@@ -12,7 +12,7 @@ import pandas
 
 
 class PostProcessing:
-    def __init__(self, model, **kwargs):
+    def __init__(self, model, logger,  **kwargs):
         """
         Parameters:
             model: SynthPop
@@ -24,12 +24,15 @@ class PostProcessing:
                     self.model.filename_base for the directory
                             and filename of the output file (without extension)
                     ...
+            logger: SynthPopLogger
+                 can be used to add messages to the logging.
 
         kwargs:
             keyword arguments from the configuration
                 ("advanced_post_processing":{"name":"name_of_the_subclass", kwargs}
         """
         self.model = model
+        self.logger = logger
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """

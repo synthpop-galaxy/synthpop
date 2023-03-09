@@ -118,21 +118,22 @@ class SynthPop:
         self.save_data = True
 
         if self.parms.advanced_post_processing is None:
-            self.post_processing = PostProcessing(self).do_post_processing
+            self.post_processing = PostProcessing(self, logger).do_post_processing
 
         elif isinstance(self.parms.advanced_post_processing, list):
             # have multiple post-processing class
             self.post_processing = []
             for post_kwargs in self.parms.advanced_post_processing:
                 post_processing_class = sp_utils.get_subclass(
-                    PostProcessing, {'model': self, **post_kwargs})
+                    PostProcessing, {'model': self, "logger": logger, **post_kwargs})
                 self.post_processing.append(post_processing_class.do_post_processing)
 
         else:
             # have single post-processing class
             self.parms.advanced_post_processing['model'] = self
             post_processing_class = sp_utils.get_subclass(
-                PostProcessing, {'model': self, **self.parms.advanced_post_processing})
+                PostProcessing, {'model': self, "logger": logger,
+                                 **self.parms.advanced_post_processing})
             self.post_processing = post_processing_class.do_post_processing
 
         self.l_deg = None

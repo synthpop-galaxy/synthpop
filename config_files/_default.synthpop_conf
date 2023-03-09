@@ -1,0 +1,140 @@
+{
+    "MANDATORY":{
+        "#comment1": "directory and base for the output files",
+        "name_for_output":null,
+        "#comment2": "directory containing population json files",
+        "model_name":null
+    },
+
+    "SIGHTLINES":{
+        "#comment1":"These inputs are mandatory in order to run synthpop.main() or process_all() ",
+
+        "#comment2":[
+            "Galactic longitude and latitude in degree",
+            "if [l/b]_set_type=='pairs' it will treat l and b as pairs i.e ((l[0],b[0]),..., (l[i],b[i]) ",
+            "otherwise it will loop over l and b individual. ie.((l[0],b[0]),...,(l[0],b[i]),(l[1],b[0]),... ",
+            "if [l/b]_set_type=='range' it will use it as argument for np.arange([l/b]_set)"
+        ],
+        "l_set":null,
+        "l_set_type":null,
+        "b_set":null,
+        "b_set_type": null,
+        "#comment3":"Solid angle of cone/pyramid in unite defined by solid_angle_unit [sr, or deg^2]",
+        "solid_angle": null,
+        "solid_angle_unit": "deg^2"
+    },
+
+    "SEED":{"random_seed":null},
+
+
+    "POPULATION_GENERATION":{
+        "#comment1":"Maximum distance from sun",
+        "max_distance":15,
+        "#comment2":"step size, in kpc",
+        "distance_step_size":0.10,
+
+        "#comment3":"specify the cone type currently only allows cone",
+        "window_type":{"window_type":"cone" , "#kwargs for windowtype": null},
+
+        "#comment4":"Limiting mass [min_mass, max_mass]",
+        "mass_lims":{"min_mass":0.08,"max_mass":100},
+        "#comment5":"Number of stars used for estimating the total mass in a slice ",
+        "N_mc_totmass":10000,
+
+        "#comment6":"methode to estimate the mass loss correction",
+        "lost_mass_option": 1,
+        "N_av_mass":20000,
+
+        "#comment7":"Flag for estimate the velocities for all stars at once",
+        "kinematics_at_the_end":true,
+
+        "#comment8": "scale down the number of generated stars n_gen = (n/scale_factor)",
+        "scale_factor": 1,
+        "#comment9": "reduce the generation of lowmass stars which are to faint",
+        "skip_lowmass_stars": false,
+        "#comment10": "Evolve the number of stars in chunks of size",
+        "chunk_size": 250000
+    },
+
+    "EXTINCTION_MAP":
+        {
+        "extinction_map_kwargs":{
+            "name":"Marshall"
+            },
+        "extinction_law_kwargs":
+            [
+            {"name":"ODonnellCardelli"}
+            ],
+        "R_V":3.1
+        },
+
+    "ISOCHRONE_INTERPOLATION":{
+        "#comment":"examples to use the code with different Isochrones System and different Interpolator",
+        "#comment2":"# if set to null it will read the keywords from the population files.",
+        "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
+
+        "# comment3": "an example for multi evolution_class: By default only the MIST isochrones are implemented",
+        "# evolution_class":[
+                {"name":"MIST", "min_mass":0.2, "max_mass":0.3, "#comment":"use the MIST isochrones for masses between 0.1, 0.2 with the standard interpolator"},
+                {"name":"MIST", "interpolator":"LagrangeInterpolator","min_mass":0.1, "max_mass":0.7},
+                {"name":"MIST", "interpolator":"CharonInterpolator", "#comment":"use the MIST isochrones outside of the previous defined ranges"}
+            ],
+        "# comment4": "an example for different evolution_class for 'population_name'",
+        "# evolution_class":{
+            "default":[
+                {"name":"MIST", "interpolator":"CharonInterpolator"}
+                ],
+            "'population_name'":[
+                        {"name":"MIST", "interpolator":"LagrangeInterpolator" , "#comment" : "a different interpolator for 'population_name'" }
+            ]
+        }
+    },
+
+    "PHOTOMETRIC_OUTPUTS":{
+        "#comment1":"Limiting magnitude- [band, limit, opt] #opt ='keep','remove'",
+        "maglim":["2MASS_Ks",30, "keep"],
+        "#comment2":"Magnitude systems and bands to generate for each star.",
+        "chosen_bands": ["Bessell_B", "Bessell_V","Bessell_I","Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3", "2MASS_J","2MASS_H","2MASS_Ks","Z087","W146"],
+        "#comment3":"use '[magsys,...]' to take all magnitudes from a given system",
+        "#comment4":"or '{magsys1:[filter1, filter2,...], magsys2:'all',...}' to avoid confusion",
+        "#comment5":"either specifying the effective wavelength in microns for each filter",
+        "#comment6":"or a string to specify a separate json file where this can be found",
+        "eff_wavelengths": {
+            "json_file":"AAA_effective_wavelengths.json"
+            },
+        "#comment7":"true for observed magnitude, false for absolute magnitudes",
+        "obsmag":true,
+
+        "#comment8": "optional properties  from the isochrones, they can overlap with the default properties.",
+        "#comment9": "opt_iso_props are the original column names in the Isochrones",
+        "#comment10": "col_names are the column names in the output table ",
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"],
+        "col_names":["logL", "Teff", "logg" ,"Fe/H_evolved","log_radius", "phase"]
+    },
+
+    "OUTPUT": {
+        "#comment1":"specify a script and function for advanced post processing",
+        "#comment2": "should be either a dictionary as follows or null",
+
+        "# advanced_post_processing": {
+            "name": "sub class name",
+            "filename": "optional: path of the file ",
+            "further_keywords": "additional keyword arguments"
+            },
+        "advanced_post_processing": null,
+
+        "#comment3": "if output_location is '' or null it is replaced with the synthpop directory",
+        "#comment4": "if output_location ends with '/' it uses output_location/name_for_output as directory",
+        "output_location": null,
+        "#comment5": "pattern for the output file (without directory and extension) interpreted by string.format() ",
+        "#comment6": "The following keys are available:",
+        "#comment7": "name_for_output (str), model_name (str), l_deg (float), b_deg(float),",
+        "#comment8": "solid_angle (float), date (datetime.date object), time (datetime.time object)",
+        "output_filename_pattern": "{model_name}_l{l_deg:.3f}_b{b_deg:.3f}",
+        "#comment9": "Filetypes from pandas: csv, json, html, xml, excel, hdf5, feather, parquet, stata, pickle, sql",
+        "#comment10": "Filetypes astropy: fits and vot" ,
+        "output_file_type": "csv",
+
+        "overwrite": false
+    }
+}

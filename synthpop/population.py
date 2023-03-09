@@ -531,6 +531,7 @@ class Population:
             return self.av_mass_corr
         data = self.generate_stars_in_slice(0, self.max_distance, n_stars)
         m_initial, age, metallicity, _, _ = data[:, [-3, -2, -1, 0, 1]].T
+
         _, s_props, _, _ , not_evolved = self.multi_get_evolved_props(
             m_initial, metallicity, age, {const.REQ_ISO_PROPS[0], self.glbl_params.maglim[0]})
 
@@ -1183,16 +1184,18 @@ class Population:
             # check if there are any stars for this step
             if len(which) == 0:
                 continue
-
             # loop over bunches of at most 250k to reduce memory usage
             if len(which) > self.glbl_params.chunk_size * 6 / 5:
                 chunk_size = self.glbl_params.chunk_size
+                use_chunks = True
             else:
                 chunk_size = len(which) + 1
-
+                use_chunks = False
             count_c = 0
-            if chunk_size != len(which)+1:
-                print(count_c, "/", len(which), end="\r")
+
+            if use_chunks:
+                print(count_c, "/", len(which), end="")
+
             for which2 in np.array_split(which, len(which) // chunk_size + 1):
                 # evolve the stars
                 if accept_np_arrays:
@@ -1226,12 +1229,12 @@ class Population:
                 # update the list of not performed stars
 
                 count_c += len(which2)
-                if chunk_size != len(which) + 1:
-                    print(count_c, "/", len(which), end='\r')
+                if use_chunks:
+                    print("\r", count_c, "/", len(which), end='')
 
             # update the list of not performed stars
             not_performed[which] = False
-
+            print('')
             # check if anything left to do
             if not any(not_performed):
                 break

@@ -45,7 +45,8 @@ class EvolutionIsochrones(ABC):
     ----------
     isochrones :  Pandas DataFrame
         DataFrame of the loaded isochrones
-
+    isochrones_grouped : Pandas DataFrameGroupBy
+        Isochrones groupend in metallicity and age
 
     more Attributes can be specified in the subclasses
 
@@ -57,7 +58,7 @@ class EvolutionIsochrones(ABC):
         return the Isochrones Data Frame
     """
     isochrones_name = None
-
+    isochrones_grouped = None
     @abstractmethod
     def __init__(self, columns=None, **kwargs):
         """
@@ -97,16 +98,15 @@ class EvolutionIsochrones(ABC):
         min_mass :  np.ndarray or float
         Returns minimum mass for stars brighter than magnitude_limit
         """
-        df = self.isochrones[min(self.file_met)]
 
         abs_mag_lim = magnitude_limit - 5 * np.log10(np.maximum(distances, 1e-8) * 100)
 
         if max_age is None:
-            max_age = df["log10_isochrone_age_yr"].max()
+            max_age = np.log10(self.iso_ages).max()
         else:
             next_age = self.iso_ages[np.searchsorted(self.iso_ages[:-1], max_age * 1e9)]
             max_age = np.log10(next_age)
-        oldest = df[df["log10_isochrone_age_yr"] == max_age]
+        oldest = self.isochrones_grouped((min(self.file_met), age))
 
         no_mass_loss = oldest[1 - oldest['star_mass'] / oldest['initial_mass'] < 1e-4]
         closest = np.searchsorted(-no_mass_loss[band][1:], -abs_mag_lim)
