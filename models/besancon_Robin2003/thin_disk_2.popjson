@@ -1,0 +1,54 @@
+{
+    "name" : "thin_disk_2",
+
+    "imf_func_kwargs" : {
+        "name" : "kroupa"
+    },
+
+    "population_density_kwargs" : {
+        "name" : "einasto",
+        "#comment" : "p0 in Msun/kpc**3 (10**9)",
+        "p0" : 0.007902E9,
+        "e" : 0.0268,
+        "hrp" : 2.530,
+        "hrm" : 1.320,
+        "offset":0.5,
+        "power":1,
+        "flare_flag" : true
+    },
+
+    
+    "age_func_kwargs" : {
+        "name" : "uniform",
+        "#comment" : "units in gigayears",
+        "low_bound" : 0.15,
+        "high_bound" : 1.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "gaussian",
+        "mean" : 0.03,
+        "std" : 0.12
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "VelocityGradient",
+        "sigma_u" : 19.8,
+        "sigma_v" : 12.8,
+        "sigma_w" : 8.0
+    }, 
+
+
+
+    "evolution_kwargs" : {
+        "json_file" : "models/besancon_Robin2003/defaults/evolution.json"
+    },
+
+    "extinction_kwargs" : {
+        "json_file" : "models/besancon_Robin2003/defaults/extinction.json"
+    },
+    
+    "mass_corr" : 0.691252,
+    "n_star_corr" : 1.44665
+}
+

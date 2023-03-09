@@ -1,0 +1,66 @@
+""" This file provides an implementation of the extinction Law from Cardelli 1989. """
+
+__all__ = ["Cardelli1989", ]
+__author__ = "J. Klüter"
+__date__ = "2022-07-10"
+__license__ = "GPLv3"
+__version__ = "1.0.0"
+
+from ._extinction import ExtinctionLaw
+
+
+class Cardelli1989(ExtinctionLaw):
+    """Extinction law from Cardelli 1989,
+       Gives the Extinction as function of wavelength and R_V
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.extinction_law_name = "Cardelli1989"
+
+    def Alambda_AV(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+        """
+        Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
+
+        Parameters
+        ----------
+        eff_wavelength : float
+            Effective Wavelength of the filter for which the extinction should be determined.
+            in micrometer
+        R_V : float
+            interstellar reddening parameter
+        """
+
+        x = 1 / wavelength_eff
+        # deep red?
+        # if x <0.3:
+        #    return (1/x)**(-1.75)
+
+        # infrared
+        # if x>= 0.3 and x<=1.1:
+        if x <= 1.1:
+            a = 0.574 * x ** 1.61
+            b = -0.527 * x ** 1.61
+
+        # optical
+        elif 1.1 < x <= 3.3:
+            y = x - 1.82
+            a = (1 + 0.17699 * y - 0.50447 * y ** 2 - 0.02427 * y ** 3 + 0.72085 * y ** 4
+                 + 0.01979 * y ** 5 - 0.77530 * y ** 6 + 0.32999 * y ** 7)
+            b = (1.41338 * y + 2.28305 * y ** 2 + 1.07233 * y ** 3 - 5.38434 * y ** 4
+                 - 0.62251 * y ** 5 + 5.30260 * y ** 6 - 2.09002 * y ** 7)
+
+        # UV and far UV
+        elif 3.3 < x <= 8:
+            if x < 5.9:
+                F_a = 0
+                F_b = 0
+            else:
+                F_a = -0.04473 * (x - 5.9) ** 2 - 0.009779 * (x - 5.9) ** 3.
+                F_b = 0.2130 * (x - 5.9) ** 2 + 0.1207 * (x - 5.9) ** 3.
+            a = 1.752 - 0.316 * x - 0.104 / ((x - 4.67) ** 2 + 0.341) + F_a
+            b = -3.090 + 1.825 * x + 1.206 / ((x - 4.62) ** 2 + 0.263) + F_b
+        else:
+            a, b = None, None
+
+        return a + b / R_V
