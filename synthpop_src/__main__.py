@@ -5,6 +5,6 @@ import os
 pth = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, pth)
 
-from synthpop.synthpop_main import main
+from synthpop_src.synthpop_main import main
 
 main()

@@ -1,5 +1,5 @@
 """ make Synthpop available for import """
 from . import constants
 from . import modules
-from .synthpop import *
-from .synthpop import __doc__
+from .synthpop_src import *
+from .synthpop_src import __doc__
