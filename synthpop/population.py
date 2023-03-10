@@ -1234,7 +1234,7 @@ class Population:
 
             # update the list of not performed stars
             not_performed[which] = False
-            print('')
+            if use_chunks: print('')
             # check if anything left to do
             if not any(not_performed):
                 break
