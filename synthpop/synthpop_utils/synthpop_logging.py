@@ -20,9 +20,9 @@ import tempfile
 import numpy as np
 
 try:
-    from ...constants import SYNTHPOP_DIR
+    from synthpop.constants import SYNTHPOP_DIR
 except (ImportError, ValueError):
-    from constants import SYNTHPOP_DIR
+    from synthpop.constants import SYNTHPOP_DIR
 
 LENGTH = 75
 

@@ -12,9 +12,12 @@ __version__ = "0.1.0"
 
 from typing import Tuple
 import numpy as np
-from .synthpop_utils import coordinates_transformation as coord_trans
-from .synthpop_utils import solidangle_to_half_cone_angle
-
+try:
+    from .synthpop_utils import coordinates_transformation as coord_trans
+    from .synthpop_utils import solidangle_to_half_cone_angle
+except ImportError:
+    from synthpop_utils import coordinates_transformation as coord_trans
+    from synthpop_utils import solidangle_to_half_cone_angle
 
 class Position:
     """

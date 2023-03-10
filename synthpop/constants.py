@@ -5,12 +5,19 @@ This file contains constants and parameters which should be treated as constant
 import os
 import numpy as np
 
-# main_directories
-SYNTHPOP_DIR = os.path.abspath(os.path.dirname(__file__))  # this directory
-DEFAULT_MODEL_DIR = f"{SYNTHPOP_DIR}/models"  # location where models are stored
-DEFAULT_CONFIG_DIR = f"{SYNTHPOP_DIR}/config_files/"
-DEFAULT_CONFIG_FILE = f"{DEFAULT_CONFIG_DIR}/_default.synthpop_conf"  # default config files
-ISOCHRONES_DIR = f"{SYNTHPOP_DIR}/data/isochrones"  # location where isochrones are stored
+# directory of Synthpop Module etc
+# a bit mor complicated to correctly work with symbolik links.
+SYNTHPOP_DIR = os.path.abspath(os.path.dirname(
+        os.path.relpath(os.path.join(os.path.dirname(__file__),'modules'))))
+
+# default location where models are stored
+DEFAULT_MODEL_DIR = os.path.join(SYNTHPOP_DIR, "models")
+# default location for config
+DEFAULT_CONFIG_DIR = os.path.join(SYNTHPOP_DIR, "config_files")
+# default config file
+DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_CONFIG_DIR,"_default.synthpop_conf")
+# location where isochrones are stored
+ISOCHRONES_DIR = os.path.join(SYNTHPOP_DIR, "data", "isochrones")
 
 # parameter which needs to be estimated from the isochrones
 # the first column MUST be the evolved stellar mass!

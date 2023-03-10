@@ -13,9 +13,9 @@ from typing import Tuple
 import numpy as np
 
 try:
-    from ... import constants as const
+    from .. import constants as const
 except (ImportError, ValueError):
-    import constants as const
+    import synthpop.constants as const
 
 
 def rotation_matrix(

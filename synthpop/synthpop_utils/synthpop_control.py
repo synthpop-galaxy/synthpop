@@ -10,7 +10,6 @@ __date__ = "2023-03-02"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
-import sys
 import os
 import json
 import itertools
@@ -22,10 +21,10 @@ from .json_loader import json_loader
 from .synthpop_logging import logger
 
 try:
-    from ...constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
+    from synthpop.constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
                               DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 except (ImportError, ValueError):
-    from constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
+    from synthpop.constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
                            DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 
 
@@ -157,7 +156,7 @@ class Parameters:
             directory of default_config_file.
 
         """
-
+        print(default_config_file)
         if os.path.isfile(default_config_file):
             config_dir = os.path.abspath(os.path.dirname(default_config_file))
         elif os.path.isfile(os.path.join(DEFAULT_CONFIG_DIR, default_config_file)):
