@@ -36,16 +36,18 @@ else:
 
 # Local Imports
 try:
-    from .. import constants as const
+    from . import constants as const
 except (ImportError, ValueError) as e :
-    import constants as const
+    import synthpop.constants as const
+    import synthpop_utils as sp_utils
     from modules.post_processing import PostProcessing
+    from population import Population
+    from synthpop_utils.synthpop_logging import logger
 else:
-    from ..modules.post_processing import PostProcessing
-
-from . import synthpop_utils as sp_utils
-from .population import Population
-from .synthpop_utils.synthpop_logging import logger
+    from .modules.post_processing import PostProcessing
+    from . import synthpop_utils as sp_utils
+    from .population import Population
+    from .synthpop_utils.synthpop_logging import logger
 
 
 class SynthPop:

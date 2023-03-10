@@ -28,17 +28,16 @@ import numpy as np
 import pandas
 
 # Local Imports
-from . import synthpop_utils as sp_utils
-from .position import Position
-from .synthpop_utils.synthpop_logging import logger
-from .synthpop_utils import coordinates_transformation as coord_trans
-from .synthpop_utils import Parameters
-
-# level depended imports based on imported or executed
-try:  # check synthpop is imported
-    from .. import constants as const
-except (ImportError, ValueError):  # if synthpop is executed
-    import constants as const
+# level dependend imports to allow runing as main
+try:
+    from . import constants as const
+except ImportError:
+    import synthpop.constants as const
+    import synthpop_utils as sp_utils
+    from position import Position
+    from synthpop_utils.synthpop_logging import logger
+    from synthpop_utils import coordinates_transformation as coord_trans
+    from synthpop_utils import Parameters
     from modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
     from modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
         CombineEvolution, MUST_HAVE_COLUMNS
@@ -48,15 +47,21 @@ except (ImportError, ValueError):  # if synthpop is executed
     from modules.metallicity import Metallicity
     from modules.population_density import PopulationDensity
 
+
 else:  # continue import when if synthpop is imported
-    from ..modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
-    from ..modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
+    from .import synthpop_utils as sp_utils
+    from .position import Position
+    from .synthpop_utils.synthpop_logging import logger
+    from .synthpop_utils import coordinates_transformation as coord_trans
+    from .synthpop_utils import Parameters
+    from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
+    from .modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
         CombineEvolution, MUST_HAVE_COLUMNS
-    from ..modules.age import Age
-    from ..modules.initial_mass_function import InitialMassFunction
-    from ..modules.kinematics import Kinematics
-    from ..modules.metallicity import Metallicity
-    from ..modules.population_density import PopulationDensity
+    from .modules.age import Age
+    from .modules.initial_mass_function import InitialMassFunction
+    from .modules.kinematics import Kinematics
+    from .modules.metallicity import Metallicity
+    from .modules.population_density import PopulationDensity
 
 
 class Population:
