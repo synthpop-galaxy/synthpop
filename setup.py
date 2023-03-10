@@ -7,6 +7,7 @@ setup(
     author='J. Klüter, S. Johnson, M.J. Huston, A. Aronica, M. Penny',
     license='GPLv3',
     packages=find_packages(),
+    include_package_data=True,
     install_requires=[
         'numpy>=1.23.2',
         'scipy>=1.9.0',
