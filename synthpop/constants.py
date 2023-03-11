@@ -6,9 +6,7 @@ import os
 import numpy as np
 
 # directory of Synthpop Module etc
-# a bit mor complicated to correctly work with symbolik links.
-SYNTHPOP_DIR = os.path.abspath(os.path.dirname(
-        os.path.relpath(os.path.join(os.path.dirname(__file__),'modules'))))
+SYNTHPOP_DIR = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
 
 # default location where models are stored
 DEFAULT_MODEL_DIR = os.path.join(SYNTHPOP_DIR, "models")
