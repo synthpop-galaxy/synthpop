@@ -2,7 +2,6 @@
 try:
     from .synthpop_main import main
 except ImportError:
-    from .synthpop_main import main
-
+    from synthpop_main import main
 
 main()
