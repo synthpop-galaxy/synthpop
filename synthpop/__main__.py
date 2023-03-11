@@ -1,4 +1,8 @@
 """ run Synthpop in the default way """
-from synthpop_main import main
+try:
+    from .synthpop_main import main
+except ImportError:
+    from .synthpop_main import main
+
 
 main()
