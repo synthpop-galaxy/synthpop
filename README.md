@@ -1,24 +1,23 @@
-# synthpop
-Synthpop is a object oriented modular python framework to generate Synthetic Population Models. 
-It will generate a star catalog following the specified model and configuration.
+# Synthpop
 
+Synthpop is an object-oriented, modular Python framework 
+for generating synthetic population models. 
+It generates a star catalog following the specified model and configuration.
 
+## Model & Populations
 
+A model is defined by a collection of populations. 
+Each population is further described by the following 5 modules:
+1. Population Density
+2. Initial Mass Function
+3. Age Distribution
+4. Metallicity Distribution
+5. Kinematics
 
-  
+A model is implemented as a dictionary containing, 
+for each population, a JSON file. 
+These files must define the following keywords:
 
-
-##  Model & Populations 
-A Model is defined by a collection of Populations.
-Each population is further described by the following 5 modules. 
-1) Population Density 
-2) Initial Mass Function
-3) Age Distribution 
-4) Metallicity Distribution
-5) Kinematic
-
-A Model is implemented as a dictonary containing for each Population a 
-json files. These must define the following keywords. 
 
     "name" : "name_of_the_population"
     "imf_func_kwargs" : ...
@@ -27,31 +26,33 @@ json files. These must define the following keywords.
     "kinematics_func_kwargs" : ...
     "population_density_kwargs" : ...
 
-each of the kwargs items includes a sub dictionary specifying the module (see below )
+Each of the kwargs items includes a sub-dictionary 
+specifying the module (see below).
 
 ## Modules
-In total 10 Moduls are used within Synthpop. These are: 
-1) Population Density 
+
+Synthpop employs 10 modules to perform various tasks, namely:
+
+1) Population Density
 2) Initial Mass Function
-3) Age Distribution 
+3) Age Distribution
 4) Metallicity Distribution
 5) Kinematic
 6) Isochrone System
-7) Isochrone Interpolator 
-8) Extinction Map 
+7) Isochrone Interpolator
+8) Extinction Map
 9) Extinction Law
-10) Post-Processing 
+10) Post-Processing
 
-Each fulfilling a single task and can be specified independently.
-Only the Isochrone System needs to be compatible with the Isochrone Interpolator. 
-The predefined modules can be found in the modules directory tree. 
-These are subclasses of a dedicated parent class. 
-The parent classes can be found in the python files idicated with a "_"
-For the Age class this can be found in 
-    
-    /modules/age/_age.py
+11) Each module fulfills a single task and can be independently specified.
+Only the Isochrone System needs to be compatible with the Isochrone Interpolator.
+All predefined modules are located in the modules directory tree 
+and are subclasses of a dedicated parent class, which is denoted by a "_" in the name of the corresponding Python file.
+For instance, the parent class for the Age module can be found in:
 
-We recommend to specify each subclass in a separate file within this file structure. 
+``.../modules/age/_age.py ``
+
+We recommend that each subclass be specified in a separate file within this directory structure.
 
 ### Define the used Module. 
 The usage of a module is either defined by the configuration or by a population file.
@@ -69,9 +70,13 @@ similar means either identical, all lower case,
 or as snake_case for  CamelCase class name.  
 
 ### Implementing a new Module
-Implementing a new Module is equivalent to creating a new subclass 
-of the corresponding parent class. 
-However, the footprint of the functions must not be changed.  
+Synthpop provides a variety of predefined modules to create synthetic populations, 
+We encourage users to develop their own custom submodules to fit their needs.
+
+To create a custom submodule, users simply can and define their own subclass of the appropriate parent class. 
+Idealy in create a new Python file in the appropriate directory within the modules tree, 
+Users can refer to the existing modules as a guide on how to structure their own custom module.
+
 
 
 ## Configuration 
@@ -106,21 +111,37 @@ However, the footprint of the functions must not be changed.
   Also note that arguments starting with an '#' are ignored.
   
 
+## Installation
+To install synthpop, you can either clone this repository, and install all the requirements. 
+or you can use 
+```
+pip install git+https://github.com/synthpop-galaxy/synthpop.git 
+``` 
+In this case you might want to migrade the model, module and conifgurations to a easyly accessable directory. 
+To do so, you need to run 
+```
+python -m synthpop.migrate_interactive_part {path_to_directory}
+```
+You can also used the buildin gui to select a directory. 
 
 
-## run synthpop
-### run SynthPop as individual script
+## Use SynthPop
+### Run Synthpop as individual script
   To run the SynthPop in the default mode:
   ```
-  python synthpop config_file 
+  python synthpop config_filename 
   ```
-  this process all locations as defined in the config_file 
-  Have a look at ```python synthpop -h ``` for additional arguments
-  all results are saved at the location defined in the configuration. 
+  this process all locations as defined in the config_filename. 
+  The config_filename sould either be in the ``config_file`` directory. 
+  Or should include the complete path.
+  Note you need to include a "-m" flag when installed by pip install.
+  For additional arguments see `python synthpop -h `. 
+
+  The generated catalogs are saved at the location defined in the configuration. 
   (default: synthpop/output-files)
   
-### import SynthPop to other script 
-  importing synthpop to another script allows a bit more flexibility.
+### Omport SynthPop to other script 
+  Importing synthpop to another script allows a bit more flexibility.
   To do so, ensure that the parent directory is within your python path, and use 
   ```
   import synthpop
@@ -148,3 +169,8 @@ However, the footprint of the functions must not be changed.
   If you think SynthPop was usfull for you work, 
   Please cite Klüter et al. (in prep), and include citations for key components of the generation process. 
   These includes, but is not limited, to the used model, isochrone system and extinction map.
+
+## Getting in touch:
+  If users encounter any issues during the development of their custom submodules or model or while using Synthpop, 
+  they can reach out to the development team through the GitHub issue tracker. 
+  We welcome any feedback, bug reports, or feature requests that can help improve Synthpop.
