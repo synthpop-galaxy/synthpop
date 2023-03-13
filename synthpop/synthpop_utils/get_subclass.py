@@ -12,7 +12,7 @@ import os
 import importlib
 import re
 import inspect
-from typing import Type, Dict, TypeVar, Union, Callable
+from typing import Type, Dict, TypeVar, Union, Callable, List
 from .synthpop_logging import logger
 T = TypeVar('T')
 
@@ -257,7 +257,7 @@ class SubClassLoader:
 
     def check_unambiguity(
             self,
-            subclasses: list[Type[T]], ParentClass: Type[T],
+            subclasses: List[Type[T]], ParentClass: Type[T],
             name: str = '??', filename: str = '??', population_file: str = '??'
             ) -> Type[T]:
         """
