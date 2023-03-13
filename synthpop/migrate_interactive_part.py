@@ -22,9 +22,6 @@ def copydir(src_dir, target_dir, name):
     symlink = os.path.join(src_dir, name)
     des = os.path.join(target_dir, name)
 
-    # create backup repository
-    if not os.path.isdir(src):
-        shutil.move(symlink, src)
     # deleat previous link
     if os.path.islink(symlink):
         os.unlink(symlink)
@@ -44,10 +41,6 @@ def copyfile(src_dir, target_dir, name):
     symlink = os.path.join(src_dir, name)
     des = os.path.join(target_dir, name)
 
-    # create backup repository
-    if not os.path.isfile(src):
-        shutil.move(symlink,src)
-
     # deleat previous link
     if os.path.islink(symlink):
         os.unlink(symlink)
@@ -60,7 +53,7 @@ def copyfile(src_dir, target_dir, name):
         os.symlink(des, symlink, target_is_directory = True)
     else:
         shutil.move(src, des)
-def main(dirname = None):
+def migrate(dirname = None):
     if dirname is None:
         # get filename from gui
         Tk().withdraw()
@@ -91,5 +84,5 @@ if __name__=="__main__":
         dirname = sys.argv[1]
     else: 
         dirname = None
-    main(dirname)
+    migrate(dirname)
 
