@@ -44,30 +44,34 @@ Synthpop employs 10 modules to perform various tasks, namely:
 9) Extinction Law
 10) Post-Processing
 
-11) Each module fulfills a single task and can be independently specified.
+Each module fulfills a single task and can be independently specified.
 Only the Isochrone System needs to be compatible with the Isochrone Interpolator.
 All predefined modules are located in the modules directory tree 
 and are subclasses of a dedicated parent class, which is denoted by a "_" in the name of the corresponding Python file.
 For instance, the parent class for the Age module can be found in:
 
 ``.../modules/age/_age.py ``
+A uniform distribution subclasses is then specified in:
+``.../modules/age/uniform.py ``
 
 We recommend that each subclass be specified in a separate file within this directory structure.
+However, different locations are axceptable when specify the filename, including the path. 
 
-### Define the used Module. 
+
+### Define the used module. 
 The usage of a module is either defined by the configuration or by a population file.
 The used module is selected based on a dictionary. 
 
-    "used_module":{
+    "used_module_kwargs":{
         "name" : "name_of_the_subclass"
         "filename" : "path_to_the_python_file"
         ... (further keys for the initialization)
         }
 
-the file_name is optional if the file is with named 
+the filename is optional if the file is with named 
 similar to the name of the subclass and in the default location. 
 similar means either identical, all lower case, 
-or as snake_case for  CamelCase class name.  
+or as a snake_case filename for CamelCase class name.
 
 ### Implementing a new Module
 Synthpop provides a variety of predefined modules to create synthetic populations, 
@@ -76,8 +80,6 @@ We encourage users to develop their own custom submodules to fit their needs.
 To create a custom submodule, users simply can and define their own subclass of the appropriate parent class. 
 Idealy in create a new Python file in the appropriate directory within the modules tree, 
 Users can refer to the existing modules as a guide on how to structure their own custom module.
-
-
 
 ## Configuration 
   SynthPop is controlled by a config json file. 
@@ -146,9 +148,8 @@ The generated catalogs are saved at the location defined in the configuration (d
 
   
 ### Import SynthPop to other script 
-mporting SynthPop to another script allows for more flexibility. 
+Importing SynthPop to another script allows for more flexibility. 
 To do so, ensure that the parent directory is within your Python path and use the following code:
-
   ```
   import synthpop
   
@@ -170,11 +171,11 @@ While ``process_all()`` only saves the results to disk, ``process_location()`` a
 
 
 ## Acknowledge Synthpop 
-  If you think SynthPop was usfull for you work, 
-  Please cite Klüter et al. (in prep), and include citations for key components of the generation process. 
+  If you think SynthPop was usfull for you work, please cite Klüter et al. (in prep). 
+  Please also include citations for key components of the generation process. 
   These includes, but is not limited, to the used model, isochrone system and extinction map.
 
 ## Getting in touch:
-  If users encounter any issues during the development of their custom submodules or model or while using Synthpop, 
+  If users encounter any issues while using Synthpopduring  the development/implementation of new submodules or models, 
   they can reach out to the development team through the GitHub issue tracker. 
   We welcome any feedback, bug reports, or feature requests that can help improve Synthpop.
