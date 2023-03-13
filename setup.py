@@ -7,6 +7,10 @@ setup(
     author='J. Klüter, S. Johnson, M.J. Huston, A. Aronica, M. Penny',
     license='GPLv3',
     packages=find_packages(),
+    data_files=[('modules', [], {'is_symlink': True}),
+                ('models', [], {'is_symlink': True}),
+                ('config_files', [], {'is_symlink': True}),
+                ('constants.py', [], {'is_symlink': True})],
     include_package_data=True,
     install_requires=[
         'numpy>=1.23.2',

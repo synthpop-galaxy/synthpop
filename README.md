@@ -123,12 +123,17 @@ Use the command below to install using pip:
 ```
 pip install git+https://github.com/synthpop-galaxy/synthpop.git
 ``` 
-In this case, you may want to migrate the model, module, and configurations to an easily accessible directory. To do so, run the following command:
+When using SynthPop for the first time, you are ask to specify a directory to 
+store all files you might want to interact with. 
+These are The module, models, constants. It will also be the default location to store the isochrone data 
+and output files. 
+A simple GUI will be used specify the directory
+You can also specify the directory directly
+To do so, run the following command: 
 ```
-python -m synthpop.migrate_interactive_part {path_to_directory}
+python -s -m synthpop.migrate_interactive_part path_to_directory
 ```
 
-You can either specify the directory as argument or select a directory using the built-in GUI to select.
 
 
 
