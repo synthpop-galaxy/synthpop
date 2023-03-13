@@ -22,20 +22,16 @@ def copydir(src_dir, target_dir, name):
     symlink = os.path.join(src_dir, name)
     des = os.path.join(target_dir, name)
 
-    # create backup repository
-    if not os.path.isdir(src):
-        shutil.move(symlink, src)
     # deleat previous link
     if os.path.islink(symlink):
         os.unlink(symlink)
 
+    # copy directory to new location
+    shutil.copytree(src, des, dirs_exist_ok = True)
     if des != symlink:
-        # copy directory to new location
-        shutil.copytree(src, des, dirs_exist_ok = True)
         # create a new link
         os.symlink(des, symlink, target_is_directory = True)
-    else:
-        shutil.move(src, des)
+
 
 def copyfile(src_dir, target_dir, name):
     """copy a file and create a symlik to the new location"""
@@ -44,23 +40,18 @@ def copyfile(src_dir, target_dir, name):
     symlink = os.path.join(src_dir, name)
     des = os.path.join(target_dir, name)
 
-    # create backup repository
-    if not os.path.isfile(src):
-        shutil.move(symlink,src)
-
     # deleat previous link
     if os.path.islink(symlink):
         os.unlink(symlink)
 
-    if des != symlink:
-        # copy file to new location
-        shutil.copy(src, des)
-        # create a new link
+    # copy file to new location
+    shutil.copy(src, des)
 
-        os.symlink(des, symlink, target_is_directory = True)
-    else:
-        shutil.move(src, des)
-def main(dirname = None):
+    # create a new link
+    if des != symlink:
+        os.symlink(des, symlink, target_is_directory = False)
+
+def migrate(dirname = None):
     if dirname is None:
         # get filename from gui
         Tk().withdraw()
@@ -76,6 +67,7 @@ def main(dirname = None):
             title="test")
     if dirname == '':
         return
+    print(dirname)
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
 
@@ -89,7 +81,6 @@ def main(dirname = None):
 if __name__=="__main__":
     if len(sys.argv) > 1:
         dirname = sys.argv[1]
-    else: 
+    else:
         dirname = None
-    main(dirname)
-
+    migrate(dirname)

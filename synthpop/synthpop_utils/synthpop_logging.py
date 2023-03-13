@@ -48,7 +48,7 @@ class SynthpopLogger(logging.Logger):
         self.debugger.setLevel(logging.DEBUG)
 
         # Create the logging formatter
-        self.file_formatter = logging.Formatter('%(levelname)s %(message)s')
+        self.file_formatter = logging.Formatter('%(message)s')
         self.stream_formatter = logging.Formatter('%(message)s')
         self.debug_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 

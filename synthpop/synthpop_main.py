@@ -30,6 +30,7 @@ import numpy as np
 # check if astropy is installed
 if importlib.util.find_spec("astropy") is not None:
     import astropy.table as astrotable
+
 else:
     pass
     # astropy is only needed if the output format is either VoTable or FITS-table
@@ -37,12 +38,14 @@ else:
 # Local Imports
 try:
     from . import constants as const
+
 except (ImportError, ValueError) as e:
-    import synthpop.constants as const
+    import constants as const
     import synthpop_utils as sp_utils
     from modules.post_processing import PostProcessing
     from population import Population
     from synthpop_utils.synthpop_logging import logger
+
 else:
     from .modules.post_processing import PostProcessing
     from . import synthpop_utils as sp_utils

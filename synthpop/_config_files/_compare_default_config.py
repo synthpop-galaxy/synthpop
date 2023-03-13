@@ -11,17 +11,17 @@ import argparse
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _DEFAULT = os.path.join(THIS_DIR, "_default.synthpop_conf")
 
-def compare_json_files(userfile_path):
+def compare_json_files(user_file_path):
     with open(_DEFAULT, 'r') as f:
         default_file = json.load(f)
-    with open(userfile_path, 'r') as f:
-        userfile = json.load(f)
+    with open(user_file_path, 'r') as f:
+        user_file = json.load(f)
     is_ok = True
     for section in default_file.keys():
         if section.startswith('#'): continue
         default_keys = {item for item in default_file[section].keys() if not item.startswith('#')}
-        # check if section is in userfile
-        if section not in userfile.keys():
+        # check if section is in user_file
+        if section not in user_file.keys():
             is_ok = False
             print(f"'{userfile_path}' should contain a '{section}' section!")
             print(f"this should included the following attributes:")
@@ -60,7 +60,7 @@ if __name__ == "__main__":
                     'if it can be used as default config file ')
 
     # add the argument for userfile_path
-    parser.add_argument('userfile_path', type=str, help='the path to the file')
+    parser.add_argument('user_file_path', type=str, help='the path to the file')
 
     # parse the arguments
     args = parser.parse_args()
