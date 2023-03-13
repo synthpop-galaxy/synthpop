@@ -112,57 +112,61 @@ Users can refer to the existing modules as a guide on how to structure their own
   
 
 ## Installation
-To install synthpop, you can either clone this repository, and install all the requirements. 
-or you can use 
+
+To install synthpop, you have two options:
+
+Clone this repository and install all the requirements.
+Use the command below to install using pip:
+
 ```
-pip install git+https://github.com/synthpop-galaxy/synthpop.git 
+pip install git+https://github.com/synthpop-galaxy/synthpop.git
 ``` 
-In this case you might want to migrade the model, module and conifgurations to a easyly accessable directory. 
-To do so, you need to run 
+In this case, you may want to migrate the model, module, and configurations to an easily accessible directory. To do so, run the following command:
 ```
 python -m synthpop.migrate_interactive_part {path_to_directory}
 ```
-You can also used the buildin gui to select a directory. 
+
+You can either specify the directory as argument or select a directory using the built-in GUI to select.
+
 
 
 ## Use SynthPop
 ### Run Synthpop as individual script
-  To run the SynthPop in the default mode:
+To run SynthPop in the default mode, use the following command:
   ```
-  python synthpop config_filename 
+  python -m synthpop config_filename 
   ```
-  this process all locations as defined in the config_filename. 
-  The config_filename sould either be in the ``config_file`` directory. 
-  Or should include the complete path.
-  Note you need to include a "-m" flag when installed by pip install.
-  For additional arguments see `python synthpop -h `. 
+This processes all locations as defined in the config_filename. 
+The config_filename should either be in the ``config_file`` directoryor should include the complete path.
+As an example, you can use the predifined ``my_config.synthpop_conf``. 
+Note that you do not need to include a ``-m`` flag when SynthPop is within your current working directory. For additional arguments, see python ``-m synthpop -h``.
 
-  The generated catalogs are saved at the location defined in the configuration. 
-  (default: synthpop/output-files)
+The generated catalogs are saved at the location defined in the configuration (default: your_specified_directory/output-files).
+
+
   
-### Omport SynthPop to other script 
-  Importing synthpop to another script allows a bit more flexibility.
-  To do so, ensure that the parent directory is within your python path, and use 
+### Import SynthPop to other script 
+mporting SynthPop to another script allows for more flexibility. 
+To do so, ensure that the parent directory is within your Python path and use the following code:
+
   ```
   import synthpop
   
   model = synthpop.SynthPop(config_file_name, **kwargs)
   model.init_population()
   ```
-  all attributes of the configuration can also specified by a keyword argument
-  It is then possible  to run all specified locations via 
+All attributes of the configuration can also be specified by a keyword argument. 
+It is then possible to run all specified locations via
   ```
   model.process_all() 
   ```
-  or to run a specified location only: 
+or to run a specified location only:
+
   ```
   data, distributions = model.process_location(
         l_deg, b_deg, solid_angle, save_data=True) 
   ```
-  while ```process_all()``` only saves the results to disk,
-  ```process_location()``` also returns the dataframe and several distributions
-  (currently only distance distributions for each population)
-  if save_data is False, the data will only be returned and not be saved. 
+While ``process_all()`` only saves the results to disk, ``process_location()`` also returns the dataframe and several distributions (currently only distance distributions for each population). Later als have a ``save_data``- flag. If it is set to False, the data will only be returned and not saved.
 
 
 ## Acknowledge Synthpop 
