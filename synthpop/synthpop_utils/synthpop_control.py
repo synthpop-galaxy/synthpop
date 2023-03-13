@@ -130,6 +130,10 @@ class Parameters:
 
         return itertools.product(self.l_set, self.b_set)
 
+    def rest_loc_iterator(self):
+        self.loc = self.location_generator()
+
+
     def log_settings(self):
         """
         log the settings as json formatted file
@@ -140,7 +144,6 @@ class Parameters:
             {key: item for key, item in self.__dict__.items() if not key.startswith('_')},
             indent=4)
         logger.info(json_object)
-
     def read_default_config(self, default_config_file: str):
         """
         reads settings from keyword arguments

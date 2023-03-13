@@ -22,7 +22,7 @@ import time
 import datetime
 import glob
 import importlib
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Iterator
 # Non-Standard Imports
 import pandas
 import numpy as np
@@ -37,7 +37,7 @@ else:
 # Local Imports
 try:
     from . import constants as const
-except (ImportError, ValueError) as e :
+except (ImportError, ValueError) as e:
     import synthpop.constants as const
     import synthpop_utils as sp_utils
     from modules.post_processing import PostProcessing
@@ -141,6 +141,11 @@ class SynthPop:
         self.l_deg = None
         self.b_deg = None
         self.solid_angle = None
+        self.solid_angle_unit = None
+
+    def get_iter_loc(self) -> Iterator[Tuple[float, float]]:
+        """ returns an iterator for the defined locations """
+        return self.parms.location_generator()
 
     def init_populations(self, forced: bool = False) -> None:
         """
@@ -186,7 +191,6 @@ class SynthPop:
         self.population_files = sorted(
             glob.glob(os.path.join(models_dirname, "*pop.json"))
             + glob.glob(os.path.join(models_dirname, "*popjson"))
-
             )
 
         if len(self.population_files) == 0:
@@ -223,7 +227,7 @@ class SynthPop:
             galactic longitude for the center of the cone
         b_deg : float ['deg']
             galactic longitude for the center of the cone
-        solid_angle_sdeg : float [deg^2]
+        solid_angle : float [deg^2]
             steradians for the cone size
         solid_angle_unit : str
             unit for steradians
@@ -238,9 +242,6 @@ class SynthPop:
 
             logger.critical(msg)
             raise ValueError(msg)
-
-
-
 
         if not self.save_data:
             self.filename_base = f'dump_file{np.random.randint(0, 999999):06d}'
@@ -266,7 +267,8 @@ class SynthPop:
 
         # update position in populations
         for population in self.populations:
-            population.set_position(l_deg, b_deg, solid_angle, solid_angle_unit, **positional_kwargs)
+            population.set_position(
+                l_deg, b_deg, solid_angle, solid_angle_unit, **positional_kwargs)
         self.l_deg = l_deg
         self.b_deg = b_deg
         self.solid_angle = solid_angle
@@ -524,8 +526,10 @@ class SynthPop:
         ----------
         l_deg, b_deg : float [deg]
             galactic coordinates
-        solid_angle_sdeg : float [deg^2]
+        solid_angle : float [deg^2]
             Area of the cone
+        solid_angle_unit : str
+            Unit of the provided solid_angle
         save_data : bool
             If True the DataFrame is saved to disk
             If False the DataFrame are only returned,
@@ -548,7 +552,7 @@ class SynthPop:
 
         # Step 1: Set the location and cone size
         self.update_location(l_deg=l_deg, b_deg=b_deg,
-            solid_angle=solid_angle, solid_angle_unit=solid_angle_unit)
+                             solid_angle=solid_angle, solid_angle_unit=solid_angle_unit)
 
         # Step 2: Generate all the fields for each population
         ti = time.time()
@@ -592,11 +596,12 @@ class SynthPop:
 
         # Go through each b and l combination
         for l_b_deg in self.parms.loc:
-            self.process_location(*l_b_deg, solid_angle=self.parms.solid_angle,
+            self.process_location(
+                *l_b_deg, solid_angle=self.parms.solid_angle,
                 solid_angle_unit=self.parms.solid_angle_unit)
 
 
-def main(configfile: str = None ,**kwargs):
+def main(configfile: str = None, **kwargs):
     """ Run Synthpop in the standard mode """
     if configfile is None:
         # read input
@@ -614,7 +619,6 @@ def main(configfile: str = None ,**kwargs):
             )
     else:
         mod = SynthPop(specific_config=configfile, **kwargs)
-
 
     # run model
     mod.process_all()
