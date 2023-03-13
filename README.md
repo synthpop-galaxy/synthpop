@@ -138,7 +138,7 @@ To run SynthPop in the default mode, use the following command:
   ```
 This processes all locations as defined in the config_filename. 
 The config_filename should either be in the ``config_file`` directoryor should include the complete path.
-As an example, you can use the predifined ``my_config.synthpop_conf``. 
+As an example, you can use the predifined ``my_config.synthpop_conf`` file. 
 Note that you do not need to include a ``-m`` flag when SynthPop is within your current working directory. For additional arguments, see python ``-m synthpop -h``.
 
 The generated catalogs are saved at the location defined in the configuration (default: your_specified_directory/output-files).
