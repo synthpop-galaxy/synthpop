@@ -40,7 +40,7 @@ try:
     from . import constants as const
 
 except (ImportError, ValueError) as e:
-    import constants as const
+    import synthpop.constants as const
     import synthpop_utils as sp_utils
     from modules.post_processing import PostProcessing
     from population import Population
