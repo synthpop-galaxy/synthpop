@@ -124,7 +124,7 @@ def get_dirname_from_gui():
 
 
 def migrate(dirname=''):
-    if dirname is '':
+    if dirname == '':
         try:
             dirname = get_dirname_from_gui()
         except TclError:
@@ -148,7 +148,7 @@ def migrate(dirname=''):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        directory = sys.argv[1]
+        directory = os.path.abspath(sys.argv[1])
     else:
-        directory = None
+        directory = ''
     migrate(directory)
