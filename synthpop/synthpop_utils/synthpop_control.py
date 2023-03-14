@@ -227,8 +227,7 @@ class Parameters:
 def parser() -> argparse.Namespace:
     """ synthpop control and help interface """
 
-    parser_ = argparse.ArgumentParser(description="Running the SynthPop Model Generator",
-        exit_on_error=False)
+    parser_ = argparse.ArgumentParser(description="Running the SynthPop Model Generator")
 
     # Set control parameters
     parser_.add_argument(
