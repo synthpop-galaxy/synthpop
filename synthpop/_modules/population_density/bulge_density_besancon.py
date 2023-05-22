@@ -3,7 +3,7 @@ Density Subclass to describe the bulge density
 from the Besancon model robin et al. 2003
 """
 __all__ = ["BulgeDensityBesancon", ]
-__author__ = "M.J. Houston"
+__author__ = "M.J. Huston"
 __date__ = "2022-07-12"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
@@ -14,7 +14,8 @@ from ._population_density import PopulationDensity
 
 
 class BulgeDensityBesancon(PopulationDensity):
-    def __init__(self, x0=1.59, y0=0.424, z0=0.424, Rc=2.54, n0=1.37e10, bar_angle=None, **kwargs):
+    def __init__(self, x0=1.59, y0=0.424, z0=0.424, Rc=2.54, n0=1.37e10, bar_angle=11.1, **kwargs):
+
         """
         initializing
 
@@ -28,10 +29,9 @@ class BulgeDensityBesancon(PopulationDensity):
             central number density
         bar_angle : float [°]
             angle of the bar,
-            if none use the one from const
 
         """
-        super().__init__()
+        super().__init__(**kwargs)
         self.population_density_name = "Bulge_Density"
         self.density_unit = 'number'
         self.x0 = x0
@@ -39,8 +39,7 @@ class BulgeDensityBesancon(PopulationDensity):
         self.z0 = z0
         self.Rc = Rc
         self.n0 = n0
-        self.bar_ang = const.BAR_ANG if bar_angle is None else bar_angle
-        self.bar_ang *= np.pi / 180
+        self.bar_ang = bar_angle * np.pi / 180
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """

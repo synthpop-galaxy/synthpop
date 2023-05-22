@@ -5,6 +5,9 @@ to be comparable with the extinction laws.
 Using dustmaps allows to evaluate the dustmap for each star. 
 which allows accurate results for larger cones.
 
+Before using this module you need to fatch the data once.
+See https://dustmaps.readthedocs.io/en/latest/installation.html
+
 """
 
 __all__ = ["MapsFromDustmaps",]
@@ -13,6 +16,8 @@ __date__ = "2022-11-05"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
+
+import os
 import astropy.units as u
 
 import dustmaps.sfd
@@ -45,7 +50,8 @@ MAPS_INFO = {
         'returns': 'E(B-V)',
         "Query": dustmaps.bayestar.BayestarQuery,
         "lambda_eff": 0.551,
-        "options": {"max_samples": 1}},
+        "options": {"max_samples": 0},
+        "kwargs": {"mode":'best'}},
     "iphas": {
         'dim': 3,
         'returns': 'A0',
@@ -76,7 +82,7 @@ MAPS_INFO = {
         'returns': 'e-foldings_GaiaG',
         "Query": dustmaps.leike_ensslin_2019.LeikeEnsslin2019Query,
         "lambda_eff": 0.673},
-    "leike2020": {
+    "leike_2020": {
         'dim': 3,
         'returns': 'e-foldings_GaiaG',
         "Query": dustmaps.leike2020.Leike2020Query,
@@ -85,6 +91,7 @@ MAPS_INFO = {
 
 # empty dictionary to store dustmaps query
 _query_dict = {}
+
 
 
 class MapsFromDustmaps(ExtinctionMap):
@@ -102,6 +109,17 @@ class MapsFromDustmaps(ExtinctionMap):
             raise NotImplementedError('leike2020 & leike_ensslin_2019 are not implemented yet')
         map_props = MAPS_INFO[dustmap_name]
 
+        if not os.path.isdir(os.path.join(dustmaps.std_paths.data_dir(), dustmap_name)):
+            url = 'https://dustmaps.readthedocs.io/en/latest/installation.html'
+            module = map_props["Query"].__module__
+
+            raise FileNotFoundError(
+                f"Data for '{dustmap_name} dustmap are not fetched\n"
+                f"when a dustmaps data directory is specified, data can be fetched using:\n\n"
+                f">>> import {module}\n"
+                f">>> {module}.fetch()\n\n"
+                f"please see '{url}' for further details")
+
         self.is_3D = map_props['dim'] == 3
         if not self.is_3D:
             raise NotImplementedError('2D-maps are not implemented yet')
@@ -110,6 +128,7 @@ class MapsFromDustmaps(ExtinctionMap):
         if dustmap_name not in _query_dict:
             _query_dict[dustmap_name] = map_props['Query'](**map_props.get('options', {}))
 
+        self.kwargs = map_props.get('kwargs', {})
         self.query = _query_dict[dustmap_name]
         self.ref_wavelength = map_props['lambda_eff']
         self.A_or_E_type = map_props['returns']
@@ -144,7 +163,7 @@ class MapsFromDustmaps(ExtinctionMap):
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, distance=dist * u.kpc, frame='galactic')
         else:
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, frame='galactic')
-        return self.query(coords)
+        return self.query(coords, **self.kwargs)
 
     def update_extinction_in_map(self, radius):
         """

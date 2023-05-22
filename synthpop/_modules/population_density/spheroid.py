@@ -32,6 +32,7 @@ class Spheroid(PopulationDensity):
         power: float
             Slope of the decay. Should be less than 0
         """
+        super().__init__(**kwargs)
 
         self.population_density_name = "Spheroid"
         self.density_unit = 'mass'
@@ -61,6 +62,6 @@ class Spheroid(PopulationDensity):
 
         """
         a = np.sqrt(r ** 2 + (z / self.e) ** 2)
-        a0 = np.sqrt(const.X_SUN ** 2 + (const.Z_SUN / self.e) ** 2)
+        a0 = np.sqrt(self.sun.r ** 2 + (self.sun.z / self.e) ** 2)
 
         return self.p0 * (np.maximum(a, self.ac) / a0) ** self.power

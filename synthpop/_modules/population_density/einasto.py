@@ -15,7 +15,7 @@ from ._population_density import PopulationDensity
 
 class Einasto(PopulationDensity):
     def __init__(
-            self, e, p0, hrp, hrm, offset=0, power=2, disk_cutoff=14, flare_flag=True, **kwargs
+            self, e, p0, hrp, hrm, offset=0, power=1, disk_cutoff=14, flare_flag=True, **kwargs
             ):
         """
 
@@ -41,7 +41,7 @@ class Einasto(PopulationDensity):
         flare_flag : bool
             include flare
         """
-        super().__init__()
+        super().__init__(**kwargs)
         self.population_density_name = "Einasto"
         self.density_unit = 'mass'
         self.disk_cutoff = disk_cutoff
@@ -73,26 +73,24 @@ class Einasto(PopulationDensity):
             mass density or initial mass density should be specified in density_unit.
 
         """
-        a = np.sqrt(r ** 2 + (z / self.e) ** 2)
-        a0 = np.sqrt(const.X_SUN ** 2 + (const.Z_SUN / self.e) ** 2)
-
-        # gamma_flare = 5.4*10**(-4)  #kpc^-1
         if self.flare_flag:
             k_flare = self.get_flare(r)
-            k_flare0 = self.get_flare(const.X_SUN)
+            k_flare0 = self.get_flare(self.sun.r)
         else:
             k_flare = 1
             k_flare0 = 1
+
+        a = np.sqrt(r ** 2 + (z / k_flare / self.e) ** 2)
+        a0 = np.sqrt(self.sun.r ** 2 + (self.sun.z / k_flare0 / self.e) ** 2)
 
         def exp_arg(x):  # function to estimate the argument for exp()
             return -np.sqrt(self.offset ** 2 + x ** 2) ** self.power
 
         # density normalization at the Sun [solar mass per kpc^3]
-        d0 = 1 / k_flare0 * np.exp(exp_arg(a0 / self.hrp)) - np.exp(exp_arg(a0 / self.hrm))
+        d0 = np.exp(exp_arg(a0 / self.hrp)) - np.exp(exp_arg(a0 / self.hrm))
 
         # estimate density
-        rho = self.p0 / d0 / k_flare \
-              * (np.exp(exp_arg(a / self.hrp)) - np.exp(exp_arg(a / self.hrm)))
+        rho = self.p0 / d0 * (np.exp(exp_arg(a / self.hrp)) - np.exp(exp_arg(a / self.hrm)))
 
         rho *= r <= self.disk_cutoff
         # radius of disk set to 0 if r > disk_cutoff. used this way so numpy arrays,

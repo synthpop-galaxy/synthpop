@@ -6,8 +6,8 @@ __date__ = "2022-07-06"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
-
 import numpy as np
+from .. import const
 from ._metallicity import Metallicity
 
 
@@ -41,7 +41,8 @@ class Gaussian(Metallicity):
     """
 
     def __init__(
-            self, mean: float, std: float, low_bound: float = -4, high_bound: float = 0.5, **kwargs
+            self, mean: float, std: float, low_bound: float = -4,
+            high_bound: float = 0.5, gradient=0.0, **kwargs
             ):
         super().__init__(**kwargs)
         self.metallicity_func_name = 'gaussian'
@@ -49,11 +50,14 @@ class Gaussian(Metallicity):
         self.std = std
         self.lower = low_bound
         self.upper = high_bound
+        self.gradient = gradient
 
         if self.lower >= self.upper:
             raise ValueError(f"{low_bound = } has to be strictly smaller than {high_bound = }")
 
-    def draw_random_metallicity(self, N: int or None = None, **kwargs) -> np.ndarray or float:
+    def draw_random_metallicity(
+            self, N: int or None = None, x=None, y=None, z=None, **kwargs
+            ) -> np.ndarray or float:
         """
         Returns one or more metallicities in [Fe/H] from a Gaussian distribution.
 
@@ -61,22 +65,28 @@ class Gaussian(Metallicity):
         ----------
         N : int, None, optional
             if N is set to an integer, an array with N random ages is returned
-
+            
         Returns
         -------
         val : ndarray, float [Gyr]
             single metallicities or ndarray of N metallicities in [Fe/H]
         """
+        if not ((x is None) or (y is None) or (z is None)):
+            r_kpc = np.sqrt(x ** 2 + y ** 2)
+        else:
+            r_kpc = self.sun.r
+        mean = self.mean + self.gradient * (r_kpc - self.sun.r)
+
         if N is None:
             # generate a single value
             while True:
-                val = np.random.normal(self.mean, self.std)
+                val = np.random.normal(mean, self.std)
                 if self.lower < val < self.upper:
                     return val
 
         else:
             # generate multiple values
-            val = np.random.normal(self.mean, self.std, N)
+            val = np.random.normal(mean, self.std, N)
             while True:
                 outside = (self.lower > val) | (val > self.upper)
                 if not any(outside):

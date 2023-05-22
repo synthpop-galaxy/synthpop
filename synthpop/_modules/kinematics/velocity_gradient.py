@@ -1,11 +1,12 @@
 """ This model provides a Kinematic class using a Velocity Gradient """
 __all__ = ['VelocityGradient']
-__author__ = "M.J. Houston"
-__date__ = "2022-07-10"
+__author__ = "M.J. Huston"
+__date__ = "2023-03-22"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
 from typing import Tuple
+from types import ModuleType
 import numpy as np
 from .. import const
 from ._kinematics import Kinematics
@@ -43,10 +44,13 @@ class VelocityGradient(Kinematics):
     """
 
     def __init__(
-            self, sigma_u: float, sigma_v: float, sigma_w: float, vel_grad: float = 60.0,
+            self,
+            sigma_u: float, sigma_v: float, sigma_w: float,
+            vel_grad: float = 60.0,
             **kwargs
             ):
         """ Init """
+        super().__init__(**kwargs)  # get sun, coord_trans and density_class
         self.kinematics_func_name = 'VelocityGradient'
         self.sigma_u = sigma_u
         self.sigma_v = sigma_v
@@ -71,27 +75,24 @@ class VelocityGradient(Kinematics):
             velocity in galactocentric x,y,and z direction.
         """
 
-        # Calculate galactocentric radii
-        r = np.sqrt(x ** 2 + y ** 2)
-        # Calculate the angle
-        theta = np.arctan2(y, -x)
+        # Convert to Galactocentric coordinates
+        r, phi_rad, z = self.coord_trans.xyz_to_rphiz(x, y, z)
+
         # Draw random deviations from circular velocity
-        du, dv, dw = np.random.normal(
-            0, [self.sigma_u, self.sigma_v, self.sigma_w], (*r.shape, 3)
-            ).T
+        du, dv, dw = np.random.normal(0, [self.sigma_u, self.sigma_v, self.sigma_w],
+                                      (*r.shape, 3)).T
 
-        # Make an array to fill in the values of circular velocity
-        # Set the circular velocity based whether the gradiant is less than the radius
-        # self.vel_grad * r if r < const.V_LSR/self.vel_grad else const.V_LSR
-        rotation_velocity = np.minimum(self.vel_grad * r, const.V_LSR)
+        # Calculate rotation velocity based on inner solid body rotation and outer velocity gradient
+        # Account for asymmetric drift if indicated
+        rotation_velocity = np.minimum(self.vel_grad * r, self.sun.v_lsr)
 
-        # assume the star is along the line of sight between sun and galaxy
+        # Get velocities in the Galactic plane in the star's frame
         u1 = du
         v1 = rotation_velocity + dv
 
-        # rotate the velocity
-        u = u1 * np.cos(theta) + v1 * np.sin(theta)
-        v = -u1 * np.sin(theta) + v1 * np.cos(theta)
+        # Rotate into Sun's frame
+        u = u1 * np.cos(phi_rad) + v1 * np.sin(phi_rad)
+        v = -u1 * np.sin(phi_rad) + v1 * np.cos(phi_rad)
         w = dw
 
         return u, v, w

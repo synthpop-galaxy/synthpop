@@ -11,7 +11,7 @@ __author__ = "J. Klüter"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-03-13"
 __license__ = "GPLv3"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 import sys
 import os
@@ -133,7 +133,7 @@ def migrate(dirname=''):
     if dirname == '':
         return
 
-    print(f"Set Synthpop_Directory to {dirname}")
+    print(f"Set SynthPop_Directory to {dirname}")
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
 
@@ -143,7 +143,7 @@ def migrate(dirname=''):
     copy_dir(synthpop_code_dir, dirname, "modules")
     copy_dir(synthpop_code_dir, dirname, "models")
     copy_file(synthpop_code_dir, dirname, "constants.py")
-    print("Synthpop_Directory is now set. You can now use Synthpop")
+    print("SynthPop_Directory is now set. You can now use SynthPop")
 
 
 if __name__ == "__main__":

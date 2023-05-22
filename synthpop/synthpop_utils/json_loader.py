@@ -18,8 +18,8 @@ import logging
 
 try:
     from .. import constants as const
-except (ImportError, ValueError):
-    import synthpop.constants as const
+except ImportError:
+    import constants as const
 
 logger = logging.getLogger('synthpop')
 
@@ -58,7 +58,7 @@ def substitutes_files(data, filename):
     Parameters
     ----------
     data: dict
-        dictionary where files should be substitued
+        dictionary where files should be substituted
     filename
         name of the original loading sequence
         used to track the location
@@ -77,7 +77,8 @@ def substitutes_files(data, filename):
         # check different lo
     for directory in ['', os.path.dirname(filename), const.SYNTHPOP_DIR]:
         file = os.path.join(directory, json_file)
-        if os.path.isfile(file): break
+        if os.path.isfile(file):
+            break
     else:
         msg = f"{json_file} can not found (specified in {filename})"
         logger.critical(msg)
@@ -103,7 +104,8 @@ def json_loader(filename, json_file_branch=None):
         loaded json file with removes comments, substitutes filenames.
 
     """
-    if json_file_branch is None: json_file_branch = []
+    if json_file_branch is None:
+        json_file_branch = []
 
     if filename in json_file_branch:
         msg = f"infinite loop detected in:\n {' -> '.join(json_file_branch)} -> {filename}"
@@ -115,10 +117,10 @@ def json_loader(filename, json_file_branch=None):
         # format the json into data
         data = json.load(handle)
 
-    data['__filename'] = filename
+    data['_filename'] = filename
 
     # check to see if any of the top level keys indicate a JSON file for kwargs
-    # only key MUST be "json_file"
+    # only key should be "json_file"
     substitutes_files(data, filename)
 
     # recursively remove any keys with '#'

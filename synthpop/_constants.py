@@ -5,26 +5,28 @@ This file contains constants and parameters which should be treated as constant
 import os
 import numpy as np
 
+# -------- main_directories ---------
 # directory of Synthpop Module etc
 SYNTHPOP_DIR = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-
 # default location where models are stored
 DEFAULT_MODEL_DIR = os.path.join(SYNTHPOP_DIR, "models")
 # default location for config
 DEFAULT_CONFIG_DIR = os.path.join(SYNTHPOP_DIR, "config_files")
 # default config file
-DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_CONFIG_DIR,"_default.synthpop_conf")
+DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_CONFIG_DIR, "_default.synthpop_conf")
 # location where isochrones are stored
 ISOCHRONES_DIR = os.path.join(SYNTHPOP_DIR, "data", "isochrones")
 
+# ------- column information --------
 # parameter which needs to be estimated from the isochrones
 # the first column MUST be the evolved stellar mass!
 # append all further columns at the end of cols
 # Note that the Isochrones also need the initial mass, age, and metallicity for the interpolation
 REQ_ISO_PROPS = ["star_mass"]
 
-# Columnnames for output table
-# You can rename each column, but do not change the order or length!
+# Column names for output table
+# You can rename each column, but you must keep the order!
+# If you add further items to REQ_ISO_PROPS, you must add the column names at the end.
 COL_NAMES = [
         "pop", "iMass", "age",  "Fe/H_initial", "Mass", "In_Final_Phase", "Dist", "l", "b",
         "vr", "mul", "mub",  "x", "y", "z",  "U", "V", "W", "VR_LSR", "ExtinctionInMap"]
@@ -40,15 +42,16 @@ DEG2RAD = np.pi / 180
 MUxD_to_VT = 4.740470446
 
 # -------- Coordinate system --------
-# Angle of galactic bar from line of sight toward GC
-BAR_ANG = 29.4
 # Coordinates of the galactic North Pole in ecliptic coordinates
 A_NGP_DEG = 192.8583
 D_NGP_DEG = 27.1283
 # Galactic longitude of the North Celestial Pole.
 L_NCP_DEG = 122.93192
 
-# Position of the Sun
+"""
+Default values for the position and velocity of the SUN and LSR.
+They are set in synthpop_utils.sun_info.SunInfo and can be modified in the config file
+
 X_SUN = -8.178  # distance from galactic center (kpc)
 Y_SUN = 0.0
 Z_SUN = 0.017  # distance above galactic plane (kpc)
@@ -59,7 +62,6 @@ THETA_SUN = np.arcsin(Z_SUN / GAL_DIST)
 CT_SUN = np.cos(THETA_SUN)
 ST_SUN = np.sin(THETA_SUN)
 
-# ---------- Solar motion -----------
 # rectangular motion of the sun
 # from Reid & Brunthaler (2020)
 U_SUN = 12.9  # [km/s] = -V_R
@@ -77,15 +79,4 @@ V_PEC = np.sqrt((U_SUN - U_LSR) ** 2 + (W_SUN - W_LSR) ** 2 + (W_SUN - W_LSR) **
 
 B_APX_DEG = 25  # degree direction of the solar apex in galactic coordinates
 L_APX_DEG = 53  # degree direction of the solar apex in galactic coordinates
-
-
-# --------- Warp adjustments --------
-# from  Chen X. et al 2019
-R_WARP = 7.72  # kpc onset radius
-AMP_WARP = 0.060  # amplitude of the WARP
-ALPHA_WARP = 1.33  # exponent in the power law
-PHI_WARP = 17.5 * DEG2RAD  # Angle for Line of Nodes
-
-# --------- Flare adjustments -------
-GAMMA_FLARE = 5.4e-4
-R_FLARE = 9.5
+"""

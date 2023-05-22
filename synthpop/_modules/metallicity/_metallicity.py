@@ -10,6 +10,8 @@ __version__ = '1.0.0'
 
 import numpy as np
 from abc import ABC, abstractmethod
+from types import ModuleType
+from .. import default_sun
 
 
 class Metallicity(ABC):
@@ -38,21 +40,35 @@ class Metallicity(ABC):
         returns the average metallicity for the distribution in [Fe/H]
         (specified in the subclasses)
     """
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            sun: ModuleType = None,
+            coord_trans: ModuleType = None,
+            **kwargs):
         """
         Initialize the Metallicity class for a Population class.
 
         Parameters
         ----------
+        sun : SunInfo
+            location and velocity of the sun and lsr
+            see synthpop_utils/sun_info
+        coord_trans: ModuleType
+            the coordinate transformation package
+            see synthpop_utils/coordinate_transformations
         **kwargs : dict, optional
             control keywords for the metallicity class read from the population.json files
         """
+        # sun sun sun, here it comes
+        self.sun = sun if sun is not None else default_sun
+        self.coord_trans = coord_trans
         self.metallicity_func_name = 'None'
 
     @abstractmethod
     def draw_random_metallicity(self,
                                 N: int or None = None, x: np.ndarray or float = None,
                                 y: np.ndarray or float = None, z: np.ndarray or float = None,
+                                age: np.ndarray or float = None
                                 ) -> np.ndarray or float:
         """
         Generate a random metallicity from the distribution
@@ -63,10 +79,14 @@ class Metallicity(ABC):
             if N is set to an integer, an array with N random metallicities is returned
         x, y, z, : float, ndarray [kpc]
             galactocentric cartesian coordinates
+            has length N, or is a float if N == None
+        age : float, ndarray [Gyr]
+            age of the stars
+            has length N, or is a float if N == None
 
         Returns
         -------
-        random_metallicity : ndarray, float [[Fe/H]]
+        random_metallicity : float, ndarray [[Fe/H]]
             array of random metallicities
         """
 

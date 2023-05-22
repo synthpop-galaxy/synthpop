@@ -14,14 +14,13 @@ from ._post_processing import PostProcessing
 
 
 class ProcessDarkCompactObjects(PostProcessing):
-    def __init__(self, model, **kwargs):
+    def __init__(self, **kwargs):
         """
         Parameters:
             model:
                 SynthPop main model object
         """
-        self.model = model
-        self.logger = logger
+        super().__init__(**kwargs)
 
     @staticmethod
     def mass_bh(m_zams, f_ej=0.9):

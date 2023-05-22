@@ -19,19 +19,23 @@
     },
 
     "kinematics_func_kwargs" : {
-        "name" : "VelocityGradient",
+        "name" : "Besancon",
         "sigma_u" : 16.7,
         "sigma_v" : 10.8,
-        "sigma_w" : 6.0
+        "sigma_w" : 6.0, 
+        "disp_grad" : -0.2
     }, 
 
     "population_density_kwargs" : {
         "name" : "einasto",
         "#comment" : "p0 in Msun/kpc**3 (10**9)",
+
         "p0" : 0.003999E9,
         "e" : 0.0140,
         "hrp" : 5.0,
         "hrm" : 3.0,
+        "power": 2,
+
         "flare_flag" : true
     },
 

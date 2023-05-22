@@ -5,7 +5,7 @@ But can change the logging location and provided function
 to create sections in the logfile .
 """
 
-__all__ = ["SynthpopLogger", "logger", "log_basic_statistics"]
+__all__ = ["SynthPopLogger", "logger", "log_basic_statistics"]
 __author__ = "J. Klüter"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2023-02-10"
@@ -20,14 +20,14 @@ import tempfile
 import numpy as np
 
 try:
-    from synthpop.constants import SYNTHPOP_DIR
-except (ImportError, ValueError):
-    from synthpop.constants import SYNTHPOP_DIR
+    from ..constants import SYNTHPOP_DIR
+except IndexError:
+    from constants import SYNTHPOP_DIR
 
 LENGTH = 75
 
 
-class SynthpopLogger(logging.Logger):
+class SynthPopLogger(logging.Logger):
     def __init__(
             self,
             name, level=logging.INFO,
@@ -154,6 +154,8 @@ class SynthpopLogger(logging.Logger):
             self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=True)
             filename = self.temp_file.name
         else:
+            dirname = os.path.dirname(filename)
+            os.makedirs(dirname, exist_ok=True)
             self.save_log_file(filename)
         if self.filelogger in self.handlers:
             self.removeHandler(self.filelogger)
@@ -231,7 +233,9 @@ class SynthpopLogger(logging.Logger):
         rec = logging.LogRecord(self.name, level, '', level, msg, args, None)
         self.stream_logger.emit(rec)
 
-logger = SynthpopLogger('synthpop_logging')
+
+logger = SynthPopLogger('synthpop_logging')
+
 
 def log_basic_statistics(df, var_name, criteria=None):
     logger.log(15, '# Basic Statistics:')
@@ -245,11 +249,9 @@ def log_basic_statistics(df, var_name, criteria=None):
     logger.log(15, f'{var_name} = [')
     for col in df.columns:
         msg = f'    {{"name":{col}, '
-        msg += f'"mean": {np.nanmean(df.loc[:, col]):.4f}, '
-        msg += f'"min": {np.nanmin(df.loc[:, col]):.4f}, '
-        msg += f'"max": {np.nanmax(df.loc[:, col]):.4f}, '
-        msg += f'"std": {np.nanstd(df.loc[:, col]):.4f}}},'
-        logger.log(15,  msg)
-    logger.log(15,'    ]')
-
-
+        msg += f'"mean": {df.loc[:, col].mean(skipna=True):.4f}, '
+        msg += f'"min": {df.loc[:, col].min(skipna=True):.4f}, '
+        msg += f'"max": {df.loc[:, col].max(skipna=True):.4f}, '
+        msg += f'"std": {df.loc[:, col].std(skipna=True):.4f}}},'
+        logger.log(15, msg)
+    logger.log(15, '    ]')

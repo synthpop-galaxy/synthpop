@@ -37,6 +37,7 @@ class Uniform(Age):
     """
 
     def __init__(self, low_bound: float, high_bound: float, **kwargs):
+        super().__init__(**kwargs)
         self.age_func_name = 'uniform'
         self.low_bound = low_bound
         self.high_bound = high_bound

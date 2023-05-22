@@ -22,7 +22,7 @@ class Chabrier(InitialMassFunction):
     """
 
     def __init__(
-            self, min_mass: float = None, max_mass: float = None, m_center=0.079, A_less=0.158,
+            self, m_center=0.079, A_less=0.158,
             sigma=0.69, m_switch=1, alpha=2.3, **kwargs
             ):
         """
@@ -45,7 +45,7 @@ class Chabrier(InitialMassFunction):
         alpha: float
             slope of the power law
         """
-        super().__init__(min_mass, max_mass)
+        super().__init__(**kwargs)
         self.imf_name = 'chabrier'
 
         # setup control parameters
@@ -56,14 +56,17 @@ class Chabrier(InitialMassFunction):
         self.x = alpha - 1
 
         # Ensure that the IMF is smooth at the connection
-        self.A_higher = (self.A_less
-                        * np.exp(-(np.log10(self.m_switch) - self.center) ** 2 / (2 * sigma ** 2))
-                        * self.m_switch ** self.x)
+        self.A_higher = (
+            self.A_less
+            * np.exp(-(np.log10(self.m_switch) - self.center) ** 2 / (2 * sigma ** 2))
+            * self.m_switch ** self.x
+            )
 
         # Estimate the integral from 0 to m_switch
         # needed for F_imf_inverse works properly ..
         self.F_m_switch = self.A_less * self.gaussian_integral(m_switch)
-    def gaussian_integral(self,m_in):
+
+    def gaussian_integral(self, m_in):
         integral = np.sqrt(2 * np.pi) * self.sigma / 2 * (
                 erf((np.log10(m_in) - self.center) / (np.sqrt(2) * self.sigma)) + 1)
         return integral
@@ -84,7 +87,7 @@ class Chabrier(InitialMassFunction):
         # 0.4342.. == 1/ln(10)
         prob = np.zeros(m.shape)
         prob[m >= self.m_switch] = self.A_higher * 0.4342944819 \
-                                   * m[m >= self.m_switch] ** (-self.x-1)
+            * m[m >= self.m_switch] ** (-self.x-1)
         prob[m < self.m_switch] = self.A_less * 0.4342944819 / m[m < self.m_switch] \
             * np.exp(-(np.log10(m[m < self.m_switch]) - self.center) ** 2 / (2 * self.sigma ** 2))
 
@@ -106,10 +109,9 @@ class Chabrier(InitialMassFunction):
 
         F = np.zeros(m.shape)
         F[m > self.m_switch] = self.A_higher * 0.4342944819/(-self.x) \
-                               * (m[m > self.m_switch]**(-self.x) - self.m_switch**(-self.x)) \
-                               + self.F_m_switch
+            * (m[m > self.m_switch]**(-self.x) - self.m_switch**(-self.x)) \
+            + self.F_m_switch
         F[m < self.m_switch] = self.A_less * self.gaussian_integral(m[m < self.m_switch])
-
 
         if not isinstance(m_in, np.ndarray):
             # translate ndarrays into floats if necessary.
@@ -125,9 +127,11 @@ class Chabrier(InitialMassFunction):
             p = p_in
 
         m = np.zeros(p.shape)
-        m[p >= self.F_m_switch] = (-self.x  /self.A_higher / 0.4342944819
-                                * (p[p >= self.F_m_switch]-self.F_m_switch)
-                                + self.m_switch**(-self.x))**(-1/self.x)
+        m[p >= self.F_m_switch] = (
+            -self.x / self.A_higher / 0.4342944819
+            * (p[p >= self.F_m_switch]-self.F_m_switch)
+            + self.m_switch**(-self.x)
+            )**(-1/self.x)
 
         m[p < self.F_m_switch] = self.inverted_gaussian_integral(
                 p[p < self.F_m_switch] / self.A_less)

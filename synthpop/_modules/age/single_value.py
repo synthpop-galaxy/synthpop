@@ -36,6 +36,7 @@ class SingleValue(Age):
     """
 
     def __init__(self, age_value: float, **kwargs):
+        super().__init__(**kwargs)
         self.age_func_name = 'single_value'
         self.age_value = age_value
 

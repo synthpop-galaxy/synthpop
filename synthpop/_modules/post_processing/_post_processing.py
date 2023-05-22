@@ -9,10 +9,18 @@ __date__ = "2022-11-16"
 __version__ = '1.0.0'
 
 import pandas
+from types import ModuleType
+from .. import default_sun
 
 
 class PostProcessing:
-    def __init__(self, model, logger,  **kwargs):
+    def __init__(
+            self,
+            model: ModuleType = None,
+            logger: ModuleType = None,
+            sun: ModuleType = None,
+            **kwargs):
+
         """
         Parameters:
             model: SynthPop
@@ -26,13 +34,19 @@ class PostProcessing:
                     ...
             logger: SynthPopLogger
                  can be used to add messages to the logging.
+            sun : SunInfo
+                location and velocity of the sun and lsr
+                see synthpop_utils/sun_info
 
         kwargs:
             keyword arguments from the configuration
-                ("advanced_post_processing":{"name":"name_of_the_subclass", kwargs}
+                ("post_processing_kwargs":{"name":"name_of_the_subclass", kwargs}
         """
+
         self.model = model
         self.logger = logger
+        # sun sun sun, here it comes
+        self.sun = sun if sun is not None else default_sun
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """

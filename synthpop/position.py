@@ -8,16 +8,15 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2022-07-06"
 __license__ = "GPLv3"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from typing import Tuple
 import numpy as np
 try:
-    from .synthpop_utils import coordinates_transformation as coord_trans
-    from .synthpop_utils import solidangle_to_half_cone_angle
+    from . import synthpop_utils as sp_utils
 except ImportError:
-    from synthpop_utils import coordinates_transformation as coord_trans
-    from synthpop_utils import solidangle_to_half_cone_angle
+    import synthpop_utils as sp_utils
+
 
 class Position:
     """
@@ -52,7 +51,7 @@ class Position:
     # placeholder for transformation matrix between the rectangular equatorial coordinate system
     # and the rectangular Galactic coordinate
 
-    def __init__(self, l_deg: float, b_deg: float, solid_angle: float, **kwargs):
+    def __init__(self, coord_trans, **kwargs):
         """
         Initialization
 
@@ -66,17 +65,32 @@ class Position:
             Future keyword arguments to specify the shape of the field.
         """
 
+        self.coord_trans = coord_trans
         # define coordinates of center of the field in degrees and radians
+        self.l_deg = None
+        self.l_rad = None
+        self.b_deg = None
+        self.b_rad = None
+        #  convert solid angle to half cone angle using wiki formula:
+        self.cone_angle = None
+
+    def update_location(self, l_deg: float, b_deg: float, solid_angle: float):
+        """
+        Set the location and solid_angle
+
+        Parameters
+        ----------
+        l_deg, b_deg : float [deg]
+            galactic longitude and latitude in degrees
+        solid_angle : float [sr]
+            size of the cone
+        """
         self.l_deg = l_deg
         self.l_rad = l_deg * np.pi / 180.
         self.b_deg = b_deg
         self.b_rad = b_deg * np.pi / 180.
         #  convert solid angle to half cone angle using wiki formula:
-        self.cone_angle = solidangle_to_half_cone_angle(solid_angle)
-
-    def update(self, *args, **kwargs):
-        """convenience function to update field pointing, other aspects"""
-        self.__init__(*args, **kwargs)
+        self.cone_angle = sp_utils.solidangle_to_half_cone_angle(solid_angle)
 
     def draw_random_point_in_slice(self, dist_inner: float, dist_outer: float, n_stars: int = 1) \
             -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -103,14 +117,16 @@ class Position:
 
         Returns
         -------
-        d_lpc : float, ndarray [kpc]
-            distances of the drawn positions
+
         x : float, ndarray [kpc]
             Cartesian X coordinate (centered at the galactic center) of the drawn positions
         y : float, ndarray [kpc]
             Cartesian Y coordinate (centered at the galactic center) of the drawn positions
         z : float, ndarray [kpc]
             Cartesian Z coordinate (centered at the galactic center) of the drawn positions
+
+        d_kpc : float, ndarray [kpc]
+            distances of the drawn positions
         star_l_deg : float, ndarray [deg]
             galactic longitude of the drawn positions
         star_b_deg : float, ndarray [deg]
@@ -135,9 +151,9 @@ class Position:
         star_l_deg = star_l_rad * 180 / np.pi
         star_b_deg = star_b_rad * 180 / np.pi
         # estimate galactocentric coordinates
-        x, y, z = coord_trans.dlb_to_xyz(d_kpc, star_l_deg, star_b_deg)
+        x, y, z = self.coord_trans.dlb_to_xyz(d_kpc, star_l_deg, star_b_deg)
 
-        return d_kpc, x, y, z, star_l_deg, star_b_deg
+        return x, y, z, d_kpc, star_l_deg, star_b_deg
 
     def rotate_00_to_lb(self, delta_l: np.ndarray, delta_b: np.ndarray) \
             -> Tuple[np.ndarray, np.ndarray]:
@@ -165,8 +181,8 @@ class Position:
         # estimate rotation matrix,
         # by rotating first around y-axis and then around z-axis
         mat = np.matmul(
-            coord_trans.rotation_matrix(self.l_rad, axis='z'),
-            coord_trans.rotation_matrix(self.b_rad, axis='y')
+            sp_utils.rotation_matrix(self.l_rad, axis='z'),
+            sp_utils.rotation_matrix(self.b_rad, axis='y')
             )
         # convert to spherical coordinates
         vec = np.array([cos_theta * cos_phi, cos_theta * sin_phi, sin_theta])

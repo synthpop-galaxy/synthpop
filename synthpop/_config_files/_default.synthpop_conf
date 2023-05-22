@@ -26,6 +26,42 @@
 
     "SEED":{"random_seed":null},
 
+    "COORDINATE_SYSTEM":{
+        "sun": {
+            "#comment": "location of the sun",
+            "x": -8.178,
+            "y": 0.0,
+            "z": 0.017,
+            "#comment2": "motion of the sun from Reid & Brunthaler (2020)",
+            "u": 12.9,
+            "v": 245.6,
+            "w": 7.78,
+            "#comment3": "direction of the solar apex in galactic coordinates in degree",
+            "l_apex_deg": 53.0,
+            "b_apex_deg": 25.0
+        },
+        "lsr":{
+            "#comment": "velocity of the local standard of rest from Schönrich et al. (2010)",
+            "u_lsr": 1.8,
+            "v_lsr": 233.4,
+            "w_lsr": 0.53
+        },
+        "warp": {
+            "#comment_1": "settings for the warp can be overwritten from the population files",
+            "#comment_2": "from  Chen X. et al 2019",
+            "#comment_3": "radius when the warp stats in kpc",
+            "r_warp": 7.72,
+            "amp_warp": 0.060,
+            "#comment_4": "can be used to specify different values for sin(phi_warp)>0 and sin(phi_warp)<0, if set to null(defaukt) use amp_warp on both sides",
+            "amp_warp_pos": null,
+            "amp_warp_neg": null,
+            "#comment_5": "exponent in the power law",
+            "alpha_warp": 1.33,
+            "#comment_6": "angle for line of nodes, can also be in radian by specifying phi_warp_rad ",
+            "phi_warp_deg": 17.5
+        }
+
+    },
 
     "POPULATION_GENERATION":{
         "#comment1":"Maximum distance from sun",
@@ -69,17 +105,18 @@
         },
 
     "ISOCHRONE_INTERPOLATION":{
-        "#comment":"examples to use the code with different Isochrones System and different Interpolator",
-        "#comment2":"# if set to null it will read the keywords from the population files.",
+        "#comment1":"examples to use the code with different Isochrones System and different Interpolator",
+        "#comment2": "currently there is only one class",
+        "#comment3":"# if set to null it will read the keywords from the population files.",
         "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
 
-        "# comment3": "an example for multi evolution_class: By default only the MIST isochrones are implemented",
+        "# comment4": "an example for multi evolution_class: By default only the MIST isochrones are implemented",
         "# evolution_class":[
                 {"name":"MIST", "min_mass":0.2, "max_mass":0.3, "#comment":"use the MIST isochrones for masses between 0.1, 0.2 with the standard interpolator"},
                 {"name":"MIST", "interpolator":"LagrangeInterpolator","min_mass":0.1, "max_mass":0.7},
                 {"name":"MIST", "interpolator":"CharonInterpolator", "#comment":"use the MIST isochrones outside of the previous defined ranges"}
             ],
-        "# comment4": "an example for different evolution_class for 'population_name'",
+        "# comment5": "an example for different evolution_class for 'population_name'",
         "# evolution_class":{
             "default":[
                 {"name":"MIST", "interpolator":"CharonInterpolator"}
@@ -121,7 +158,7 @@
             "filename": "optional: path of the file ",
             "further_keywords": "additional keyword arguments"
             },
-        "advanced_post_processing": null,
+        "post_processing_kwargs": null,
 
         "#comment3": "if output_location is '' or null it is replaced with the synthpop directory",
         "#comment4": "if output_location ends with '/' it uses output_location/name_for_output as directory",

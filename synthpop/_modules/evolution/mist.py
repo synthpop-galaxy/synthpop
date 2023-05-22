@@ -3,7 +3,7 @@ This module provides the loading and handling of MIST isochrones.
 It automatically downloads the isochrone form the Online MIST service.
 Where each magnitude can be found is defined in the mist_columns.json file.
 """
-__all__ = ["MIST",]
+__all__ = ["MIST", ]
 __author__ = "M.J. Huston"
 __date__ = "2023-03-01"
 __license__ = "GPLv3"
@@ -135,7 +135,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 mist_isochrones = self.isochrones = self.load_isochrones(self.magsys)
         else:
             self.isochrones = self.load_isochrones(self.magsys)
-        self.isochrones_grouped = self.isochrones.groupby(["[Fe/H]_init","log10_isochrone_age_yr"])
+        self.isochrones_grouped = self.isochrones.groupby(["[Fe/H]_init", "log10_isochrone_age_yr"])
 
         # Get ages
         self.iso_ages = 10 ** self.isochrones['log10_isochrone_age_yr'].unique()
@@ -143,9 +143,8 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         # Get mass range for each metallicity and age
         self.mass_range = self.get_mass_ranges(self.isochrones_grouped)
 
-        # call super after loading the isochrones
+        # call super after loading the isochrones so the interpolator has axcess to the data
         super().__init__()
-
 
     @staticmethod
     def get_mag_systems(columns):
@@ -262,9 +261,9 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
 
         max_values = isochrones_grouped['initial_mass'].max()
         min_values = isochrones_grouped['initial_mass'].max()
-        min_values.name='min_mass'
-        max_values.name='max_mass'
-        mass_range = pandas.concat([min_values,max_values], axis=1)
+        min_values.name = 'min_mass'
+        max_values.name = 'max_mass'
+        mass_range = pandas.concat([min_values, max_values], axis=1)
         return mass_range
 
     @staticmethod
@@ -324,9 +323,9 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                         df = self.convert_to_cmd_to_h5(filename)
                 # Correct Phase for WD
                 df.loc[df['EEP'] > 1409, 'phase'] = 6
-                df.loc[(df['EEP'] > 707) & (df['phase'] ==  0) , 'phase'] = 4
-                df.loc[(df['EEP'] > 605) & (df['phase'] ==  0) , 'phase'] = 3
-                df.loc[(df['EEP'] > 453) & (df['phase'] ==  0) , 'phase'] = 2
+                df.loc[(df['EEP'] > 707) & (df['phase'] == 0), 'phase'] = 4
+                df.loc[(df['EEP'] > 605) & (df['phase'] == 0), 'phase'] = 3
+                df.loc[(df['EEP'] > 453) & (df['phase'] == 0), 'phase'] = 2
 
                 if i == 0:
                     isochrones[file_met] = df[use_columns].copy()
@@ -350,7 +349,8 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         # get column names
         cols = cls.get_columns(filename)
         # load table from ascii file
-        df = pandas.read_csv(filename, delim_whitespace=True, comment='#',
+        df = pandas.read_csv(
+            filename, delim_whitespace=True, comment='#',
             skip_blank_lines=True, low_memory=False, header=None, names=cols)
         return df
 

@@ -18,10 +18,11 @@
     },
 
     "kinematics_func_kwargs" : {
-        "name" : "VelocityGradient",
+        "name" : "Besancon",
         "sigma_u" : 131.0,
         "sigma_v" : 106.0,
-        "sigma_w" : 85.0
+        "sigma_w" : 85.0,
+        "const_V_ad" : 226
     }, 
 
     "population_density_kwargs" : {

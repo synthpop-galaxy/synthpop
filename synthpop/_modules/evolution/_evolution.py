@@ -17,11 +17,11 @@ __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penn
 __license__ = "GPLv3"
 __date__ = "2022-06-29"
 __version__ = '1.0.0'
-import numpy as np
-from abc import ABC, abstractmethod
 
-from .. import const
 import os
+from abc import ABC, abstractmethod
+import numpy as np
+from .. import const
 
 ISOCHRONES_DIR = const.ISOCHRONES_DIR
 EVOLUTION_DIR = os.path.dirname(__file__)
@@ -59,7 +59,7 @@ class EvolutionIsochrones(ABC):
     """
     isochrones_name = None
     isochrones_grouped = None
-    @abstractmethod
+
     def __init__(self, columns=None, **kwargs):
         """
 
@@ -88,6 +88,8 @@ class EvolutionIsochrones(ABC):
 
         Parameters
         ----------
+        band : str
+´           filter name
         magnitude_limit : float
             maximum observed magnitude, (set distance to 0.01 if absolute magnitudes),
         distances : np.ndarray or float
@@ -249,7 +251,6 @@ def CombineEvolution(Isochrones=None, Interpolator=None):
                 iso_kwargs: dict
                      keyword arguments for the Isochrone
                 """
-
 
                 # initialize Isochrones
                 if iso_kwargs is None:

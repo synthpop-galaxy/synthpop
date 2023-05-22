@@ -3,7 +3,7 @@ This file contains the Parameters Class.
 Its task is to handel the configuration of SynthPop from the config files a Keyword input .
 And provide the different task in a Namespace Object.
 """
-__all__ = ["Parameters", "parser"]
+__all__ = ["Parameters", "parser", "PopParams", "ModuleKwargs"]
 __author__ = "J. Klüter"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2023-03-02"
@@ -13,26 +13,79 @@ __version__ = "1.0.0"
 import os
 import json
 import itertools
-from typing import Iterator, Tuple
+from typing import Iterator, Tuple, Dict, Optional, Union, List
 import argparse
 import numpy as np
+from pydantic import BaseModel, validator, Extra, root_validator
 
 from .json_loader import json_loader
 from .synthpop_logging import logger
+from .sun_info import SunInfo
 
 try:
-    from synthpop.constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
-                              DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
-except (ImportError, ValueError):
-    from synthpop.constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
-                           DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
+    from ..constants import SYNTHPOP_DIR, DEFAULT_MODEL_DIR
+    from ..constants import DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR
+except ImportError:
+    from constants import SYNTHPOP_DIR, DEFAULT_MODEL_DIR
+    from constants import DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR
+
+
+class ModuleKwargs(BaseModel, extra=Extra.allow):
+    name: Optional[str] = ""
+    filename: Optional[str] = ""
+
+    @root_validator(pre=True)
+    def validate_filename(cls, values):
+        assert values.get("filename", "") != "" or values.get("name", "") != "", \
+            "Either filename or name need to be specified"
+
+        values.pop("json_file", None)
+        return values
+
+    @property
+    def init_kwargs(self):
+        fields = list(self.__fields__.keys())
+        fields.append('json_file')
+        attributes = {k: v for k, v in self.__dict__.items() if k not in fields}
+        return attributes
+
+
+class ExtLawKwargs(ModuleKwargs):
+    bands: Optional[List[str]] = []
+    min_lambda: Optional[float] = None
+    max_lambda: Optional[float] = None
+    lambdas: List[float] = None
+
+
+class PopParams(BaseModel, extra=Extra.allow):
+    name: str
+
+    imf_func_kwargs: ModuleKwargs
+    age_func_kwargs: ModuleKwargs
+    metallicity_func_kwargs: ModuleKwargs
+    population_density_kwargs: ModuleKwargs
+    kinematics_func_kwargs: ModuleKwargs
+
+    evolution_kwargs: Optional[Union[ModuleKwargs, List[ModuleKwargs]]]
+
+    av_mass_corr: Optional[float] = None
+    n_star_corr: Optional[float] = None
+
+    @classmethod
+    def parse_jsonfile(cls, filename):
+        try:
+            data = json_loader(filename)
+            obj = cls.parse_obj(data)
+        except Exception as e:
+            print(f"Error occurred when reading specifications from {filename}", flush=True)
+            raise e
+        return obj
 
 
 class Parameters:
     """
     NameSpace object to store the configuration parameters
     defined by keyword arguments, and in the configuration files
-
     """
 
     def __init__(
@@ -53,6 +106,10 @@ class Parameters:
         kwargs: dict
             set of keyword control arguments
         """
+        self.l_set = None
+        self.l_set_type = None
+        self.b_set = None
+        self.b_set_type = None
 
         logger.create_info_section('Settings')
         self._categories = {}
@@ -90,6 +147,29 @@ class Parameters:
                 and getattr(self, 'kinematics_at_the_end', False):
             raise ValueError("'skip_lowmass_stars' and 'kinematics_at_the_end' "
                              "can not be set to true simultaneously")
+        #
+        self.sun = SunInfo(**self.sun, **self.lsr)
+        # convert to ModuleKwargs BaseModels
+        if isinstance(self.evolution_class, list):
+            self.evolution_class = [
+                ModuleKwargs.parse_obj(ev) for ev in self.evolution_class]
+        else:
+            self.evolution_class = ModuleKwargs.parse_obj(self.evolution_class)
+
+        self.extinction_map_kwargs = ModuleKwargs.parse_obj(self.extinction_map_kwargs)
+
+        if isinstance(self.extinction_law_kwargs, list):
+            self.extinction_law_kwargs = [
+                ExtLawKwargs.parse_obj(ext_law) for ext_law in self.extinction_law_kwargs
+                ]
+        else:
+            self.extinction_law_kwargs = ExtLawKwargs.parse_obj(self.extinction_law_kwargs)
+
+        if isinstance(self.post_processing_kwargs, list):
+            self.post_processing_kwargs = [
+                ModuleKwargs.parse_obj(pp) for pp in self.post_processing_kwargs]
+        elif self.post_processing_kwargs is not None:
+            self.post_processing_kwargs = ModuleKwargs.parse_obj(self.post_processing_kwargs)
 
     def validate_input(self):
         """ checks if all Mandatory files are provided"""
@@ -133,7 +213,6 @@ class Parameters:
     def rest_loc_iterator(self):
         self.loc = self.location_generator()
 
-
     def log_settings(self):
         """
         log the settings as json formatted file
@@ -144,6 +223,7 @@ class Parameters:
             {key: item for key, item in self.__dict__.items() if not key.startswith('_')},
             indent=4)
         logger.info(json_object)
+
     def read_default_config(self, default_config_file: str):
         """
         reads settings from keyword arguments
@@ -159,7 +239,6 @@ class Parameters:
             directory of default_config_file.
 
         """
-        print(default_config_file)
         if os.path.isfile(default_config_file):
             config_dir = os.path.abspath(os.path.dirname(default_config_file))
         elif os.path.isfile(os.path.join(DEFAULT_CONFIG_DIR, default_config_file)):
@@ -167,10 +246,11 @@ class Parameters:
         else:
             raise FileNotFoundError(f'default_config_file "{default_config_file}" was not found')
 
-        logger.info(f"read default parameters from {default_config_file} ")
+        logger.info("# read default parameters from")
+        logger.info(f" {default_config_file = !r} ")
         default = json_loader(default_config_file)
         for cat, item in default.items():
-            if cat.startswith("__"):
+            if cat.startswith("_"):
                 continue
             self.__dict__.update(item)
             self._categories[cat] = item.keys()
@@ -197,7 +277,8 @@ class Parameters:
                 raise FileNotFoundError(msg)
 
             config_file = config_file_2
-        logger.info(f"read configuration from {config_file} ")
+        logger.info("# read configuration from ")
+        logger.info(f"{config_file = !r} ")
         specified = json_loader(config_file)
 
         for cat, items in self._categories.items():

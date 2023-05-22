@@ -58,6 +58,7 @@ class CustomAge(Age):
     # They are used to find the Subclass and are not passed to the initialization.
 
     def __init__(self, low_bound, high_bound, **kwargs):
+        super().__init__(**kwargs)
         self.age_func_name = 'Custom_age'
         self.low_bound = low_bound
         self.high_bound = high_bound

@@ -6,8 +6,10 @@ __all__ = ["Age", ]
 __date__ = "2022-06-27"
 __version__ = '1.0.0'
 
-import numpy as np
 from abc import ABC, abstractmethod
+from types import ModuleType
+import numpy as np
+from .. import const, default_sun
 
 class Age(ABC):
     """
@@ -33,17 +35,22 @@ class Age(ABC):
     """
 
 
-    @abstractmethod
-    def __init__(self, **kwargs):
+    def __init__(self, sun: ModuleType = None,
+            coord_trans: ModuleType = None,
+            **kwargs):
         """
         Initialize the Age class for a Population class.
         
         Parameters
         ----------
+        su
         **kwargs : dict, optional
             control keywords for the age class read from the population.json files
         """
         self.age_func_name = 'None'
+        # sun sun sun, here it comes
+        self.sun = sun if sun is not None else default_sun
+        self.coord_trans = coord_trans
 
     @abstractmethod
     def draw_random_age(self, N: int = None) -> np.ndarray or float:

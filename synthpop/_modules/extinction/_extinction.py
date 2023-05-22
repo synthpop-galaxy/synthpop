@@ -19,14 +19,13 @@ __license__ = "GPLv3"
 __date__ = "2022-07-09"
 __version__ = "1.0.0"
 
-import inspect
 import os
+import inspect
 from typing import Callable, Tuple, List, Dict
 from abc import ABC, abstractmethod
-
-# Path to the extinction directory.
 import numpy as np
 
+# Path to the extinction directory.
 EXTINCTION_DIR = os.path.dirname(__file__)
 
 
@@ -269,7 +268,7 @@ class ExtinctionMap(ABC):
         return self.extinction_map_name, self.ref_wavelength, self.A_or_E_type
 
 
-def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw, which_extinction_law=None) \
+def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw) \
         -> "Extinction":
     """
     This function combines an Extinction Map and an ExtinctionLaw to a combined Class
@@ -283,17 +282,6 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw, which_extinc
         Class or list of classes for the Extinction Law
         If it is a list, it uses multiple extinction laws
         Use the which_extinction_law to specify which Extinction Law should be adopted
-    
-    which_extinction_law : list or None
-        if None use always the first Extinction law
-        otherwise each entry should specify a specific wavelength,
-        a list of wavelengths or a wavelength regime
-        e.g. [{'max_lambda':0.5, 'ext_law_name':"extinction_law_name_1"}
-            {'min_lambda':0.52, 'max_lambda':2, 'ext_law_name':"extinction_law_name_1"}, 
-            {'lambda':1.23456, 'ext_law_name':"extinction_law_name_2"},
-            {'lambda':[2.345678,3.4567890], 'ext_law':"extinction_law_name_3"}]
-        Note It will use the first entry which satisfied the criteria. 
-        If all checks are false it will use the one specified in the last row
     """
     if inspect.isclass(ext_law):
         ext_law = {ext_law}  # convert a single class into a set
@@ -313,25 +301,24 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw, which_extinc
         """
 
         def __init__(
-                self, ext_map_kwargs: List[dict] or dict or None = None,
-                ext_law_kwargs: List[dict] or dict or None = None
+                self, ext_map_kwargs,
+                ext_law_kwargs
                 ):
-            if ext_map_kwargs is None:
-                ext_map_kwargs = {}
-            if ext_law_kwargs is None:
-                ext_law_kwargs = {}
 
             self.bands = []
             self.eff_wavelengths = {}
             self.ext_law_index = {}
             self.ext_law_dict = {}
             self.extinction_dict = {}
+            self.ext_law_kwargs = ext_law_kwargs
+
             # initializing the extinction law
             if len(ext_law) == 1:  # only one extinction law is set
                 if isinstance(ext_law_kwargs, list):
                     ext_law_kwargs = ext_law_kwargs[0]
-                ext_law.pop().__init__(self, **ext_law_kwargs)
+                ext_law.pop().__init__(self, **ext_law_kwargs.init_kwargs)
                 self.multi_laws = False
+
             else:
                 # multiple extinction laws are set.
                 # needs to initialize each extinction law separately,
@@ -339,11 +326,10 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw, which_extinc
                 self.multi_laws = True
                 # store initialized extinction laws in a dictionary to prevent overwriting
                 for i, law in enumerate(ext_law):
-                    self.ext_law_dict[i] = law(**ext_law_kwargs[i])
-                self.which_extinction_law = which_extinction_law
+                    self.ext_law_dict[i] = law(**ext_law_kwargs[i].init_kwargs)
 
             # initializing the extinction map
-            ext_map.__init__(self, **ext_map_kwargs)
+            ext_map.__init__(self, **ext_map_kwargs.init_kwargs)
 
             if self.multi_laws:
                 # pass properties from extinction map to extinction law
@@ -406,19 +392,21 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw, which_extinc
                 used when an extinction law is defined for specific wavelength bands
 
             """
-            for i, law_dict in enumerate(self.which_extinction_law):
+            for i, ext_law_kwarg in enumerate(self.ext_law_kwargs):
                 # check if the band is specified 
-                if band in law_dict.get("bands", ''):
+                if band in ext_law_kwarg.bands:
                     return i
-                lam = law_dict.get("lambda", eff_wavelengths)
-                lam = [lam] if isinstance(lam, float) else lam
 
-                if eff_wavelengths not in lam:
+                if ext_law_kwarg.lambdas is not None \
+                        and eff_wavelengths not in ext_law_kwarg.lambdas:
                     continue
-                if eff_wavelengths < law_dict.get("min_lambda", 0):
+                if ext_law_kwarg.min_lambda is not None \
+                        and eff_wavelengths < ext_law_kwarg.min_lambda:
                     continue
-                if eff_wavelengths > law_dict.get("max_lambda", 0):
+                if ext_law_kwarg.max_lambda is not None \
+                        and eff_wavelengths < ext_law_kwarg.max_lambda:
                     continue
+
                 return i
 
         def set_bands(self, bands: List[str], eff_wavelengths: Dict[str, float]):

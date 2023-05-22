@@ -14,6 +14,7 @@ import re
 import inspect
 from typing import Type, Dict, TypeVar, Union, Callable, List
 from .synthpop_logging import logger
+from .synthpop_control import ModuleKwargs
 T = TypeVar('T')
 
 
@@ -32,7 +33,8 @@ class SubClassLoader:
     def __call__(
             self,
             ParentClass: Type[T],
-            kwargs: Dict, initialize: bool = True,
+            modul_kwargs: ModuleKwargs,
+            initialize: bool = True,
             keyword_name: str = 'kwargs',
             population_file: str = '??',
             no_logging: bool = False
@@ -67,11 +69,12 @@ class SubClassLoader:
 
         # update logging information
         self.do_logging = not no_logging
-
         # get subclass_name, filename and not_a_sub_class  from kwargs
-        kwargs = kwargs.copy()
-        subclass_name = kwargs.pop('name', '')
-        filename = kwargs.pop('filename', '')
+        # if isinstance(modul_kwargs, dict):
+        #     modul_kwargs = ModuleKwargs.parse_obj(modul_kwargs)
+        kwargs = modul_kwargs.init_kwargs
+        subclass_name = modul_kwargs.name
+        filename = modul_kwargs.filename
         not_a_sub_class = kwargs.pop('not_a_sub_class', False)
 
         if (not subclass_name) and (not filename):
@@ -272,7 +275,7 @@ class SubClassLoader:
         filename : str
             filename of the module for better logging messages
         population_file : str
-            population file that included the kwards. Used for a better logging messages
+            population file that included the kwargs. Used for a better logging messages
         Returns
         -------
         subclass: class

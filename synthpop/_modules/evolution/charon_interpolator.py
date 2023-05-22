@@ -337,7 +337,7 @@ class CharonInterpolator(EvolutionInterpolator):
                 for i, item in enumerate(props):
                     data[common_met_and_age, i] = (
                         current_iso.iloc[grid_index.ravel()][item]
-                        ).values.reshape(grid_index.shape)
+                    ).values.reshape(grid_index.shape)
 
         return grid, data
 
@@ -417,11 +417,11 @@ class CharonInterpolator(EvolutionInterpolator):
         end_grid = self.endp_func(grid_met, grid_log_age, grid=False)
 
         mass_new = (mass - tip1_req) / (tip2_req - tip1_req) \
-                    * (tip2_grid - tip1_grid) + tip1_grid
+                   * (tip2_grid - tip1_grid) + tip1_grid
         mass_new_rgb_phase = (mass - tip0_req) / (tip1_req - tip0_req) \
-                              * (tip1_grid - tip0_grid) + tip0_grid
+                             * (tip1_grid - tip0_grid) + tip0_grid
         mass_new_wd_phase = (mass - tip2_req) / (end_req - tip2_req) \
-                             * (end_grid - tip2_grid) + tip2_grid
+                            * (end_grid - tip2_grid) + tip2_grid
 
         mass_new[mass < tip1_req] = mass_new_rgb_phase[mass < tip1_req]
         mass_new[mass > tip2_req] = mass_new_wd_phase[mass > tip2_req]

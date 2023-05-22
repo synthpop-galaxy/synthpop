@@ -49,6 +49,8 @@ class ThickDiskDensityBesancon(PopulationDensity):
         flare_flag: bool
             flag if flare is included or not
         """
+        super().__init__(**kwargs)
+
         self.population_density_name = "ThickDisk"
         self.density_unit = 'mass'
         self.rho0 = rho0
@@ -79,7 +81,7 @@ class ThickDiskDensityBesancon(PopulationDensity):
         """
         if self.flare_flag:
             k_flare = self.get_flare(r)
-            k_flare0 = self.get_flare(const.X_SUN)
+            k_flare0 = self.get_flare(self.sun.r)
         else:
             k_flare = 1
             k_flare0 = 1
@@ -87,19 +89,21 @@ class ThickDiskDensityBesancon(PopulationDensity):
         # estimate d0 by passing the coordinates of the sun
 
         # r_sun == -x_sun
-        if abs(const.Z_SUN) < self.xl:
+        if abs(self.sun.z) < self.xl:
             # most likely
-            d0 = 1 / k_flare0 * (1 - const.Z_SUN ** 2 / (self.xl * (2 * self.hz + self.xl)))
+            d0 = (1 - self.sun.z ** 2 / (self.xl * (2 * self.hz/k_flare0 + self.xl)))
         else:
-            d0 = np.exp((self.xl - np.abs(const.Z_SUN)) / self.hz) / (1 + self.xl / (2 * self.hz))
+            d0 = np.exp((self.xl - np.abs(self.sun.z)) / self.hz/k_flare0) \
+                    / (1 + self.xl / (2 * self.hz/k_flare0))
 
         # used so numpy arrays, and floats works the same without checking the type of the input
         abs_z_lt_xl = np.abs(z) <= self.xl  # 1 if True, 0 if False
 
-        rho = self.rho0 / d0 * np.exp(-(r - abs(const.X_SUN)) / self.hr)
-        rho *= (1 / k_flare * (1 - z ** 2 / (self.xl * (2 * self.hz + self.xl))
-                               )) ** abs_z_lt_xl  # only if abs(z) <= xl
+        rho = self.rho0 / d0 * np.exp(-(r - self.sun.r) / self.hr)
+        rho *= (1 - z ** 2 / (self.xl * (2 * self.hz/k_flare + self.xl))
+                ) ** abs_z_lt_xl  # only if abs(z) <= xl
 
-        rho *= (np.exp((self.xl - np.abs(z)) / self.hz) / (1 + self.xl / 2 / self.hz)
+        rho *= (np.exp((self.xl - np.abs(z)) / self.hz / k_flare)
+                / (1 + self.xl / 2 / self.hz/k_flare)
                 ) ** (1 - abs_z_lt_xl)  # only if abs(z) > xl
         return rho

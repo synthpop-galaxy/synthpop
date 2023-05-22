@@ -14,7 +14,7 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-01-09"
 __license__ = "GPLv3"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Standard Imports
 import os
@@ -40,7 +40,7 @@ try:
     from . import constants as const
 
 except (ImportError, ValueError) as e:
-    import synthpop.constants as const
+    import constants as const
     import synthpop_utils as sp_utils
     from modules.post_processing import PostProcessing
     from population import Population
@@ -122,24 +122,29 @@ class SynthPop:
         self.populations_are_initialized = False
         self.save_data = True
 
-        if self.parms.advanced_post_processing is None:
+        if self.parms.post_processing_kwargs is None:
             self.post_processing = PostProcessing(self, logger).do_post_processing
 
-        elif isinstance(self.parms.advanced_post_processing, list):
+        elif isinstance(self.parms.post_processing_kwargs, list):
             # have multiple post-processing class
             self.post_processing = []
-            for post_kwargs in self.parms.advanced_post_processing:
+            for post_kwargs in self.parms.post_processing_kwargs:
+                post_kwargs.sun = self.parms.sun
+                post_kwargs.model = self
+                post_kwargs.logger = logger
                 post_processing_class = sp_utils.get_subclass(
-                    PostProcessing, {'model': self, "logger": logger, **post_kwargs})
+                    PostProcessing, post_kwargs)
                 self.post_processing.append(post_processing_class.do_post_processing)
 
         else:
             # have single post-processing class
-            self.parms.advanced_post_processing['model'] = self
+            self.parms.post_processing_kwargs.model = self
+            self.parms.post_processing_kwargs.logger = logger
             post_processing_class = sp_utils.get_subclass(
-                PostProcessing, {'model': self, "logger": logger,
-                                 **self.parms.advanced_post_processing})
+                PostProcessing, self.parms.post_processing_kwargs)
             self.post_processing = post_processing_class.do_post_processing
+
+        self.population_params = None
 
         self.l_deg = None
         self.b_deg = None
@@ -197,7 +202,7 @@ class SynthPop:
             )
 
         if len(self.population_files) == 0:
-            msg = f"No 'pop_json' file found in {models_dirname}, fall back to '.json' files"
+            msg = f"No 'popjson' file found in {models_dirname}, fall back to '.json' files"
             logger.warning(msg)
             self.population_files = sorted(
                 glob.glob(os.path.join(models_dirname, "*.json"))
@@ -209,11 +214,16 @@ class SynthPop:
             raise FileNotFoundError(msg)
 
         # initialize the populations
+        self.population_params = {
+                pop_id: sp_utils.PopParams.parse_jsonfile(population_file)
+                for pop_id, population_file in enumerate(self.population_files)
+                }
+
         self.populations = [
-            Population(population_file, pop_id, self.parms)
-            for pop_id, population_file in enumerate(self.population_files)
+            Population(pop_params, pop_id, self.parms)
+            for pop_id, pop_params in self.population_params.items()
             ]
-        logger.info("all population are initialized")
+        logger.info("# all population are initialized")
         self.populations_are_initialized = True
 
     def update_location(
@@ -237,14 +247,6 @@ class SynthPop:
         positional_kwargs :
             any keyword to be passed to Position
         """
-        if (solid_angle_unit != "sr") & (solid_angle < 3e-5):
-            msg = f"Default unit for solid_angle was changed to square Degree!\n" \
-                  f"\t{solid_angle = :.3e} seems to be to small for square degree\n" \
-                  f"\tYou might want to use ({solid_angle*(180/np.pi)**2:.3e}) square degree\n" \
-                  f"\tor set 'solid_angle_unit' to 'sr'. "
-
-            logger.critical(msg)
-            raise ValueError(msg)
 
         if not self.save_data:
             self.filename_base = f'dump_file{np.random.randint(0, 999999):06d}'
@@ -262,7 +264,7 @@ class SynthPop:
         # update populations with the coordinates for the field
         logger.log(25, f"# set location to: ")
         logger.log(25, f"l, b = ({l_deg:.2f} deg, {b_deg:.2f} deg)")
-        logger.log(25, f"set solid_angle to:")
+        logger.log(25, f"# set solid_angle to:")
         logger.log(25, f"solid_angle = {solid_angle:.3e} {solid_angle_unit}")
 
         # placeholder for future position kwargs
@@ -316,6 +318,7 @@ class SynthPop:
         all_mass = field_df.iloc[:, 4].to_numpy()
         all_dist, all_l_deg, all_b_deg = field_df.iloc[:, [6, 7, 8]].to_numpy().T
         all_x, all_y, all_z = field_df.iloc[:, [12, 13, 14]].to_numpy().T
+        all_density_classes = tuple(pop.population_density for pop in self.populations)
 
         for pop_id, population in enumerate(self.populations):
             # select stars which belongs to population
@@ -327,7 +330,8 @@ class SynthPop:
                 star_l_deg=all_l_deg[stars_with_pop_id], star_b_deg=all_b_deg[stars_with_pop_id],
                 x=all_x[stars_with_pop_id], y=all_y[stars_with_pop_id], z=all_z[stars_with_pop_id],
                 mass=all_mass[stars_with_pop_id],
-                all_x=all_x, all_y=all_y, all_z=all_z, all_mass=all_mass)
+                all_x=all_x, all_y=all_y, all_z=all_z, all_mass=all_mass,
+                all_density_classes=all_density_classes, pop_id=pop_id)
 
             # update velocities in population file
             field_df.loc[stars_with_pop_id, const.COL_NAMES[9]] = vr

@@ -34,15 +34,14 @@ class SingleValue(Metallicity):
     """
 
     def __init__(self, met_value: float, **kwargs):
+        super().__init__(**kwargs)
         self.metallicity_func_name = 'single_value'
         self.metallicity_value = met_value
 
     def draw_random_metallicity(
             self,
             N: int or None = None,
-            x: np.ndarray or float = None,
-            y: np.ndarray or float = None,
-            z: np.ndarray or float = None,
+            **kwargs
             ) -> np.ndarray or float:
         """
         Generate a "random" metallicity from a single value distribution
@@ -51,7 +50,6 @@ class SingleValue(Metallicity):
         ----------
         N : int, None, optional
             if N is set to an integer, an array with N random metallicities is returned
-        x,y,z: locations of the stars.
         Returns
         -------
         met : float, ndarray [[Fe/H]]

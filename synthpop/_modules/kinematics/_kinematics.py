@@ -10,8 +10,11 @@ __date__ = "2022-06-29"
 __version__ = '1.0.0'
 
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Type
+from types import ModuleType
 import numpy as np
+from .. import default_sun
+
 
 class Kinematics(ABC):
     """
@@ -37,21 +40,36 @@ class Kinematics(ABC):
 
     """
 
-    def __init__(self, **kwargs):
-        """test
-        Initialize the Kinematics class for a Population class.
+    def __init__(
+            self,
+            sun: ModuleType = None,
+            coord_trans: ModuleType = None,
+            density_class: ModuleType = None,
+            **kwargs):
+        """
+        Initialize the Kinematics class
         
         Parameters
         ----------
-        Population : an instance of a Population class
-        
-        Raises
-        ------
-        population_parameter_file_error:
-            error raised when a population parameter file is missing information or
-            configured incorrectly
+        sun : SunInfo
+            location and velocity of the sun and lsr
+            see synthpop_utils/sun_info
+        coord_trans: ModuleType
+            the coordinate transformation package
+            see synthpop_utils/coordinate_transformations
+        density_class: ModuleType
+            the density profile for the current population
+
+        additional Parameters can be set by each subclass.
         """
+
         self.kinematics_func_name = 'None'
+
+        # sun sun sun, here it comes
+        self.sun = sun if sun is not None else default_sun
+
+        self.coord_trans = coord_trans
+        self.density_class = density_class
 
     @abstractmethod
     def draw_random_velocity(
@@ -59,10 +77,14 @@ class Kinematics(ABC):
             z: np.ndarray or float, mass: np.ndarray or float = None,
             all_x: np.ndarray or float = None, all_y: np.ndarray or float = None,
             all_z: np.ndarray or float = None, all_mass: np.ndarray or float = None,
+            all_density_classes: Tuple[Type] = None,
             **kwargs
             ) -> Tuple[np.ndarray, np.ndarray, np.ndarray] or Tuple[float, float, float]:
+
         """
         Generate a random velocities u,v,w  by using a velocity dispersion
+        arguments starting with 'all_' are only provided if the "kinematics_at_the_end"
+        keyword in the configuration is set to True
 
         Parameters
         ----------
@@ -70,11 +92,13 @@ class Kinematics(ABC):
             galactocentric coordinates
         mass : ndarray, float , optional [Msun]
             mass of the stars. Has to be the same format and shape as x,y & z
-
         all_x, all_y, all_z : nparray, optional  [kpc]
             galactocentric coordinates of all stars generated in all populations
         all_mass : nparray, optional  [kpc]
             mass of all the generated stars. Has to have the same length as all_x
+        all_density_classes : Tuple[Type]
+            the population density class of all population
+            see _population_density/_population_density for available functions.
 
         Returns
         -------

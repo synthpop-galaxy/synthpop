@@ -17,15 +17,13 @@ class Kroupa(InitialMassFunction):
 
     """
 
-    def __init__(self, min_mass=None, max_mass=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Initialize the IMF class for a Population class
         """
-        super().__init__(min_mass, max_mass)
+        super().__init__(**kwargs)
         self.imf_name = 'kroupa'
 
-
-    # returns the number of stars of that initial mass
     def imf(self, m_in):
         """
         Initial mass function

@@ -9,8 +9,12 @@ __date__ = "2022-07-12"
 __version__ = '1.0.0'
 
 from abc import ABC, abstractmethod
+from types import ModuleType
+from typing import Tuple
 import numpy as np
-from .. import const
+
+from .. import const, default_sun
+
 
 class PopulationDensity(ABC):
     """
@@ -32,10 +36,43 @@ class PopulationDensity(ABC):
         estimate the density at (r,theta,z)
         (specified in the subclasses)
     """
+    # placeholder for average mass, and emass/imass correction
+    # are set when generating a field
+    average_mass = None
+    average_mass_cor = None
 
-    def __init__(self):
+    def __init__(
+            self,
+            sun: ModuleType = None,
+            coord_trans: ModuleType = None,
+            gamma_flare: float = 0,
+            radius_flare: float = 0,
+            **kwargs
+            ):
+        """
+        Initialize the Population Density class
+        SubClasses MUST define a density_unit!
+
+        Parameters
+        ----------
+        sun : SunInfo
+            location and velocity of the sun and lsr
+            see synthpop_utils/sun_info
+        coord_trans: ModuleType
+            the coordinate transformation package
+            see synthpop_utils/coordinate_transformations
+        gamma_flare, radius_flare: float
+            parameters to implement the flare of the milky way
+
+        """
+        # sun sun sun, here it comes
+        self.sun = sun if sun is not None else default_sun
+
         self.population_density_name = 'None'
-        self.density_unit = "'mass', 'init_mass', or 'number'"
+        self.density_unit = "one of 'mass', 'init_mass', or 'number'"
+        self.coord_trans = coord_trans
+        self.gamma_flare = gamma_flare
+        self.radius_flare = radius_flare
 
     @abstractmethod
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
@@ -60,9 +97,9 @@ class PopulationDensity(ABC):
         """
         raise NotImplementedError('No density profile is implemented!')
 
-    @staticmethod
     def get_flare(
-            r: np.ndarray or float, gamma_flare: float = None, radius_flare: float = None
+            self,
+            r_kpc: np.ndarray or float, gamma_flare: float = None, radius_flare: float = None
             ) -> np.ndarray or float:
         """
         Estimates the correction factor for the Warp.
@@ -70,7 +107,7 @@ class PopulationDensity(ABC):
 
         Parameters
         ----------
-        r : float or ndarray
+        r_kpc : float or ndarray
             galactocentric radii
         gamma_flare: float or None
             slope of the flare
@@ -85,15 +122,49 @@ class PopulationDensity(ABC):
         kappa_flare : ndarray:
             correction factor for the scale height
         """
+        if gamma_flare is None:
+            gamma_flare = self.gamma_flare
+        if radius_flare is None:
+            radius_flare = self.radius_flare
 
-        gamma_flare = const.GAMMA_FLARE if gamma_flare is None else gamma_flare
-        radius_flare = const.R_FLARE if radius_flare is None else radius_flare
+        return 1 + gamma_flare * np.maximum(r_kpc - radius_flare, 0)
 
-        return 1 + gamma_flare * np.maximum(r - radius_flare, 0)
+    def gradient(
+            self, r_kpc: np.ndarray or float,
+            phi_rad: np.ndarray or float,
+            z_kpc: np.ndarray or float,
+            eps: Tuple[float] = (1e-3, 1e-4, 1e-3)
+            ) -> Tuple[np.ndarray or float, np.ndarray or float, np.ndarray or float]:
+        """
+        return the gradient at the given location
 
-    @staticmethod
-    def warp_correction(r_kpc, phi_rad):
-        """Correction for the WARP following Chen X. et al 2019 """
-        # only if r >= rWarp, else hw=0
-        hw = const.AMP_WARP * np.maximum(r_kpc - const.R_WARP, 0) ** const.ALPHA_WARP
-        return hw * np.sin(phi_rad - const.PHI_WARP)
+        Parameters
+        ----------
+        r_kpc :  float, ndarray [kpc]
+            Radius in kpc
+        phi_rad : float, ndarray [rad]
+            polar angle follows the rotation of the galaxy
+            zero point is at the sun.
+        z_kpc : float, ndarray [kpc]
+            height above/below the galactic plane
+        eps: Tuple(float,float,float)
+            difference used to estimate the gradient
+
+        Returns
+        -------
+        dRho_dR :  float, ndarray
+            Gradient in Radius
+        dRho_dPhi : float, ndarray
+            Gradient in polar angle direction
+        dRho_dz : float, ndarray
+            Gradient in z direction
+        """
+
+        dRho_dR = (self.density(r_kpc + eps[0], phi_rad, z_kpc)
+                   - self.density(r_kpc - eps[0], phi_rad, z_kpc)) / (2 * eps[0])
+        dRho_dPhi = (self.density(r_kpc, phi_rad + eps[1], z_kpc)
+                     - self.density(r_kpc, phi_rad - eps[1], z_kpc)) / (2 * eps[1])
+        dRho_dz = (self.density(r_kpc, phi_rad, z_kpc + eps[2])
+                   - self.density(r_kpc, phi_rad, z_kpc - eps[2])) / (2 * eps[2])
+
+        return dRho_dR, dRho_dPhi, dRho_dz

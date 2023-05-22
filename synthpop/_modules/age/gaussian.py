@@ -17,7 +17,7 @@ class Gaussian(Age):
 
     Attributes
     ----------
-    metallicity_func_name : str
+    age_func_name : str
         A class attribute for the name of the _Age subclass that this is.
     mean : float [[Fe/H]]
         the mean age in Gyr for the Gaussian distribution
@@ -43,6 +43,7 @@ class Gaussian(Age):
             self, mean: float, std: float,
             low_bound: float = 1e-4, high_bound: float = 19.9526231497, **kwargs
             ):
+        super().__init__(**kwargs)
         self.age_func_name = 'gaussian'
         self.mean = mean
         self.std = std
@@ -83,7 +84,7 @@ class Gaussian(Age):
                 val[outside] = np.random.normal(self.mean, self.std, sum(outside))
 
     def average_age(self) -> float:
-        """Determine the average metallicity of the population"""
+        """Determine the average age of the population"""
         return self.mean
 
     def get_maximum_age(self) -> float:
