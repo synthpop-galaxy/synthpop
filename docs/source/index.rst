@@ -5,7 +5,8 @@ Welcome to SynthPop's documentation!
 for generating synthetic population models. 
 It generates a star catalog following the specified model and configuration.
 
-## Model & Populations
+Model & Populations
+--------
 
 A model is defined by a collection of populations. 
 Each population is further described by the following 5 modules:
@@ -32,7 +33,8 @@ specifying the module (see below).
 Additional kwargs can be used to define a population specific
 evolutionary modul and galactic warp.
 
-## Modules
+Modules
+--------
 
 Synthpop employs 10 modules to perform various tasks, namely:
 
@@ -63,7 +65,8 @@ We recommend to specified each subclass in a separate file within this directory
 However, different locations are acceptable by specifying the filename, including the path . 
 
 
-### Define the used module. 
+Define the used module
+^^^^^^^
 The usage of a module is either defined by the configuration or by a population file.
 The used module is selected based on a dictionary. 
 
@@ -78,7 +81,8 @@ similar to the name of the subclass and in the default location.
 similar means either identical, all lower case, 
 or as a snake_case filename for CamelCase class name.
 
-### Implementing a new Module
+Implementing a new Module
+^^^^^^^^
 Synthpop provides a variety of predefined modules to create synthetic populations, 
 We encourage users to develop their own custom submodules to fit their needs.
 
@@ -86,7 +90,8 @@ To create a custom submodule, users simply can and define their own subclass of 
 Idealy in create a new Python file in the appropriate directory within the modules tree, 
 Users can refer to the existing modules as a guide on how to structure their own custom module.
 
-## Configuration 
+Configuration 
+--------
   SynthPop is controlled by a config json file. 
   Within these you can specify the used model, 
   the isochrone system & interpolator extinction
@@ -118,7 +123,8 @@ Users can refer to the existing modules as a guide on how to structure their own
   Also note that arguments starting with an '#' are ignored.
   
 
-## Installation
+Installation
+--------
 
 To install synthpop, you have two options:
 
@@ -143,8 +149,10 @@ Only afterwards, synthpop is ready to be used.
 
 
 
-## Use SynthPop
-### Run Synthpop as individual script
+Use SynthPop
+-------
+Run Synthpop as individual script
+^^^^^^^^^
 To run SynthPop in the default mode, use the following command:
   ```
   python -m synthpop config_filename 
@@ -158,7 +166,8 @@ The generated catalogs are saved at the location defined in the configuration (d
 
 
   
-### Import SynthPop to other script 
+Import SynthPop to other script 
+^^^^^^^^
 Importing SynthPop to another script allows for more flexibility. 
 To do so, ensure that the parent directory is within your Python path and use the following code:
   ```
@@ -181,12 +190,14 @@ or to run a specified location only:
 While ``process_all()`` only saves the results to disk, ``process_location()`` also returns the dataframe and several distributions (currently only distance distributions for each population). Later als have a ``save_data``- flag. If it is set to False, the data will only be returned and not saved.
 
 
-## Acknowledge Synthpop 
+Acknowledge Synthpop 
+--------
   If you think SynthPop was usfull for you work, please cite Klüter et al. (in prep). 
   Please also include citations for key components of the generation process. 
   These includes, but is not limited, to the used model, isochrone system and extinction map.
 
-## Getting in touch:
+Getting in touch:
+--------
   If users encounter any issues while using Synthpopduring  the development/implementation of new submodules or models, 
   they can reach out to the development team through the GitHub issue tracker. 
   We welcome any feedback, bug reports, or feature requests that can help improve Synthpop.
