@@ -1,11 +1,10 @@
-""" Density Subclass to describe the bulge density from cao et al. 2013"""
+""" Density Subclass to describe the bulge density ***TODO where from?***"""
 __all__ = ["ExpRCoshZ", ]
 __date__ = "2023-04-03"
 
 import numpy as np
 import scipy.special
 from ._population_density import PopulationDensity
-
 
 class ExpRCoshZ(PopulationDensity):
     def __init__(self, rho0, hr, hz, flare_flag=True, **kwargs):
@@ -39,14 +38,14 @@ class ExpRCoshZ(PopulationDensity):
         """
 
         if self.flare_flag:
-            k_flare = self.get_flare(r)
-            k_flare0 = self.get_flare(self.sun.r)
+            k_flare = self.get_kappa_flare(r)
+            k_flare0 = self.get_kappa_flare(self.sun.r)
         else:
             k_flare = 1
             k_flare0 = 1
         # density normalization at the Sun [solar mass per kpc^3]
         d0 = np.cosh(self.sun.z/(2*self.hz*k_flare0))**(-2)
         rho = self.rho0/d0 * np.exp(-(r - self.sun.r) / self.hr) \
-            * np.cosh(z / (2*self.hz*k_flare)) ** (-2)
+              * np.cosh(z / (2*self.hz*k_flare)) ** (-2)
 
         return rho

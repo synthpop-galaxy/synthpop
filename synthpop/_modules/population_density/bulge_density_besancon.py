@@ -31,7 +31,7 @@ class BulgeDensityBesancon(PopulationDensity):
             angle of the bar,
 
         """
-        super().__init__(**kwargs)
+        super().__init__()
         self.population_density_name = "Bulge_Density"
         self.density_unit = 'number'
         self.x0 = x0
@@ -40,6 +40,7 @@ class BulgeDensityBesancon(PopulationDensity):
         self.Rc = Rc
         self.n0 = n0
         self.bar_ang = bar_angle * np.pi / 180
+
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """

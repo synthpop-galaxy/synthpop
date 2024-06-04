@@ -19,7 +19,8 @@ class ODonnellCardelli(ExtinctionLaw):
     DO NOT GO ABOVE THIS, as it ramps up crazy fast
     """
 
-    def __init__(self, **kwargs, ):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.extinction_law_name = 'ODonnellCardelli'
 
     def Alambda_AV(self, eff_wavelength: float, R_V: float = 3.1) -> float:

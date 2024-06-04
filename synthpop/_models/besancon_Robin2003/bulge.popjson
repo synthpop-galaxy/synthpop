@@ -37,14 +37,6 @@
         "Rc":2.54,
         "n0": 1.370e10
     },
-
-    "evolution_kwargs" : {
-        "json_file" : "models/besancon_Robin2003/defaults/evolution.json"
-    },
-
-    "extinction_kwargs" : {
-        "json_file" : "models/besancon_Robin2003/defaults/extinction.json"
-    },
     
     "av_mass_corr" : 0.563529,
     "n_star_corr" : 1.77453

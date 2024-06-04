@@ -1,7 +1,7 @@
 """ Density Subclass to describe the thick disk density
 from the  Besancon model robin et al. (2003)"""
 __all__ = ["ThickDiskDensityBesancon", ]
-__author__ = "M.J. Houston"
+__author__ = "M.J. Huston"
 __date__ = "2022-07-12"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
@@ -80,8 +80,8 @@ class ThickDiskDensityBesancon(PopulationDensity):
 
         """
         if self.flare_flag:
-            k_flare = self.get_flare(r)
-            k_flare0 = self.get_flare(self.sun.r)
+            k_flare = self.get_kappa_flare(r)
+            k_flare0 = self.get_kappa_flare(self.sun.r)
         else:
             k_flare = 1
             k_flare0 = 1
@@ -101,7 +101,7 @@ class ThickDiskDensityBesancon(PopulationDensity):
 
         rho = self.rho0 / d0 * np.exp(-(r - self.sun.r) / self.hr)
         rho *= (1 - z ** 2 / (self.xl * (2 * self.hz/k_flare + self.xl))
-                ) ** abs_z_lt_xl  # only if abs(z) <= xl
+                               ) ** abs_z_lt_xl  # only if abs(z) <= xl
 
         rho *= (np.exp((self.xl - np.abs(z)) / self.hz / k_flare)
                 / (1 + self.xl / 2 / self.hz/k_flare)

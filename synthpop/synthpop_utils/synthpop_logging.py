@@ -5,7 +5,7 @@ But can change the logging location and provided function
 to create sections in the logfile .
 """
 
-__all__ = ["SynthPopLogger", "logger", "log_basic_statistics"]
+__all__ = ["SynthpopLogger", "logger", "log_basic_statistics"]
 __author__ = "J. Klüter"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2023-02-10"
@@ -20,14 +20,14 @@ import tempfile
 import numpy as np
 
 try:
-    from ..constants import SYNTHPOP_DIR
-except IndexError:
     from constants import SYNTHPOP_DIR
+except (ImportError, ValueError):
+    from ..constants import SYNTHPOP_DIR
 
 LENGTH = 75
 
 
-class SynthPopLogger(logging.Logger):
+class SynthpopLogger(logging.Logger):
     def __init__(
             self,
             name, level=logging.INFO,
@@ -154,7 +154,7 @@ class SynthPopLogger(logging.Logger):
             self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=True)
             filename = self.temp_file.name
         else:
-            dirname = os.path.dirname(filename)
+            dirname= os.path.dirname(filename)
             os.makedirs(dirname, exist_ok=True)
             self.save_log_file(filename)
         if self.filelogger in self.handlers:
@@ -233,9 +233,7 @@ class SynthPopLogger(logging.Logger):
         rec = logging.LogRecord(self.name, level, '', level, msg, args, None)
         self.stream_logger.emit(rec)
 
-
-logger = SynthPopLogger('synthpop_logging')
-
+logger = SynthpopLogger('synthpop_logging')
 
 def log_basic_statistics(df, var_name, criteria=None):
     logger.log(15, '# Basic Statistics:')
@@ -253,5 +251,7 @@ def log_basic_statistics(df, var_name, criteria=None):
         msg += f'"min": {df.loc[:, col].min(skipna=True):.4f}, '
         msg += f'"max": {df.loc[:, col].max(skipna=True):.4f}, '
         msg += f'"std": {df.loc[:, col].std(skipna=True):.4f}}},'
-        logger.log(15, msg)
-    logger.log(15, '    ]')
+        logger.log(15,  msg)
+    logger.log(15,'    ]')
+
+

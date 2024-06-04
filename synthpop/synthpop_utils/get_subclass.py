@@ -308,7 +308,7 @@ class SubClassLoader:
             msg = msg.replace('True', 'true').replace('False', 'false')
             msg = msg.replace('None', 'null')
             logger.log(15, msg)
-        return sub_class(**kwargs)
+        return sub_class(logger=logger, **kwargs)
 
 
 def check_file_case_sensitive(file: str) -> bool:

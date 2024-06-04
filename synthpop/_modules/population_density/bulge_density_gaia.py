@@ -8,8 +8,7 @@ from ._population_density import PopulationDensity
 
 
 class BulgeDensityGaia(PopulationDensity):
-    def __init__(
-            self, n0, x0, y0, z0, alpha, beta, gamma, c_perp, c_para,
+    def __init__(self, n0, x0, y0, z0, alpha, beta, gamma, c_perp, c_para,
             dz_bone=0, x_bone=0, r_max=np.inf, sigma_cut_of=1e-10, **kwargs):
         super().__init__(**kwargs)
         self.density_unit = 'number'
@@ -64,6 +63,6 @@ class BulgeDensityGaia(PopulationDensity):
 
         rs = (r_perp ** self.c_para + np.abs(z / z_po) ** self.c_para) ** (1 / self.c_para)
         n = self.n0 * np.cosh(rs)**(-2)
-        n *= np.exp(-0.5*np.maximum(np.sqrt(x**2+y**2) - self.r_max, 0)**2 / self.sigma_cut_of**2)
+        n *= np.exp(-0.5*np.maximum(np.sqrt(x**2+y**2)-self.r_max, 0)**2/self.sigma_cut_of**2)
 
         return n

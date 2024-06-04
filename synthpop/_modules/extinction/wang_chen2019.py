@@ -23,6 +23,7 @@ class WangChen2019(ExtinctionLaw):
     """
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.extinction_law_name = 'WangChen2019'
 
     def Alambda_AV(self, eff_wavelength: float, R_V: float = 3.1) -> float:

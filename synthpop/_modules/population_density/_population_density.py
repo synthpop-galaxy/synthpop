@@ -38,17 +38,17 @@ class PopulationDensity(ABC):
     """
     # placeholder for average mass, and emass/imass correction
     # are set when generating a field
-    average_mass = None
-    average_mass_cor = None
+    average_mass  = None
+    average_mass_coor = None
 
-    def __init__(
-            self,
+    def __init__(self,
             sun: ModuleType = None,
             coord_trans: ModuleType = None,
-            gamma_flare: float = 0,
+            gamma_flare: float = None,
+            h_flare: float = None,
             radius_flare: float = 0,
-            **kwargs
-            ):
+            logger: ModuleType = None,
+            **kwargs):
         """
         Initialize the Population Density class
         SubClasses MUST define a density_unit!
@@ -66,14 +66,16 @@ class PopulationDensity(ABC):
 
         """
         # sun sun sun, here it comes
+        self.logger = logger
         self.sun = sun if sun is not None else default_sun
 
         self.population_density_name = 'None'
         self.density_unit = "one of 'mass', 'init_mass', or 'number'"
         self.coord_trans = coord_trans
-        self.gamma_flare = gamma_flare
-        self.radius_flare = radius_flare
 
+        self.gamma_flare = 0 if gamma_flare is None and h_flare is None else gamma_flare
+        self.h_flare = h_flare
+        self.radius_flare = radius_flare
     @abstractmethod
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
@@ -97,9 +99,10 @@ class PopulationDensity(ABC):
         """
         raise NotImplementedError('No density profile is implemented!')
 
-    def get_flare(
-            self,
-            r_kpc: np.ndarray or float, gamma_flare: float = None, radius_flare: float = None
+    def get_kappa_flare(self,
+            r_kpc: np.ndarray or float,
+            gamma_flare: float = None,
+            h_flare: float = None, radius_flare: float = None
             ) -> np.ndarray or float:
         """
         Estimates the correction factor for the Warp.
@@ -122,19 +125,24 @@ class PopulationDensity(ABC):
         kappa_flare : ndarray:
             correction factor for the scale height
         """
-        if gamma_flare is None:
+
+        if gamma_flare is None and h_flare is None:
             gamma_flare = self.gamma_flare
+            h_flare = self.h_flare
+
         if radius_flare is None:
             radius_flare = self.radius_flare
 
-        return 1 + gamma_flare * np.maximum(r_kpc - radius_flare, 0)
+        if gamma_flare is not None:
+            return 1 + gamma_flare * np.maximum(r_kpc - radius_flare, 0)
 
-    def gradient(
-            self, r_kpc: np.ndarray or float,
-            phi_rad: np.ndarray or float,
-            z_kpc: np.ndarray or float,
-            eps: Tuple[float] = (1e-3, 1e-4, 1e-3)
-            ) -> Tuple[np.ndarray or float, np.ndarray or float, np.ndarray or float]:
+        return np.exp(np.maximum(r_kpc - radius_flare, 0)/h_flare)
+
+    def gradient(self, r_kpc: np.ndarray or float,
+                 phi_rad: np.ndarray or float,
+                 z_kpc: np.ndarray or float,
+                 eps: Tuple[float] = (1e-3, 1e-4, 1e-3)
+                 ) -> Tuple[np.ndarray or float, np.ndarray or float, np.ndarray or float]:
         """
         return the gradient at the given location
 

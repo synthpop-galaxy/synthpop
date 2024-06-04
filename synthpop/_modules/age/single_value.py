@@ -1,4 +1,4 @@
-""" A single Value age distribution """
+""" A single value age distribution """
 
 __all__ = ["SingleValue", ]
 __author__ = "S. Johnson"

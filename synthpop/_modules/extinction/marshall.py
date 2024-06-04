@@ -72,6 +72,7 @@ class Marshall(ExtinctionMap):
     """
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # name of the extinction map used
         self.extinction_map_name = "Marshall"
         # effective wavelength for 2MASS K_s bandpass
@@ -142,7 +143,7 @@ class Marshall(ExtinctionMap):
         Parameters
         ----------
         l_deg : float [degree]
-            galactic longitude
+            galactic longitude can either be (-180,180] or [0-360)
         b_deg : float [degree]
             galactic latitude
 

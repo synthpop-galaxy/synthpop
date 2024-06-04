@@ -15,7 +15,7 @@ class Cardelli1989(ExtinctionLaw):
     """
 
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         self.extinction_law_name = "Cardelli1989"
 
     def Alambda_AV(self, eff_wavelength: float, R_V: float = 3.1) -> float:

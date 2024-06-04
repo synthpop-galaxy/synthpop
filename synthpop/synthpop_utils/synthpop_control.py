@@ -21,14 +21,12 @@ from pydantic import BaseModel, validator, Extra, root_validator
 from .json_loader import json_loader
 from .synthpop_logging import logger
 from .sun_info import SunInfo
-
 try:
-    from ..constants import SYNTHPOP_DIR, DEFAULT_MODEL_DIR
-    from ..constants import DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR
-except ImportError:
-    from constants import SYNTHPOP_DIR, DEFAULT_MODEL_DIR
-    from constants import DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR
-
+    from constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
+                                    DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
+except (ImportError, ValueError):
+    from ..constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
+                                    DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 
 class ModuleKwargs(BaseModel, extra=Extra.allow):
     name: Optional[str] = ""
@@ -171,6 +169,9 @@ class Parameters:
         elif self.post_processing_kwargs is not None:
             self.post_processing_kwargs = ModuleKwargs.parse_obj(self.post_processing_kwargs)
 
+        if isinstance(self.output_file_type, str):
+            self.output_file_type = [self.output_file_type, {}]
+
     def validate_input(self):
         """ checks if all Mandatory files are provided"""
         out = True
@@ -286,6 +287,7 @@ class Parameters:
             for item in items:
                 if item in spec_dict:
                     self.__dict__.update({item: spec_dict[item]})
+
 
     def read_kwargs_config(self, kwargs: dict):
         """

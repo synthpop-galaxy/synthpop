@@ -9,6 +9,8 @@ __date__ = "2022-06-29"
 __version__ = '1.0.0'
 
 from typing import Union, Callable
+from types import ModuleType
+
 import numpy as np
 from scipy import integrate, interpolate
 from abc import ABC, abstractmethod
@@ -38,14 +40,16 @@ class InitialMassFunction(ABC):
     mass_grid: np.ndarray = None
     prob_dens: np.ndarray = None
 
-    def __init__(self, min_mass=None, max_mass=None):
+    def __init__(self, min_mass=None, max_mass=None, logger: ModuleType = None):
         """
         Initialize the IMF class for a Population class
         """
-
+        self.logger = logger
         # default mass limits
-        self.min_mass = min_mass if min_mass is None else 0.01
-        self.max_mass = max_mass if min_mass is None else 100
+        if min_mass is  None: min_mass = 0.01
+        if max_mass is  None: max_mass = 100
+        self.min_mass = min_mass
+        self.max_mass = max_mass
 
     # returns the number of stars of that initial mass
     # This is only a placeholder. The function should be defined in a subclass
@@ -60,7 +64,7 @@ class InitialMassFunction(ABC):
         This allows that any function can be given as IMF
         F_imf and F_inf_inverse can be given by the child class, this can speed up the process
         """
-        print('Start interpolating the IMF to get F_imf and F_inf_inverse')
+        self.logger.info('Start interpolating the IMF to get F_imf and F_inf_inverse')
         step = 1e-4
         # estimate grid size
         grid_min = self.grid_min if self.grid_min is not None else min_mass
@@ -72,16 +76,17 @@ class InitialMassFunction(ABC):
         # Evaluate probability density function
         prob_dens = self.imf(mass_grid)
         prob_dens = prob_dens / np.sum(prob_dens)
-        # us cumulative sum as integral (all grids have the same length) 
+
+        # use a cumulative sum as integral (all intervals have the same length)
         F_mass_grid = np.zeros(len(mass_grid))
         F_mass_grid[1:] = np.cumsum((prob_dens[1:] + prob_dens[:-1]) / 2)
 
-        # remove points from grid which have a zero likelihood density function #
+        # remove points from grid which have a zero likelihood density function
         mass_grid = mass_grid[prob_dens > 0]
         F_mass_grid = F_mass_grid[prob_dens > 0]
         self.F_imf_inverse = interpolate.interp1d(F_mass_grid, mass_grid, kind='cubic')
         self.F_imf = interpolate.interp1d(mass_grid, F_mass_grid, kind='cubic')
-        print('Done interpolating the IMF')
+        self.logger.info('Done interpolating the IMF')
 
     def average_mass(self,
             min_mass: Union[np.ndarray, float, None] = None,

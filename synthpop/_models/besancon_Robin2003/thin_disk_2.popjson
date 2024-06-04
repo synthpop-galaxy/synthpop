@@ -39,16 +39,6 @@
         "disp_grad" : -0.2
     }, 
 
-
-
-    "evolution_kwargs" : {
-        "json_file" : "models/besancon_Robin2003/defaults/evolution.json"
-    },
-
-    "extinction_kwargs" : {
-        "json_file" : "models/besancon_Robin2003/defaults/extinction.json"
-    },
-    
     "mass_corr" : 0.691252,
     "n_star_corr" : 1.44665
 }

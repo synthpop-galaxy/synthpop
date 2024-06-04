@@ -10,7 +10,7 @@ from types import ModuleType
 import numpy as np
 from .. import const
 from ._kinematics import Kinematics
-
+from .. import default_sun
 
 class VelocityGradient(Kinematics):
     """
@@ -44,14 +44,16 @@ class VelocityGradient(Kinematics):
     """
 
     def __init__(
-            self,
+            self, 
             sigma_u: float, sigma_v: float, sigma_w: float,
+            sun: ModuleType = None,
             vel_grad: float = 60.0,
             **kwargs
             ):
         """ Init """
-        super().__init__(**kwargs)  # get sun, coord_trans and density_class
+        super().__init__(**kwargs) # get sun, coord_trans and density_class
         self.kinematics_func_name = 'VelocityGradient'
+        self.sun = sun if sun is not None else default_sun
         self.sigma_u = sigma_u
         self.sigma_v = sigma_v
         self.sigma_w = sigma_w
@@ -85,6 +87,7 @@ class VelocityGradient(Kinematics):
         # Calculate rotation velocity based on inner solid body rotation and outer velocity gradient
         # Account for asymmetric drift if indicated
         rotation_velocity = np.minimum(self.vel_grad * r, self.sun.v_lsr)
+
 
         # Get velocities in the Galactic plane in the star's frame
         u1 = du

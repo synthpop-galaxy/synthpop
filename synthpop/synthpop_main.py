@@ -14,7 +14,7 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-01-09"
 __license__ = "GPLv3"
-__version__ = "0.2.0"
+__version__ = "0.1.0"
 
 # Standard Imports
 import os
@@ -131,7 +131,6 @@ class SynthPop:
             for post_kwargs in self.parms.post_processing_kwargs:
                 post_kwargs.sun = self.parms.sun
                 post_kwargs.model = self
-                post_kwargs.logger = logger
                 post_processing_class = sp_utils.get_subclass(
                     PostProcessing, post_kwargs)
                 self.post_processing.append(post_processing_class.do_post_processing)
@@ -139,12 +138,9 @@ class SynthPop:
         else:
             # have single post-processing class
             self.parms.post_processing_kwargs.model = self
-            self.parms.post_processing_kwargs.logger = logger
             post_processing_class = sp_utils.get_subclass(
                 PostProcessing, self.parms.post_processing_kwargs)
             self.post_processing = post_processing_class.do_post_processing
-
-        self.population_params = None
 
         self.l_deg = None
         self.b_deg = None
@@ -202,7 +198,7 @@ class SynthPop:
             )
 
         if len(self.population_files) == 0:
-            msg = f"No 'popjson' file found in {models_dirname}, fall back to '.json' files"
+            msg = f"No 'pop_json' file found in {models_dirname}, fall back to '.json' files"
             logger.warning(msg)
             self.population_files = sorted(
                 glob.glob(os.path.join(models_dirname, "*.json"))
@@ -214,10 +210,9 @@ class SynthPop:
             raise FileNotFoundError(msg)
 
         # initialize the populations
-        self.population_params = {
-                pop_id: sp_utils.PopParams.parse_jsonfile(population_file)
-                for pop_id, population_file in enumerate(self.population_files)
-                }
+        self.population_params = {pop_id: sp_utils.PopParams.parse_jsonfile(population_file)
+            for pop_id, population_file in enumerate(self.population_files)
+            }
 
         self.populations = [
             Population(pop_params, pop_id, self.parms)
@@ -467,17 +462,18 @@ class SynthPop:
             'votable': [self.write_astrotable, "votable", {"df": df, "extension": "votable"}],
             'vot': [self.write_astrotable, "vot", {"df": df, "extension": "vot"}],
             }
-
+        output_file_type, output_save_kwargs = self.parms.output_file_type[:2]
         # get specific function for the defined format
         write_func, extension, kwargs = output_formatter.get(
-            self.parms.output_file_type.lower(), [df.to_pickle, 'SAVE_ERROR.pkl', {}]
+            output_file_type.lower(), [df.to_pickle, 'SAVE_ERROR.pkl', {}]
             )
+        kwargs.update(output_save_kwargs)
         # add extension to filename_base.
         filename = f"{self.filename_base}.{extension}"
         logger.log(25, 'write result to "%s"', filename)
 
         if extension.startswith('SAVE_ERROR'):
-            logger.error(f"Invalid output file type {self.parms.output_file_type}; "
+            logger.error(f"Invalid output file type {output_file_type}; "
                          f"save as pickle instead")
 
         # write dataframe to disk
@@ -590,13 +586,14 @@ class SynthPop:
 
         return field_df, distributions
 
-    def process_all(self) -> None:
+    def process_all(self, forced=False) -> None:
         """
         Calls the Initialization of all populations and calls the process for all given locations.
         """
 
         # Initializing all the different moduls.
-        self.init_populations()
+        if (not self.populations_are_initialized) | forced:
+            self.init_populations(forced=forced)
 
         # create output location, if it does not exist
         os.makedirs(self.parms.output_location, exist_ok=True)

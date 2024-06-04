@@ -96,6 +96,8 @@ _query_dict = {}
 
 class MapsFromDustmaps(ExtinctionMap):
     def __init__(self, dustmap_name=None, return_functions=True, **kwargs):
+        super().__init__(**kwargs)
+        #pre loaded query functions to share between populations.
         global _query_dict
         self.extinction_map_name = f"dustmaps.{dustmap_name}"
         self.return_functions = return_functions

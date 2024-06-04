@@ -17,7 +17,7 @@ from ._post_processing import PostProcessing
 
 
 class CombinedCsv(PostProcessing):
-    def __init__(self, combined_filename=None, **kwargs):
+    def __init__(self, model, logger, combined_filename=None, **kwargs):
         """
 
         Parameters
@@ -29,14 +29,12 @@ class CombinedCsv(PostProcessing):
         kwargs:
 
         """
-        super().__init__(**kwargs)
-
+        super().__init__(model, logger, **kwargs)
         if combined_filename is None:
             self.combined_filename = os.path.join(model.parms.output_location,
                                                   f"{model.parms.model_name}.combined.csv")
         else:
             self.combined_filename = combined_filename
-
         if os.path.isfile(self.combined_filename):
             os.remove(self.combined_filename)
 

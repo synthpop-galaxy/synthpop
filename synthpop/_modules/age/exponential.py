@@ -1,4 +1,4 @@
-""" A Gaussian age distribution """
+""" An exponential age distribution """
 
 __all__ = ['Exponential']
 __author__ = "J. Klüter"
@@ -13,7 +13,7 @@ from ._age import Age
 class Exponential(Age):
     """
     Exponential subclass of Age base class. This subclass is for populations that
-    have age characterized by an exponential age distribution.
+    have age characterized by a  exponential age distribution.
 
     Attributes
     ----------
@@ -41,7 +41,7 @@ class Exponential(Age):
 
     def __init__(
             self, gamma: float,
-            low_bound: float = 1e-4, high_bound: float = 19.9526231497, **kwargs
+            low_bound: float = 1e-4, high_bound: float = 19.9526231497,**kwargs
             ):
         super().__init__(**kwargs)
         self.age_func_name = 'exponential'
@@ -76,13 +76,13 @@ class Exponential(Age):
 
         return val
 
+
     def average_age(self) -> float:
         """Determine the average age of the population"""
-        av_age = (
-            (self.upper - 1/self.gamma) * np.exp(self.gamma*self.upper)
-            - (self.lower - 1/self.gamma) * np.exp(self.gamma*self.lower)
-            ) / (np.exp(self.gamma*self.upper) - np.exp(self.gamma*self.lower))
-        return av_age
+
+        return ((self.upper - 1/self.gamma) * np.exp(self.gamma*self.upper)
+                - (self.lower - 1/self.gamma) * np.exp(self.gamma*self.lower)) \
+               / (np.exp(self.gamma*self.upper) - np.exp(self.gamma*self.lower))
 
     def get_maximum_age(self) -> float:
         """

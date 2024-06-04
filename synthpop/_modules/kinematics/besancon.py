@@ -11,8 +11,8 @@ from ._kinematics import Kinematics
 from typing import Tuple
 from types import ModuleType
 
-
 class Besancon(Kinematics):
+
     """
     The Kinematics base class for a Population class. The appropriate subclass is
     assigned based on the kinematics_func_kwargs through the "get_subclass" factory.
@@ -49,7 +49,7 @@ class Besancon(Kinematics):
             self,
             sigma_u: float, sigma_v: float, sigma_w: float,
             vel_grad: float = 60.0,
-            disp_grad: float = 0,
+            disp_grad: float = 0, 
             do_V_ad=True, const_V_ad=None,
             **kwargs
             ):
@@ -66,7 +66,7 @@ class Besancon(Kinematics):
 
     def draw_random_velocity(
             self, x: np.ndarray or float, y: np.ndarray or float,
-            z: np.ndarray or float, **kwargs
+            z: np.ndarray or float, all_density_classes=None, pop_id=None, **kwargs
             ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Generate a random velocities u,v,w  by using a velocity dispersion
@@ -86,44 +86,36 @@ class Besancon(Kinematics):
         r, phi_rad, z = self.coord_trans.xyz_to_rphiz(x, y, z)
 
         # Apply velocity dispersion gradient
-        sigma_u_r = self.sigma_u * np.exp((r - self.sun.r) * self.disp_grad / 2)
+        sigma_u_r = self.sigma_u*np.exp((r-self.sun.r)*self.disp_grad/2)
         # Draw random deviations from circular velocity
-        du = np.random.normal(0, sigma_u_r)
-        dv, dw = np.random.normal(0, [self.sigma_v, self.sigma_w], (*r.shape, 2)).T
+        du = np.random.normal(0,sigma_u_r)
+        dv, dw = np.random.normal(0, [self.sigma_v, self.sigma_w],
+                                      (*r.shape, 2)).T
 
-        # Calculate asymmetric drift
-        # For a single value, adopt the maximum of the given value
-        # and the rotational velocity at the position
-        if self.const_V_ad is not None:
-            V_ad = np.minimum(self.const_V_ad, self.vel_grad * r)
-
-        # Calculate asymmetric drift from equation in Robin et al, (2003) paper erratum
-        elif self.do_V_ad:
-            if self.density_class.density_unit == 'number':
-                avg_mass = self.density_class.average_mass
-            else:
-                avg_mass = 1
-
-            rho = self.density_class.density(r, phi_rad, z) * avg_mass
-            drho_dr = self.density_class.gradient(r, phi_rad, z)[0] * avg_mass
-            dsigma_u_dr = self.disp_grad / 2 * sigma_u_r
-            V_ad = -sigma_u_r ** 2 / (2 * self.sun.v_lsr) * \
-                (r / rho * drho_dr
-                 + 2 * r / sigma_u_r * dsigma_u_dr
-                 + (1 - self.sigma_v ** 2 / sigma_u_r ** 2)
-                 + (1 - self.sigma_w ** 2 / sigma_u_r ** 2)
-                 )
+        #Calculate asymmetric drift
+        #For a single value, adopt the maximum of the given value and the rotational velocity at the position
+        if not self.const_V_ad==None:
+            V_ad = np.minimum(self.const_V_ad, self.vel_grad*r)
+        #Calculate asymmetric drift from equation in Robin et al, (2003) paper erratum
+        elif self.do_V_ad == True:
+            density_class = kwargs['density_class']
+            number_density = int(density_class.density_unit=='number')
+            avg_mass = density_class.average_mass * number_density + (1-number_density)
+            rho = density_class.density(r, phi_rad, z) * avg_mass
+            drho_dr = density_class.gradient(r, phi_rad, z)[0] * avg_mass
+            dsigmau_dr = self.disp_grad/2 * sigma_u_r
+            V_ad = -sigma_u_r**2 / (2*self.sun.v_lsr) * (r/rho*drho_dr + 2*r/sigma_u_r * 
+            V_ad = -sigma_u_r**2 / (2*self.sun.v_lsr) * (r/rho*drho_dr + 2*r/sigma_u_r *
+                dsigmau_dr + (1-self.sigma_v**2/sigma_u_r**2) + (1-self.sigma_w**2/sigma_u_r**2))
             V_ad = np.maximum(V_ad, 0)
-
-        # If selected, don't apply an asymmetric drift
+        #If selected, don't apply an asymmetric drift
         else:
             V_ad = 0.0
-
         # Calculate rotation velocity based on inner solid body rotation and outer velocity gradient
         # Account for asymmetric drift if indicated
         rotation_velocity = np.minimum(self.vel_grad * r, self.sun.v_lsr) - V_ad
 
-        # Get velocities in the Galactic plane in the star's frame
+        # Get velocities in the star's frame
         u1 = du
         v1 = rotation_velocity + dv
 
@@ -133,3 +125,4 @@ class Besancon(Kinematics):
         w = dw
 
         return u, v, w
+

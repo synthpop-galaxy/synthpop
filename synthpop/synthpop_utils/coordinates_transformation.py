@@ -1,10 +1,8 @@
 """
-functions for coordinates transformations
-following Bovy 2011.
+Functions for coordinates transformations following Bovy 2011.
 """
-__all__ = [
-    "get_trans_matrix", "getA", "lb_to_ad", "ad_to_lb", "dlb_to_xyz",
-    "xyz_to_rphiz", "dlb_to_rphiz", "uvw_to_vrmulb", "uvw_to_vrmuad", "CoordTrans"]
+__all__ = ["get_trans_matrix", "getA", "lb_to_ad", "ad_to_lb", "dlb_to_xyz",
+           "xyz_to_rphiz", "dlb_to_rphiz", "uvw_to_vrmulb", "uvw_to_vrmuad", "CoordTrans"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __license__ = "GPLv3"
 __date__ = "2022-07-08"
@@ -16,11 +14,11 @@ from numpy import ndarray
 
 try:
     from .. import constants as const
-except ImportError:
+except (ImportError):
     import constants as const
-
 from .utils_functions import rotation_matrix
 from .sun_info import default_sun, SunInfo
+
 
 
 def get_trans_matrix() -> np.ndarray:
@@ -70,12 +68,10 @@ trans_matrix = get_trans_matrix()
 
 
 class CoordTrans:
-    def __init__(
-            self, sun: SunInfo = None,
+    def __init__(self, sun: SunInfo = None,
             amp_warp: float = 0, amp_warp_pos: float = None, amp_warp_neg: float = None,
             r_warp: float = 0, alpha_warp: float = 0,
-            phi_warp_deg: float = 0, phi_warp_rad: float = 0
-            ):
+            phi_warp_deg: float = 0, phi_warp_rad: float = 0):
 
         # sun sun sun, here it comes!
         self.sun = sun if sun is not None else default_sun
@@ -309,8 +305,7 @@ class CoordTrans:
         b_deg = b_rad * 180 / np.pi
         return l_deg, b_deg
 
-    def uvw_to_vrmulb(
-            self,
+    def uvw_to_vrmulb(self,
             l_deg: np.ndarray, b_deg: np.ndarray, dist_kpc: np.ndarray,
             u_kmps: np.ndarray, v_kmps: np.ndarray, w_kmps: np.ndarray
             ) \
@@ -491,7 +486,7 @@ def dlb_to_xyz(d_kpc: np.ndarray, l_deg: np.ndarray, b_deg: np.ndarray) \
     return _coord_trans.dlb_to_xyz(d_kpc, l_deg, b_deg)
 
 
-def rphiz_to_xyz(r_kpc: np.ndarray, phi_rad: np.ndarray, z_kpc: np.ndarray) \
+def rphiz_to_xyz(r_kpc: np.ndarray, phi_rad: np.ndarray, z_kpc: np.ndarray)\
         -> ndarray:
     """
         Translate from cylindrical cartesian coordinates to

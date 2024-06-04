@@ -1,4 +1,4 @@
-""" TODO THIS IS A DESCRIPTION """
+""" Density subclass for dark matter from Besancon model (Robin et al 2003) """
 __all__ = ["DarkDensity", ]
 __date__ = "2021-10-18"
 

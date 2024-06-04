@@ -15,7 +15,6 @@ from types import ModuleType
 import numpy as np
 from .. import default_sun
 
-
 class Kinematics(ABC):
     """
     The Kinematics base class for a Population class. The appropriate subclass is
@@ -40,12 +39,13 @@ class Kinematics(ABC):
 
     """
 
-    def __init__(
-            self,
+    def __init__(self,
             sun: ModuleType = None,
             coord_trans: ModuleType = None,
             density_class: ModuleType = None,
-            **kwargs):
+            logger: ModuleType = None,
+
+                 **kwargs):
         """
         Initialize the Kinematics class
         
@@ -63,6 +63,7 @@ class Kinematics(ABC):
         additional Parameters can be set by each subclass.
         """
 
+        self.logger = logger
         self.kinematics_func_name = 'None'
 
         # sun sun sun, here it comes

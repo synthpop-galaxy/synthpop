@@ -24,6 +24,7 @@ class Nishiyama2009(ExtinctionLaw):
     """
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.extinction_law_name = 'Nishiyama2009'
         self.table1, self.spline = self.determine_parameters()
 

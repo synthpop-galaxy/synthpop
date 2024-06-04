@@ -72,7 +72,7 @@ class GaussianGradient(Metallicity):
             while True:
                 val = np.random.normal(self.mean, self.std)
                 if self.lower < val < self.upper:
-                    break
+                    return val
 
         else:
             # generate multiple values
@@ -80,11 +80,10 @@ class GaussianGradient(Metallicity):
             while True:
                 outside = (self.lower > val) | (val > self.upper)
                 if not any(outside):
-                    break
+                    return val
                 val[outside] = np.random.normal(self.mean, self.std, sum(outside))
-
+        radius = np.sqrt(x**2+y**2)
         # add radial_gradient
-        radius = np.sqrt(x**2 + y**2)
         val += self.radial_gradient * (radius - self.sun.r)
 
         return val

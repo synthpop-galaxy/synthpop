@@ -1,6 +1,6 @@
 """
 Subclass for Einasto density profiles
-Within others this is used for the Thin Disk in the Besancon Model Robin et al. 2003.
+As well as others, this is used for the Thin Disk in the Besancon Model by Robin et al. 2003.
 """
 __all__ = ["Einasto", ]
 __author__ = "J. Klüter"
@@ -74,14 +74,16 @@ class Einasto(PopulationDensity):
 
         """
         if self.flare_flag:
-            k_flare = self.get_flare(r)
-            k_flare0 = self.get_flare(self.sun.r)
+            k_flare = self.get_kappa_flare(r)
+            k_flare0 = self.get_kappa_flare(self.sun.r)
         else:
             k_flare = 1
             k_flare0 = 1
 
         a = np.sqrt(r ** 2 + (z / k_flare / self.e) ** 2)
         a0 = np.sqrt(self.sun.r ** 2 + (self.sun.z / k_flare0 / self.e) ** 2)
+
+
 
         def exp_arg(x):  # function to estimate the argument for exp()
             return -np.sqrt(self.offset ** 2 + x ** 2) ** self.power

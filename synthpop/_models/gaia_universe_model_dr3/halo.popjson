@@ -3,7 +3,11 @@
 
     "population_density_kwargs" : {
         "name" : "HernquistHalo",
-        "rho0": 4.1e4
+        "rho0": 4.1e4,
+        "e": 0.774,
+        "ah": 1,
+        "dh": 2.777231,
+        "rc": 2.175827881
 
     },
 

@@ -3,8 +3,8 @@ This module provides the parent classes for the Extinction:
 An Extinction Class is a child of an ExtinctionMap and one or more ExtinctionLaws.
 Those will be  combined with  the CombineExtinction factory functions.
 
-ExtinctionLaw: Patent class for extinction laws
-ExtinctionMap: Patent class for extinction maps
+ExtinctionLaw: Parent class for extinction laws
+ExtinctionMap: Parent class for extinction maps
 
 CombineExtinction: Factory that combines an ExtinctionLaw subclass
                    and an ExtinctionMap subclass into one Extinction Class
@@ -22,6 +22,8 @@ __version__ = "1.0.0"
 import os
 import inspect
 from typing import Callable, Tuple, List, Dict
+from types import ModuleType
+
 from abc import ABC, abstractmethod
 import numpy as np
 
@@ -77,7 +79,8 @@ class ExtinctionLaw(ABC):
         (color excess or total extinction)
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, logger: ModuleType = None,  **kwargs):
+        self.logger =logger
         self.map_name = None
         self.ref_wavelength = None
         self.A_or_E_type = None
@@ -159,8 +162,8 @@ class ExtinctionLaw(ABC):
         self.map_name = map_name
         self.ref_wavelength = ref_wavelength
         self.A_or_E_type = A_or_E_type
-        if A_or_E_type.startswith("E"):
-            self.ref_wavelength = 0.551
+        #if A_or_E_type.startswith("E"):
+        #    self.ref_wavelength = 0.551
 
 
 class ExtinctionMap(ABC):
@@ -207,7 +210,8 @@ class ExtinctionMap(ABC):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, logger: ModuleType = None, **kwargs):
+        self.logger = logger
         # Basic properties of the extinction map.
         self.extinction_map_name = "NONE"
         self.ref_wavelength = None
@@ -235,7 +239,7 @@ class ExtinctionMap(ABC):
         Parameters
         ----------
         l_deg : float [degree]
-            galactic longitude
+            galactic longitude should work with both ranges  [0-360) and (-180, 180]
         b_deg : float [degree]
             galactic latitude
 
@@ -301,10 +305,11 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw) \
         """
 
         def __init__(
-                self, ext_map_kwargs,
-                ext_law_kwargs
+                self, ext_map_kwargs: ModuleType,
+                ext_law_kwargs: ModuleType,
+                logger: ModuleType = None
                 ):
-
+            self.logger = logger
             self.bands = []
             self.eff_wavelengths = {}
             self.ext_law_index = {}
@@ -316,7 +321,7 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw) \
             if len(ext_law) == 1:  # only one extinction law is set
                 if isinstance(ext_law_kwargs, list):
                     ext_law_kwargs = ext_law_kwargs[0]
-                ext_law.pop().__init__(self, **ext_law_kwargs.init_kwargs)
+                ext_law.pop().__init__(self,logger=self.logger, **ext_law_kwargs.init_kwargs)
                 self.multi_laws = False
 
             else:
@@ -326,10 +331,10 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw) \
                 self.multi_laws = True
                 # store initialized extinction laws in a dictionary to prevent overwriting
                 for i, law in enumerate(ext_law):
-                    self.ext_law_dict[i] = law(**ext_law_kwargs[i].init_kwargs)
+                    self.ext_law_dict[i] = law(logger=self.logger, **ext_law_kwargs[i].init_kwargs)
 
             # initializing the extinction map
-            ext_map.__init__(self, **ext_map_kwargs.init_kwargs)
+            ext_map.__init__(self, logger=self.logger, **ext_map_kwargs.init_kwargs)
 
             if self.multi_laws:
                 # pass properties from extinction map to extinction law
