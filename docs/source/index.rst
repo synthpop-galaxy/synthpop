@@ -4,7 +4,7 @@ Welcome to SynthPop's documentation!
 **SynthPop** is a Python Galactic modeling framework.
 
 Check out the :doc:`usage` section for further information, including
-how to :ref:`installation` the project.
+how to :ref:`install` the project.
 
 .. note::
 
