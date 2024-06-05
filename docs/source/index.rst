@@ -67,7 +67,7 @@ However, different locations are acceptable by specifying the filename, includin
 Define the used module
 ^^^^^^^^^^^^^^^^^^^^^^^
 The usage of a module is either defined by the configuration or by a population file.
-The used module is selected based on a dictionary. 
+The used module is selected based on a dictionary:: 
 
     "used_module_kwargs":{
         "name" : "name_of_the_subclass"
@@ -101,7 +101,7 @@ Configuration
   which differs from the default_config file.  
   We recommend to include all information you think are 
   usefull to understand the meaning of your generated catalog.
-  For example the config file can look as follows:
+  For example the config file can look as follows::
     
     {
       "model_base_name":"my_generated_model",
@@ -128,11 +128,9 @@ Installation
 To install synthpop, you have two options:
 
 Clone this repository and install all the requirements.
-Use the command below to install using pip:
+Use the command below to install using pip::
+    pip install git+https://github.com/synthpop-galaxy/synthpop.git
 
-```
-pip install git+https://github.com/synthpop-galaxy/synthpop.git
-``` 
 When using SynthPop for the first time, you are ask to specify a directory to 
 store all files you might want to interact with. 
 These are The module, models, constants. It will also be the default location to store the isochrone data 
@@ -140,10 +138,9 @@ and output files.
 
 A simple GUI will be used specify the directory
 You can also specify the directory directly
-To do so, run the following command: 
-```
-python -m synthpop.migrate_interactive_part path_to_directory
-```
+To do so, run the following command:: 
+    python -m synthpop.migrate_interactive_part path_to_directory
+
 Only afterwards, synthpop is ready to be used. 
 
 
@@ -152,10 +149,9 @@ Use SynthPop
 ------------
 Run Synthpop as individual script
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-To run SynthPop in the default mode, use the following command:
-  ```
+To run SynthPop in the default mode, use the following command::
   python -m synthpop config_filename 
-  ```
+
 This processes all locations as defined in the config_filename. 
 The config_filename should either be in the ``config_file`` directoryor should include the complete path.
 As an example, you can use the predifined ``my_config.synthpop_conf`` file. 
@@ -168,13 +164,13 @@ The generated catalogs are saved at the location defined in the configuration (d
 Import SynthPop to other script 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Importing SynthPop to another script allows for more flexibility. 
-To do so, ensure that the parent directory is within your Python path and use the following code:
-  ```
+To do so, ensure that the parent directory is within your Python path and use the following code::
+  
   import synthpop
   
   model = synthpop.SynthPop(config_file_name, **kwargs)
   model.init_populations()
-  ```
+  
 All attributes of the configuration can also be specified by a keyword argument. 
 It is then possible to run all specified locations via
   ```
