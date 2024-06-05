@@ -9,7 +9,7 @@ ensure that the parent dictionary is in your Python Path.
 
 Requirements
 ^^^^^^^^^^^^
-  The following packages are needed: 
+The following packages are needed: 
   - numpy
   - scipy
   - pandas
@@ -26,8 +26,8 @@ install all by using::
 
 Run SynthPop
 ------------
-  Synthpop can either be run as an individual script 
-  or can be imported to other scripts
+Synthpop can either be run as an individual script 
+or can be imported to other scripts
 
 Run SynthPop as individual script
 ---------------------------------
