@@ -18,8 +18,7 @@ Each population is further described by the following 5 modules:
 
 A model is implemented as a dictionary containing separate json files, one for each population.
 To avoid ambiguity, a ".popjson" extension should be used for these files. 
-Each files must define the following keywords:
-
+Each files must define the following keywords::
 
     "name" : "name_of_the_population"
     "imf_func_kwargs" : ...
@@ -53,13 +52,13 @@ Each module fulfills a single task and can be independently specified.
 Only the Isochrone System needs to be compatible with the Isochrone Interpolator.
 All predefined modules are located in the modules directory tree 
 and are subclasses of a dedicated parent class, which is denoted by a "_" in the name of the corresponding Python file.
-For instance, the parent class for the Age module can be found in:\
+For instance, the parent class for the Age module can be found in::
 
-``.../modules/age/_age.py ``
+.../modules/age/_age.py 
 
-A uniform distribution subclasses is then specified in:
+A uniform distribution subclasses is then specified in::
 
-``.../modules/age/uniform.py ``
+.../modules/age/uniform.py 
 
 We recommend to specified each subclass in a separate file within this directory structure.
 However, different locations are acceptable by specifying the filename, including the path . 
