@@ -9,7 +9,8 @@ ensure that the parent dictionary is in your Python Path.
 
 Requirements
 ^^^^^^^^^^^^
-The following packages are needed 
+The following packages are needed
+
   * numpy
   * scipy
   * pandas
