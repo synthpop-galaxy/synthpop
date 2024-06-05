@@ -1,5 +1,5 @@
 Welcome to SynthPop's documentation!
-===================================
+====================================
 
 **SynthPop** is an object-oriented, modular Python framework 
 for generating synthetic population models. 
