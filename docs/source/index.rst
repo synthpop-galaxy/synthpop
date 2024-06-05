@@ -91,17 +91,17 @@ Users can refer to the existing modules as a guide on how to structure their own
 
 Configuration 
 -------------
-  SynthPop is controlled by a config json file. 
-  Within these you can specify the used model, 
-  the isochrone system & interpolator extinction
-  the wanted Properties for the output, output location 
-  and several other control keys.
-  The default values can be found in config_files/_default_config.json.
-  Within the config file it is sufficient to specify only the items 
-  which differs from the default_config file.  
-  We recommend to include all information you think are 
-  usefull to understand the meaning of your generated catalog.
-  For example the config file can look as follows::
+SynthPop is controlled by a config json file. 
+Within these you can specify the used model, 
+the isochrone system & interpolator extinction
+the wanted Properties for the output, output location 
+and several other control keys.
+The default values can be found in config_files/_default_config.json.
+Within the config file it is sufficient to specify only the items 
+which differs from the default_config file.  
+We recommend to include all information you think are 
+usefull to understand the meaning of your generated catalog.
+For example the config file can look as follows::
     
     {
       "model_base_name":"my_generated_model",
@@ -117,9 +117,9 @@ Configuration
       "extinction_law_kwargs": {"name":"ODonnellCardelli"}
     }
 
-  Note that _default_config.json is sorted into different categories, 
-  These can be (but don't need to be) translated into the config file. 
-  Also note that arguments starting with an '#' are ignored.
+Note that _default_config.json is sorted into different categories, 
+These can be (but don't need to be) translated into the config file. 
+Also note that arguments starting with an '#' are ignored.
   
 
 Installation
@@ -189,15 +189,15 @@ While ``process_all()`` only saves the results to disk, ``process_location()`` a
 
 Acknowledge Synthpop 
 --------------------
-  If you think SynthPop was useful for you work, please cite Klüter et al. (in prep). 
-  Please also include citations for key components of the generation process. 
-  These includes, but is not limited, to the used model, isochrone system and extinction map.
+If you think SynthPop was useful for you work, please cite Klüter et al. (in prep). 
+Please also include citations for key components of the generation process. 
+These includes, but is not limited, to the used model, isochrone system and extinction map.
 
 Getting in touch
 -----------------
-  If users encounter any issues while using SynthPop during the development/implementation of new submodules or models, 
-  they can reach out to the development team through the GitHub issue tracker. 
-  We welcome any feedback, bug reports, or feature requests that can help improve Synthpop.
+If users encounter any issues while using SynthPop during the development/implementation of new submodules or models, 
+they can reach out to the development team through the GitHub issue tracker. 
+We welcome any feedback, bug reports, or feature requests that can help improve Synthpop.
 
 
 Contents
