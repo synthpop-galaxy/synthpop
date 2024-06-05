@@ -192,13 +192,13 @@ While ``process_all()`` only saves the results to disk, ``process_location()`` a
 
 Acknowledge Synthpop 
 --------------------
-  If you think SynthPop was usfull for you work, please cite Klüter et al. (in prep). 
+  If you think SynthPop was useful for you work, please cite Klüter et al. (in prep). 
   Please also include citations for key components of the generation process. 
   These includes, but is not limited, to the used model, isochrone system and extinction map.
 
 Getting in touch
 -----------------
-  If users encounter any issues while using Synthpopduring  the development/implementation of new submodules or models, 
+  If users encounter any issues while using SynthPop during the development/implementation of new submodules or models, 
   they can reach out to the development team through the GitHub issue tracker. 
   We welcome any feedback, bug reports, or feature requests that can help improve Synthpop.
 
