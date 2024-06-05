@@ -21,25 +21,26 @@ The following packages are needed
  * dustmaps
  * astropy
   
-tables dustmaps and astropy are optional but highly recommended.
-install all by using::
+The tables, dustmaps, and astropy packages are optional but highly recommended.
+Install all by using::
+
   pip install -r requirements.txt
 
 Run SynthPop
 ------------
 Synthpop can either be run as an individual script 
-or can be imported to other scripts
+or can be imported to other scripts.
 
 Run SynthPop as individual script
 ---------------------------------
-to run the SynthPop type::
+To run the SynthPop type::
   
   python synthpop config_file 
   
-  this process all locations as defined in the config_file 
-  Have a look at ```python synthpop -h ``` for additional arguments
-  all results are stored in the defined output location
-  (default: synthpop/output-files)
+This processes all locations as defined in the config_file.
+Have a look at ```python synthpop -h ``` for additional arguments.
+All results are stored in the defined output location
+(default: synthpop/output-files).
   
 Import SynthPop to other script 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
