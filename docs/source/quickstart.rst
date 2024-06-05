@@ -10,15 +10,15 @@ ensure that the parent dictionary is in your Python Path.
 Requirements
 ^^^^^^^^^^^^
 The following packages are needed 
-  - numpy
-  - scipy
-  - pandas
-  - request
-  - json
-  - tqdm
-  - tables
-  - dustmaps
-  - astropy
+  * numpy
+  * scipy
+  * pandas
+  * request
+  * json
+  * tqdm
+  * tables
+  * dustmaps
+  * astropy
   
 tables dustmaps and astropy are optional but highly recommended.
 install all by using::
