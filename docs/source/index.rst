@@ -129,6 +129,7 @@ To install synthpop, you have two options:
 
 Clone this repository and install all the requirements.
 Use the command below to install using pip::
+
     pip install git+https://github.com/synthpop-galaxy/synthpop.git
 
 When using SynthPop for the first time, you are ask to specify a directory to 
