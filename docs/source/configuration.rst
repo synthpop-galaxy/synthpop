@@ -4,6 +4,7 @@ SynthPop Configuration
 SynthPop is configured via json files with a ``.synthpop_conf`` extension. Each run must have a default configuration, and may optionally have a specific configuration which overrides any default values.
 
 The configuration sets the following: 
+
 * Sightlines
 * Coordinate system definition
 * Population generation settings
