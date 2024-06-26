@@ -206,5 +206,6 @@ Contents
 .. toctree::
 
    quickstart
+   configuration
    usage
    api
