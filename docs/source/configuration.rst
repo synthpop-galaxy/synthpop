@@ -12,30 +12,14 @@ The configuration sets the following:
 * Photometry settings
 * Output contents + formatting
 
-We provide a ``_default_config.synthpop_conf`` file, which is the automatic default file used if a custom one is not entered. 
-
-Setting Your Configuration
----------------------------
-To set a configuration for a SynthPop run via command line, use::
-
-  python -m synthpop <config_file>
-
-or::
-
-  python -m synthpop --specific_config <config_file> --default_config <default_config_file
-
-The equivalent process in a script that imports synthpop is::
-
-  import synthpop
-  model = synthpop.SynthPop('config_file',**kwargs)
-  model.init_population()
-  model.process_all()
-
-where ``default_config`` is an optional keyword argument.
+Specific and Default Configurations
+-----------------------------------
+We provide a ``_default_config.synthpop_conf`` file, which is the default file used if a custom one is not entered.
+A specific configuration will override any parameters defined in the default.
 
 The default values are defined in config_files/_default_config.json.
-Within the config file, it is sufficient to specify only the items 
-which differ from the _default_config file.  
+Within the specific config file, it is sufficient to specify only the items 
+which differ from the default config file.  
 We recommend to include all information you think are 
 usefull to understand the meaning of your generated catalog.
 For example the config file can look as follows::
@@ -54,8 +38,36 @@ For example the config file can look as follows::
       "extinction_law_kwargs": {"name":"ODonnellCardelli"}
     }
 
-Note that _default_config.json is sorted into different categories, 
-These can be (but don't need to be) translated into the config file. 
-Also note that arguments starting with an '#' are ignored.
+Setting Your Configuration
+---------------------------
+To set a configuration for a SynthPop run via command line, use::
+
+  python -m synthpop <config_file>
+
+or::
+
+  python -m synthpop --specific_config <config_file> --default_config <default_config_file>
+
+The equivalent process in a script that imports synthpop is::
+
+  import synthpop
+  model = synthpop.SynthPop('config_file',**kwargs)
+  model.init_population()
+  model.process_all()
+
+where ``default_config`` is an optional keyword argument.
+
+Configuration file formatting
+-----------------------------
+
+Our ``_default_config.json`` is sorted into different categories, which are not required but may be used for any configuration. Note that any arguments starting with an '#' are ignored, so we use these for comments. The optional category headings are: MANDITORY, SIGHTLINES, SEED, COORDINATE_SYSTEM, POPULATION_GENERATION, EXTINCTION_MAP, ISOCHRONE_INTERPOLATION, PHOTOMETRIC_OUTPUTS, and OUTPUT.
+
+MANDITORY
+^^^^^^^^^
+*model_name*: string defining the model directory containing the population files
+
+*name_for_output*: string defining the default directory and base for the output files
+
+
 
 
