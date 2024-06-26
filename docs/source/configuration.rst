@@ -70,13 +70,9 @@ MANDITORY
 
 SIGHTLINES
 ^^^^^^^^^^
-**l_set**
+**l_set**, **b_set**
 
-**l_set_type**
-
-**b_set**
-
-**l_set_type**
+**l_set_type**, **b_set_type**
 
 **solid_angle**
 
@@ -91,6 +87,8 @@ COORDINATE_SYSTEMS
 **sun**: dictionary containing the following values:
 
 * **x**, **y**, **z**: location of the Sun in cartesian Galactic coordinates (kpc)
+* **u**, **v**, **w**: motion of the Sun in cartesian Galactic coordinates (km/s)
+* **l_apex_deg**, **b_apex_deg**: direction of the Solar apex in Galactic coordinates (degree)
 
 
 POPULATION_GENERATION
