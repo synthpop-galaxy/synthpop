@@ -84,9 +84,13 @@ SIGHTLINES
 
 SEED
 ^^^^
+**random_seen**
 
 COORDINATE_SYSTEMS
 ^^^^^^^^^^^^^^^^^^
+**sun** dictionary containing the following values:
+* **x**, **y**, **z**: location of the Sun in cartesian Galactic coordinates (kpc)
+
 
 POPULATION_GENERATION
 ^^^^^^^^^^^^^^^^^^^^^
