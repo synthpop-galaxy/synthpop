@@ -64,9 +64,9 @@ Our ``_default_config.json`` is sorted into different categories, which are not 
 
 MANDITORY
 ^^^^^^^^^
-**model_name**: string defining the model directory containing the population files
+**model_name**: (string) model directory containing the population files
 
-**name_for_output**: string defining the default directory and base for the output files
+**name_for_output**: (string) default directory and base for the output files
 
 SIGHTLINES
 ^^^^^^^^^^
