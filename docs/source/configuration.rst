@@ -18,9 +18,20 @@ Setting Your Configuration
 ---------------------------
 To set a configuration for a SynthPop run via command line, use::
 
-  python synthpop config_file
+  python -m synthpop <config_file>
 
+or::
 
+  python -m synthpop --specific_config <config_file> --default_config <default_config_file
+
+The equivalent process in a script that imports synthpop is::
+
+  import synthpop
+  model = synthpop.SynthPop('config_file',**kwargs)
+  model.init_population()
+  model.process_all()
+
+where ``default_config`` is an optional keyword argument.
 
 The default values are defined in config_files/_default_config.json.
 Within the config file, it is sufficient to specify only the items 
