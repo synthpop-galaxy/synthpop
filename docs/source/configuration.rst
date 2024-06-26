@@ -64,10 +64,41 @@ Our ``_default_config.json`` is sorted into different categories, which are not 
 
 MANDITORY
 ^^^^^^^^^
-*model_name*: string defining the model directory containing the population files
+**model_name**: string defining the model directory containing the population files
 
-*name_for_output*: string defining the default directory and base for the output files
+**name_for_output**: string defining the default directory and base for the output files
 
+SIGHTLINES
+^^^^^^^^^^
+**l_set**
 
+**l_set_type**
 
+**b_set**
 
+**l_set_type**
+
+**solid_angle**
+
+**solid_angle_unit**
+
+SEED
+^^^^
+
+COORDINATE_SYSTEMS
+^^^^^^^^^^^^^^^^^^
+
+POPULATION_GENERATION
+^^^^^^^^^^^^^^^^^^^^^
+
+EXTINCTION_MAP
+^^^^^^^^^^^^^^
+
+ISOCHRONE_INTERPOLATION
+^^^^^^^^^^^^^^^^^^^^^^^
+
+PHOTOMETRIC_OUTPUTS
+^^^^^^^^^^^^^^^^^^^
+
+OUTPUT
+^^^^^^
