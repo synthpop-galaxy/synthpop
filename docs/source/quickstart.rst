@@ -69,7 +69,7 @@ while ``process_all()`` only saves the results to disk,
 
 Configure SynthPop
 ------------------
-See :doc:`configuration.rst`
+See :ref:`Configuration`
  
 
 Select magnitudes 
