@@ -1,6 +1,9 @@
 Welcome to SynthPop's documentation!
 ====================================
 
+..note::
+This documentation is under construction as of June 2024- more coming soon!
+
 **SynthPop** is an object-oriented, modular Python framework 
 for generating synthetic population models. 
 It generates a star catalog following the specified model and configuration.
