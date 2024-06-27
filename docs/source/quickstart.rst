@@ -38,7 +38,7 @@ To run the SynthPop type::
   python synthpop config_file 
   
 This processes all locations as defined in the config_file.
-Have a look at ```python synthpop -h ``` for additional arguments.
+Have a look at ``python synthpop -h `` for additional arguments.
 All results are stored in the defined output location
 (default: synthpop/output-files).
   
@@ -63,18 +63,18 @@ To run a specified locations::
   data, distributions = model.process_location(
         l_deg, b_deg,solid_angle) 
   
-while ```process_all()``` only saves the results to disk,
-```process_location()``` also returns the dataframe and several distributions
+while ``process_all()`` only saves the results to disk,
+``process_location()`` also returns the dataframe and several distributions
 (currently only distance distributions for each population)
 
 Configure SynthPop
 ------------------
-See :doc:'Configuration <configuration.rst>'
+See :doc:`Configuration <configuration.rst>`
  
 
 Select magnitudes 
 ^^^^^^^^^^^^^^^^^
-The ```"chosen_band"``` argument is used to specify the returned filters, 
+The ``"chosen_band"`` argument is used to specify the returned filters, 
 With the default MIST isochrone system, any available filter can be selected. 
 However, these have to follow the MIST column names (e.g. The PanSTARRS g magnitude can only specify by "PS_g")
 Note that the implement MIST module downloads the data automatically. 
