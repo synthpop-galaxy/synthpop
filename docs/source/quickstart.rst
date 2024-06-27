@@ -1,4 +1,4 @@
-Quickstart for SynthPop
+Quickstart
 =======================
 
 Installation
@@ -69,16 +69,7 @@ while ```process_all()``` only saves the results to disk,
 
 Configure SynthPop
 ------------------
-SynthPop is controlled by a config json file.
-The Default can be found in synthpop/config_files.
-To modify arguments, these must be saved in an additional
-config file and passed to the
-When an arguments are not specified, synthpop falls back to 
-the value in the default_config file. 
-
-Note that _default_config.json is sorted into different categories, 
-These can be (but don't need to be) translated into the config file. 
-Also note that arguments starting with an '#' are ignored. 
+See :doc:'Configuration <configuration.rst>'
  
 
 Select magnitudes 
