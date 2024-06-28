@@ -210,5 +210,4 @@ Contents
 
    quickstart
    configuration
-   usage
-   api
+   output
