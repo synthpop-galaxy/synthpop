@@ -28,7 +28,21 @@ Default basic outputs
    * - Mass
      - M\ :sub:`Sun`
      - current mass
-
+   * - In_Final_Phase
+     - 
+     - flag for stars beyond AGB phase
+   * - Dist
+     - kpc
+     - distance from Sun
+   * - l, b
+     - degree
+     - Galactic coordinates
+   * - vr_bc
+     - km/s
+     - radial velocity in barycentric frame
+   * - mul, mub
+     - mas/yr
+     - proper motion in Galactic coordinates
 
 Outputs from MIST evolution
 ----------------------------
