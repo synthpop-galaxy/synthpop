@@ -17,14 +17,18 @@ Default basic outputs
      -
      - population number
    * - iMass
-     - M_{Sun}
+     - M:sub:`Sun`
      - initial mass
    * - age
      - Gyr
      - current age
-   * - FE/H_initial
+   * - Fe/H_initial
      - dex
      - initial metallicity
+   * - Mass
+     - M:sub:`Sun`
+     - current mass
+
 
 Outputs from MIST evolution
 ----------------------------
