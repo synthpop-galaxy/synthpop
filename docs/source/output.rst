@@ -17,7 +17,7 @@ Default basic outputs
      -
      - population number
    * - iMass
-     - M :sub:`Sun`
+     - M\ :sub:`Sun`
      - initial mass
    * - age
      - Gyr
@@ -26,7 +26,7 @@ Default basic outputs
      - dex
      - initial metallicity
    * - Mass
-     - M :sub:`Sun`
+     - M\ :sub:`Sun`
      - current mass
 
 
