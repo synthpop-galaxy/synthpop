@@ -6,7 +6,7 @@ Output
 Default basic outputs
 ----------------------
 
-.. list-table:: Title
+.. list-table:: 
    :widths: 25 15 100
    :header-rows: 1
 
