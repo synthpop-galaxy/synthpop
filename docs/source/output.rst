@@ -36,7 +36,7 @@ Default basic outputs
      - distance from Sun
    * - l, b
      - degree
-     - Galactic coordinates
+     - Galactic longitude, latitute
    * - vr_bc
      - km/s
      - radial velocity in barycentric frame
