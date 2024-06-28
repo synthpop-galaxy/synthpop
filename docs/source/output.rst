@@ -43,6 +43,18 @@ Default basic outputs
    * - mul, mub
      - mas/yr
      - proper motion in Galactic coordinates
+   * - x, y, z
+     - kpc
+     - position in Galactic cartesian coordinates (see Figure)
+   * - U, V, W
+     - km/s
+     - velocity in Galactic cartesian coordinates (see Figure)
+   * - VR_LSR
+     - km/s
+     - radial velocity in local standard of rest frame
+   * - A_<band>
+     - mag
+     - extinction in <band>
 
 Outputs from MIST evolution
 ----------------------------
