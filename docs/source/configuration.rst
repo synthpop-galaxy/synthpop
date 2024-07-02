@@ -237,6 +237,7 @@ ISOCHRONE_INTERPOLATION
 * **interpolator**: name of isochrone interpolator class
 
 example for single evolution class::
+
     "ISOCHRONE_INTERPOLATION":{
         "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
     }
