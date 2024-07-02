@@ -160,5 +160,29 @@ ISOCHRONE_INTERPOLATION
 PHOTOMETRIC_OUTPUTS
 ^^^^^^^^^^^^^^^^^^^
 
+**mag_lim**: list containing the band to select on, the magnitude limit in that band, and "keep" or "remove" for whether to drop stars dimmer than the limit
+
+**chosen_bands**: list of filters to include for synthetic photometry
+
+**eff_wavelengths**: dictionary specifying effective wavelength for each chosen filter [Note: use option {"json_file":"AAA_effective_wavelengths.json"} to load these from a pre-existing file]
+
+**obs_mag**: boolean option to generate observed magnitudes (generates absolute magnitudes if set to false)
+
+**opt_iso_props**: optional stellar properties to save, with original column names from isochrones
+
+**col_names**: columns names for output for the columns determined in **opt_iso_props**
+
 OUTPUT
 ^^^^^^
+**post_processing_kwargs**: null, or list of dictionaries for postprocessing modules (to be executed in order), where the dictionaries contain:
+
+* **name**: name of postprocessing module
+* **<kwargs>**: required or optional kwargs for the given extinction module
+
+**output_location**: path for folder to save output to
+
+**output_filename_pattern**: string describing naming system for output files. Accessible values are model_base_name (str), model_name (str), l_deg (float), b_deg(float), solid_angle (float), date (datetime.date object), time (datetime.time object).
+
+**output_file_type**: list containing output file type and dictionary for additional kwargs
+
+**overwrite**: boolean option to overwrite existing output files of the same name
