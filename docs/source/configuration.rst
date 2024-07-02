@@ -101,7 +101,7 @@ COORDINATE_SYSTEMS
 **warp**: dictionary describing the warp of the galaxy, where warp is parametrized as z_w=a(R-R_W)^b sin(phi-phi_W) (see `Chen et al. 2019 <https://ui.adsabs.harvard.edu/abs/2019NatAs...3..320C/abstract>`_) [note: these values can be overwritten in population files]:
 
 * **r_warp**: radius where the warp begins (kpc, R_W in equation below)
-* **amp_warp**: warp amplitude (a in equation below) [note: set this to null to use **amp_warp_pos**+**amp_warp_neg**]
+* **amp_warp**: warp amplitude (a in equation below) [note: set this to null to use **amp_warp_pos** + **amp_warp_neg**]
 * **amp_warp_pos**, **amp_warp_neg**: warp amplitude (a in equation below), for positive and negative phi [note: set these to null to use **amp_warp**]
 * **alpha_warp**: exponent of warp power law (b in equation below)
 * **phi_warp_deg**, **phi_warp_rad**: angle for line of notes, where one should be specified with indicated unit (degree or radian)
@@ -109,26 +109,53 @@ COORDINATE_SYSTEMS
 
 POPULATION_GENERATION
 ^^^^^^^^^^^^^^^^^^^^^
-**max_distance**
+**max_distance**: maximum distance for stars in catalog (kpc)
 
-**distance_step_size**
+**distance_step_size**: step size for generation of stars as slices in distance (kpc)
 
 **window_type**: dictionary containing the following:
 
-* **window_type**
+* **window_type**: currently must be set to "cone" [note: other options are planned but not in the immediate future]
 * **kwargs**
 
 **mass_lims**: range of initial stellar masses to produce
 
 **N_mc_totmass**: number of stars to use to estimate number of stars needed per slice
 
-**
+**lost_mass_option**: method to estimate correction for mass loss
+
+**N_av_mass**: number of stars to use to estimate average evolved stellar mass
+
+**kinematics_at_the_end**: sets whether to determine stellar masses are evolved at the end of the process, instead of as stars are generated (boolean)
+
+**scale_factor**: scale down number of generated stars as n_generated = (n_total/scale_factor)
+
+**skip_lowmass_stars**: option to skip the generation of low mass stars which cannot be bright enough to reach the magnitude cut [note: improves runtimes and memory usage]
+
+**chunk_size**: for computational feasibility, limit number of stars to evolve at once to this value
 
 EXTINCTION_MAP
 ^^^^^^^^^^^^^^
 
+**extinction_map_kwargs**: dictionary containing:
+
+* **name**: name of extinction map module
+* **<kwargs>**: any kwargs required or optional for the selected module
+
+**extinction_law_kwargs**: dictionary containing:
+
+* **name**: name of extinction law module
+* **<kwargs>**: any kwargs required or optional for the selected module
+[Note: multi-evolution class options are available]
+
+**R_V**: total to selective extinction ratio [note: only used in select extinction laws]
+
 ISOCHRONE_INTERPOLATION
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+**evolution_class**: dictionary containing:
+* **name**: name of stellar evolution class
+* **interpolator**: name of isochrone interpolator class
 
 PHOTOMETRIC_OUTPUTS
 ^^^^^^^^^^^^^^^^^^^
