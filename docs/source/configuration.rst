@@ -94,6 +94,7 @@ SIGHTLINES
 **solid_angle_unit**: angle for solid angle of FoV (options: "deg^2" for square degree, "sr" for steradian)
 
 example::
+
     "SIGHTLINES":{
             "l_set": [3,4],
             "l_set_type":"list",
@@ -127,6 +128,33 @@ COORDINATE_SYSTEMS
 * **alpha_warp**: exponent of warp power law (b in equation below)
 * **phi_warp_deg**, **phi_warp_rad**: angle for line of notes, where one should be specified with indicated unit (degree or radian)
 
+example with solar motion from Reid & Brunthaler (2020), LSR motion from Schönrich et al. (2010), warp from Chen X. et al (2019)::
+
+    "COORDINATE_SYSTEM":{
+        "sun": {
+            "x": -8.178,
+            "y": 0.0,
+            "z": 0.017,
+            "u": 12.9,
+            "v": 245.6,
+            "w": 7.78,
+            "l_apex_deg": 56.24,
+            "b_apex_deg": 22.54
+        },
+        "lsr":{
+            "u_lsr": 1.8,
+            "v_lsr": 233.4,
+            "w_lsr": 0.53
+        },
+        "warp": {
+            "r_warp": 7.72,
+            "amp_warp": 0.060,
+            "amp_warp_pos": null,
+            "amp_warp_neg": null,
+            "alpha_warp": 1.33,
+            "phi_warp_deg": 17.5
+        }
+    },
 
 POPULATION_GENERATION
 ^^^^^^^^^^^^^^^^^^^^^
@@ -155,6 +183,22 @@ POPULATION_GENERATION
 
 **chunk_size**: for computational feasibility, limit number of stars to evolve at once to this value
 
+example::
+
+    "POPULATION_GENERATION":{
+        "max_distance":25,
+        "distance_step_size":0.10,
+        "window_type":{"window_type":"cone"},
+        "mass_lims":{"min_mass":0.08,"max_mass":100},
+        "N_mc_totmass":10000,
+        "lost_mass_option": 1,
+        "N_av_mass":20000,
+        "kinematics_at_the_end":true,
+        "scale_factor": 1,
+        "skip_lowmass_stars": false,
+        "chunk_size": 250000
+    },
+
 EXTINCTION_MAP
 ^^^^^^^^^^^^^^
 
@@ -171,12 +215,53 @@ EXTINCTION_MAP
 
 **R_V**: total to selective extinction ratio [note: only used in select extinction laws]
 
+example::
+
+    "EXTINCTION_MAP":
+        {
+        "extinction_map_kwargs":{
+            "name":"MapsFromDustmaps", "dustmap_name":"marshall"
+            },
+        "extinction_law_kwargs":
+            [
+            {"name":"SODC"}
+            ],
+        "R_V":2.5
+        },
+
 ISOCHRONE_INTERPOLATION
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 **evolution_class**: dictionary containing:
 * **name**: name of stellar evolution class
 * **interpolator**: name of isochrone interpolator class
+
+example for single evolution class::
+    "ISOCHRONE_INTERPOLATION":{
+        "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
+    }
+
+example for evolution class determined by initial mass, where we iterate through the list and apply the first appropriate option per star::
+
+    "ISOCHRONE_INTERPOLATION":{
+        "evolution_class":[
+                {"name":"MIST", "min_mass":0.2, "max_mass":0.3},
+                {"name":"MIST", "interpolator":"LagrangeInterpolator","min_mass":0.1, "max_mass":0.7},
+                {"name":"MIST", "interpolator":"CharonInterpolator"}
+            ]
+    }
+
+example for evolution class determined by population::
+
+    "ISOCHRONE_INTERPOLATION":{
+        "evolution_class":{
+            "default":[
+                {"name":"MIST", "interpolator":"CharonInterpolator"}
+                ],
+            "<population_name>":[
+                        {"name":"MIST", "interpolator":"LagrangeInterpolator"}
+            ]
+    }
 
 PHOTOMETRIC_OUTPUTS
 ^^^^^^^^^^^^^^^^^^^
@@ -193,6 +278,18 @@ PHOTOMETRIC_OUTPUTS
 
 **col_names**: columns names for output for the columns determined in **opt_iso_props**
 
+example::
+
+    "PHOTOMETRIC_OUTPUTS":{
+        "maglim":["Bessell_I", 18, "remove"],
+        "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "VISTA_J", "VISTA_H", "VISTA_Ks"],
+        "eff_wavelengths": {"json_file":"AAA_effective_wavelengths.json"},
+        "obsmag":true,
+
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
+        "col_names":["logL", "Teff", "logg" ,"Fe/H_evolved","log_radius"]
+    },
+
 OUTPUT
 ^^^^^^
 **post_processing_kwargs**: null, or list of dictionaries for postprocessing modules (to be executed in order), where the dictionaries contain:
@@ -207,3 +304,13 @@ OUTPUT
 **output_file_type**: list containing output file type and dictionary for additional kwargs
 
 **overwrite**: boolean option to overwrite existing output files of the same name
+
+example::
+
+    "OUTPUT":{
+        "post_processing_kwargs": [{"name":"ProcessDarkCompactObjects", "remove":true}],
+        "output_location":"outputfiles/testing",
+        "output_filename_pattern": "{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}",
+        "output_file_type": ["csv",{}],
+        "overwrite": true
+    }
