@@ -68,26 +68,40 @@ Our ``_default_config.json`` is sorted into different categories, which are not 
 
 MANDITORY
 ^^^^^^^^^
-example code::
+**model_name**: (string) model directory containing the population files
+
+**name_for_output**: (string) default directory and base for the output files
+
+example::
 
     "MANDATORY":{
         "model_name":"Model1",
         "name_for_output":"Model1_v1"
     },
 
-**model_name**: (string) model directory containing the population files
-
-**name_for_output**: (string) default directory and base for the output files
-
 SIGHTLINES
 ^^^^^^^^^^
-**l_set**, **b_set**
+**l_set**, **b_set**: lists of Galactic longitude and latitudes for sightlines to generate (degrees)
 
-**l_set_type**, **b_set_type**
+**l_set_type**, **b_set_type**: three options for how to handle **l_set** and **b_set**:
 
-**solid_angle**
+* "list": create a grid of sightlines, with all l and b values looped over individually, i.e. ((l[0],b[0]),...,(l[0],b[i]),(l[1],b[0]),... 
+* "pairs": treats the l and b sets as a list of pairs, i.e. ((l[0],b[0]),..., (l[i],b[i])
+* "range": treats the l and b sets as arguments for np.arange([l/b]_set)
 
-**solid_angle_unit**
+**solid_angle**: solid angle of cone FoV in units defined by **solid_angle_unit**
+
+**solid_angle_unit**: angle for solid angle of FoV (options: "deg^2" for square degree, "sr" for steradian)
+
+example::
+    "SIGHTLINES":{
+            "l_set": [3,4],
+            "l_set_type":"list",
+            "b_set":[-1,0,1],
+            "b_set_type":"list",
+           "solid_angle": 1e-2,
+            "solid_angle_unit": "deg^2"
+    }
 
 SEED
 ^^^^
