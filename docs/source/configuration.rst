@@ -97,7 +97,12 @@ COORDINATE_SYSTEMS
 * **u_lsr**, **v_lsr**, **w_lsr**: velocity of the local standard of rest (km/s) in cartesian Galactic coordinates
 
 **warp**: dictionary describing the warp of the galaxy (can be overwritten in population files)
-* 
+* **r_warp**: radius where the warp begins (kpc, R_W in equation below)
+* **amp_warp**: warp amplitude (a in equation below) [note: set this to null to use **amp_warp_pos**+**amp_warp_neg**]
+* **amp_warp_pos**, **amp_warp_neg**: warp amplitude (a in equation below), for positive and negative phi [note: set these to null to use **amp_warp**]
+* **alpha_warp**: exponent of warp power law (b in equation below)
+* **phi_warp_deg**, **phi_warp_rad**: angle for line of notes, where one should be specified with indicated unit (degree or radian)
+where warp is parametrized as z_w=a(R-R_W)^b sin(phi-phi_W) (see `Chen et al. 2019 <https://ui.adsabs.harvard.edu/abs/2019NatAs...3..320C/abstract>`_)
 
 POPULATION_GENERATION
 ^^^^^^^^^^^^^^^^^^^^^
