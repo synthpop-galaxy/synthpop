@@ -89,14 +89,31 @@ SEED
 COORDINATE_SYSTEMS
 ^^^^^^^^^^^^^^^^^^
 **sun**: dictionary containing the following values:
-
 * **x**, **y**, **z**: location of the Sun in cartesian Galactic coordinates (kpc)
 * **u**, **v**, **w**: motion of the Sun in cartesian Galactic coordinates (km/s)
 * **l_apex_deg**, **b_apex_deg**: direction of the Solar apex in Galactic coordinates (degree)
 
+**lsr**: dictionary containing the following values:
+* **u_lsr**, **v_lsr**, **w_lsr**: velocity of the local standard of rest (km/s) in cartesian Galactic coordinates
+
+**warp**: dictionary describing the warp of the galaxy (can be overwritten in population files)
+* 
 
 POPULATION_GENERATION
 ^^^^^^^^^^^^^^^^^^^^^
+**max_distance**
+
+**distance_step_size**
+
+**window_type**: dictionary containing the following:
+* **window_type**
+* **kwargs**
+
+**mass_lims**: range of initial stellar masses to produce
+
+**N_mc_totmass**: number of stars to use to estimate number of stars needed per slice
+
+**
 
 EXTINCTION_MAP
 ^^^^^^^^^^^^^^
