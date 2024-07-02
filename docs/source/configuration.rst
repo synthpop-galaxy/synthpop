@@ -68,6 +68,13 @@ Our ``_default_config.json`` is sorted into different categories, which are not 
 
 MANDITORY
 ^^^^^^^^^
+example code::
+
+    "MANDATORY":{
+        "model_name":"Model1",
+        "name_for_output":"Model1_v1"
+    },
+
 **model_name**: (string) model directory containing the population files
 
 **name_for_output**: (string) default directory and base for the output files
