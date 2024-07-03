@@ -32,7 +32,7 @@ synthpop.population module
 --------------------------
 
 .. automodule:: synthpop.population
-   :members:
+   :members: Population
    :undoc-members:
    :show-inheritance:
 
