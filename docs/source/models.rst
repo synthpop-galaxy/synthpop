@@ -34,4 +34,12 @@ specifying the module, e.g.::
         "std2" : 0.20
     }
 
-Additional kwargs can be used to define galactic warp.
+Additional kwargs can be used to define galactic warp, e.g.::
+
+    "warp":{
+        "r_warp": 9.8065,
+        "amp_warp_pos": 0.61675,
+        "amp_warp_neg": 0.18500,
+        "phi_warp_rad": -0.1570536732,
+        "alpha_warp": 1.0
+    }
