@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.abspath('../../synthpop/_modules/'))
 project = 'SynthPop'
 copyright = 'tbd'
 author = 'M Huston'
+master_doc = 'index'
 
 release = '0.1'
 version = '0.1.0'
