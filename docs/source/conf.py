@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.abspath('../../synthpop/_modules/'))
 sys.path.insert(0, os.path.abspath('../../synthpop/_modules/age/'))
 
 from synthpop import migrate_interactive_part
-
+migrate_interactive_part.migrate('../../synthpop')
 
 project = 'SynthPop'
 copyright = 'tbd'
