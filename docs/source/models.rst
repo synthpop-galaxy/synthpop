@@ -1,6 +1,7 @@
 Models
 ======
 
+In the code, each Model option exists as a directory in ``synthpop/modules``.
 A model is defined by a collection of populations. 
 Each population is further described by the following 5 modules:
 
@@ -10,8 +11,7 @@ Each population is further described by the following 5 modules:
 4. Metallicity Distribution
 5. Kinematics
 
-A model is implemented as a dictionary containing separate json files, one for each population.
-To avoid ambiguity, a ".popjson" extension should be used for these files. 
+To avoid ambiguity, a ".popjson" extension should be used for the population files. 
 Each files must define the following keywords::
 
     "name" : "name_of_the_population"
@@ -22,7 +22,7 @@ Each files must define the following keywords::
     "population_density_kwargs" : ...
 
 Each of the kwargs items includes a sub-dictionary 
-specifying the module, e.g.::
+specifying the module name and any keyword arguments for the module, e.g.::
 
     "metallicity_func_kwargs" : {
         "name" : "double_gaussian",
