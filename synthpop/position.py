@@ -1,6 +1,6 @@
 """
 This file includes the Position class.
-It handles the generation of stars within a given Cone.
+It handles the generation of star positions within a given cone.
 """
 
 __all__ = ['Position']
@@ -8,7 +8,7 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2022-07-06"
 __license__ = "GPLv3"
-__version__ = "0.2.0"
+__version__ = "0.1.0"
 
 from typing import Tuple
 import numpy as np
@@ -16,7 +16,6 @@ try:
     from . import synthpop_utils as sp_utils
 except ImportError:
     import synthpop_utils as sp_utils
-
 
 class Position:
     """

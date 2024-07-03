@@ -20,7 +20,7 @@
         "std" : 0.10
     },
     "population_density_kwargs" : {
-        "name" : "BulgeDensityBesancon",
+        "name" : "Besancon2003Bulge",
         "x0":1.59,
         "y0":0.424,
         "z0":0.424,

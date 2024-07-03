@@ -23,9 +23,11 @@ class WangChen2019(ExtinctionLaw):
     """
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.extinction_law_name = 'WangChen2019'
+        self.law_ref_wavelength = 0.549
 
-    def Alambda_AV(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float, R_V: float = 3.1) -> float:
         """
         Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
 

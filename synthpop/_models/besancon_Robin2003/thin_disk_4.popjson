@@ -19,7 +19,7 @@
     },
 
     "kinematics_func_kwargs" : {
-        "name" : "Besancon",
+        "name" : "Besancon2003",
         "sigma_u" : 30.2,
         "sigma_v" : 19.5,
         "sigma_w" : 13.2, 
@@ -27,7 +27,7 @@
     }, 
 
     "population_density_kwargs" : {
-        "name" : "einasto",
+        "name" : "Besancon2003Thindisk",
         "#comment" : "p0 in Msun/kpc**3 (10**9)",
         "p0" : 0.004020E9,
         "e" : 0.0551,
@@ -36,14 +36,6 @@
         "hrm" : 1.320,
         "offset":0.5,
         "power":1
-    },
-
-    "evolution_kwargs" : {
-        "json_file" : "models/besancon_Robin2003/defaults/evolution.json"
-    },
-
-    "extinction_kwargs" : {
-        "json_file" : "models/besancon_Robin2003/defaults/extinction.json"
     },
     
     "av_mass_corr" : 0.620140,

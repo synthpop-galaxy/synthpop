@@ -5,8 +5,8 @@ The Evolution class is split into a EvolutionIsochrones and EvolutionInterpolato
 This allows to vary both independently.
 Those are combined into a common Evolution Class using the CombineEvolution function
 
-A EvolutionIsochrones subclass should also have an EvolutionInterpolator as second Parent 
-to specify a default interpolator. This interpolator is used whenever no Interpolator is defined. 
+A EvolutionIsochrones subclass should also have an EvolutionInterpolator as second Parent
+to specify a default interpolator. This interpolator is used whenever no Interpolator is defined.
 """
 
 __all__ = [
@@ -20,7 +20,10 @@ __version__ = '1.0.0'
 
 import os
 from abc import ABC, abstractmethod
+from types import ModuleType
+
 import numpy as np
+
 from .. import const
 
 ISOCHRONES_DIR = const.ISOCHRONES_DIR
@@ -59,8 +62,7 @@ class EvolutionIsochrones(ABC):
     """
     isochrones_name = None
     isochrones_grouped = None
-
-    def __init__(self, columns=None, **kwargs):
+    def __init__(self, columns=None, logger: ModuleType = None,  **kwargs):
         """
 
         Parameters
@@ -68,7 +70,9 @@ class EvolutionIsochrones(ABC):
         columns: list of columns to be loaded
         kwargs : additional parameters specified in the evolution_class
         """
-        super().__init__()
+        super().__init__(**kwargs)
+        self.columns = columns
+        self.logger = logger
 
     def get_isochrones(self):
         """
@@ -88,8 +92,6 @@ class EvolutionIsochrones(ABC):
 
         Parameters
         ----------
-        band : str
-´           filter name
         magnitude_limit : float
             maximum observed magnitude, (set distance to 0.01 if absolute magnitudes),
         distances : np.ndarray or float
@@ -108,7 +110,7 @@ class EvolutionIsochrones(ABC):
         else:
             next_age = self.iso_ages[np.searchsorted(self.iso_ages[:-1], max_age * 1e9)]
             max_age = np.log10(next_age)
-        oldest = self.isochrones_grouped((min(self.file_met), age))
+        oldest = self.isochrones_grouped.get_group((min(self.file_met),max_age))
 
         no_mass_loss = oldest[1 - oldest['star_mass'] / oldest['initial_mass'] < 1e-4]
         closest = np.searchsorted(-no_mass_loss[band][1:], -abs_mag_lim)
@@ -153,6 +155,9 @@ class EvolutionInterpolator(ABC):
     met_to_file_iso = None
     file_met = None
     iso_ages = None
+    def __init__(self,  logger: ModuleType = None, **kwargs):
+        self.logger = logger
+
 
     @abstractmethod
     def get_evolved_props(self, m_init, met, age, props, **kwargs):
@@ -214,7 +219,7 @@ def CombineEvolution(Isochrones=None, Interpolator=None):
             A Combined Class of an Isochrones grid and an interpolator.
             """
 
-            def __init__(self, int_kwargs=None, iso_kwargs=None):
+            def __init__(self, int_kwargs=None, iso_kwargs=None,  logger: ModuleType = None):
                 """
                 Parameters
                 ----------
@@ -226,7 +231,7 @@ def CombineEvolution(Isochrones=None, Interpolator=None):
                 # initialize Isochrones
                 if iso_kwargs is None:
                     iso_kwargs = {}
-                Isochrones.__init__(self, **iso_kwargs)
+                super().__init__(logger=logger, **iso_kwargs)
 
                 # add Isochrones docstring
                 if Isochrones.__doc__ is not None:
@@ -242,7 +247,7 @@ def CombineEvolution(Isochrones=None, Interpolator=None):
             A Combined Class of an Isochrones grid and an Interpolator.
             """
 
-            def __init__(self, int_kwargs=None, iso_kwargs=None):
+            def __init__(self, int_kwargs=None, iso_kwargs=None, logger: ModuleType = None):
                 """
                 Parameters
                 ----------
@@ -251,6 +256,7 @@ def CombineEvolution(Isochrones=None, Interpolator=None):
                 iso_kwargs: dict
                      keyword arguments for the Isochrone
                 """
+
 
                 # initialize Isochrones
                 if iso_kwargs is None:
@@ -261,7 +267,7 @@ def CombineEvolution(Isochrones=None, Interpolator=None):
                 if int_kwargs is None:
                     int_kwargs = {}
                 Interpolator.__init__(self, **int_kwargs)
-
+                self.logger = logger
                 # add Isochrones docstring
                 if Isochrones.__doc__ is not None:
                     self.__doc__ = ''.join(

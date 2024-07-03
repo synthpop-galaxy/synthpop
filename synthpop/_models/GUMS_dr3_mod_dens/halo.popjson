@@ -1,0 +1,39 @@
+{
+    "name" : "halo",
+
+    "population_density_kwargs" : {
+        "name" : "GumsHalo",
+        "rho0": 10.455e4,
+        "# rho0": "4.1e4 * 2.55",
+        "e": 0.774,
+        "ah": 1,
+        "dh": 2.777231,
+        "rc": 2.175827881
+    },
+
+    "#imf_func_kwargs" :{
+        "name": "PiecewisePowerlaw",
+        "alphas": [0.5]
+    },
+    "imf_func_kwargs": {"name": "Kroupa"},
+    "age_func_kwargs" : {
+        "name" : "SingleValue",
+        "age_value": 14
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "Gaussian",
+        "mean" : -1.5,
+        "std" : 0.5,
+        "low_bound" : -4,
+        "high_bound" : 1
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "VelocityGradient",
+        "sigma_u": 131,
+        "sigma_v": 106,
+        "sigma_w": 85
+    }
+
+}

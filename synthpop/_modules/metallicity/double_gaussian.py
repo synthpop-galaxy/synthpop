@@ -6,6 +6,7 @@ __date__ = "2022-07-06"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
+import math
 import numpy as np
 from ._metallicity import Metallicity
 
@@ -119,3 +120,23 @@ class DoubleGaussian(Metallicity):
         """Determine the average metallicity of the population"""
 
         return self.weight * self.mean1 + (1 - self.weight) * self.mean2
+
+
+    def likelyhood_distribution(self, met: np.ndarray) -> np.ndarray:
+        """ analytic version  of likelyhood_distribution. only used for the validating"""
+
+        properbility = self.weight / np.sqrt(2*np.pi)/self.std1 \
+                       * np.exp(-0.5*((met-self.mean1)/self.std1)**2) \
+                       + (1 - self.weight) / np.sqrt(2*np.pi)/self.std2 \
+                       * np.exp(-0.5 * ((met - self.mean2) / self.std2) ** 2)
+
+        # include upper and lower cut
+        properbility[met>self.upper] = 0
+        properbility[met<self.lower] = 0
+        # renormalize
+        norm = self.weight * (math.erf((self.upper-self.mean1)/self.std1/np.sqrt(2))
+               + math.erf((self.mean1-self.lower)/self.std1/np.sqrt(2)))/2 \
+               + (1-self.weight) * (math.erf((self.upper - self.mean2) / self.std2 / np.sqrt(2))
+               + math.erf((self.mean2 - self.lower) / self.std2 / np.sqrt(2))) / 2
+
+        return properbility / norm

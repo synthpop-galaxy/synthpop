@@ -12,10 +12,8 @@ import pandas
 from types import ModuleType
 from .. import default_sun
 
-
 class PostProcessing:
-    def __init__(
-            self,
+    def __init__(self,
             model: ModuleType = None,
             logger: ModuleType = None,
             sun: ModuleType = None,

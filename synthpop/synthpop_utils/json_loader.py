@@ -17,9 +17,9 @@ import json
 import logging
 
 try:
-    from .. import constants as const
-except ImportError:
     import constants as const
+except (ImportError, ValueError):
+    from .. import constants as const
 
 logger = logging.getLogger('synthpop')
 

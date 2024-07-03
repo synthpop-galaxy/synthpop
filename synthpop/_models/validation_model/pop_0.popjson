@@ -25,7 +25,7 @@
     },
 
     "population_density_kwargs" : {
-        "name" : "Einasto",
+        "name" : "Besancon2003Thindisk",
         "#comment" : "p0 in Msun/kpc**3 (10**9)",
         "p0" : 4.002E7,
         "e" : 0.0268,

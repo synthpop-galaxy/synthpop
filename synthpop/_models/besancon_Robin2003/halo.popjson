@@ -18,7 +18,7 @@
     },
 
     "kinematics_func_kwargs" : {
-        "name" : "Besancon",
+        "name" : "Besancon2003",
         "sigma_u" : 131.0,
         "sigma_v" : 106.0,
         "sigma_w" : 85.0,
@@ -26,15 +26,7 @@
     }, 
 
     "population_density_kwargs" : {
-        "name" : "spheroid"
-    },
-
-    "evolution_kwargs" : {
-        "json_file" : "models/besancon_Robin2003/defaults/evolution.json"
-    },
-
-    "extinction_kwargs" : {
-        "json_file" : "models/besancon_Robin2003/defaults/extinction.json"
+        "name" : "Besancon2003Halo",
     },
     
     "av_mass_corr" : 0.549629,

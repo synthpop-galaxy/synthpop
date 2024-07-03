@@ -15,7 +15,6 @@ def solidangle_to_half_cone_angle(solid_angle):
 def half_cone_angle_to_solidangle(cone_angle):
     return (2. * np.pi) * (1 - np.cos(cone_angle))
 
-
 def rotation_matrix(
         theta_rad: float or np.ndarray or None = None,
         st: float or np.ndarray or None = None, ct: float or np.ndarray or None = None,

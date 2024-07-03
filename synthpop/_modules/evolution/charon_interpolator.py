@@ -43,6 +43,7 @@ class CharonInterpolator(EvolutionInterpolator):
     accept_np_arrays = True
 
     def __init__(self, isochrones=None, props_no_charon=None, coins=2, **kwargs):
+        super().__init__(**kwargs)
         if coins < 2:
             raise ValueError("you needed 2 coins to pay Charon to cross the river Styx.")
         if isochrones is not None:
@@ -315,7 +316,7 @@ class CharonInterpolator(EvolutionInterpolator):
         grid : ndarray
         data : ndarray
         """
-
+        max_mass = np.zeros(len(iso_ages))
         data = np.zeros((len(iso_ages), len(props), 4))
         grid = np.zeros((len(iso_ages), 1, 4))
 
@@ -329,17 +330,18 @@ class CharonInterpolator(EvolutionInterpolator):
                     continue
                 # get all masses with for the iso_age and iso_met
                 current_iso = self.isochrones_grouped.get_group((current_met, current_age))
-                grid_index, grid_masses = self.grid_n4(current_iso["initial_mass"],
+                grid_index, grid_masses = self.grid_n4(current_iso.initial_mass,
                     mass[common_met_and_age])
                 grid[common_met_and_age, 0, :] = grid_masses
+                max_mass[common_met_and_age] = current_iso.initial_mass.max()
                 # evaluate the properties at the selected grid points
 
                 for i, item in enumerate(props):
                     data[common_met_and_age, i] = (
                         current_iso.iloc[grid_index.ravel()][item]
-                    ).values.reshape(grid_index.shape)
+                        ).values.reshape(grid_index.shape)
 
-        return grid, data
+        return grid, data, max_mass
 
         # Interpolate each property to the proper metallicity
 
@@ -378,7 +380,7 @@ class CharonInterpolator(EvolutionInterpolator):
         inter_props returns a dictionary with interpolated values  for each property
         """
 
-        grid, data = self.combined_grid(mass, met_grid, log_age_grid, props)
+        grid, data, max_mass = self.combined_grid(mass, met_grid, log_age_grid, props)
 
         in_grid = grid[:, 0, 1] != grid[:, 0, 2]
 
@@ -386,7 +388,7 @@ class CharonInterpolator(EvolutionInterpolator):
         result = self.lagrange_poly(mass, grid, data)
 
         # transform results into a dictionary
-        return result, in_grid
+        return result, in_grid, max_mass
 
     def get_modified_mass(self, mass, met, log_age, grid_met, grid_log_age):
         """
@@ -417,11 +419,11 @@ class CharonInterpolator(EvolutionInterpolator):
         end_grid = self.endp_func(grid_met, grid_log_age, grid=False)
 
         mass_new = (mass - tip1_req) / (tip2_req - tip1_req) \
-                   * (tip2_grid - tip1_grid) + tip1_grid
+                    * (tip2_grid - tip1_grid) + tip1_grid
         mass_new_rgb_phase = (mass - tip0_req) / (tip1_req - tip0_req) \
-                             * (tip1_grid - tip0_grid) + tip0_grid
+                              * (tip1_grid - tip0_grid) + tip0_grid
         mass_new_wd_phase = (mass - tip2_req) / (end_req - tip2_req) \
-                            * (end_grid - tip2_grid) + tip2_grid
+                             * (end_grid - tip2_grid) + tip2_grid
 
         mass_new[mass < tip1_req] = mass_new_rgb_phase[mass < tip1_req]
         mass_new[mass > tip2_req] = mass_new_wd_phase[mass > tip2_req]
@@ -430,18 +432,9 @@ class CharonInterpolator(EvolutionInterpolator):
         weight = (mass - tip0_req * 0.95) / (tip0_req * 0.05)
 
         weight = np.clip(weight, 0, 1)
-        w = 0.0
-        if w != 0:
-            # smooth weight
-            weight = 1 / (1 + np.exp((0.5 - weight) / w))
-            # ensure weight(0) == 0
-            weight -= 1 / (1 + np.exp(0.5 / w))
-            # ensure weight(1) == 1
-            weight /= (1 / (1 + np.exp(-0.5 / w)) - 1 / (1 + np.exp(0.5 / w)))
 
         mass_new = (1 - weight) * mass + weight * mass_new
-        if any(mass_new < 0.1):
-            print("WARNING!")
+
         return mass_new
 
     def get_adjacent_gridpoints(self, met, log_ages):
@@ -567,14 +560,13 @@ class CharonInterpolator(EvolutionInterpolator):
 
         # evolve props not_good for charon:
         if props_no_charon:
-
-            p_f1, in_grid1 = self.interp_props(m_init, iso_met_lower, log_iso_ages_lower,
+            p_f1, in_grid1, max_mass1 = self.interp_props(m_init, iso_met_lower, log_iso_ages_lower,
                 props_no_charon)
-            p_f2, in_grid2 = self.interp_props(m_init, iso_met_lower, log_iso_ages_higher,
+            p_f2, in_grid2, max_mass2 = self.interp_props(m_init, iso_met_lower, log_iso_ages_higher,
                 props_no_charon)
-            p_f3, in_grid3 = self.interp_props(m_init, iso_met_higher, log_iso_ages_lower,
+            p_f3, in_grid3, max_mass3 = self.interp_props(m_init, iso_met_higher, log_iso_ages_lower,
                 props_no_charon)
-            p_f4, in_grid4 = self.interp_props(m_init, iso_met_higher, log_iso_ages_higher,
+            p_f4, in_grid4, max_mass4 = self.interp_props(m_init, iso_met_higher, log_iso_ages_higher,
                 props_no_charon)
 
             result = (w1 * p_f1 + w2 * p_f2 + w3 * p_f3 + w4 * p_f4) / (w1 + w2 + w3 + w4)
@@ -598,14 +590,18 @@ class CharonInterpolator(EvolutionInterpolator):
             mass4 = self.get_modified_mass(m_init, met,
                 log_ages, iso_met_higher, log_iso_ages_higher)
 
-            p_f1_charon, in_grid1 = self.interp_props(mass1, iso_met_lower, log_iso_ages_lower,
-                props_with_charon)
-            p_f2_charon, in_grid2 = self.interp_props(mass2, iso_met_lower, log_iso_ages_higher,
-                props_with_charon)
-            p_f3_charon, in_grid3 = self.interp_props(mass3, iso_met_higher, log_iso_ages_lower,
-                props_with_charon)
-            p_f4_charon, in_grid4 = self.interp_props(mass4, iso_met_higher, log_iso_ages_higher,
-                props_with_charon)
+            p_f1_charon, in_grid1, max_mass_1 = self.interp_props(
+                mass1, iso_met_lower, log_iso_ages_lower, props_with_charon)
+
+            p_f2_charon, in_grid2, max_mass_2 = self.interp_props(
+                mass2, iso_met_lower, log_iso_ages_higher, props_with_charon)
+
+            p_f3_charon, in_grid3, max_mass_3 = self.interp_props(
+                mass3, iso_met_higher, log_iso_ages_lower, props_with_charon)
+
+            p_f4_charon, in_grid4, max_mass_4 = self.interp_props(
+                mass4, iso_met_higher, log_iso_ages_higher, props_with_charon)
+
 
             result_charon = ((w1 * p_f1_charon + w2 * p_f2_charon
                               + w3 * p_f3_charon + w4 * p_f4_charon)
@@ -617,9 +613,17 @@ class CharonInterpolator(EvolutionInterpolator):
                       & (in_grid4 | (w4[:, 0] == 0))
 
         else:
+            mass1 = mass2 = mass3 = mass4 = m_init
             result_charon = None
 
-        final_phase = m_init > self.tips2_func(met, log_ages, grid=False)
+        final_phase = ((m_init > self.tips2_func(met, log_ages, grid=False))
+                    | (max_mass_1 < mass1)
+                    | (max_mass_2 < mass2)
+                    | (max_mass_3 < mass3)
+                    | (max_mass_4 < mass4))
+
+
+
         output = {item: result[..., i] for i, item in enumerate(props_no_charon)}
         output.update({item: result_charon[..., i] for i, item in enumerate(props_with_charon)})
 

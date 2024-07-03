@@ -8,13 +8,12 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-05-05"
 __license__ = "GPLv3"
-__version__ = "0.2.0"
+__version__ = "0.1.0"
 
 
 from functools import cached_property
 import numpy as np
 from pydantic import BaseModel
-
 
 class SunInfo(BaseModel):
     # location of the sun
@@ -38,7 +37,7 @@ class SunInfo(BaseModel):
     l_apex_deg: float = 53.
     b_apex_deg: float = 25.
 
-    class Config:
+    class Config():
         keep_untouched = (cached_property,)
 
     @cached_property
@@ -67,8 +66,7 @@ class SunInfo(BaseModel):
     def v_pec(self) -> float:
         # peculiar motion of the Sun relative to the LSR
         return ((self.u - self.u_lsr) ** 2
-                + (self.v - self.v_lsr) ** 2
-                + (self.w - self.w_lsr) ** 2)**0.5
-
+                 + (self.v - self.v_lsr) ** 2
+                 + (self.w - self.w_lsr) ** 2)**0.5
 
 default_sun = SunInfo()

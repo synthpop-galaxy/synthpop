@@ -28,7 +28,7 @@
         "sigma_w" : 8.0
     },
       "population_density_kwargs" : {
-        "name" : "spheroid",
+        "name" : "Besancon2003Halo",
         "p0" : 3.9e5,
         "e" : 0.76,
         "ac" : 0.5,

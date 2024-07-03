@@ -37,6 +37,7 @@ class Age(ABC):
 
     def __init__(self, sun: ModuleType = None,
             coord_trans: ModuleType = None,
+            logger: ModuleType = None,
             **kwargs):
         """
         Initialize the Age class for a Population class.
@@ -47,6 +48,7 @@ class Age(ABC):
         **kwargs : dict, optional
             control keywords for the age class read from the population.json files
         """
+        self.logger = logger
         self.age_func_name = 'None'
         # sun sun sun, here it comes
         self.sun = sun if sun is not None else default_sun

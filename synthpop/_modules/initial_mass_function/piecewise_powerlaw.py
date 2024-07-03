@@ -15,7 +15,7 @@ from typing import Callable
 
 class PiecewisePowerlaw(InitialMassFunction):
     """
-    Initial mass function from Kroupa 2001
+    Initial mass function for a piecewise power law
     This is
         For M ≤ m1:    ξ(M) ∝ M^-a0
         For m1 < M ≤ m2:    ξ(M) ∝ M^-a1
@@ -24,22 +24,22 @@ class PiecewisePowerlaw(InitialMassFunction):
     """
 
     def __init__(
-            self,
-            alphas: tuple[float] = (1,), splitpoints: tuple[float] = (), **kwargs
+            self, min_mass=None, max_mass=None,
+            alphas: tuple[float] = (1), splitpoints: tuple[float] = (), **kwargs
             ):
         """
         Initialize the IMF class for a Population class
         """
-        super().__init__(**kwargs)
-        self.imf_name = 'kroupa'
+        super().__init__(min_mass, max_mass)
+        self.imf_name = 'Piecewise Powerlaw'
 
         self.alphas = alphas
         self.splitpoints = splitpoints
         (self.imf_parts, self.F_imf_parts, self.F_imf_inverse_parts
-            ) = self.get_functions(alphas, splitpoints)
+        ) = self.get_functions(alphas, splitpoints)
 
     def get_functions(self, alphas, splitpoints):
-        F_split_points = []
+        Fsplitpoints = []
         As = [1]
         F_parts = []
         F_inv_parts = []
@@ -54,20 +54,19 @@ class PiecewisePowerlaw(InitialMassFunction):
 
             func = self.get_F_parts(mass, mass0, As[-1], alphas[i])
             F_parts.append(func)
-            F_split_points.append(func(mass) + F0)
+            Fsplitpoints.append(func(mass) + F0)
 
-            F_inv_parts.append(self.get_F_inv_parts(
-                mass, mass0, F_split_points[-1], F0, As[-1], alphas[i]))
+            F_inv_parts.append(self.get_F_inv_parts(mass, mass0,
+                Fsplitpoints[-1], F0, As[-1], alphas[i]))
 
             As.append(As[-1] * mass ** (alphas[i + 1] - alphas[i]))
-            F0 = F_split_points[-1]
+            F0 = Fsplitpoints[-1]
             mass0 = mass
 
         F_parts.append(self.get_F_parts(self.max_mass, mass, As[-1], alphas[-1]))
         imf_parts.append(self.get_imf_parts(self.max_mass, mass, As[-1], alphas[-1]))
-        F_inv_parts.append(self.get_F_inv_parts(
-            self.max_mass, mass, np.inf, F0, As[-1], alphas[-1])
-            )
+        F_inv_parts.append(self.get_F_inv_parts(self.max_mass, mass, np.inf,
+            F0, As[-1], alphas[-1]))
 
         return imf_parts, F_parts, F_inv_parts
 
@@ -186,3 +185,23 @@ class PiecewisePowerlaw(InitialMassFunction):
 
     grid_max = 10000
     grid_min = 0
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    kk = PiecewisePowerlaw(alphas=(0.5,),
+        min_mass=0.08)
+    m = np.linspace(0.08, 100, 10000)
+    p = np.linspace(0, kk.F_imf(100), 100000)
+    bins = np.logspace(np.log10(0.08), 2 ,30)
+    plt.loglog(m, kk.imf(m)/(kk.F_imf(100)-kk.F_imf(0.1)))
+    dd = kk.draw_random_mass(0.1,100,100000)
+    plt.hist(dd, density=True, histtype="step", bins=bins)
+    plt.figure()
+    plt.loglog(m, kk.F_imf(m), '.')
+    plt.loglog(m, np.cumsum(kk.imf(m)) * (m[1] - m[0]))
+    plt.figure()
+    plt.semilogy(p, kk.F_imf_inverse(p), '.')
+    plt.semilogy(kk.F_imf(m), m)
+    plt.show()
