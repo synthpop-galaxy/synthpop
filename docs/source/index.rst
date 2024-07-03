@@ -211,4 +211,4 @@ Contents
    quickstart
    configuration
    output
-   synthpop
+   age/age
