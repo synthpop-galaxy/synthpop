@@ -1,6 +1,9 @@
 Models
 ======
 
+Model & Population Structure
+----------------------------
+
 In the code, each Model option exists as a directory in ``synthpop/modules``.
 A model is defined by a collection of populations. 
 Each population is further described by the following 5 modules:
@@ -42,3 +45,21 @@ Additional kwargs can be used to define galactic warp (see Configuration info fo
         "phi_warp_rad": -0.1570536732,
         "alpha_warp": 1.0
     }
+
+Available Models
+----------------
+.. note::
+    additional models + descriptions coming soon
+
+besancon_Robin2003
+^^^^^^^^^^^^^^^^^^
+
+GUMS_dr3
+^^^^^^^^
+
+GUMS_dr3_mod_dens
+^^^^^^^^^^^^^^^^^
+
+Koshimoto2021
+^^^^^^^^^^^^^
+
