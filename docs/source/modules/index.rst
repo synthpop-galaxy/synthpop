@@ -4,9 +4,6 @@ Modules
 .. note::
   More module documentation coming soon
 
-Modules
------------
-
 Synthpop employs 10 modules to perform various tasks, namely:
 
 1) Population Density
