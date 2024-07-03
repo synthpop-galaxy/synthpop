@@ -17,8 +17,9 @@ class Cardelli1989(ExtinctionLaw):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.extinction_law_name = "Cardelli1989"
+        self.law_ref_wavelength = 0.549
 
-    def Alambda_AV(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float, R_V: float = 3.1) -> float:
         """
         Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
 
@@ -31,7 +32,7 @@ class Cardelli1989(ExtinctionLaw):
             interstellar reddening parameter
         """
 
-        x = 1 / wavelength_eff
+        x = 1 / eff_wavelength
         # deep red?
         # if x <0.3:
         #    return (1/x)**(-1.75)

@@ -27,6 +27,7 @@ class Nishiyama2009(ExtinctionLaw):
         super().__init__(**kwargs)
         self.extinction_law_name = 'Nishiyama2009'
         self.table1, self.spline = self.determine_parameters()
+        self.law_ref_wavelength = 2.14
 
     @staticmethod
     def determine_parameters():
@@ -34,8 +35,19 @@ class Nishiyama2009(ExtinctionLaw):
          creates an interpolation to the table data.
         """
         # load Table as numpy array 
-        table1 = np.loadtxt(f"{EXTINCTION_DIR}/nishiyama2009_table1.csv", dtype=float,
-            usecols=[1, 2, 3, 4, 5], delimiter=',')
+        table1 = np.array([[ 1.250e+00,     np.nan,     np.nan,  3.020e+00,  4.000e-02],
+                           [ 1.630e+00,     np.nan,     np.nan,  1.730e+00,  3.000e-02],
+                           [ 2.140e+00,     np.nan,     np.nan,  1.000e+00,  0.000e+00],
+                           [ 3.545e+00,  2.010e+00,  4.000e-02,  5.000e-01,  1.000e-02],
+                           [ 4.442e+00,  1.640e+00,  2.000e-02,  3.900e-01,  1.000e-02],
+                           [ 5.675e+00,  1.560e+00,  3.000e-02,  3.600e-01,  1.000e-02],
+                           [ 7.760e+00,  1.740e+00,  4.000e-02,  4.300e-01,  1.000e-02],
+                           [ 1.240e+00, -5.280e-01,  1.500e-02,  2.890e+00,  8.000e-02],
+                           [ 1.664e+00, -1.610e+00,  4.000e-02,  1.620e+00,  4.000e-02],
+                           [ 2.164e+00,     np.nan,     np.nan,  1.012e+00,  2.000e-03]])
+        #np.loadtxt(f"{EXTINCTION_DIR}/nishiyama2009_table1.csv", dtype=float,
+        #    usecols=[1, 2, 3, 4, 5], delimiter=',')
+
         # spline interpolation needs a sorted array
         table2 = table1[np.argsort(-table1[:7, 0])]
         spline = UnivariateSpline(-np.log10(table2[:, 0]), np.log10(table2[:, 3]),
@@ -50,7 +62,7 @@ class Nishiyama2009(ExtinctionLaw):
 
         return table1, spline
 
-    def Alambda_AV(self, eff_wavelength: float or np.ndarray, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float or np.ndarray, R_V: float = 3.1) -> float:
         """
         Estimates the Extinction
         returns linear extrapolation for lambda < 2.140
@@ -58,7 +70,7 @@ class Nishiyama2009(ExtinctionLaw):
         note that it is given relative to A_K 
         """
         if eff_wavelength < 2.140:
-            return x ** -2
+            return (eff_wavelength/2.140) ** -2
         else:
             return 10 ** self.spline(-np.log10(eff_wavelength))
 

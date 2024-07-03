@@ -5,8 +5,8 @@ The Evolution class is split into a EvolutionIsochrones and EvolutionInterpolato
 This allows to vary both independently.
 Those are combined into a common Evolution Class using the CombineEvolution function
 
-A EvolutionIsochrones subclass should also have an EvolutionInterpolator as second Parent 
-to specify a default interpolator. This interpolator is used whenever no Interpolator is defined. 
+A EvolutionIsochrones subclass should also have an EvolutionInterpolator as second Parent
+to specify a default interpolator. This interpolator is used whenever no Interpolator is defined.
 """
 
 __all__ = [
@@ -110,7 +110,7 @@ class EvolutionIsochrones(ABC):
         else:
             next_age = self.iso_ages[np.searchsorted(self.iso_ages[:-1], max_age * 1e9)]
             max_age = np.log10(next_age)
-        oldest = self.isochrones_grouped((min(self.file_met), age))
+        oldest = self.isochrones_grouped.get_group((min(self.file_met),max_age))
 
         no_mass_loss = oldest[1 - oldest['star_mass'] / oldest['initial_mass'] < 1e-4]
         closest = np.searchsorted(-no_mass_loss[band][1:], -abs_mag_lim)

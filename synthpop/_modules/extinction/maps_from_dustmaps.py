@@ -1,6 +1,4 @@
 """ Extinction maps collected from the dustmap module
-Currently only marshall is finished since the others need a transformation between eg E(B-V) and AV
-to be comparable with the extinction laws.
 
 Using dustmaps allows to evaluate the dustmap for each star. 
 which allows accurate results for larger cones.
@@ -15,7 +13,6 @@ __author__ = "J. Klüter"
 __date__ = "2022-11-05"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
-
 
 import os
 import astropy.units as u
@@ -39,17 +36,20 @@ MAPS_INFO = {
         'dim': 2,
         'returns': 'E(B-V)',
         "Query": dustmaps.sfd.SFDQuery,
-        "lambda_eff": 0.551},
+        "lambda_eff": 0.493,
+        "lambda_eff2": 0.551},
     "planck": {
         'dim': 2,
         'returns': 'E(B-V)',
         "Query": dustmaps.planck.PlanckQuery,
-        "lambda_eff": 0.551},
+        "lambda_eff": 0.493,
+        "lambda_eff2": 0.551},
     "bayestar": {
         'dim': 3,
         'returns': 'E(B-V)',
         "Query": dustmaps.bayestar.BayestarQuery,
-        "lambda_eff": 0.551,
+        "lambda_eff": 0.493,
+        "lambda_eff2": 0.551,
         "options": {"max_samples": 0},
         "kwargs": {"mode":'best'}},
     "iphas": {
@@ -71,12 +71,14 @@ MAPS_INFO = {
         'dim': 2,
         'returns': 'E(B-V)',
         "Query": dustmaps.lenz2017.Lenz2017Query,
-        "lambda_eff": 0.551},
+        "lambda_eff": 0.493,
+        "lambda_eff2": 0.551},
     "pg2010": {
         'dim': 2,
         'returns': 'E(B-V)',
         "Query": dustmaps.pg2010.PG2010Query,
-        "lambda_eff": 0.551},
+        "lambda_eff": 0.493,
+        "lambda_eff2": 0.551},
     "leike_ensslin_2019": {
         'dim': 3,
         'returns': 'e-foldings_GaiaG',
@@ -134,6 +136,8 @@ class MapsFromDustmaps(ExtinctionMap):
         self.query = _query_dict[dustmap_name]
         self.ref_wavelength = map_props['lambda_eff']
         self.A_or_E_type = map_props['returns']
+        if self.A_or_E_type.startswith("E"):
+            self.ref_wavelength2 = map_props['lambda_eff2']
 
         # placeholder for location, filter properties, etc.
         self.l_deg = None

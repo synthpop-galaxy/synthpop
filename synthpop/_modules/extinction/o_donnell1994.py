@@ -3,7 +3,7 @@ This file provides an implementation of the extinction Law from ODonnell 1994.
 It is bases on Cardelli 1989.
 """
 
-__all__ = ["ODonnellCardelli", ]
+__all__ = ["ODonnell1994", ]
 __author__ = "M.J. Huston"
 __date__ = "2022-07-10"
 __license__ = "GPLv3"
@@ -12,7 +12,7 @@ __version__ = "1.0.0"
 from ._extinction import ExtinctionLaw
 
 
-class ODonnellCardelli(ExtinctionLaw):
+class ODonnell1994(ExtinctionLaw):
     """
     Extinction law from O'Donnell(1994) :
     For Alambda_AV. Good below 1/lambda=3 or so. Or at least smoother than Cardelli
@@ -21,9 +21,10 @@ class ODonnellCardelli(ExtinctionLaw):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.extinction_law_name = 'ODonnellCardelli'
+        self.extinction_law_name = 'ODonnell1994'
+        self.law_ref_wavelength=0.549
 
-    def Alambda_AV(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float, R_V: float = 3.1) -> float:
         """
         Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
 
