@@ -25,7 +25,6 @@ Each of the kwargs items includes a sub-dictionary
 specifying the module, e.g.::
 
     "metallicity_func_kwargs" : {
-        "#comment":"From Gonzalez, O.A., et al. (2015)",
         "name" : "double_gaussian",
         "weight" : 0.323,
         "mean1" : -0.31,
