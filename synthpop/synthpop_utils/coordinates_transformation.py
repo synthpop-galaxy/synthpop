@@ -430,7 +430,7 @@ class CoordTrans:
 
 
 # create wrappers for the default instance.
-# _coord_trans = CoordTrans()
+_coord_trans = CoordTrans()
 
 
 def warp_correction(r_kpc, phi_rad):

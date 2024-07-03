@@ -193,8 +193,7 @@ class SubClassLoader:
 
         return submodule
 
-    @staticmethod
-    def get_subclasses_from_module(submodule, name, ParentClass, not_a_sub_class=False):
+    def get_subclasses_from_module(self, submodule, name, ParentClass, not_a_sub_class=False):
         """
 
         Parameters
@@ -285,7 +284,7 @@ class SubClassLoader:
             msg = f"Found more than one subclasses with name = '{name}',  filename = '{filename}'" \
                   f" (from {population_file})"
             logger.critical(msg)
-            logger.critical(sub_class)
+            logger.critical(subclasses)
             raise ModuleNotFoundError(msg)
 
         if len(subclasses) == 0:

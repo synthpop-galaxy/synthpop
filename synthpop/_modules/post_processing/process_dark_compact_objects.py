@@ -310,11 +310,11 @@ class ProcessDarkCompactObjects(PostProcessing):
                 m_final = self.single_mass_spera15(proc_stars['iMass'][idx],
                     proc_stars['Fe/H_initial'][idx])
                 m_type = self.compact_type_from_final(m_final)
-                dataframe['Mass'][idx] = m_final  
-                dataframe['Dim_Compact_Object_Flag'][idx] = m_type
+                dataframe.loc[idx, 'Mass'] = m_final  
+                dataframe.loc[idx, 'Dim_Compact_Object_Flag'] = m_type
 
         # Set dim object magnitudes to nan
         for magcol in self.model.parms.chosen_bands:
-            dataframe[magcol].loc[proc_stars.index] = np.nan
+            dataframe.loc[proc_stars.index, magcol] = np.nan
             
         return dataframe

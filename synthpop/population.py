@@ -230,31 +230,23 @@ class Population:
         extinction
         """
 
-        # get evolution class
-        evolution_class = None
-        if hasattr(self.glbl_params, "evolution_class"):
-            evolution_class = self.glbl_params.evolution_class
-        evolution_class = getattr(self.glbl_params, "evolution_class")
-        if evolution_class is None:
-            # log N
-            if hasattr(self.pop_params, "evolution_kwargs"):
-                logger.debug("read evolution class from Population file")
-                evolution_class = self.pop_params.evolution_kwargs
-            else:
-                msg = "evolution_kwargs is neither defined " \
-                      "via the config file nor via the population"
-                logger.critical(msg)
-                raise ModuleNotFoundError(msg)
-        else:
-            logger.debug("read evolution class from config file ")
-        if not isinstance(evolution_class, list):
-            evolution_class = [evolution_class]
+        evolution = self.get_evolution_class()
+        extinction = self.get_extinction_class()
+        population_density = self.get_population_density_class()
+        imf = self.get_imf_class()
+        age = self.get_age_class()
+        metallicity = self.get_metallicity_class()
+        kinematics = self.get_kinematics_class(population_density)
 
+        return population_density, imf, age, metallicity, kinematics, evolution, extinction
+
+    def get_evolution_class(self):
+        evolution_class_config = self.get_evolution_class_config()
         evolutions = []
         # go through  all mass ranges
         # this is to combine different isochrone systems or interpolator
         ev_init = []
-        for i, ev_kwargs in enumerate(evolution_class):
+        for i, ev_kwargs in enumerate(evolution_class_config):
             # get the Isochrone system
 
             Isochrone_System = sp_utils.get_subclass(
@@ -278,7 +270,7 @@ class Population:
             columns.extend(self.glbl_params.opt_iso_props)
             # add magnitudes to columns
             if isinstance(self.glbl_params.chosen_bands, dict):
-                # convert dict into list of tuples
+                # 1convert dict into list of tuples
                 columns.extend(self.glbl_params.chosen_bands.items())
             else:
                 columns.extend(self.glbl_params.chosen_bands)
@@ -314,38 +306,54 @@ class Population:
             msg = msg.replace('None', 'null')
             logger.log(15, msg)
         logger.log(15, '   ]')
-
         if len(evolutions) == 1:
             evolution = evolutions[0]
         else:
             evolution = evolutions
+        return evolution
 
-        # get Extinctions
+    def get_evolution_class_config(self):
+        evolution_class = getattr(self.glbl_params, "evolution_class")
+        if evolution_class is None:
+            # log N
+            if hasattr(self.pop_params, "evolution_kwargs"):
+                logger.debug("read evolution class from Population file")
+                evolution_class = self.pop_params.evolution_kwargs
+            else:
+                msg = "evolution_kwargs is neither defined " \
+                      "via the config file nor via the population"
+                logger.critical(msg)
+                raise ModuleNotFoundError(msg)
+        else:
+            logger.debug("read evolution class from config file ")
+        if not isinstance(evolution_class, list):
+            evolution_class = [evolution_class]
+        return evolution_class
+
+    def get_extinction_class(self):
         ExtMap = sp_utils.get_subclass(ExtinctionMap, self.glbl_params.extinction_map_kwargs,
-            initialize=False, population_file=self.pop_params._filename)
-
+                                       initialize=False, population_file=self.pop_params._filename)
         logger.debug(
             [f'initialize Extinction Map with keywords {self.glbl_params.extinction_map_kwargs}',
-                ''])
+             ''])
         logger.log(15, f'"extinction_map" :  {self.glbl_params.extinction_map_kwargs}')
-
         # check if multiple extinction laws are provided
         if not isinstance(self.glbl_params.extinction_law_kwargs, list):
             ExtLaw = sp_utils.get_subclass(ExtinctionLaw, self.glbl_params.extinction_law_kwargs,
-                initialize=False, population_file=self.pop_params._filename)
+                                           initialize=False, population_file=self.pop_params._filename)
         else:
             # collect all extinction laws in a common list
             ExtLaw = [
                 sp_utils.get_subclass(ExtinctionLaw, ext_law, initialize=False,
-                    population_file=self.pop_params._filename)
+                                      population_file=self.pop_params._filename)
                 for ext_law in self.glbl_params.extinction_law_kwargs]
-
         # combine Extinction and Extinction laws in a combined Class
         Extinction = CombineExtinction(ext_map=ExtMap, ext_law=ExtLaw)
         # initialize extinction
         if not isinstance(self.glbl_params.extinction_law_kwargs, list):
-            ext_law_kwargs = [self.glbl_params.extinction_law_kwargs ]
-        else: ext_law_kwargs = self.glbl_params.extinction_law_kwargs
+            ext_law_kwargs = [self.glbl_params.extinction_law_kwargs]
+        else:
+            ext_law_kwargs = self.glbl_params.extinction_law_kwargs
         logger.log(15, '"extinction_law_kwargs" : [')
         for ext_law_kwarg in ext_law_kwargs:
             msg = f'    {ext_law_kwarg},'.replace("'", '"')
@@ -358,60 +366,58 @@ class Population:
             ext_map_kwargs=self.glbl_params.extinction_map_kwargs,
             ext_law_kwargs=self.glbl_params.extinction_law_kwargs,
             logger=logger
-            )
+        )
         extinction.set_R_V(self.glbl_params.R_V)
+        return extinction
 
-        # assign population density class
+    def get_population_density_class(self):
         logger.debug("%s : using PopulationDensity subclass '%s'", self.name,
-            self.pop_params.population_density_kwargs.name)
-
+                     self.pop_params.population_density_kwargs.name)
         population_density = sp_utils.get_subclass(
             PopulationDensity,
             self.pop_params.population_density_kwargs,
             keyword_name='population_density_kwargs',
             population_file=self.pop_params._filename,
-            )
+        )
+        return population_density
 
-        # assign IMF class
+    def get_imf_class(self):
         logger.debug("%s : using InitialMassFunction subclass '%s'", self.name,
-            self.pop_params.imf_func_kwargs.name)
-
+                     self.pop_params.imf_func_kwargs.name)
         imf = sp_utils.get_subclass(
             InitialMassFunction, self.pop_params.imf_func_kwargs,
             keyword_name='imf_func_kwargs',
             population_file=self.pop_params._filename)
+        return imf
 
-        # assign Age class
+    def get_age_class(self):
         logger.debug("%s : using Age subclass '%s'", self.name,
-            self.pop_params.age_func_kwargs.name)
-
+                     self.pop_params.age_func_kwargs.name)
         age = sp_utils.get_subclass(
             Age, self.pop_params.age_func_kwargs,
             keyword_name='age_func_kwargs',
             population_file=self.pop_params._filename)
+        return age
 
-        # assign Metallicity class
+    def get_metallicity_class(self):
         logger.debug("%s : using Metallicity subclass '%s'", self.name,
-            self.pop_params.metallicity_func_kwargs.name)
-
+                     self.pop_params.metallicity_func_kwargs.name)
         metallicity = sp_utils.get_subclass(
             Metallicity, self.pop_params.metallicity_func_kwargs,
             keyword_name='metallicity_func_kwargs',
             population_file=self.pop_params._filename)
+        return metallicity
 
+    def get_kinematics_class(self, population_density):
         self.pop_params.kinematics_func_kwargs.density_class = population_density
-
-        # assign Kinematics class
         logger.debug("%s : using Kinematics subclass '%s'", self.name,
-            self.pop_params.kinematics_func_kwargs.name)
-
+                     self.pop_params.kinematics_func_kwargs.name)
         kinematics = sp_utils.get_subclass(
             Kinematics,
             self.pop_params.kinematics_func_kwargs,
             keyword_name='metallicity_func_kwargs',
             population_file=self.pop_params._filename)
-
-        return population_density, imf, age, metallicity, kinematics, evolution, extinction
+        return kinematics
 
     def set_position(
             self, l_deg: float, b_deg: float, solid_angle: float, solid_angle_unit: str,
@@ -864,7 +870,7 @@ class Population:
         if len(population_df) != 0:
 
             logger.info(f'generated_total_iMass = {population_df["iMass"].sum():.4f}')
-            gg = population_df.groupby(pandas.cut(population_df.Dist, radii))
+            gg = population_df.groupby(pandas.cut(population_df.Dist, radii), observed=True)
             if self.skip_lowmass_stars:
                 im_incl = (gg["iMass"].sum()
                            + gg.size() * frac_lowmass[0] * frac_lowmass[1]

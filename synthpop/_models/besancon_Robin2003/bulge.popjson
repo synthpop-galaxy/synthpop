@@ -22,7 +22,7 @@
     },
 
     "kinematics_func_kwargs" : {
-        "name" : "Besancon",
+        "name" : "Besancon2003",
         "sigma_u" : 113.0,
         "sigma_v" : 115.0,
         "sigma_w" : 100.0,
@@ -30,7 +30,7 @@
     }, 
 
     "population_density_kwargs" : {
-        "name" : "BulgeDensityBesancon",
+        "name" : "Besancon2003Bulge",
         "x0":1.59,
         "y0":0.424,
         "z0":0.424,

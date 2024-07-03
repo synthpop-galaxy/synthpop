@@ -19,7 +19,7 @@
     },
 
     "kinematics_func_kwargs" : {
-        "name" : "Besancon",
+        "name" : "Besancon2003",
         "sigma_u" : 36.7,
         "sigma_v" : 13.7,
         "sigma_w" : 15.8, 
@@ -27,7 +27,7 @@
     }, 
 
     "population_density_kwargs" : {
-        "name" : "einasto",
+        "name" : "Besancon2003Thindisk",
         "#comment" : "p0 in Msun/kpc**3 (10**9)",
         "p0" : 0.0058140E9,
         "e" : 0.0696,
