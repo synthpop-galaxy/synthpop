@@ -32,7 +32,7 @@ def copy_dir(src_dir, target_dir, name):
     # delete previous link
     if os.path.islink(symlink):
         os.unlink(symlink)
-    if os.path.isfile(symlink):
+    elif os.path.isfile(symlink):
         os.remove(symlink)
     # copy directory to new location
     shutil.copytree(src, des, dirs_exist_ok=True)
