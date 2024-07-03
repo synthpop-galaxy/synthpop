@@ -211,3 +211,4 @@ Contents
    quickstart
    configuration
    output
+   synthpop
