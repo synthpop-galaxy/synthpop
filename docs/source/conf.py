@@ -5,6 +5,9 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../../synthpop/'))
+sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../synthpop/_modules/'))
 
 project = 'SynthPop'
 copyright = 'tbd'
