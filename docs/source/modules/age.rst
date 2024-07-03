@@ -1,4 +1,4 @@
-age package
+Module type: age
 ===========
 
 Submodules
