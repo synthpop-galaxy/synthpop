@@ -22,5 +22,16 @@ Each files must define the following keywords::
     "population_density_kwargs" : ...
 
 Each of the kwargs items includes a sub-dictionary 
-specifying the module.
+specifying the module, e.g.::
+
+    "metallicity_func_kwargs" : {
+        "#comment":"From Gonzalez, O.A., et al. (2015)",
+        "name" : "double_gaussian",
+        "weight" : 0.323,
+        "mean1" : -0.31,
+        "std1" : 0.31,
+        "mean2" : 0.26,
+        "std2" : 0.20
+    }
+
 Additional kwargs can be used to define galactic warp.
