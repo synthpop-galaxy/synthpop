@@ -3,8 +3,8 @@ Installation
 
 To install synthpop, you have two options:
 
-Clone this repository and install all the requirements.
-Use the command below to install using pip::
+1. Clone this repository and install all the requirements.
+2. Use the command below to install using pip::
 
     pip install git+https://github.com/synthpop-galaxy/synthpop.git
 
