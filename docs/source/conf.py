@@ -8,6 +8,8 @@ sys.path.insert(0, os.path.abspath('../../synthpop/'))
 sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../synthpop/_modules/'))
+sys.path.insert(0, os.path.abspath('../../synthpop/_modules/age/'))
+
 
 project = 'SynthPop'
 copyright = 'tbd'
