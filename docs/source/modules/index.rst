@@ -1,5 +1,5 @@
 Modules
 =======
 
-.. toctree::
-  age
+.. note::
+  Module documentation coming soon
