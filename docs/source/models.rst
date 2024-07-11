@@ -51,6 +51,9 @@ Available Models
 .. note::
     additional models + descriptions coming soon
 
+synthpop_Huston2024
+^^^^^^^^^^^^^^^^^^^
+
 besancon_Robin2003
 ^^^^^^^^^^^^^^^^^^
 
