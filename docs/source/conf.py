@@ -9,6 +9,8 @@ sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../synthpop/_modules/'))
 sys.path.insert(0, os.path.abspath('../../synthpop/_modules/age/'))
+sys.path.insert(0, os.path.abspath('../../synthpop/_modules/metallicity/'))
+
 
 #import migrate_interactive_part
 #migrate_interactive_part.migrate('../../synthpop')
