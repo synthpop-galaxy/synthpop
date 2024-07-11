@@ -33,6 +33,7 @@ extensions = [
 ]
 
 extensions.append('autoapi.extension')
+extensions.append('sphinx.ext.autosectionlabel')
 autoapi_dirs = ['../../synthpop','../../synthpop/_modules/']
 autoapi_ignore = ['conf.py']
 
