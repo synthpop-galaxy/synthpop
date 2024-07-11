@@ -32,4 +32,4 @@ Contents
    configuration
    output
    models
-   modules/index
+   modules
