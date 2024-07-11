@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.abspath('../../synthpop/_modules/'))
 sys.path.insert(0, os.path.abspath('../../synthpop/_modules/age/'))
 sys.path.insert(0, os.path.abspath('../../synthpop/_modules/metallicity/'))
 
-pip install sphinx-autoapi
+import sphinx-autoapi
 extensions.append('autoapi.extension')
 autoapi_dirs = ['../', '../../', '../../synthpop','../../synthpop/_modules/','../../synthpop/_modules/metallicity']
 
