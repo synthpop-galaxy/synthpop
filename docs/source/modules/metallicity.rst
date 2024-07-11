@@ -1,4 +1,4 @@
 Metallicity Modules
 --------------------
 
-.. autoclass:: gaussian
+.. automodule:: gaussian
