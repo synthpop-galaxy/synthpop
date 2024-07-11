@@ -55,3 +55,6 @@ To create a custom submodule, users simply can and define their own subclass of 
 This should be done in a new Python file in the appropriate directory within the modules tree, referring to existing modules for structure.
 
 Well-tested modules may be added to the SynthPop repository. Alternatively, users are welcome to share modules and other SynthPop-related code and data via `Zenodo <https://zenodo.org/communities/synthpop/records?q=&l=list&p=1&s=10&sort=newest>`_, which we encourage for any publications using SynthPop.
+
+.. toctree::
+  metallicity
