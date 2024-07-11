@@ -12,8 +12,6 @@ sys.path.insert(0, os.path.abspath('../../synthpop/_modules/age/'))
 sys.path.insert(0, os.path.abspath('../../synthpop/_modules/metallicity/'))
 
 #import sphinx-autoapi
-extensions.append('autoapi.extension')
-autoapi_dirs = ['../', '../../', '../../synthpop','../../synthpop/_modules/','../../synthpop/_modules/metallicity']
 
 #import migrate_interactive_part
 #migrate_interactive_part.migrate('../../synthpop')
@@ -35,6 +33,9 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
 ]
+
+extensions.append('autoapi.extension')
+autoapi_dirs = ['../', '../../', '../../synthpop','../../synthpop/_modules/','../../synthpop/_modules/metallicity']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
