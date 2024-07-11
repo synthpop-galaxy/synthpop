@@ -34,7 +34,7 @@ extensions = [
 
 extensions.append('autoapi.extension')
 autoapi_dirs = ['../../synthpop','../../synthpop/_modules/']
-#autoapi_ignore = ['conf.py']
+autoapi_ignore = ['conf.py']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
