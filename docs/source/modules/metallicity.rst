@@ -1,0 +1,4 @@
+Metallicity Modules
+--------------------
+
+.. autoclass:: gaussian
