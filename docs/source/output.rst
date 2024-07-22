@@ -54,7 +54,7 @@ Default basic outputs
      - radial velocity in local standard of rest frame
    * - A_<band>
      - mag
-     - extinction in <band>
+     - extinction in <band>, as specified by the extinction map
 
 Outputs from MIST evolution
 ----------------------------
