@@ -63,16 +63,28 @@ Default basic outputs
 Outputs from MIST evolution
 ----------------------------
 
+.. note::
+    Any/all of these columns can be selected or excluded via ``opt_iso_props`` in the configuration and may be renamed via ``col_names``.
+
 .. list-table:: Title
    :widths: 25 25 50
    :header-rows: 1
 
-   * - column name
+   * - column name in MIST
      - units
      - description
-   * - Row 1, column 1
+   * - [Fe/H]
+     - dex
+     - current metallicity
+   * - log_L
+     - 
      -
-     - Row 1, column 3
-   * - Row 2, column 1
-     - Row 2, column 2
-     - Row 2, column 3
+   * - log_Teff
+     - 
+     -
+   * - log_g
+     - 
+     -
+   * - log_R
+     - 
+     -
