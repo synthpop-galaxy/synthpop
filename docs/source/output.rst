@@ -56,7 +56,7 @@ Default basic outputs
      - mag
      - extinction in <band>, as specified by the extinction map
 
-.. image:: figures/cartesian_coordinates-1.png
+.. image:: figures/cartesian_coordinates.png
   :width: 600
   :alt: Galactic cartesian coordinates diagram
 
