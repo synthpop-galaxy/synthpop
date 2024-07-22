@@ -63,10 +63,12 @@ Default basic outputs
 Outputs from MIST evolution
 ----------------------------
 
+For the default stellar evolution method, we use the `MIST packaged model isochrones <https://waps.cfa.harvard.edu/MIST/model_grids.html>`_.
+
 .. note::
     Any/all of these columns can be selected or excluded via ``opt_iso_props`` in the configuration and may be renamed via ``col_names``.
 
-.. list-table:: Title
+.. list-table:: 
    :widths: 25 25 50
    :header-rows: 1
 
