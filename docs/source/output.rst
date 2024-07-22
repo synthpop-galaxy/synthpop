@@ -1,7 +1,5 @@
 Output
 =======
-.. note::
-  Page under construction
 
 Default basic outputs
 ----------------------
