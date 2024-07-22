@@ -79,17 +79,17 @@ For the default stellar evolution method, we use the `MIST packaged model isochr
      - dex
      - current metallicity
    * - log_L
-     - 
-     -
+     - log L\ :sub:`Sun`
+     - bolometric luminosity
    * - log_Teff
-     - 
-     -
+     - log Kelvin
+     - effective temperature
    * - log_g
-     - 
-     -
+     - log cm/s/s
+     - surface gravity
    * - log_R
-     - 
-     -
+     - log R\ :sub:`Sun`
+     - radius
    * - phase
      - 
-     -
+     - evolutionary phase, with -1=PMS, 0=MS, 2=RGB, 3=CHeB, 4=EAGB, 5=TPAGB, 6=postAGB, 9=WR
