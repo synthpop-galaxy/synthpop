@@ -13,12 +13,9 @@
 
     "metallicity_func_kwargs" : {
         "#comment":"From Gonzalez, O.A.; et al. 2015",
-        "name" : "double_gaussian",
-        "weight" : 0.323,
-        "mean1" : -0.31,
-        "std1" : 0.31,
-        "mean2" : 0.26,
-        "std2" : 0.20
+        "name" : "gaussian",
+        "mean" : 0.00,
+        "std" : 0.40
     },
 
     "kinematics_func_kwargs" : {
