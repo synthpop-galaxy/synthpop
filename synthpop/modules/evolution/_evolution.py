@@ -85,7 +85,7 @@ class EvolutionIsochrones(ABC):
 
     def get_mass_min(
             self, band: str, magnitude_limit: float, distances: np.ndarray or float,
-            max_age: float = None
+            max_age: float = None, extinction_at_slice_front: np.ndarray or float = None
             ) -> np.ndarray:
         """
         gets the minimum mass of stars still passing the magnitude_limit
@@ -104,7 +104,12 @@ class EvolutionIsochrones(ABC):
         """
 
         abs_mag_lim = magnitude_limit - 5 * np.log10(np.maximum(distances, 1e-8) * 100)
+        #print('abs_mag_lim_init',abs_mag_lim)
+        if extinction_at_slice_front is not None:
+            abs_mag_lim -= extinction_at_slice_front
 
+        #print('abs_mag_lim',abs_mag_lim)
+        #print('ages', max_age, self.iso_ages)
         if max_age is None:
             max_age = np.log10(self.iso_ages).max()
         else:
@@ -113,9 +118,13 @@ class EvolutionIsochrones(ABC):
         oldest = self.isochrones_grouped.get_group((min(self.file_met),max_age))
 
         no_mass_loss = oldest[1 - oldest['star_mass'] / oldest['initial_mass'] < 1e-4]
+        yes_mass_loss = oldest[1 - oldest['star_mass'] / oldest['initial_mass'] >= 1e-4]
+        #print(yes_mass_loss['initial_mass'],yes_mass_loss['Bessell_I'])
+        #print(self.isochrones_grouped['initial_mass'])
         closest = np.searchsorted(-no_mass_loss[band][1:], -abs_mag_lim)
         masses = no_mass_loss.iloc[closest].initial_mass.values
         masses[closest < 10] = 0
+        #print(masses)
         return masses
 
 

@@ -80,6 +80,7 @@ class KinematicsFromGrid(Kinematics):
 
         # Convert to Galactocentric coordinates
         r, phi_rad, z = self.coord_trans.xyz_to_rphiz(x, y, z)
+        z = np.abs(z)
 
         sigma_r = self.interpolate_sigma_r(list(zip(r,z)))
         sigma_phi = self.interpolate_sigma_phi(list(zip(r,z)))

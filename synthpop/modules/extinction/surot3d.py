@@ -71,12 +71,13 @@ class Surot3d(ExtinctionMap):
 
     """
 
-    def __init__(self, screen_dist=2.0, **kwargs):
+    def __init__(self, dist_2d=8.15, **kwargs):
         # name of the extinction map used
         self.extinction_map_name = "Surot3d"
         # effective wavelength for VISTA K_s bandpass (http://svo2.cab.inta-csic.es/theory/fps/index.php?id=Paranal/VISTA.Ks&&mode=browse&gname=Paranal&gname2=VISTA#filter)
         self.ref_wavelength = 2.152152
         self.A_or_E_type = "A_Ks"
+        self.dist_2d = dist_2d
         
         # placeholder for and location...
         self.l_deg = None
@@ -108,16 +109,22 @@ class Surot3d(ExtinctionMap):
         """
         # 3D portion for base fraction
         # Edge case: 0 for too low radius
+        if self.l_deg<0:
+            use_l = self.l_deg+360
+        else:
+            use_l = self.l_deg
         if radius < self.r_grid[0]:
             self.extinction_in_map = 0.0
         # Edge case: use extinction at furthest point for too high radius
         elif radius > self.r_grid[-1]:
-            self.extinction_in_map = self.grid_interpolator_3d([self.l_deg,self.b_deg, rgrid[-1]])[0]
+            self.extinction_in_map = self.grid_interpolator_3d([use_l,self.b_deg, rgrid[-1]])[0]
         # Regular case, 3-D interpolation
         else:
-            self.extinction_in_map = self.grid_interpolator_3d([self.l_deg,self.b_deg, radius])[0]
+            self.extinction_in_map = self.grid_interpolator_3d([use_l,self.b_deg, radius])[0]
+            
+        ext_norm = self.grid_interpolator_3d([use_l,self.b_deg, self.dist_2d])[0]
         
-        self.extinction_in_map *= self.sightline[2]
+        self.extinction_in_map *= self.sightline[2]/ext_norm
 
         # a generic function we will place in all self.update_extinction functions
         return 1
@@ -135,8 +142,8 @@ class Surot3d(ExtinctionMap):
 
         """
         self.l_deg = l_deg
-        if self.l_deg<0:
-            self.l_deg+=360.0
+        if self.l_deg>180:
+            self.l_deg = 360.0-self.l_deg
         self.b_deg = b_deg
         self.find_sightline()
         self.init_sightline()
