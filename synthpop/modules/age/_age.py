@@ -1,5 +1,5 @@
 """
-This file contains the base class for the Age distributions.
+The base class for Age distribution modules.
 """
 
 __all__ = ["Age", ]
@@ -15,6 +15,8 @@ class Age(ABC):
     """
     The Age base class for a Population class. The appropriate subclass is
     assigned based on the age_func_kwargs through the "get_subclass" factory.
+    The Age base class for a Population. 
+    The appropriate subclass is assigned based on the age_func_kwargs through the "get_subclass" factory.
 
     Attributes
     ----------
@@ -27,10 +29,10 @@ class Age(ABC):
     __init__(self,**kwargs) : None
         initialize the Age class
     draw_random_age(self, N: int or None = None) : float, ndarray [Gyr]
-        returns one or more values for the age of a star in giga-years.
+        returns one value or N values for the age of a star in Gyr
         (specified in the subclasses)
     average_age(self) : float [Gyr]
-        returns the average age of the distribution in giga-years.
+        returns the average age of the distribution in Gyr
         (specified in the subclasses)
     """
 
@@ -44,13 +46,12 @@ class Age(ABC):
         
         Parameters
         ----------
-        su
+        sun
         **kwargs : dict, optional
             control keywords for the age class read from the population.json files
         """
         self.logger = logger
         self.age_func_name = 'None'
-        # sun sun sun, here it comes
         self.sun = sun if sun is not None else default_sun
         self.coord_trans = coord_trans
 

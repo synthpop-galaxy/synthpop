@@ -55,7 +55,6 @@ class ExtinctionLaw(ABC):
         secondary reference wavelength for the extinction
         for an A_lambda map, none
         for an E(lambda1-lambda2) map, lambda2
-
     A_or_E_type : str
         specify if an extinction Alambda_ref, or a color excess is given by A_or_E
         if it starts with "A": A_or_E is a total extinction
@@ -145,7 +144,6 @@ class ExtinctionLaw(ABC):
 
 
         """
-
         Alambda_Aref = self.Alambda_Amap(eff_wavelength, R_V=R_V)
         if self.A_or_E_type.startswith("A"):
             # a total extinction was provided.
@@ -166,7 +164,6 @@ class ExtinctionLaw(ABC):
         self.A_or_E_type = A_or_E_type
         if A_or_E_type.startswith("E"):
             self.ref_wavelength2 = ref_wavelength2
-
 
 class ExtinctionMap(ABC):
     """

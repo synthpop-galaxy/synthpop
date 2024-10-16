@@ -110,6 +110,7 @@ class EvolutionIsochrones(ABC):
 
         #print('abs_mag_lim',abs_mag_lim)
         #print('ages', max_age, self.iso_ages)
+
         if max_age is None:
             max_age = np.log10(self.iso_ages).max()
         else:
@@ -125,6 +126,9 @@ class EvolutionIsochrones(ABC):
         masses = no_mass_loss.iloc[closest].initial_mass.values
         masses[closest < 10] = 0
         #print(masses)
+        closest = np.searchsorted(-no_mass_loss[band][1:], -abs_mag_lim)
+        masses = no_mass_loss.iloc[closest].initial_mass.values
+        masses[closest < 10] = 0
         return masses
 
 

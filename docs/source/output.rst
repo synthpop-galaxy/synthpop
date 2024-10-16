@@ -1,7 +1,5 @@
 Output
 =======
-.. note::
-  Page under construction
 
 Default basic outputs
 ----------------------
@@ -54,21 +52,42 @@ Default basic outputs
      - radial velocity in local standard of rest frame
    * - A_<band>
      - mag
-     - extinction in <band>
+     - extinction in <band>, as specified by the extinction map
+
+.. image:: figures/cartesian_coordinates.png
+  :width: 600
+  :alt: Galactic cartesian coordinates diagram
 
 Outputs from MIST evolution
 ----------------------------
 
-.. list-table:: Title
+For the default stellar evolution method, we use the `MIST packaged model isochrones <https://waps.cfa.harvard.edu/MIST/model_grids.html>`_.
+
+.. note::
+    Any/all of these columns can be selected or excluded via ``opt_iso_props`` in the configuration and may be renamed via ``col_names``.
+
+.. list-table:: 
    :widths: 25 25 50
    :header-rows: 1
 
-   * - Heading row 1, column 1
-     - Heading row 1, column 2
-     - Heading row 1, column 3
-   * - Row 1, column 1
-     -
-     - Row 1, column 3
-   * - Row 2, column 1
-     - Row 2, column 2
-     - Row 2, column 3
+   * - column name in MIST
+     - units
+     - description
+   * - [Fe/H]
+     - dex
+     - current metallicity
+   * - log_L
+     - log L\ :sub:`Sun`
+     - bolometric luminosity
+   * - log_Teff
+     - log Kelvin
+     - effective temperature
+   * - log_g
+     - log cm/s/s
+     - surface gravity
+   * - log_R
+     - log R\ :sub:`Sun`
+     - radius
+   * - phase
+     - 
+     - evolutionary phase, with -1=PMS, 0=MS, 2=RGB, 3=CHeB, 4=EAGB, 5=TPAGB, 6=postAGB, 9=WR
