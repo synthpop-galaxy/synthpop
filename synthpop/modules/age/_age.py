@@ -13,13 +13,15 @@ from .. import const, default_sun
 
 class Age(ABC):
     """
+    The Age base class for a Population class. The appropriate subclass is
+    assigned based on the age_func_kwargs through the "get_subclass" factory.
     The Age base class for a Population. 
     The appropriate subclass is assigned based on the age_func_kwargs through the "get_subclass" factory.
 
     Attributes
     ----------
     age_func_name : str
-        name of the Age class
+        name of the Age Class
     (more attributes are specified in the subclasses)
 
     Methods

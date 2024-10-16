@@ -1,4 +1,4 @@
-""" make SynthPop available for import """
+""" make Synthpop available for import """
 import sys
 
 try:
@@ -6,8 +6,7 @@ try:
 
 except ImportError:
     if sys.argv[0] != '-m':
-        raise ImportError("You must migrate the files first using migrate_interactive_part\n "
-                          "eg. python -m synthpop.migrate_interactive_part")
+        raise ImportError("You must migrate the files first using migrate_interactive_part")
 
 else:
     from . import modules
