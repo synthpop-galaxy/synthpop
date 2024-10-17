@@ -57,7 +57,6 @@ class ProcessDarkCompactObjects(PostProcessing):
             branch = (m_zams > 42.21).astype(int)
             m_bh = (f_ej * m_bh_core_i + (1 - f_ej) * m_bh_all_i) * (1 - branch) + m_bh_core_ii * branch
         elif self.ifmr_name=='SukhboldN20':
-            # NEEDS edited to deal with too high mass (negative masses for high mass, high met bhs
             f_z = np.minimum(10**feh, np.ones(len(feh)))
             m_bh_0 = 0.4652*m_zams - 3.2917
             m_bh_zsun = -0.271*m_zams + 24.743
@@ -102,7 +101,6 @@ class ProcessDarkCompactObjects(PostProcessing):
             float or array of float values for final white dwarf mass in units of solar mass
         """
         return 0.109 * m_zams + 0.394
-
 
     def mass_spera15(self, m_zams, feh):
         """
