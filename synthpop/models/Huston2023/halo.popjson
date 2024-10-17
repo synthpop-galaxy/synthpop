@@ -26,7 +26,7 @@
     }, 
 
     "population_density_kwargs" : {
-        "name" : "Besancon2003Halo",
+        "name" : "Besancon2003Halo"
     },
     
     "n_star_corr" : 1.81941
