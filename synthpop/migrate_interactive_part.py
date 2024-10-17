@@ -25,18 +25,14 @@ from tkinter.simpledialog import Dialog
 def copy_dir(src_dir, target_dir, name):
     """copy a directory and create a symlink to the new location"""
     # estimate paths
-    src = os.path.join(src_dir, '_' + name)
-    symlink = os.path.join(src_dir, name)
+    src = os.path.join(src_dir, name)
+    symlink = src
     des = os.path.join(target_dir, name)
 
-    # delete previous link
-    if os.path.islink(symlink):
-        os.unlink(symlink)
-    elif os.path.isfile(symlink):
-        os.remove(symlink)
-    # copy directory to new location
-    shutil.copytree(src, des, dirs_exist_ok=True)
-    if des != symlink:
+    if des != src:
+        # move directory
+        shutil.copytree(src, des, dirs_exist_ok=True)
+        shutil.rmtree(src)
         # create a new link
         os.symlink(des, symlink, target_is_directory=True)
 
@@ -44,20 +40,15 @@ def copy_dir(src_dir, target_dir, name):
 def copy_file(src_dir, target_dir, name):
     """copy a file and create a symlink to the new location"""
     # estimate paths
-    src = os.path.join(src_dir, '_' + name)
-    symlink = os.path.join(src_dir, name)
+    src = os.path.join(src_dir, name)
+    symlink = src
     des = os.path.join(target_dir, name)
 
-    # delete previous link
-    if os.path.islink(symlink):
-        os.unlink(symlink)
-    elif os.path.isfile(symlink):
-        os.remove(symlink)
-    # copy file to new location
-    shutil.copy(src, des)
-
     # create a new link
-    if des != symlink:
+    if des != src:
+        # copy file to new location
+        shutil.copy(src, des)
+        os.remove(src)
         os.symlink(des, symlink, target_is_directory=False)
 
 
@@ -143,7 +134,7 @@ def migrate(dirname=''):
     copy_dir(synthpop_code_dir, dirname, "modules")
     copy_dir(synthpop_code_dir, dirname, "models")
     copy_file(synthpop_code_dir, dirname, "constants.py")
-    print("Synthpop_Directory is now set. You can now use Synthpop")
+    print("Synthpop_Directory is now set. You can now use Synthpop with the interactive portions in your custom directory.")
 
 
 if __name__ == "__main__":
