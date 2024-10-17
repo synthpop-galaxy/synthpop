@@ -1,4 +1,4 @@
-""" make SynthPop available for import """
+""" make Synthpop available for import """
 import sys
 
 from .constants import SYNTHPOP_DIR

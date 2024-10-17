@@ -100,7 +100,7 @@
             },
         "extinction_law_kwargs":
             [
-            {"name":"ODonnellCardelli"}
+            {"name":"ODonnell1994"}
             ],
         "R_V":3.1
         },

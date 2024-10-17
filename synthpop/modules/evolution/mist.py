@@ -135,7 +135,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 mist_isochrones = self.isochrones = self.load_isochrones(self.magsys)
         else:
             self.isochrones = self.load_isochrones(self.magsys)
-        self.isochrones_grouped = self.isochrones.groupby(["[Fe/H]_init","log10_isochrone_age_yr"])
+        self.isochrones_grouped = self.isochrones.groupby(["[Fe/H]_init", "log10_isochrone_age_yr"])
 
         # Get ages
         self.iso_ages = 10 ** self.isochrones['log10_isochrone_age_yr'].unique()

@@ -25,7 +25,7 @@ class density_from_grid(PopulationDensity):
         "mass" or "number" to specify units for the provided density
     """
     def __init__(
-            self, moment_file=None, density_unit='mass',
+            self, moment_file=None, density_unit='mass',abs_z=True,
             **kwargs
             ):
         super().__init__(**kwargs)
@@ -34,6 +34,10 @@ class density_from_grid(PopulationDensity):
         self.interpolate_rho = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
             dat['rho'], fill_value=0.0, rescale=False)
         self.density_unit = density_unit
+        self.abs_z=abs_z
 
     def density(self, r, theta, z):
+        if self.abs_z:
+            z = np.abs(z)
+
         return self.interpolate_rho(list(zip(r,z))) * 1e9
