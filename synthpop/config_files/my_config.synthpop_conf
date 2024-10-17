@@ -1,15 +1,15 @@
 {
-    "l_set": [0],
+    "l_set": [1],
     "l_set_type":"list",
-    "b_set":[0],
+    "b_set":[1],
     "b_set_type":"list",
-    "solid_angle":0.001,
+    "solid_angle":0.0001,
     "solid_angle_unit":"deg^2",
 
     "model_name":"besancon_Robin2003",
 
-    "extinction_map_kwargs": {"name":"MapsFromDustmaps", "dustmap_name":"marshall"},
-    "extinction_law_kwargs": {"name":"ODonnellCardelli"},
+    "extinction_map_kwargs": {"name":"Marshall"},
+    "extinction_law_kwargs": {"name":"ODonnell1994"},
     "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
 
     "maglim":["2MASS_Ks",21, "remove"],
