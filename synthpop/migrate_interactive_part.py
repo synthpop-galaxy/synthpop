@@ -137,9 +137,9 @@ def migrate(dirname=''):
     print("Synthpop_Directory is now set. You can now use Synthpop with the interactive portions in your custom directory.")
 
 
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        directory = os.path.abspath(sys.argv[1])
-    else:
-        directory = ''
-    migrate(directory)
+#if __name__ == "__main__":
+#    if len(sys.argv) > 1:
+#        directory = os.path.abspath(sys.argv[1])
+#    else:
+#        directory = ''
+#    migrate(directory)
