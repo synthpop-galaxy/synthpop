@@ -1,8 +1,10 @@
-""" run SynthPop in the default way """
+
+""" run Synthpop in the default way """
 flag = True
 import_with_dot = True
 try:
     from .constants import SYNTHPOP_DIR
+
 except ImportError as e:
     if str(e) == 'attempted relative import with no known parent package':
         import_with_dot = False
@@ -10,7 +12,7 @@ except ImportError as e:
             from constants import SYNTHPOP_DIR
         except ImportError:
             flag = False
-    else: 
+    else:
         flag = False
 
 if flag:
@@ -18,7 +20,6 @@ if flag:
         from .synthpop_main import main
     else:
         from synthpop_main import main
-
     main()
 
 else:

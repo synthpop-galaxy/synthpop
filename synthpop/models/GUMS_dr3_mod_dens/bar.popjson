@@ -1,0 +1,47 @@
+{
+    "name" : "bar",
+
+    "population_density_kwargs" : {
+        "name" : "GumsBar",
+        "n0": 4.508e10,
+        "x0":1.076,
+        "y0":0.49,
+        "z0":0.3,
+        "#comment":"alpha = 0.509 + pi due to coordinate systems",
+        "alpha":3.6505926536,
+        "beta": 0,
+        "gamma": 0,
+        "c_perp": 3.329,
+        "c_para": 3.007,
+        "dz_bone": 0.534,
+        "x_bone": 0.870,
+        "r_max":4.19555,
+        "sigma_cut_of": 4e-6
+    },
+
+    "imf_func_kwargs" :{
+        "name": "PiecewisePowerlaw",
+        "alphas":[0.5]
+    },
+
+
+   "age_func_kwargs" : {
+        "name" : "SingleValue",
+       "age_value": 10
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "Gaussian",
+        "mean": 0.20,
+        "std": 0.20,
+        "high_bound": 1,
+        "low_bound": -0.8
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "VelocityGradient",
+        "sigma_u": 150,
+        "sigma_v": 115,
+        "sigma_w": 100
+    }
+}

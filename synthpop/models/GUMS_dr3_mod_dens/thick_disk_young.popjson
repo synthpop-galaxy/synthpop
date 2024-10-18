@@ -1,0 +1,36 @@
+{
+    "name" : "thick_disk_young",
+
+    "population_density_kwargs" : {
+        "name": "GumsThickdisk",
+        "rho0": 0.0141e9,
+        "# rho0": "0.0036e9 * 3.931 (corrected for WD)",
+        "hr": 2.040,
+        "hz": 0.400
+    },
+
+    "imf_func_kwargs" :{
+        "name": "PiecewisePowerlaw",
+        "alphas":[1]
+    },
+
+   "age_func_kwargs" : {
+        "name" : "SingleValue",
+        "age_value": 10
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "Gaussian",
+        "mean": -0.5,
+        "std": 0.30,
+        "low_bound": -2.0,
+        "high_bound": 1.0
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "VelocityGradient",
+        "sigma_u": 40.018,
+        "sigma_v": 31.855,
+        "sigma_w": 27.889
+    }
+}

@@ -1,0 +1,21 @@
+
+{
+    "name_for_output":"validation_model",
+    "model_name": "validation_model",
+    "l_set": [0,90, 12.17, 39.14],
+    "max_distance":25,
+    "b_set":[0, 0, 5.37, 8.53],
+    "l_set_type":"pairs",
+    "b_set_type":"pairs",
+    "solid_angle":1e-5,
+    "extinction_map_kwargs": {
+        "name":"MapsFromDustmaps", "dustmap_name":"marshall"
+        },
+    "output_file_type":"hdf5",
+    "obsmag": false,
+    "chosen_bands": ["Bessell_B", "Bessell_V", "Bessell_I"],
+    "maglim": ["Bessell_V", 99999, "keep"],
+    "lost_mass_option": 1,
+    "overwrite":true
+}
+

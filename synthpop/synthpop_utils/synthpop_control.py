@@ -13,6 +13,7 @@ __version__ = "1.0.0"
 import os
 import json
 import itertools
+import logging
 from typing import Iterator, Tuple, Dict, Optional, Union, List
 import argparse
 import numpy as np
@@ -75,7 +76,7 @@ class PopParams(BaseModel, extra=Extra.allow):
             data = json_loader(filename)
             obj = cls.parse_obj(data)
         except Exception as e:
-            print(f"Error occurred when reading specifications from {filename}", flush=True)
+            logging.error(f"Error occurred when reading specifications from {filename}")
             raise e
         return obj
 

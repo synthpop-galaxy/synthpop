@@ -1,0 +1,33 @@
+{
+    "name" : "test_population_5",
+    "imf_func_kwargs" : {
+        "name" : "kroupa"
+    },
+      "age_func_kwargs" : {
+        "name" : "single_value",
+        "#comment" : "units in gigayears",
+        "age_value" : 9.135
+    },
+      "metallicity_func_kwargs": {
+        "#comment": "From Gonzalez, O.A.; et al. 2015",
+        "name": "SingleValue",
+        "met_value": -0.32
+    },
+    "kinematics_func_kwargs" : {
+        "name" : "VelocityGradient",
+        "sigma_u" : 19.8,
+        "sigma_v" : 12.8,
+        "sigma_w" : 8.0
+    },
+    "population_density_kwargs" : {
+        "name" : "Besancon2003Thindisk",
+        "#comment" : "p0 in Msun/kpc**3 (10**9)",
+        "p0" : 0.004020E9,
+        "e" : 0.0551,
+        "flare_flag" : true,
+        "hrp" : 2.530,
+        "hrm" : 1.320,
+        "offset":0.5,
+        "power":1
+    }
+}

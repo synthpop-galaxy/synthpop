@@ -1,1 +1,0 @@
-from ._extinction import *

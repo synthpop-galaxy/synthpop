@@ -315,7 +315,6 @@ class Population:
     def get_evolution_class_config(self):
         evolution_class = getattr(self.glbl_params, "evolution_class")
         if evolution_class is None:
-            # log N
             if hasattr(self.pop_params, "evolution_kwargs"):
                 logger.debug("read evolution class from Population file")
                 evolution_class = self.pop_params.evolution_kwargs
@@ -760,9 +759,17 @@ class Population:
         elif self.skip_lowmass_stars:
             logger.info(f"{self.name} : estimate minimum mass for magnitude limit")
             max_age = self.age.get_maximum_age()
+            '''if self.glbl_params.obsmag:
+                self.extinction.update_extinction_in_map(radius=radii[:-1])
+                _,ext_dict_temp = self.extinction.get_extinctions(self.l_deg*np.ones(len(radii)-1),self.b_deg*np.ones(len(radii)-1),radii[:-1])
+                extinction_at_slice_fronts = ext_dict_temp[self.glbl_params.maglim[0]]
+            else:
+                extinction_at_slice_fronts = None'''
+            #print('ext slices',extinction_at_slice_fronts)
             mass_limit = self.evolution.get_mass_min(
                 self.glbl_params.maglim[0],
-                self.glbl_params.maglim[1], radii[:-1], max_age
+                self.glbl_params.maglim[1], radii[:-1], 
+                max_age #, extinction_at_slice_fronts
                 )
 
             mass_limit = np.maximum(mass_limit, self.min_mass)
@@ -870,7 +877,7 @@ class Population:
         if len(population_df) != 0:
 
             logger.info(f'generated_total_iMass = {population_df["iMass"].sum():.4f}')
-            gg = population_df.groupby(pandas.cut(population_df.Dist, radii), observed=True)
+            gg = population_df.groupby(pandas.cut(population_df.Dist, radii), observed=False)
             if self.skip_lowmass_stars:
                 im_incl = (gg["iMass"].sum()
                            + gg.size() * frac_lowmass[0] * frac_lowmass[1]
