@@ -135,7 +135,7 @@ def migrate(dirname=''):
     copy_dir(synthpop_code_dir, dirname, "models")
     copy_file(synthpop_code_dir, dirname, "constants.py")
     os.mkdir(dirname+'/outputfiles')
-    os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/output_files', target_is_directory=True)
+    os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/outputfiles', target_is_directory=True)
     print("Synthpop_Directory is now set. You can now use Synthpop with the interactive portions in your custom directory.")
 
 

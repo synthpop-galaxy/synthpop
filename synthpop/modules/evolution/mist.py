@@ -351,7 +351,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         # get column names
         cols = cls.get_columns(filename)
         # load table from ascii file
-        df = pandas.read_csv(filename, delim_whitespace=True, comment='#',
+        df = pandas.read_csv(filename, sep='\s+', comment='#',
             skip_blank_lines=True, low_memory=False, header=None, names=cols)
         return df
 
