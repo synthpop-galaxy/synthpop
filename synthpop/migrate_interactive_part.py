@@ -114,7 +114,7 @@ def get_dirname_from_gui():
     return dirname
 
 
-def migrate(dirname=''):
+def go(dirname=''):
     if dirname == '':
         try:
             dirname = get_dirname_from_gui()
