@@ -114,7 +114,7 @@ def get_dirname_from_gui():
     return dirname
 
 
-def go(dirname=''):
+def migrate(dirname=''):
     if dirname == '':
         try:
             dirname = get_dirname_from_gui()
@@ -137,9 +137,9 @@ def go(dirname=''):
     print("Synthpop_Directory is now set. You can now use Synthpop with the interactive portions in your custom directory.")
 
 
-#if __name__ == "__main__":
-#    if len(sys.argv) > 1:
-#        directory = os.path.abspath(sys.argv[1])
-#    else:
-#        directory = ''
-#    migrate(directory)
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        directory = os.path.abspath(sys.argv[1])
+    else:
+        directory = ''
+    migrate(directory)
