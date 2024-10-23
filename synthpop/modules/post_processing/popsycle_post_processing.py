@@ -80,7 +80,7 @@ class PopsyclePostProcessing(PostProcessing):
         ebf_df["/py"] = dataframe["y"]
         ebf_df["/pz"] = dataframe["z"]
         ebf_df["/grav"] = dataframe["logg"]
-        ebf_df["/teff"] = dataframe["Teff"]
+        ebf_df["/teff"] = dataframe["logTeff"]
         ebf_df["/mbol"] = -2.5 * dataframe["logL"] + 4.75
         ebf_df["/feh"] = dataframe["Fe/H_evolved"]
         ebf_df["/ubv_J"] = dataframe["2MASS_J"]
