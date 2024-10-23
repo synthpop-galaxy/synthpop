@@ -137,8 +137,9 @@ class Population:
 
         logger.info(f"# Initialize Population {self.popid} ({self.name}) from ")
         logger.info(f"pop_file = {self.pop_params._filename!r}")
-        logger.debug("pop_params = " + self.pop_params.json(indent=4).replace('\n', '\n    '))
-
+        json_dump = self.pop_params.model_dump_json(indent=4).replace('\n', '\n    ')
+        logger.debug(f"pop_params = {json_dump}")
+        
         if hasattr(pop_params, "warp"):
             self.coord_trans = coord_trans.CoordTrans(
                 sun=self.glbl_params.sun, **pop_params.warp)
