@@ -82,7 +82,7 @@ def get_dirname_from_command_line():
         else:
             return None
 
-    print("Please specify a directory that holds "
+    print("Please specify the directory that holds "
           "the models, modules and configurations, etc.")
     _delims = readline.get_completer_delims()
     readline.parse_and_bind("tab: complete")
@@ -103,7 +103,7 @@ def get_dirname_from_gui():
     Tk().withdraw()
     result = messagebox.showinfo(
         "Select Directory",
-        "Please specify a directory for\n"
+        "Please specify the directory that holds\n"
         "the models, modules and configurations, etc.",
         type=messagebox.OKCANCEL)
     if result == "cancel":
@@ -136,8 +136,7 @@ def undo_migrate(dirname=''):
     copy_dir(dirname, synthpop_code_dir, "modules")
     copy_dir(dirname, synthpop_code_dir, "models")
     copy_file(dirname, synthpop_code_dir, "constants.py")
-    os.mkdir(dirname+'/outputfiles')
-    os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/outputfiles', target_is_directory=True)
+    os.unlink(synthpop_code_dir+'/outputfiles')
     print("Synthpop_Directory migration has been undone. You can now safely update SynthPop via pip.")
 
 if __name__ == "__main__":
