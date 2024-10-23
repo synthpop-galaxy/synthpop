@@ -7,7 +7,7 @@ also the data volume for Isochrones can reach several GB.
 It uses symbolic links to connect the two directories.
 """
 __all__ = ["migrate"]
-__author__ = "J. Klüter"
+__author__ = ["J. Klüter", "M.J. Huston"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-03-13"
 __license__ = "GPLv3"
@@ -114,7 +114,7 @@ def get_dirname_from_gui():
     return dirname
 
 
-def migrate(dirname=''):
+def undo_migrate(dirname=''):
     if dirname == '':
         try:
             dirname = get_dirname_from_gui()
@@ -124,23 +124,23 @@ def migrate(dirname=''):
     if dirname == '':
         return
 
-    print(f"Set Synthpop_Directory to {dirname}")
+    print(f"Undoing SynthPop migration to {dirname}")
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
 
     # copy modules models and config & constants to new location
     synthpop_code_dir = os.path.dirname(__file__)
-    copy_dir(synthpop_code_dir, dirname, "config_files")
-    copy_dir(synthpop_code_dir, dirname, "modules")
-    copy_dir(synthpop_code_dir, dirname, "models")
-    copy_file(synthpop_code_dir, dirname, "constants.py")
-    os.mkdir(dirname+'/outputfiles')
-    os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/outputfiles', target_is_directory=True)
-    print("Synthpop_Directory is now set. You can now use Synthpop with the interactive portions in your custom directory.")
+    copy_dir( dirname,synthpop_code_dir, "config_files")
+    copy_dir(dirname, synthpop_code_dir, "modules")
+    copy_dir(dirname, synthpop_code_dir, "models")
+    copy_file(dirname, synthpop_code_dir, "constants.py")
+    #os.mkdir(dirname+'/outputfiles')
+    #os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/outputfiles', target_is_directory=True)
+    print("Synthpop_Directory migration has been undone. You can now safely update SynthPop via pip.")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         directory = os.path.abspath(sys.argv[1])
     else:
         directory = ''
-    migrate(directory)
+    undo_migrate(directory)
