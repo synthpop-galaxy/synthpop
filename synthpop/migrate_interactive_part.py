@@ -7,7 +7,7 @@ also the data volume for Isochrones can reach several GB.
 It uses symbolic links to connect the two directories.
 """
 __all__ = ["migrate"]
-__author__ = "J. Klüter"
+__author__ = ["J. Klüter", "M.J. Huston"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-03-13"
 __license__ = "GPLv3"
@@ -134,7 +134,8 @@ def migrate(dirname=''):
     copy_dir(synthpop_code_dir, dirname, "modules")
     copy_dir(synthpop_code_dir, dirname, "models")
     copy_file(synthpop_code_dir, dirname, "constants.py")
-    os.mkdir(dirname+'/outputfiles')
+    if not os.isdir(dirname+'/outputfiles'):
+        os.mkdir(dirname+'/outputfiles')
     os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/outputfiles', target_is_directory=True)
     print("Synthpop_Directory is now set. You can now use Synthpop with the interactive portions in your custom directory.")
 
