@@ -26,7 +26,6 @@ REQ_ISO_PROPS = ["star_mass"]
 # If you add further items to REQ_ISO_PROPS, you must add the column names at the end.
 COL_NAMES = [
         "pop", "iMass", "age",  "Fe/H_initial", "Mass",
-        #"Phase",
         "In_Final_Phase", "Dist", "l", "b",
         "vr_bc", "mul", "mub",  "x", "y", "z",  "U", "V", "W", "VR_LSR", "ExtinctionInMap"]
 
