@@ -80,7 +80,7 @@ def get_dirname_from_command_line():
         else:
             return None
 
-    print("Please specify a directory for easy access "
+    print("Please specify a directory for easy access " + 
           "to the models, modules and configurations, etc.")
     _delims = readline.get_completer_delims()
     readline.parse_and_bind("tab: complete")
