@@ -13,7 +13,7 @@ import numpy as np
 from ._post_processing import PostProcessing
 
 class ProcessDarkCompactObjects(PostProcessing):
-    def __init__(self, model, logger, remove=False, ifmr_name='Raithel18', **kwargs):
+    def __init__(self, model, logger, remove=False, ifmr_name='SukhboldN20', **kwargs):
         """
         Parameters:
             model:
