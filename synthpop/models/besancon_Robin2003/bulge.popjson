@@ -1,0 +1,42 @@
+{
+    "name" : "bulge",
+
+    "imf_func_kwargs" : {
+        "name" : "kroupa"
+    },
+    
+    "age_func_kwargs" : {
+        "name" : "single_value",
+        "#comment" : "units in gigayears",
+        "age_value" : 10.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "#comment":"From Gonzalez, O.A.; et al. 2015",
+        "name" : "gaussian",
+        "mean" : 0.00,
+        "std" : 0.40
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "Besancon2003",
+        "sigma_u" : 113.0,
+        "sigma_v" : 115.0,
+        "sigma_w" : 100.0,
+        "const_V_ad" : 79
+    }, 
+
+    "population_density_kwargs" : {
+        "name" : "Besancon2003Bulge",
+        "x0":1.59,
+        "y0":0.424,
+        "z0":0.424,
+        "Rc":2.54,
+        "n0": 1.370e10
+    },
+    
+    "av_mass_corr" : 0.563529,
+    "n_star_corr" : 1.77453
+}
+
+

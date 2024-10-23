@@ -1,0 +1,53 @@
+{
+    "name" : "disk4",
+
+    "population_density_kwargs" : {
+        "name" : "Besancon2003Thindisk",
+        "p0": 0.0037e9,
+        "e": 0.0555,
+        "hrp": 2.011,
+        "hrm": 1.310,
+        "offset": 0.5,
+        "power": 1,
+        "gamma_flare": 0.0001,
+        "radius_flare": 10,
+        "disk_cutoff": 100
+
+    },
+
+    "imf_func_kwargs" : {
+        "name" : "PiecewisePowerlaw",
+        "alphas": [0.5, 2.1, 2.9],
+        "splitpoints": [0.5, 1.53]
+    },
+
+   "age_func_kwargs" : {
+        "name" : "Exponential",
+        "low_bound": 2,
+        "high_bound": 3,
+        "gamma": 0.14
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "GaussianGradient",
+        "mean": -0.03,
+        "std": 0.125,
+        "low_bound": -0.655,
+        "high_bound": 0.595,
+        "radial_gradient": -0.07
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "VelocityGradient",
+        "sigma_u": 24.368,
+        "sigma_v": 13.851,
+        "sigma_w": 11.272
+    },
+      "warp":{
+        "r_warp": 9.5515,
+        "amp_warp_pos": 0.47175,
+        "amp_warp_neg": 0.26700,
+        "phi_warp_rad": -0.09540367321,
+        "alpha_warp": 1.0
+    }
+}

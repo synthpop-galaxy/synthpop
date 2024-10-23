@@ -1,0 +1,37 @@
+{
+    "name" : "test_population_0",
+    "imf_func_kwargs" : {
+        "name" : "Chabrier"
+    },
+
+    "age_func_kwargs" : {
+        "name" : "uniform",
+        "#comment" : "units in gigayears",
+        "low_bound" : 3.0,
+        "high_bound" : 5.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "gaussian",
+        "mean" : -1.4,
+        "std" : 0.4
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "VelocityGradient",
+        "sigma_u" : 19.8,
+        "sigma_v" : 12.8,
+        "sigma_w" : 8.0
+    },
+
+    "population_density_kwargs" : {
+        "name" : "Besancon2003Thindisk",
+        "#comment" : "p0 in Msun/kpc**3 (10**9)",
+        "p0" : 4.002E7,
+        "e" : 0.0268,
+        "hrp" : 2.530,
+        "hrm" : 1.320,
+        "offset":0.5,
+        "power":1
+    }
+}

@@ -13,39 +13,42 @@ __version__ = "1.0.0"
 import os
 import json
 import itertools
+import logging
 from typing import Iterator, Tuple, Dict, Optional, Union, List
 import argparse
 import numpy as np
-from pydantic import BaseModel, validator, Extra, root_validator
+import pydantic
 
+if pydantic.__version__.startswith("2"):
+    from pydantic import BaseModel, model_validator
+else:
+    from .pydantic_1_compatibility import BaseModel, model_validator
 from .json_loader import json_loader
 from .synthpop_logging import logger
 from .sun_info import SunInfo
+
 try:
     from constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
-                                    DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
+                           DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 except (ImportError, ValueError):
     from ..constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
-                                    DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
+                             DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 
-class ModuleKwargs(BaseModel, extra=Extra.allow):
+
+class ModuleKwargs(BaseModel, extra="allow"):
     name: Optional[str] = ""
     filename: Optional[str] = ""
 
-    @root_validator(pre=True)
+    @classmethod
+    @model_validator(mode="before")
     def validate_filename(cls, values):
         assert values.get("filename", "") != "" or values.get("name", "") != "", \
             "Either filename or name need to be specified"
-
-        values.pop("json_file", None)
         return values
 
     @property
     def init_kwargs(self):
-        fields = list(self.__fields__.keys())
-        fields.append('json_file')
-        attributes = {k: v for k, v in self.__dict__.items() if k not in fields}
-        return attributes
+        return {k: v for k, v in self.model_extra.items() if k != "json_file"}
 
 
 class ExtLawKwargs(ModuleKwargs):
@@ -55,7 +58,7 @@ class ExtLawKwargs(ModuleKwargs):
     lambdas: List[float] = None
 
 
-class PopParams(BaseModel, extra=Extra.allow):
+class PopParams(BaseModel, extra="allow"):
     name: str
 
     imf_func_kwargs: ModuleKwargs
@@ -64,7 +67,7 @@ class PopParams(BaseModel, extra=Extra.allow):
     population_density_kwargs: ModuleKwargs
     kinematics_func_kwargs: ModuleKwargs
 
-    evolution_kwargs: Optional[Union[ModuleKwargs, List[ModuleKwargs]]]
+    evolution_kwargs: Optional[Union[ModuleKwargs, List[ModuleKwargs]]] = None
 
     av_mass_corr: Optional[float] = None
     n_star_corr: Optional[float] = None
@@ -73,9 +76,9 @@ class PopParams(BaseModel, extra=Extra.allow):
     def parse_jsonfile(cls, filename):
         try:
             data = json_loader(filename)
-            obj = cls.parse_obj(data)
+            obj = cls.model_validate(data)
         except Exception as e:
-            print(f"Error occurred when reading specifications from {filename}", flush=True)
+            logging.error(f"Error occurred when reading specifications from {filename}")
             raise e
         return obj
 
@@ -189,6 +192,7 @@ class Parameters:
         if (self.l_set is None) or (self.b_set is None) or (self.solid_angle is None):
             logger.critical("Location or solid_angle_sr are not  defined in the settings! "
                             "Can not run main() or process_all()")
+
             # create
 
             def no_location():
@@ -196,6 +200,7 @@ class Parameters:
                                 "Can not run main() or process_all()")
                 for _ in []:
                     yield 0, 0
+
             return no_location()
 
         if (self.l_set_type == "pairs") or (self.b_set_type == "pairs"):
@@ -287,7 +292,6 @@ class Parameters:
             for item in items:
                 if item in spec_dict:
                     self.__dict__.update({item: spec_dict[item]})
-
 
     def read_kwargs_config(self, kwargs: dict):
         """
