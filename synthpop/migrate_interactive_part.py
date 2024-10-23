@@ -80,7 +80,7 @@ def get_dirname_from_command_line():
         else:
             return None
 
-    print("Please specify a directory for easy access " + 
+    print("Please specify a directory for easy access " +
           "to the models, modules and configurations, etc.")
     _delims = readline.get_completer_delims()
     readline.parse_and_bind("tab: complete")
@@ -134,7 +134,7 @@ def migrate(dirname=''):
     copy_dir(synthpop_code_dir, dirname, "modules")
     copy_dir(synthpop_code_dir, dirname, "models")
     copy_file(synthpop_code_dir, dirname, "constants.py")
-    if not os.isdir(dirname+'/outputfiles'):
+    if not os.path.isdir(dirname+'/outputfiles'):
         os.mkdir(dirname+'/outputfiles')
     os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/outputfiles', target_is_directory=True)
     print("Synthpop_Directory is now set. You can now use Synthpop with the interactive portions in your custom directory.")

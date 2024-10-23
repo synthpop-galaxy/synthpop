@@ -134,7 +134,7 @@ def undo_migrate(dirname=''):
     synthpop_code_dir = os.path.dirname(__file__)
     copy_dir( dirname,synthpop_code_dir, "config_files")
     copy_dir(dirname, synthpop_code_dir, "modules")
-    copy_dir(dirname, synthpop_code_dir, dirname, "models")
+    copy_dir(dirname, synthpop_code_dir, "models")
     copy_file(dirname, synthpop_code_dir, "constants.py")
     os.mkdir(dirname+'/outputfiles')
     os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/outputfiles', target_is_directory=True)
