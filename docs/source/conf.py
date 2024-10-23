@@ -7,9 +7,9 @@ import sys
 sys.path.insert(0, os.path.abspath('../../synthpop/'))
 sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../../'))
-sys.path.insert(0, os.path.abspath('../../synthpop/_modules/'))
-sys.path.insert(0, os.path.abspath('../../synthpop/_modules/age/'))
-sys.path.insert(0, os.path.abspath('../../synthpop/_modules/metallicity/'))
+sys.path.insert(0, os.path.abspath('../../synthpop/modules/'))
+sys.path.insert(0, os.path.abspath('../../synthpop/modules/age/'))
+sys.path.insert(0, os.path.abspath('../../synthpop/modules/metallicity/'))
 
 #import migrate_interactive_part
 #migrate_interactive_part.migrate('../../synthpop')
@@ -34,7 +34,7 @@ extensions = [
 
 extensions.append('autoapi.extension')
 extensions.append('sphinx.ext.autosectionlabel')
-autoapi_dirs = ['../../synthpop','../../synthpop/_modules/']
+autoapi_dirs = ['../../synthpop','../../synthpop/modules/']
 autoapi_ignore = ['conf.py']
 
 intersphinx_mapping = {
