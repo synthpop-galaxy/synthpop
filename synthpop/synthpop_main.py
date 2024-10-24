@@ -462,6 +462,7 @@ class SynthPop:
             'fits': [self.write_astrotable, "fits", {"df": df, "extension": "fits"}],
             'votable': [self.write_astrotable, "votable", {"df": df, "extension": "votable"}],
             'vot': [self.write_astrotable, "vot", {"df": df, "extension": "vot"}],
+            'ssv': [df.to_csv, 'csv', {'sep': ' ','index': None, 'header': True, 'float_format': "%0.7e"}],
             }
         output_file_type, output_save_kwargs = self.parms.output_file_type[:2]
         # get specific function for the defined format

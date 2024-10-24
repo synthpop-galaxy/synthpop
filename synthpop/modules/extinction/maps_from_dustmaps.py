@@ -116,17 +116,19 @@ class MapsFromDustmaps(ExtinctionMap):
         if not os.path.isdir(os.path.join(dustmaps.std_paths.data_dir(), dustmap_name)):
             url = 'https://dustmaps.readthedocs.io/en/latest/installation.html'
             module = map_props["Query"].__module__
-
-            raise FileNotFoundError(
-                f"Data for '{dustmap_name} dustmap are not fetched\n"
-                f"when a dustmaps data directory is specified, data can be fetched using:\n\n"
-                f">>> import {module}\n"
-                f">>> {module}.fetch()\n\n"
-                f"please see '{url}' for further details")
+            
+            try:
+                print("Downloading",self.extinction_map_name)
+                getattr(dustmaps, dustmap_name).fetch()
+            except:
+                raise FileNotFoundError(
+                    f"Data for '{dustmap_name} dustmap are not fetched\n"
+                    f"when a dustmaps data directory is specified, data can be fetched using:\n\n"
+                    f">>> import {module}\n"
+                    f">>> {module}.fetch()\n\n"
+                    f"please see '{url}' for further details")
 
         self.is_3D = map_props['dim'] == 3
-        if not self.is_3D:
-            raise NotImplementedError('2D-maps are not implemented yet')
 
         # select the query object for the given dustmap
         if dustmap_name not in _query_dict:
