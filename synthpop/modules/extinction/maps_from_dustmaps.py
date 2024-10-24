@@ -129,8 +129,6 @@ class MapsFromDustmaps(ExtinctionMap):
                     f"please see '{url}' for further details")
 
         self.is_3D = map_props['dim'] == 3
-        if not self.is_3D:
-            raise NotImplementedError('2D-maps are not implemented yet')
 
         # select the query object for the given dustmap
         if dustmap_name not in _query_dict:
