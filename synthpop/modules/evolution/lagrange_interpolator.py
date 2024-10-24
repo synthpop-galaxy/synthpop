@@ -24,18 +24,22 @@ class LagrangeInterpolator(EvolutionInterpolator):
         get the closest points from the isochrones mass grid
     combined_grid(met_key, mass, iso_ages, props) : ndarray, ndarray
         get the grid points for different metallicities and ages
-
     interp_props(self,track,mass,age,props) : dict
         interp the properties using the isochrones.
-
     get_evolved_props () : dict, ndarray
     """
     interpolator_name = 'Lagrange_Polynomials'
 
     accept_np_arrays = True
 
-    def __init__(self, **kwargs):
+    def __init__(self, isochrones=None, **kwargs):
         super().__init__(**kwargs)
+        if isochrones is not None:
+            self.isochrones = isochrones
+            self.isochrones_grouped = isochrones.groupby(["[Fe/H]_init", "log10_isochrone_age_yr"])
+        self.log_ages = self.isochrones['log10_isochrone_age_yr'].unique()
+        self.lin_ages = 10 ** (self.log_ages - 9)
+        self.iso_met = self.isochrones['[Fe/H]_init'].unique()
 
     # @staticmethod
     def lagrange_poly(self, x, grid, fgrid):
@@ -214,13 +218,13 @@ class LagrangeInterpolator(EvolutionInterpolator):
         grid : ndarray
         data : ndarray
         """
-
+        max_mass = np.zeros(len(iso_ages))
         data = np.zeros((len(iso_ages), len(props), 4))
         grid = np.zeros((len(iso_ages), 1, 4))
 
         # create grid
         for current_met in np.unique(met_key):
-            track_dif_ages = self.isochrones[current_met]
+            #track_dif_ages = self.isochrones[current_met]
             for current_age in np.unique(iso_ages):
                 common_met_and_age = (
                         (iso_ages == current_age)
@@ -228,16 +232,20 @@ class LagrangeInterpolator(EvolutionInterpolator):
                 if not common_met_and_age.any():
                     continue
                 # get all masses with for the closest age
-                closest_grid_points = track_dif_ages['log10_isochrone_age_yr'] == current_age
-                masses = track_dif_ages[closest_grid_points]["initial_mass"]
-
-                grid_index, grid_masses = self.grid_n4(masses, mass[common_met_and_age])
+                #closest_grid_points = track_dif_ages['log10_isochrone_age_yr'] == current_age
+                #masses = track_dif_ages[closest_grid_points]["initial_mass"]
+                current_iso = self.isochrones_grouped.get_group((current_met, current_age))
+                grid_index, grid_masses = self.grid_n4(current_iso.initial_mass, mass[common_met_and_age])
                 grid[common_met_and_age, 0, :] = grid_masses
+                max_mass[common_met_and_age] = current_iso.initial_mass.max()
                 # evaluate the properties at the selected grid points
                 for i, item in enumerate(props):
+                    #data[common_met_and_age, i] = (
+                    #    track_dif_ages[closest_grid_points].iloc[grid_index.ravel()][item]
+                    #).values.reshape(grid_index.shape)
                     data[common_met_and_age, i] = (
-                        track_dif_ages[closest_grid_points].iloc[grid_index.ravel()][item]
-                    ).values.reshape(grid_index.shape)
+                        current_iso.iloc[grid_index.ravel()][item]
+                        ).values.reshape(grid_index.shape)
         return grid, data
 
         # Interpolate each property to the proper metallicity
@@ -424,16 +432,13 @@ class LagrangeInterpolator(EvolutionInterpolator):
             # estimates ISO string
             met_key = self.file_met[met_index]
 
-        unique_log_ages = np.sort(np.unique(
-            self.isochrones[met_key[0]]['log10_isochrone_age_yr']))
-
         log_ages = np.log10(age) + 9
         if age_interpolation:
             # estimates higher and lower grid point
-            log_iso_ages_index = np.searchsorted(unique_log_ages, log_ages)
-            log_iso_ages = unique_log_ages[np.maximum(log_iso_ages_index - 1, 0)]
-            log_iso_ages_higher = unique_log_ages[
-                np.minimum(log_iso_ages_index, len(unique_log_ages) - 1)]
+            log_iso_ages_index = np.searchsorted(self.log_ages, log_ages)
+            log_iso_ages = self.log_ages[np.maximum(log_iso_ages_index - 1, 0)]
+            log_iso_ages_higher = self.log_ages[
+                np.minimum(log_iso_ages_index, len(self.log_ages) - 1)]
         else:
             log_iso_ages_higher = None
 
@@ -442,8 +447,8 @@ class LagrangeInterpolator(EvolutionInterpolator):
             index_age = np.searchsorted(age_midpoints, age)
             closest_age = self.iso_ages[index_age]
             # translate to log10_isochrone_age_yr, ensures the correct rounding
-            unique_log_ages_midpoints = (unique_log_ages[:-1] + unique_log_ages[1:]) / 2
-            log_iso_ages = unique_log_ages[np.searchsorted(
+            unique_log_ages_midpoints = (self.log_ages[:-1] + self.log_ages[1:]) / 2
+            log_iso_ages = self.log_ages[np.searchsorted(
                 unique_log_ages_midpoints, np.log10(closest_age))]
 
         # Interpolate properties

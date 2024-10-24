@@ -45,9 +45,10 @@ class CharonInterpolator(EvolutionInterpolator):
     def __init__(self, isochrones=None, props_no_charon=None, coins=2, **kwargs):
         super().__init__(**kwargs)
         if coins < 2:
-            raise ValueError("you needed 2 coins to pay Charon to cross the river Styx.")
+            raise ValueError("You needed 2 coins to pay Charon to cross the river Styx.")
         if isochrones is not None:
             self.isochrones = isochrones
+            self.isochrones_grouped = isochrones.groupby(["[Fe/H]_init", "log10_isochrone_age_yr"])
 
         (self.tips, self.tips0_func, self.tips1_func,
         self.tips2_func, self.endp_func) = self.get_tip_func()
@@ -335,7 +336,6 @@ class CharonInterpolator(EvolutionInterpolator):
                 grid[common_met_and_age, 0, :] = grid_masses
                 max_mass[common_met_and_age] = current_iso.initial_mass.max()
                 # evaluate the properties at the selected grid points
-
                 for i, item in enumerate(props):
                     data[common_met_and_age, i] = (
                         current_iso.iloc[grid_index.ravel()][item]
