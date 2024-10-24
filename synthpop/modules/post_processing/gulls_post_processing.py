@@ -134,65 +134,91 @@ class GullsPostProcessing(PostProcessing):
         #dataframe["Cl"] = dataframe["phase"]
         dataframe["Vr"]=dataframe['vr_bc']
         # converting Vega mag to AB mag
-        Vega_AB_Correction = {
-            "R062": 0.137095,
-            "Z087": 0.487379,
-            "Y106": 0.653780,
-            "J129": 0.958363,
-            "W146": 1.024467,
-            "H158": 1.287404,
-            "F184": 1.551332,
-            "2MASS_Ks": 1.834505,
-            "2MASS_J": 0.889176,
-            "2MASS_H": 1.364157,
-            "Gaia_G_EDR3": 0.128961,
-            "Gaia_BP_EDR3": 0.030233,
-            "Gaia_RP_EDR3": 0.373349,
-            "Bessell_U": 0.800527,
-            "Bessell_B": -0.107512,
-            "Bessell_V": 0.006521,
-            "Bessell_I": 0.431372,
-            "Bessell_R": 0.190278,
-            "Kepler_Kp": 0.122666,
-            "TESS": 0.363778,
-            "VISTA_Z": 	0.502,
-            "VISTA_Y": 0.600,
-            "VISTA_J": 0.916,
-            "VISTA_H": 1.366,
-            "VISTA_Ks": 1.827}
-        for filt, corr in Vega_AB_Correction.items():
-            if filt in dataframe.columns:
-                dataframe[filt] = (dataframe[filt] + corr).round(5)
-            else:
-                dataframe[filt] = 99
+        # Vega_AB_Correction = {
+        #     "R062": 0.137095,
+        #     "Z087": 0.487379,
+        #     "Y106": 0.653780,
+        #     "J129": 0.958363,
+        #     "W146": 1.024467,
+        #     "H158": 1.287404,
+        #     "F184": 1.551332,
+        #     "2MASS_Ks": 1.834505,
+        #     "2MASS_J": 0.889176,
+        #     "2MASS_H": 1.364157,
+        #     "Gaia_G_EDR3": 0.128961,
+        #     "Gaia_BP_EDR3": 0.030233,
+        #     "Gaia_RP_EDR3": 0.373349,
+        #     "Bessell_U": 0.800527,
+        #     "Bessell_B": -0.107512,
+        #     "Bessell_V": 0.006521,
+        #     "Bessell_I": 0.431372,
+        #     "Bessell_R": 0.190278,
+        #     "Kepler_Kp": 0.122666,
+        #     "TESS": 0.363778,
+        #     "VISTA_Z": 	0.502,
+        #     "VISTA_Y": 0.600,
+        #     "VISTA_J": 0.916,
+        #     "VISTA_H": 1.366,
+        #     "VISTA_Ks": 1.827}
+        # for filt, corr in Vega_AB_Correction.items():
+        #    if filt in dataframe.columns:
+        #        dataframe[filt] = (dataframe[filt] + corr).round(5)
+        #    else:
+        #        dataframe[filt] = 99
 
-            # reduce data frame to the needed columns
-            dataframe = dataframe[
-                    ["Z087","R062","Y106","J129","W146","H158","F184","2MASS_Ks","2MASS_J","2MASS_H","Bessell_U","Bessell_B","Bessell_V","Bessell_I","Bessell_R","Kepler_Kp","TESS","DECam_z","DECam_u","DECam_g","DECam_r","DECam_i","DECam_Y","Gaia_G_EDR3","Gaia_BP_EDR3","Gaia_RP_EDR3","VISTA_Z","VISTA_Y","VISTA_J","VISTA_H","VISTA_Ks","mul", "mub", "Vr", "U", "V", "W", "iMass","CL", "age", "Teff", "logg", "pop", "Mass", "Mbol", "Radius", "[Fe/H]","l", "b", "RA2000.0", "DEC2000.0", "Dist", "x", "y", "z", "Av", "[alpha/Fe]"]]
+
+        # for filt in Vega_AB_Correction.keys():
+        #     dataframe[filt].fillna(value=99, inplace=True)
+
+        # dataframe.fillna(value=2e-50, inplace=True)
+        
+        # add K-band magnitude
+        k213 = dataframe["2MASS_Ks"] + 1.834505
+       
+        
+        # reduce data frame to the needed columns
+        filtlist = self.model.parms.chosen_bands
+        cols = filtlist + ["mul", "mub", "Vr", "U", "V", "W", "iMass", 
+                "CL", "age", "Teff", "logg", "pop", "Mass", "Mbol", "Radius", 
+                "[Fe/H]","l", "b", "RA2000.0", "DEC2000.0", 
+                "Dist", "x", "y", "z", "Av", "[alpha/Fe]"]
+        dataframe = dataframe[cols]
+        idx = dataframe.columns.get_loc("F184")+1
+        dataframe.insert(idx, "K213", k213)
+        
+        
+        for filt in filtlist:
+            dataframe[filt].fillna(value=99, inplace=True)
+        
+        dataframe['K213'].fillna(value=99, inplace=True)
+        
+        dataframe.fillna(value=2e-50, inplace=True)
 
         if self.cat_type == "lens":
             pass
 
         elif self.cat_type == "source":
-            dataframe = dataframe.loc[dataframe["W146"] < 27]
-
+            # dataframe = dataframe.loc[dataframe["W146"] < 25]
+            pass # upper limit should be handled in config file
+            
         elif self.cat_type == "extra-bright":
-            dataframe = dataframe.loc[dataframe["W146"] < 12] #aim for ~5k+
-
+            # dataframe = dataframe.loc[dataframe["W146"] < 12] #aim for ~5k+
+            pass # ditto
+            
         elif self.cat_type == "bright":
-            dataframe = dataframe.loc[dataframe["W146"] < 17] #aim for ~10k+
+            # dataframe = dataframe.loc[dataframe["W146"] < 17] #aim for ~10k+
             dataframe = dataframe.loc[dataframe["W146"] > 12]
 
         elif self.cat_type == "mid1":
-            dataframe = dataframe.loc[dataframe["W146"] < 20]
+            # dataframe = dataframe.loc[dataframe["W146"] < 20]
             dataframe = dataframe.loc[dataframe["W146"] > 17] #aim for ~20k+
 
         elif self.cat_type == "mid2":
-            dataframe = dataframe.loc[dataframe["W146"] < 23] #aim for ~20k+
+            # dataframe = dataframe.loc[dataframe["W146"] < 24] #aim for ~20k+
             dataframe = dataframe.loc[dataframe["W146"] > 20]
 
         elif self.cat_type == "faint":
-            dataframe = dataframe.loc[dataframe["W146"] < 35] #aim for ~10k+
-            dataframe = dataframe.loc[dataframe["W146"] > 23]
+            # dataframe = dataframe.loc[dataframe["W146"] < 35] #aim for ~10k+
+            dataframe = dataframe.loc[dataframe["W146"] > 24]
 
         return dataframe
