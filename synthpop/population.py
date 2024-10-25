@@ -863,6 +863,8 @@ class Population:
                 df = self.remove_stars(df, pop_array[:, 0], missing_stars, radii)
                 missing_stars = np.maximum(missing_stars, 0)
             # add to previous drawn data
+            if self.glbl_params.maglim[-1] != "keep":
+                df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             df_list.append(df)
             loop_counts += 1
 
