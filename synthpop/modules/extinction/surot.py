@@ -16,6 +16,8 @@ from ._extinction import ExtinctionMap #, EXTINCTION_DIR
 import time
 import ebf
 from scipy.interpolate import RegularGridInterpolator
+import requests
+import os
 
 class Surot(ExtinctionMap):
     """
@@ -75,16 +77,42 @@ class Surot(ExtinctionMap):
         self.project_3d = project_3d
         self.dist_2d = dist_2d
         self.return_functions = return_functions
-
         
         # placeholder for and location...
         self.l_deg = None
         self.b_deg = None
         self.extinction_in_map = None
 
+        # Fetch extinction map data if needed
+        if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
+            print("Missing Surot table. Download and formatting may take several minutes.")
+            print('Downloading map file from VizieR...')
+            map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
+            map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
+            with open(map_filename, "wb") as f:
+                r = requests.get(map_url)
+                f.write(r.content)
+                print('Map retrieved.')
+            print('Reading table...')
+            E_JKs_map_df = pd.read_fwf(map_filename,compression='gzip', header=None)
+            print('Reformatting values...')
+            E_JKs_map = E_JKs_map_df.to_numpy()
+            A_Ks_vals = 0.422167 * E_JKs_map[:,2] #conversion from Surot2020 paper
+            entries = E_JKs_map.shape[0]
+            print('Saving hdf5 version')
+            map_output = 'surot_A_Ks_table.h5'
+            surot_2d = np.zeros((entries, 3))
+            surot_2d[:,0] = E_JKs_map[:,0]
+            surot_2d[:,1] = E_JKs_map[:,1]
+            surot_2d[:,2] = A_Ks_vals
+            surot_2d_df = pd.DataFrame(surot_2d, columns=['l','b','A_Ks'])
+            surot_2d_df.to_hdf(f'{const.EXTINCTIONS_DIR}/'+map_output, key='data', index=False, mode='w')
+            print('File 2D version saved as '+map_output)
+
         # Data from surot_A_Ks_table1.csv
-        tmp = pd.read_csv(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table_2D.csv',
-            usecols=[0, 1, 2], sep=',', names=['l','b','A_Ks'])
+        tmp = pd.read_hdf(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5', key='data')
+        #pd.read_csv(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table_2D.csv',
+        #    usecols=[0, 1, 2], sep=',', names=['l','b','A_Ks'])
         self.coord_tree = KDTree(np.transpose(np.array([tmp['l'],tmp['b']])))
         self.A_Ks_list = np.array(tmp['A_Ks'])
         # TODO: set up interpolation function
