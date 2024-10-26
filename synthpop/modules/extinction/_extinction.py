@@ -119,9 +119,6 @@ class ExtinctionLaw(ABC):
         """
         Afilt_Aref = self.Alambda_Aref(self.ref_wavelength, R_V)
         Alambda_Aref = self.Alambda_Aref(eff_wavelength, R_V)
-        # Return  A_lambda   A_lambda    A_V
-        #        -------- = -------- * ------
-        #         A_filt      A_V      A_filt
         return Alambda_Aref / Afilt_Aref
 
     def extinction_at_lambda(
