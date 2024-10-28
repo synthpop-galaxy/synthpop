@@ -372,7 +372,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         print(f"convert {filename} to hdf5", end="\r")
         df = cls.read_csv(filename)
         # save table as h5 file
-        df.to_hdf(f'{filename}.h5', 'data', mode='w')
+        df.to_hdf(f'{filename}.h5', key='data', mode='w')
         return df
 
     def download_isochrones(self, magsys_name):
