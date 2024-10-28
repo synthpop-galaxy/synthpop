@@ -818,7 +818,6 @@ class Population:
         logger.debug("generate stellar properties")
         while any(missing_stars > 0):
             if sum(missing_stars)>self.glbl_params.chunk_size:
-                print("chunk", loop_counts+1, self.glbl_params.chunk_size, sum(missing_stars))
                 idx_cs = np.searchsorted(np.cumsum(missing_stars), self.glbl_params.chunk_size)
                 rem_chunk = np.cumsum(missing_stars)[idx_cs] - self.glbl_params.chunk_size
                 missing_stars_chunk = missing_stars * (np.cumsum(missing_stars)<self.glbl_params.chunk_size)
@@ -847,7 +846,6 @@ class Population:
             missing_stars_evol = self.check_field(
                 radii, average_imass_per_star, m_initial, m_evolved, r_inner, loop_counts,
                 mass_per_slice, frac_lowmass)
-            print('msc', missing_stars_chunk)
             missing_stars += -missing_stars_chunk + missing_stars_evol.astype(int)
 
             # Convert Table to pd.DataFrame

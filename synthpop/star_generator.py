@@ -172,7 +172,7 @@ class StarGenerator:
             else:
                 accept_np_arrays = True
 
-            # find the stars which falles into the mass range of the current evolution class
+            # find the stars which fall into the mass range of the current evolution class
             if i != len(self.evolution_module) - 1:
                 which = np.where(not_performed & (m_init > evolution_i.min_mass) & (
                         m_init < evolution_i.max_mass))[0]
@@ -183,7 +183,7 @@ class StarGenerator:
             if len(which) == 0:
                 continue
             # loop over bunches of at most chunk_size to reduce memory usage
-            if len(which) > self.chunk_size * 6 / 5:
+            '''if len(which) > self.chunk_size * 6 / 5:
                 chunk_size = self.chunk_size
                 use_chunks = True
             else:
@@ -192,54 +192,56 @@ class StarGenerator:
             count_c = 0
 
             if use_chunks:
-                print(count_c, "/", len(which), end="")
+                print(count_c, "/", len(which), end="")'''
 
-            for which2 in np.array_split(which, len(which) // chunk_size + 1):
+            #for which2 in np.array_split(which, len(which) // chunk_size + 1):
                 # evolve the stars
-                if accept_np_arrays:
-                    s_props_i, inside_grid_i, in_final_phase_i = evolution_i.get_evolved_props(
-                        m_init[which2], met[which2], age[which2], props, **kwargs)
+            which2=which
+            if accept_np_arrays:
+                s_props_i, inside_grid_i, in_final_phase_i = evolution_i.get_evolved_props(
+                    m_init[which2], met[which2], age[which2], props, **kwargs)
 
-                else:
-                    # This can be used if self.evolution.get_evolved_props
-                    # can not handle multiple stars and numpy array:
-                    m_initial = m_init[which2]
-                    metallicity = met[which2]
-                    age2 = age[which2]
-                    s_props_array, inside_grid_i, in_final_phase_i = np.array([
-                        evolution_i.get_evolved_props(
-                            m_initial[i], metallicity[i], age2[i] * 1e9, props, **kwargs)
-                        for i in range(len(m_initial))
-                        ]).T
-                    # s_props needs to be transformed from an array of dictionaries
-                    # into a dictionary of numpy arrays
-                    s_props_i = {
-                        key: np.array([i[key] for i in s_props_array])
-                        for key in s_props_array[0].keys()}
+            else:
+                # This can be used if self.evolution.get_evolved_props
+                # can not handle multiple stars and numpy array:
+                m_initial = m_init[which2]
+                metallicity = met[which2]
+                age2 = age[which2]
+                s_props_array, inside_grid_i, in_final_phase_i = np.array([
+                    evolution_i.get_evolved_props(
+                        m_initial[i], metallicity[i], age2[i] * 1e9, props, **kwargs)
+                    for i in range(len(m_initial))
+                    ]).T
+                # s_props needs to be transformed from an array of dictionaries
+                # into a dictionary of numpy arrays
+                s_props_i = {
+                    key: np.array([i[key] for i in s_props_array])
+                    for key in s_props_array[0].keys()}
 
-                # update results to data array
-                # update primary magnitude (used for limits etc)
-                mag_i = s_props_i.get(self.ref_band)
-                mag[which2] = mag_i
+            # update results to data array
+            # update primary magnitude (used for limits etc)
+            mag_i = s_props_i.get(self.ref_band)
+            mag[which2] = mag_i
 
-                # update flags
-                inside_grid[which2] = inside_grid_i
-                in_final_phase[which2] = in_final_phase_i
+            # update flags
+            inside_grid[which2] = inside_grid_i
+            in_final_phase[which2] = in_final_phase_i
 
-                # update properties
-                for key in s_track.keys():
-                    s_track[key][which2] = s_props_i[key]
+            # update properties
+            for key in s_track.keys():
+                s_track[key][which2] = s_props_i[key]
 
-                count_c += len(which2)
-                if use_chunks:
-                    print("\r", count_c, "/", len(which), end='')
+            #count_c += len(which2)
+            #if use_chunks:
+            #    print("\r", count_c, "/", len(which), end='')
+            # End loop we are removing here
 
             # update the list of not performed stars
             not_performed[which] = False
-            if use_chunks: print('')
+            #if use_chunks: print('')
             # check if anything left to do
-            if not any(not_performed):
-                break
+            #if not any(not_performed):
+            #    break
         self.logger.debug(f"used time = {time.time() - ti:.2f}s")
 
         return mag, s_track, in_final_phase, inside_grid, not_performed
