@@ -26,12 +26,13 @@ import requests
 from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
 # import a "standard" interpolator
 from .charon_interpolator import CharonInterpolator
+#from .lagrange_interpolator import LagrangeInterpolator
 
 # global variable to stor the isochrones
 mist_isochrones = None
 mist_columns = {}
 
-
+# TODO: put default interpolator back to lagrange
 class MIST(EvolutionIsochrones, CharonInterpolator):
     """
     MIST Isochrone class
