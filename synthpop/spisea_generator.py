@@ -1,8 +1,8 @@
 
 """
 This file contains the in-progress Spisea alternative to StarGenerator,
-It generates stars based on the provided initial distributions,
-evolves them and applies the extinction.
+It bins stars by age and metallicity and generates SPISEA clusters,
+    then assigns them locations based on the population_density
 """
 
 __all__ = ["SpiseaGenerator"]
@@ -15,6 +15,7 @@ __version__ = "0.2.0"
 from typing import Set, Tuple, Dict
 import numpy as np
 import time
+import spisea
 
 # Local Imports
 # used to allow running as main and importing to another script
@@ -28,8 +29,6 @@ except ImportError:
     from synthpop_utils import coordinates_transformation as coord_trans
     from synthpop_utils import Parameters
     from modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
-    from modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
-        CombineEvolution, MUST_HAVE_COLUMNS
     from modules.age import Age
     from modules.initial_mass_function import InitialMassFunction
     from modules.kinematics import Kinematics
@@ -43,14 +42,11 @@ else:  # continue import when if synthpop is imported
     from .synthpop_utils import coordinates_transformation as coord_trans
     from .synthpop_utils import Parameters
     from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
-    from .modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
-        CombineEvolution, MUST_HAVE_COLUMNS
     from .modules.age import Age
     from .modules.initial_mass_function import InitialMassFunction
     from .modules.kinematics import Kinematics
     from .modules.metallicity import Metallicity
     from .modules.population_density import PopulationDensity
-
 
 class SpiseaGenerator:
     def __init__(self, imf_module, age_module, met_module, evolution_module,
