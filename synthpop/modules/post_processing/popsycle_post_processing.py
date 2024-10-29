@@ -1,7 +1,7 @@
 """ Module to convert the output into the popsycle input format"""
 """ Note: obsmag must be set to FALSE in config file to use this module"""
 
-__author__ = "Alex Kim"
+__author__ = "Alex Kim, M.J. Huston"
 
 from ._post_processing import PostProcessing
 import time
@@ -63,9 +63,9 @@ class PopsyclePostProcessing(PostProcessing):
         dtype = [('latitude', 'f8'), ('longitude', 'f8'), ('surveyArea', 'f8')]
 
         log = np.zeros(1, dtype=dtype)
-        log['latitude'] = self.model.parms.l_set[0]
-        log['longitude'] = self.model.parms.b_set[0]
-        log['surveyArea'] = self.model.parms.solid_angle
+        log['latitude'] = self.model.l_deg
+        log['longitude'] = self.model.b_deg
+        log['surveyArea'] = self.model.solid_angle
         
         ebf_df["/popid"] = dataframe["pop"]
         ebf_df["/vx"] = dataframe["U"]
@@ -91,7 +91,7 @@ class PopsyclePostProcessing(PostProcessing):
         ebf_df["/ubv_B"] = dataframe["Bessell_B"]
         ebf_df["/ubv_V"] = dataframe["Bessell_V"]
         ebf_df["/ubv_R"] = dataframe["Bessell_R"]
-        ebf_df["/exbv_schegel"] = dataframe["exbv"]
+        ebf_df["/exbv_schegel"] = dataframe["E(B-V)"]
         
         # Create a dictionary or structured array with your data
         # Define the output file path
