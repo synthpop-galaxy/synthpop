@@ -2,7 +2,7 @@
 
 """
 
-__all__ = ["Surot3d", ]
+__all__ = ["Surot", ]
 __author__ = "M.J. Huston"
 __date__ = "2023-06-26"
 __license__ = "GPLv3"
@@ -115,7 +115,6 @@ class Surot(ExtinctionMap):
         #    usecols=[0, 1, 2], sep=',', names=['l','b','A_Ks'])
         self.coord_tree = KDTree(np.transpose(np.array([tmp['l'],tmp['b']])))
         self.A_Ks_list = np.array(tmp['A_Ks'])
-        # TODO: set up interpolation function
         
         if self.project_3d:
         # Set up 3D grid
@@ -130,7 +129,8 @@ class Surot(ExtinctionMap):
                 map_data_3d)
 
     def ext_func(self, l_deg, b_deg, dist):
-        _, min_dist_arg = self.coord_tree.query(np.transpose([l_deg,b_deg]))
+        use_l = l_deg - (l_deg>180)*360
+        _, min_dist_arg = self.coord_tree.query(np.transpose([use_l,b_deg]))
         ext_value = self.A_Ks_list[min_dist_arg]
 
         # Calculate the scaling from the 3-d interpolator
