@@ -6,12 +6,12 @@ also the data volume for Isochrones can reach several GB.
 
 It uses symbolic links to connect the two directories.
 """
-__all__ = ["migrate"]
-__author__ = ["J. Klüter", "M.J. Huston"]
+__all__ = ["undo_migrate"]
+__author__ = ["M.J. Huston", "J. Klüter"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
-__data__ = "2023-03-13"
+__data__ = "2024-10-23"
 __license__ = "GPLv3"
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 import sys
 import os
@@ -30,11 +30,12 @@ def copy_dir(src_dir, target_dir, name):
     des = os.path.join(target_dir, name)
 
     if des != src:
+        # delete link
+        os.unlink(des)
         # move directory
         shutil.copytree(src, des, dirs_exist_ok=True)
         shutil.rmtree(src)
-        # create a new link
-        os.symlink(des, symlink, target_is_directory=True)
+
 
 
 def copy_file(src_dir, target_dir, name):
@@ -46,10 +47,11 @@ def copy_file(src_dir, target_dir, name):
 
     # create a new link
     if des != src:
+        # delete link
+        os.unlink(des)
         # copy file to new location
         shutil.copy(src, des)
         os.remove(src)
-        os.symlink(des, symlink, target_is_directory=False)
 
 
 def get_dirname_from_command_line():
@@ -80,8 +82,8 @@ def get_dirname_from_command_line():
         else:
             return None
 
-    print("Please specify a directory for easy access " +
-          "to the models, modules and configurations, etc.")
+    print("Please specify the directory that holds "
+          "the models, modules and configurations, etc.")
     _delims = readline.get_completer_delims()
     readline.parse_and_bind("tab: complete")
     readline.set_completer_delims(' \t\n;')
@@ -101,7 +103,7 @@ def get_dirname_from_gui():
     Tk().withdraw()
     result = messagebox.showinfo(
         "Select Directory",
-        "Please specify a directory for\n"
+        "Please specify the directory that holds\n"
         "the models, modules and configurations, etc.",
         type=messagebox.OKCANCEL)
     if result == "cancel":
@@ -114,7 +116,7 @@ def get_dirname_from_gui():
     return dirname
 
 
-def migrate(dirname=''):
+def undo_migrate(dirname=''):
     if dirname == '':
         try:
             dirname = get_dirname_from_gui()
@@ -124,26 +126,22 @@ def migrate(dirname=''):
     if dirname == '':
         return
 
-    print(f"Set Synthpop_Directory to {dirname}")
+    print(f"Undoing SynthPop migration to {dirname}")
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
 
     # copy modules models and config & constants to new location
     synthpop_code_dir = os.path.dirname(__file__)
-    copy_dir(synthpop_code_dir, dirname, "config_files")
-    copy_dir(synthpop_code_dir, dirname, "modules")
-    copy_dir(synthpop_code_dir, dirname, "models")
-    copy_file(synthpop_code_dir, dirname, "constants.py")
-    if os.path.isdir(synthpop_code_dir+'/outputfiles'):
-        copy_dir(synthpop_code_dir, dirname, "outputfiles")
-    else: os.path.isdir(dirname+'/outputfiles'):
-        os.mkdir(dirname+'/outputfiles')
-    os.symlink(dirname+'/outputfiles', synthpop_code_dir+'/outputfiles', target_is_directory=True)
-    print("Synthpop_Directory is now set. You can now use Synthpop with the interactive portions in your custom directory.")
+    copy_dir( dirname,synthpop_code_dir, "config_files")
+    copy_dir(dirname, synthpop_code_dir, "modules")
+    copy_dir(dirname, synthpop_code_dir, "models")
+    copy_file(dirname, synthpop_code_dir, "constants.py")
+    os.unlink(synthpop_code_dir+'/outputfiles')
+    print("Synthpop_Directory migration has been undone. You can now safely update SynthPop via pip.")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         directory = os.path.abspath(sys.argv[1])
     else:
         directory = ''
-    migrate(directory)
+    undo_migrate(directory)

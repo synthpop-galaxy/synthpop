@@ -26,12 +26,13 @@ import requests
 from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
 # import a "standard" interpolator
 from .charon_interpolator import CharonInterpolator
+#from .lagrange_interpolator import LagrangeInterpolator
 
 # global variable to stor the isochrones
 mist_isochrones = None
 mist_columns = {}
 
-
+# TODO: put default interpolator back to lagrange
 class MIST(EvolutionIsochrones, CharonInterpolator):
     """
     MIST Isochrone class
@@ -372,7 +373,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         print(f"convert {filename} to hdf5", end="\r")
         df = cls.read_csv(filename)
         # save table as h5 file
-        df.to_hdf(f'{filename}.h5', 'data', mode='w')
+        df.to_hdf(f'{filename}.h5', key='data', mode='w')
         return df
 
     def download_isochrones(self, magsys_name):

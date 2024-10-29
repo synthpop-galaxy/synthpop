@@ -4,7 +4,7 @@ Its task is to handel the configuration of SynthPop from the config files a Keyw
 And provide the different task in a Namespace Object.
 """
 __all__ = ["Parameters", "parser", "PopParams", "ModuleKwargs"]
-__author__ = "J. Klüter"
+__author__ = ["J. Klüter", "M.J. Huston"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2023-03-02"
 __license__ = "GPLv3"
@@ -246,15 +246,17 @@ class Parameters:
 
         """
         if os.path.isfile(default_config_file):
-            config_dir = os.path.abspath(os.path.dirname(default_config_file))
+            config_dir = os.path.abspath(os.path.dirname(default_config_file))+'/'
+            add_dir=''
         elif os.path.isfile(os.path.join(DEFAULT_CONFIG_DIR, default_config_file)):
-            config_dir = DEFAULT_CONFIG_DIR
+            config_dir = DEFAULT_CONFIG_DIR+'/'
+            add_dir=config_dir
         else:
             raise FileNotFoundError(f'default_config_file "{default_config_file}" was not found')
 
-        logger.info("# read default parameters from")
-        logger.info(f" {default_config_file = !r} ")
-        default = json_loader(default_config_file)
+        logger.info("# reading default parameters from")
+        logger.info(f"default_config_file =  {add_dir}{default_config_file} ")
+        default = json_loader(add_dir+default_config_file)
         for cat, item in default.items():
             if cat.startswith("_"):
                 continue
