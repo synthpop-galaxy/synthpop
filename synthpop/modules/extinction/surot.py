@@ -85,14 +85,17 @@ class Surot(ExtinctionMap):
 
         # Fetch extinction map data if needed
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
-            print("Missing Surot table. Download and formatting may take several minutes.")
-            print('Downloading map file from VizieR...')
-            map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
-            map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
-            with open(map_filename, "wb") as f:
-                r = requests.get(map_url)
-                f.write(r.content)
-                print('Map retrieved.')
+            if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]):
+                print("Missing Surot table. Download and formatting may take several minutes.")
+                print('Downloading map file from VizieR...')
+                map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
+                map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
+                with open(map_filename, "wb") as f:
+                    r = requests.get(map_url)
+                    f.write(r.content)
+                    print('Map retrieved.')
+            else:
+                map_filename = f'{const.EXTINCTIONS_DIR}/surot_ejkmap.dat'
             print('Reading table...')
             E_JKs_map_df = pd.read_fwf(map_filename,compression='gzip', header=None)
             print('Reformatting values...')
