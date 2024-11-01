@@ -38,7 +38,10 @@ class SunInfo(BaseModel):
     b_apex_deg: float = 25.
 
     class Config():
-        keep_untouched = (cached_property,)
+        try: #pydantic version compatibility
+            ignored_types = (cached_property,)
+        except: 
+            keep_untouched = (cached_property,)
 
     @cached_property
     def gal_dist(self) -> float:

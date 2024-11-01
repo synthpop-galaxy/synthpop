@@ -1,6 +1,10 @@
 """
-This file provides an implementation of the extinction Law from ODonnell 1994.
-It is bases on Cardelli 1989.
+Extinction Law from ODonnell (1994), which builds from the
+Cardelli et al. (1989) law. 
+
+Valid from 0.25 to 3.5 microns
+
+Source DOI: 10.1086/173713
 """
 
 __all__ = ["ODonnell1994", ]
@@ -11,20 +15,16 @@ __version__ = "1.0.0"
 
 from ._extinction import ExtinctionLaw
 
-
 class ODonnell1994(ExtinctionLaw):
-    """
-    Extinction law from O'Donnell(1994) :
-    For Alambda_AV. Good below 1/lambda=3 or so. Or at least smoother than Cardelli
-    DO NOT GO ABOVE THIS, as it ramps up crazy fast
-    """
-
-    def __init__(self, **kwargs):
+    def __init__(self, R_V: float = 3.1, **kwargs):
         super().__init__(**kwargs)
         self.extinction_law_name = 'ODonnell1994'
         self.law_ref_wavelength=0.549
+        self.R_V=R_V
+        self.min_wavelength = 0.25
+        self.max_wavelength = 3.5
 
-    def Alambda_Aref(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float) -> float:
         """
         Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
 
@@ -33,8 +33,6 @@ class ODonnell1994(ExtinctionLaw):
         eff_wavelength : float
             Effective Wavelength of the filter for which the extinction should be determined.
             in micrometer
-        R_V : float
-            interstellar reddening parameter
         """
 
         x = 1. / eff_wavelength
@@ -50,4 +48,4 @@ class ODonnell1994(ExtinctionLaw):
             a = 0.574 * xpow
             b = -0.527 * xpow
 
-        return a + b / R_V
+        return a + b / self.R_V

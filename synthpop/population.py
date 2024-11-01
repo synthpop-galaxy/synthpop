@@ -367,7 +367,6 @@ class Population:
             ext_law_kwargs=self.glbl_params.extinction_law_kwargs,
             logger=logger
         )
-        extinction.set_R_V(self.glbl_params.R_V)
         return extinction
 
     def get_population_density_class(self):
