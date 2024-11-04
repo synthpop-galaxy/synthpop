@@ -100,7 +100,7 @@ example::
             "l_set_type":"list",
             "b_set":[-1,0,1],
             "b_set_type":"list",
-           "solid_angle": 1e-2,
+            "solid_angle": 1e-2,
             "solid_angle_unit": "deg^2"
     }
 
