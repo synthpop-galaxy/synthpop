@@ -169,7 +169,7 @@ POPULATION_GENERATION
 
 **mass_lims**: range of initial stellar masses to produce
 
-**N_mc_totmass**: number of stars to use to estimate number of stars needed per slice
+**N_mc_totmass**: number of random points to sample to estimate average density in a slice
 
 **lost_mass_option**: method to estimate correction for mass loss
 
