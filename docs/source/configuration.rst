@@ -210,10 +210,8 @@ EXTINCTION_MAP
 **extinction_law_kwargs**: dictionary containing:
 
 * **name**: name of extinction law module
+* **R_V**: total to selective extinction ratio [note: only used in select extinction laws, will be ignored if input for others]
 * **<kwargs>**: any kwargs required or optional for the selected module
-[Note: multi-evolution class options are available]
-
-**R_V**: total to selective extinction ratio [note: only used in select extinction laws]
 
 example::
 
