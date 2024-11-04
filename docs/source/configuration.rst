@@ -222,9 +222,8 @@ example::
             },
         "extinction_law_kwargs":
             [
-            {"name":"SODC"}
-            ],
-        "R_V":2.5
+            {"name":"SODC", "R_V":2.5}
+            ]
         },
 
 ISOCHRONE_INTERPOLATION
