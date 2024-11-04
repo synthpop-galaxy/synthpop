@@ -73,7 +73,7 @@
 
         "#comment4":"Limiting mass [min_mass, max_mass]",
         "mass_lims":{"min_mass":0.08,"max_mass":100},
-        "#comment5":"Number of stars used for estimating the total mass in a slice ",
+        "#comment5":"Number of points used for estimating the total mass in a slice ",
         "N_mc_totmass":10000,
 
         "#comment6":"method to estimate the mass loss correction",

@@ -1,6 +1,5 @@
 """
-This file contains post-processing to account for dim compact objects,
-based on PopSyCLE (Rose et al 2022).
+Post-processing to account for dim compact objects, based on PopSyCLE (Rose et al 2022).
 """
 __all__ = ["ProcessDarkCompactObjects", ]
 __author__ = "M.J. Huston"
@@ -13,22 +12,21 @@ import numpy as np
 from ._post_processing import PostProcessing
 
 class ProcessDarkCompactObjects(PostProcessing):
-    def __init__(self, model, logger, remove=False, ifmr_name='SukhboldN20', **kwargs):
-        """
-        Parameters:
-            model:
-                SynthPop main model object
-    	    remove:
-    		  if True, remove compact objects from catalog; if False, keep them in
-    	    ifmr_name:
-    		  select initial final mass relation to determine compact object masses based on their initial mass
-    		  current options are Raithel18, SukhboldN20, Spera15
-        """
-        self.model = model
-        self.remove = remove
-        self.ifmr_name= ifmr_name
-        self.logger = logger
+    """
+    Post-processing to account for dim compact objects, based on PopSyCLE (Rose et al 2022).
+    The module will take all objects that have evolved past the MIST grid, and assign them a final
+    mass, removing their photometry. Optionally, one can just remove all of these objects instead.
+    """
 
+    def __init__(self, model, logger, remove=False, ifmr_name='SukhboldN20', **kwargs):
+        super().__init__(model, logger, **kwargs)
+        #: true to remove all dark compact objects; false to keep
+        self.remove = remove
+        #: initial-final mass relation name to determine compact object masses.
+        #: options are Raithel18, SukhboldN20, Spera15
+        self.ifmr_name= ifmr_name
+
+    @staticmethod
     def mass_bh(self, m_zams, feh, f_ej=0.9):
         """
         Black hole mass calculation for Raithel18 and SukhboldN20
@@ -67,6 +65,7 @@ class ProcessDarkCompactObjects(PostProcessing):
             m_bh = np.maximum(m_bh_prelim, m_ns_backup)
         return m_bh
 
+    @staticmethod
     def mass_ns(self, m_zams):
         """
         Neutron star final mass calculation, adopting the 1.36 Msun average
@@ -85,6 +84,7 @@ class ProcessDarkCompactObjects(PostProcessing):
         """
         return np.random.normal(1.36, 0.09, len(m_zams))
 
+    @staticmethod
     def mass_wd(self, m_zams):
         """
         White dwarf final mass calculation.
@@ -102,6 +102,7 @@ class ProcessDarkCompactObjects(PostProcessing):
         """
         return 0.109 * m_zams + 0.394
 
+    @staticmethod
     def mass_spera15(self, m_zams, feh):
         """
         Remnant mass calculation from Spera et al 2015, appendix C
@@ -173,6 +174,7 @@ class ProcessDarkCompactObjects(PostProcessing):
 
         return m_rem
             
+    @staticmethod
     def compact_type_from_final(self, m_fin):
         """
         Determination of compact object type from final mass
@@ -193,6 +195,7 @@ class ProcessDarkCompactObjects(PostProcessing):
         """
         return (m_fin<1.4).astype(int)*1 + ((m_fin>=1.4) & (m_fin<3)).astype(int) * 2 + (m_fin>=3).astype(int)*3
 
+    @staticmethod
     def compact_type_from_initial(self, m_zams, feh):
         """
         Probabilistic drawing of compact object types
@@ -246,17 +249,7 @@ class ProcessDarkCompactObjects(PostProcessing):
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """
-        Function that executes the post-processing to assign compact object masses
-
-        Parameters
-        ----------
-        dataframe : dataframe
-            original SynthPop output as pandas data frame
-
-        Returns
-        -------
-        dataframe : dataframe
-            modified pandas data frame
+        Perform the post-processing and return the modified DataFrame.
         """
 
         # Pick out which stars need processed
