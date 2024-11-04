@@ -122,11 +122,11 @@ class EvolutionIsochrones(ABC):
         yes_mass_loss = oldest[1 - oldest['star_mass'] / oldest['initial_mass'] >= 1e-4]
         #print(yes_mass_loss['initial_mass'],yes_mass_loss['Bessell_I'])
         #print(self.isochrones_grouped['initial_mass'])
-        closest = np.searchsorted(-no_mass_loss[band][1:], -abs_mag_lim)
+        closest = np.searchsorted(-no_mass_loss[band].iloc[1:], -abs_mag_lim)
         masses = no_mass_loss.iloc[closest].initial_mass.values
         masses[closest < 10] = 0
         #print(masses)
-        closest = np.searchsorted(-no_mass_loss[band][1:], -abs_mag_lim)
+        closest = np.searchsorted(-no_mass_loss[band].iloc[1:], -abs_mag_lim)
         masses = no_mass_loss.iloc[closest].initial_mass.values
         masses[closest < 10] = 0
         return masses

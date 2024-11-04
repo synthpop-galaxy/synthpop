@@ -121,12 +121,12 @@ class CompareGaia:
 
         self.mod1 = synthpop.SynthPop(
             os.path.join(DIRNAME, 'gaia_config.json'),
-            model_name='gaia_universe_model_dr3',
+            model_name='GUMS_dr3',
             **self.kwargs)
 
         self.mod2 = synthpop.SynthPop(
             os.path.join(DIRNAME, 'gaia_config.json'),
-            model_name='gaia_universe_model_dr3_mod_dens',
+            model_name='GUMS_dr3_mod_dens',
             **self.kwargs)
 
         self.mod1.init_populations()
