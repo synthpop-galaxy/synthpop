@@ -21,7 +21,7 @@ __version__ = "0.1.0"
 # Standard Imports
 import time
 from typing import Tuple, Dict, Union
-
+import pdb
 # Non-Standard Imports
 import numpy as np
 import pandas
@@ -719,7 +719,7 @@ class Population:
             extinction_index = headers.index("ExtinctionInMap")
             headers[extinction_index] = self.extinction.A_or_E_type
         # requested properties
-        props = set(const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props + self.bands)
+        props_list = set(const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props + self.bands)
 
         # get average_mass from imf
         average_imass_per_star = self.imf.average_mass(min_mass=self.min_mass,
@@ -805,15 +805,20 @@ class Population:
         missing_stars = total_stars
         loop_counts = 0
         logger.debug("generate stellar properties")
-
         while any(missing_stars > 0):
-            #r_inner = np.repeat(radii[:-1], missing_stars)
+            if sum(missing_stars)>self.glbl_params.chunk_size:
+                idx_cs = np.searchsorted(np.cumsum(missing_stars), self.glbl_params.chunk_size)
+                rem_chunk = np.cumsum(missing_stars)[idx_cs] - self.glbl_params.chunk_size
+                missing_stars_chunk = missing_stars * (np.cumsum(missing_stars)<self.glbl_params.chunk_size)
+                missing_stars_chunk[idx_cs] = rem_chunk
+            else:
+                missing_stars_chunk = np.copy(missing_stars)
 
             position, r_inner, proper_motions, velocities, vr_lsr, \
             (m_initial, age, met, ref_mag, s_props, final_phase_flag, 
                 inside_grid, not_evolved) = self.generator.generate_stars(radii, 
-                missing_stars, mass_per_slice, 
-                mass_limit, self.do_kinematics, props)
+                missing_stars_chunk, mass_per_slice,
+                mass_limit, self.do_kinematics, props_list)
 
             initial_parameters = np.column_stack([m_initial, age, met])
 
@@ -827,9 +832,10 @@ class Population:
                 self.glbl_params.opt_iso_props, inside_grid, not_evolved)
 
             # check field, e.g. does the density matches the expectations
-            missing_stars = self.check_field(
+            missing_stars_evol = self.check_field(
                 radii, average_imass_per_star, m_initial, m_evolved, r_inner, loop_counts,
                 mass_per_slice, frac_lowmass)
+            missing_stars += -missing_stars_chunk + missing_stars_evol.astype(int)
 
             # Convert Table to pd.DataFrame
             df = self.convert_to_dataframe(
@@ -844,6 +850,8 @@ class Population:
                 df = self.remove_stars(df, pop_array[:, 0], missing_stars, radii)
                 missing_stars = np.maximum(missing_stars, 0)
             # add to previous drawn data
+            if self.glbl_params.maglim[-1] != "keep":
+                df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             df_list.append(df)
             loop_counts += 1
 
@@ -953,14 +961,13 @@ class Population:
         missing_stars : ndarray
             number of missing stars in each slice
         """
-
         # estimate current initial mass
         m_in = np.array([np.sum(m_initial[radii_star == r]) for r in radii[:-1]])
         # estimate current evoled mass
         m_evo = np.array([np.sum(m_evolved[radii_star == r]) for r in radii[:-1]])
 
         if self.population_density.density_unit in ['number', 'init_mass']:
-            return np.zeros(1)
+            return np.zeros(len(mass_per_slice))
 
         # Option 1, 2 and 6 does not make use of check_field
         elif self.lost_mass_option == 3:
@@ -969,7 +976,7 @@ class Population:
             # otherwise use the determined stars to estimate the average evolved mass:
             # only pick a second time
             if loop_counts > 0:
-                return np.zeros(1)
+                return np.zeros(len(mass_per_slice))
 
             average_emass_per_star_mass = (
                 fract_mass_limit[0] * fract_mass_limit[1]  # not generated
@@ -985,7 +992,7 @@ class Population:
             return missing_stars
 
         else:
-            return np.zeros(1)
+            return np.zeros(len(mass_per_slice))
 
     def do_kinematics(
             self, dist: np.ndarray, star_l_deg: np.ndarray, star_b_deg: np.ndarray,
