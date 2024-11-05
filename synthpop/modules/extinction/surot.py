@@ -2,7 +2,7 @@
 
 """
 
-__all__ = ["Surot3d", ]
+__all__ = ["Surot", ]
 __author__ = "M.J. Huston"
 __date__ = "2023-06-26"
 __license__ = "GPLv3"
@@ -85,14 +85,17 @@ class Surot(ExtinctionMap):
 
         # Fetch extinction map data if needed
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
-            print("Missing Surot table. Download and formatting may take several minutes.")
-            print('Downloading map file from VizieR...')
-            map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
-            map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
-            with open(map_filename, "wb") as f:
-                r = requests.get(map_url)
-                f.write(r.content)
-                print('Map retrieved.')
+            if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]):
+                print("Missing Surot table. Download and formatting may take several minutes.")
+                print('Downloading map file from VizieR...')
+                map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
+                map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
+                with open(map_filename, "wb") as f:
+                    r = requests.get(map_url)
+                    f.write(r.content)
+                    print('Map retrieved.')
+            else:
+                map_filename = f'{const.EXTINCTIONS_DIR}/surot_ejkmap.dat'
             print('Reading table...')
             E_JKs_map_df = pd.read_fwf(map_filename,compression='gzip', header=None)
             print('Reformatting values...')
@@ -115,7 +118,6 @@ class Surot(ExtinctionMap):
         #    usecols=[0, 1, 2], sep=',', names=['l','b','A_Ks'])
         self.coord_tree = KDTree(np.transpose(np.array([tmp['l'],tmp['b']])))
         self.A_Ks_list = np.array(tmp['A_Ks'])
-        # TODO: set up interpolation function
         
         if self.project_3d:
         # Set up 3D grid
@@ -130,7 +132,8 @@ class Surot(ExtinctionMap):
                 map_data_3d)
 
     def ext_func(self, l_deg, b_deg, dist):
-        _, min_dist_arg = self.coord_tree.query(np.transpose([l_deg,b_deg]))
+        use_l = l_deg - (l_deg>180)*360
+        _, min_dist_arg = self.coord_tree.query(np.transpose([use_l,b_deg]))
         ext_value = self.A_Ks_list[min_dist_arg]
 
         # Calculate the scaling from the 3-d interpolator

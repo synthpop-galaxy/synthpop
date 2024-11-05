@@ -1,5 +1,6 @@
 """
-This file contains post-processing to convert magnitude systems
+Postprocessing module to convert magnitude systems for any
+filters provided by MIST.
 """
 __all__ = ["ConvertMistMags", ]
 __author__ = "M.J. Huston"
@@ -12,31 +13,22 @@ import numpy as np
 from ._post_processing import PostProcessing
 
 class ConvertMistMags(PostProcessing):
+    """
+    Postprocessing module to convert magnitude systems for any
+    filters provided by MIST. Allowed systems are Vega, AB, and ST.
+    """
+
     def __init__(self, model, conversions, logger, **kwargs):
-        """
-        Parameters:
-            model:
-                SynthPop main model object
-            conversions:
-                Dictionary defining which filters to convert to which systems
-                format: {'NEW_SYSTEM':['FILTER1', 'FILTER2']}
-        """
-        self.model = model
+        super().__init__(model,logger, **kwargs)
+        
+        #: magnitude conversions:
+        #:    Dictionary defining which filters to convert to which systems
+        #:    format: {'NEW_SYSTEM':['FILTER1', 'FILTER2']}
         self.conversions = conversions
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """
-        It must accept the pandas data frame and must return a pandas data frame
-
-        Parameters
-        ----------
-        dataframe : dataframe
-            original SynthPop output as pandas data frame
-
-        Returns
-        -------
-        dataframe : dataframe
-            modified pandas data frame
+        Perform the magnitude conversions and returns the modified DataFrame.
         """
 
         # MIST data
@@ -286,6 +278,6 @@ class ConvertMistMags(PostProcessing):
                 elif system_old=='ST' and system_new=='AB':
                     dataframe[filt] = dataframe[filt] - mist_mag_vega_st[idx] + mist_mag_vega_ab[idx]   
                 else:
-                    raise ValueError('Invalid magnitude system conversion:',system_old,
-                        '->',system_new)
+                    raise ValueError('Invalid magnitude system conversion: '+system_old+
+                        ' -> '+system_new)
         return dataframe
