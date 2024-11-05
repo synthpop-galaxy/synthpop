@@ -171,7 +171,8 @@ POPULATION_GENERATION
 
 **N_mc_totmass**: number of random points to sample to estimate average density in a slice
 
-**lost_mass_option**: method to estimate correction for mass loss with four integer options
+**lost_mass_option**: method to estimate correction for mass loss with four integer options:
+
 * 1: For each population, a test batch of N_av_mass stars is generated and evolved to estimate the total initial stellar mass required to meet the desired present day total stellar mass. These values are saved for all sightlines run with the initialized populations.
 * 2: For each population a test batch of N_av_mass stars is generated and evolved to estimate the total initial stellar mass required to meet the desired present day total stellar mass. These value is re-calculated for each sightline run.
 * 3: TEMPORARILY UNAVAILABLE
