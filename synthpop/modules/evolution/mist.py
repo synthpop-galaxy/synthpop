@@ -28,11 +28,10 @@ from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
 from .charon_interpolator import CharonInterpolator
 #from .lagrange_interpolator import LagrangeInterpolator
 
-# global variable to stor the isochrones
+# global variable to store the isochrones
 mist_isochrones = None
 mist_columns = {}
 
-# TODO: put default interpolator back to lagrange
 class MIST(EvolutionIsochrones, CharonInterpolator):
     """
     MIST Isochrone class
@@ -131,7 +130,10 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         if use_global:
             global mist_isochrones
             if mist_isochrones is not None:
-                self.isochrones = mist_isochrones
+                if np.array_equal(np.sort(np.unique(self.bands+self.none_mag_cols)).astype(str), np.sort(np.unique(mist_isochrones.keys())).astype(str)):
+                    self.isochrones = mist_isochrones
+                else:
+                    mist_isochrones = self.isochrones = self.load_isochrones(self.magsys)
             else:
                 mist_isochrones = self.isochrones = self.load_isochrones(self.magsys)
         else:

@@ -47,7 +47,6 @@ except ImportError:
     from modules.metallicity import Metallicity
     from modules.population_density import PopulationDensity
 
-
 else:  # continue import when if synthpop is imported
     from . import synthpop_utils as sp_utils
     from .position import Position
@@ -69,8 +68,6 @@ class Population:
     """
     Population subclass for model class.
     Requires a population parameter file to be initialized.
-
-    ...
 
     Attributes
     ----------
@@ -113,10 +110,6 @@ class Population:
     evolve_field(self,data) : float x 4
         estimates the evolved parameter for each star in the field
     """
-
-    # still deciding on what goes in init...
-    # we could also make an update function to reset values like coordinates and solid angle
-    # new args ideas : population_file, field class, evolution class, extinction class
     def __init__(
             self, pop_params: str, population_index: int, glbl_params: Parameters,
             **positional_kwargs
@@ -124,8 +117,6 @@ class Population:
         # machinery to import parameter file for a population only given filename
         self.glbl_params = glbl_params
         self.sun = glbl_params.sun
-        # reduces the number of stars by a given scale_factor
-        # i.e. if set to 100 only 1% of the stars are generated
         self.scale_factor = getattr(glbl_params, "scale_factor", 1)
 
         self.pop_params = pop_params
@@ -133,7 +124,6 @@ class Population:
         self.popid = population_index
 
         logger.create_info_subsection(f"Population {self.popid};  {self.name}")
-        # independent index issued by model class
 
         logger.info(f"# Initialize Population {self.popid} ({self.name}) from ")
         logger.info(f"pop_file = {self.pop_params._filename!r}")
@@ -367,7 +357,6 @@ class Population:
             ext_law_kwargs=self.glbl_params.extinction_law_kwargs,
             logger=logger
         )
-        extinction.set_R_V(self.glbl_params.R_V)
         return extinction
 
     def get_population_density_class(self):

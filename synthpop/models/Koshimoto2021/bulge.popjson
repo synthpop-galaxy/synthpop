@@ -38,9 +38,7 @@
 
     "population_density_kwargs" : {
         "name" : "Koshimoto2021BulgeB"
-    },
-    
-    "n_star_corr" : 1.77453
+    }
 }
 
 
