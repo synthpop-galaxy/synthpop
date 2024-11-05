@@ -26,7 +26,6 @@ class ProcessDarkCompactObjects(PostProcessing):
         #: options are Raithel18, SukhboldN20, Spera15
         self.ifmr_name= ifmr_name
 
-    @staticmethod
     def mass_bh(self, m_zams, feh, f_ej=0.9):
         """
         Black hole mass calculation for Raithel18 and SukhboldN20
@@ -65,7 +64,6 @@ class ProcessDarkCompactObjects(PostProcessing):
             m_bh = np.maximum(m_bh_prelim, m_ns_backup)
         return m_bh
 
-    @staticmethod
     def mass_ns(self, m_zams):
         """
         Neutron star final mass calculation, adopting the 1.36 Msun average
@@ -84,7 +82,6 @@ class ProcessDarkCompactObjects(PostProcessing):
         """
         return np.random.normal(1.36, 0.09, len(m_zams))
 
-    @staticmethod
     def mass_wd(self, m_zams):
         """
         White dwarf final mass calculation.
@@ -102,7 +99,6 @@ class ProcessDarkCompactObjects(PostProcessing):
         """
         return 0.109 * m_zams + 0.394
 
-    @staticmethod
     def mass_spera15(self, m_zams, feh):
         """
         Remnant mass calculation from Spera et al 2015, appendix C
@@ -174,7 +170,6 @@ class ProcessDarkCompactObjects(PostProcessing):
 
         return m_rem
             
-    @staticmethod
     def compact_type_from_final(self, m_fin):
         """
         Determination of compact object type from final mass
@@ -195,7 +190,6 @@ class ProcessDarkCompactObjects(PostProcessing):
         """
         return (m_fin<1.4).astype(int)*1 + ((m_fin>=1.4) & (m_fin<3)).astype(int) * 2 + (m_fin>=3).astype(int)*3
 
-    @staticmethod
     def compact_type_from_initial(self, m_zams, feh):
         """
         Probabilistic drawing of compact object types
@@ -206,8 +200,8 @@ class ProcessDarkCompactObjects(PostProcessing):
         ----------
         m_zams
             array of float values for initial stellar mass in units of solar mass
-        phase
-            indicator that a star is in its final phase.
+        feh
+            array of float values for initial metallicity [Fe/H]
         Returns
         -------
         m_type

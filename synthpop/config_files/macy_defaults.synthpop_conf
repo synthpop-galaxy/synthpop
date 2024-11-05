@@ -146,7 +146,7 @@
         
         "#comment1":"if output_location is '' or null it is replaced with the synthpop directory",
         "#comment2":"if output_location ends with '/' it uses output_location/model_base_name as directory",
-        "output_location":"outputfiles/hst_bulge_treasury_sim",
+        "output_location":"outputfiles/default",
         "#comment5": "pattern for the output file (without directory and extension) interpreted by string.format() ",
         "#comment6": "The following keys are available:",
         "#comment7": "model_base_name (str), model_name (str), l_deg (float), b_deg(float),",
