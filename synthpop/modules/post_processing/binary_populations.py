@@ -29,9 +29,9 @@ from synthpop.modules.age import Age
 from synthpop.modules.metallicity import Metallicity
 
 class BinaryGenerator(StarGenerator):
-    """
-    Subclass of StarGenerator to generate new stars as binary companions
-    """
+	"""
+	Subclass of StarGenerator to generate new stars as binary companions
+	"""
 	def __init__(self, imf_module, age_module, met_module, evolution_module, glbl_params, logger, binary_property):
 		super().__init__(imf_module, age_module, met_module, evolution_module, glbl_params, logger)
 		self.binary_property = binary_property
