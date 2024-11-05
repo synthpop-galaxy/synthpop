@@ -11,8 +11,10 @@ from ._post_processing import PostProcessing
 import time
 import pandas as pd
 import numpy as np
-from synthpop.synthpop_utils.coordinates_transformation import lb_to_ad
-from popsycle import ebf
+try:
+    from popsycle import ebf
+except:
+    import ebf
 
 class PopsyclePostProcessing(PostProcessing):
 
