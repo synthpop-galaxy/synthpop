@@ -114,6 +114,7 @@ class Surot(ExtinctionMap):
             surot_2d_df.to_hdf(f'{const.EXTINCTIONS_DIR}/'+map_output, key='data', index=False, mode='w')
             print('File 2D version saved as '+map_output)
 
+        # Grab saved data from last population, if same map used.
         global current_map_name, current_map_data
         if (current_map_name is not None) and (current_map_data is not None):
             if current_map_name==self.extinction_map_name:
