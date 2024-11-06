@@ -92,9 +92,12 @@ class CompareGaia:
                 f'{DIRNAME}/comp/gaia_synthpop_compare_gums.csv'
                 ]
             self.kwargs = {}
-            self.l_deg = np.random.uniform(0, 90, n_locations).round(6) % 360
+            #self.l_deg = np.random.uniform(0, 90, n_locations).round(6) % 360
+            #min_b = 15 * (self.l_deg < 15)
+            #self.b_deg = np.random.uniform(min_b, 45).round(6)
+            self.l_deg = np.array([44.253064, 14.705311, 64.940919, 63.825752, 35.491666,  0.297496, 52.429847, 28.759156, 69.626973, 11.143102])
             min_b = 15 * (self.l_deg < 15)
-            self.b_deg = np.random.uniform(min_b, 45).round(6)
+            self.b_deg = np.array([29.233977, 38.847422, 23.836576, 30.082817, 31.646088, 38.979967, 18.837763, 39.484596, 24.838014, 29.617931])
             self.solid_angle = half_cone_angle_to_solidangle(
                 radius_deg / 180 * np.pi) * (180 / np.pi) ** 2
             self.radius_deg = radius_deg * u.degree
@@ -109,11 +112,13 @@ class CompareGaia:
             self.kwargs = {
                 "extinction_map_kwargs": {"name": "MapsFromDustmaps", "dustmap_name": "marshall"}
                 }
-            self.l_deg = np.zeros(n_locations)
-            self.b_deg = np.zeros(n_locations)
-            while any((self.l_deg **2+self.b_deg **2)<1):
-                self.l_deg = np.random.uniform(0, 15, n_locations).round(6)
-                self.b_deg = np.random.uniform(0, 10, n_locations).round(6)
+            #self.l_deg = np.zeros(n_locations)
+            #self.b_deg = np.zeros(n_locations)
+            #while any((self.l_deg **2+self.b_deg **2)<1):
+            #    self.l_deg = np.random.uniform(0, 15, n_locations).round(6)
+            #    self.b_deg = np.random.uniform(0, 10, n_locations).round(6)
+            self.l_deg = np.array([ 7.800946,  5.391022,  9.891575, 10.459377,  4.092467,  9.094776, 6.93679 ,  1.714315, 10.985764, 13.395032])
+            self.b_deg = np.array([6.415989, 7.864786, 1.88672 , 3.452827, 0.232533, 8.595475, 3.309097, 2.568136, 3.128835, 3.533741])
             print(loc)
             self.radius_deg = radius_deg * u.degree
             self.solid_angle = \
@@ -132,17 +137,11 @@ class CompareGaia:
         self.mod1.init_populations()
         self.mod2.init_populations()
 
-
-        (
-            self.complete_synth1, self.complete_synth2, self.complete_gaia, self.complete_gums
+        (self.complete_synth1, self.complete_synth2, self.complete_gaia, self.complete_gums
             ) = self.load_data(**kwargs)
 
-
-
-        self.complete_synth1_filtered = self.complete_synth1.loc[self.complete_synth1["Teff"] >= 0]
-        self.complete_synth2_filtered = self.complete_synth2.loc[self.complete_synth2["Teff"] >= 0]
-
-
+        self.complete_synth1_filtered = self.complete_synth1.loc[self.complete_synth1["logTeff"] >= 0]
+        self.complete_synth2_filtered = self.complete_synth2.loc[self.complete_synth2["logTeff"] >= 0]
 
     def download_cat(self):
         complete_gaia_list = []
@@ -217,6 +216,7 @@ class CompareGaia:
         """ load the data, if they do not exist it will call generate or downloaded routine."""
         print("Load Data")
         data = []
+        
         # check if generated data exist
         if os.path.isfile(self.files[0]) and os.path.isfile(self.files[1]) and (not regenerate):
             print(f"load {self.files[0]}", end='', flush=True)
@@ -680,7 +680,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 3:
         redownload = (sys.argv[3])=='yes'
     else:redownload = True
-
+    
+    if not os.path.isdir(f'{DIRNAME}/images'):
+        os.mkdir(f'{DIRNAME}/images')
 
     if field.lower() == 'disk':
         comp_gaia = CompareGaia(loc='Disk', regenerate=regen, radius_deg=1,

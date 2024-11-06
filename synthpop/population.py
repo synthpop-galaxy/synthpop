@@ -624,7 +624,7 @@ class Population:
                 n_stars=self.N_av_mass, use_save_value=False
                 )
 
-        elif lost_mass_option == 6:
+        elif lost_mass_option == 4:
             # use the av_mass_corr or n_star_corr keyword  specified in the population_config_file
             if self.pop_params.av_mass_corr is not None:
                 av_mass_corr = self.pop_params.av_mass_corr
@@ -969,7 +969,7 @@ class Population:
         if self.population_density.density_unit in ['number', 'init_mass']:
             return np.zeros(len(mass_per_slice))
 
-        # Option 1, 2 and 6 does not make use of check_field
+        # Option 1, 2 and 4 does not make use of check_field
         elif self.lost_mass_option == 3:
             # option 3.
             # if the sample is large enough otherwise determine the average mass before.
