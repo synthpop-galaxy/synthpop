@@ -118,7 +118,7 @@ class Lallement(ExtinctionMap):
         # Set up points along lines to integrate through
         n_pts, dr_rem = np.divmod(dist,self.dr)
         dist_max = np.max(dist)
-        dist_pts = np.repeat([np.arange(0,dist_max,self.dr)], len(dist),axis=0)
+        dist_pts = np.arange(0,dist_max,self.dr)[np.newaxis,:]
         # Convert to nearest neighbor map array indices
         l_rad, b_rad = l_deg[:,np.newaxis]*np.pi/180, b_deg[:,np.newaxis]*np.pi/180
         xm_pts = np.maximum(np.minimum(np.around(dist_pts*np.cos(b_rad)*np.cos(l_rad)/self.grid_dr).astype(int), self.grid_x_mid), -self.grid_x_mid) + self.grid_x_mid
