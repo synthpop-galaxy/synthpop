@@ -19,7 +19,6 @@ import shutil
 import numpy as np
 from ._extinction import ExtinctionMap, EXTINCTION_DIR
 import time
-from scipy.interpolate import RegularGridInterpolator
 import os
 from .. import const
 import requests
@@ -109,7 +108,10 @@ class Lallement(ExtinctionMap):
         self.grid_x_mid = 600
         self.grid_y_mid = 600
         self.grid_z_mid = 80
-        # Data units are mag/pc in A0, 5500 angstrom
+        self.x_extent=3.0
+        self.y_extent=3.0
+        self.z_extent=0.4
+        # Data units are dmag/dpc at A0, 5500 angstrom
         
     def ext_func(self,l_deg,b_deg,dist):
         '''
