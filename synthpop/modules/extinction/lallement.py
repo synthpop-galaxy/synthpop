@@ -65,7 +65,7 @@ class Lallement(ExtinctionMap):
 
     """
 
-    def __init__(self, dr=0.005, return_functions=True, **kwargs):
+    def __init__(self, dr=0.001, return_functions=True, **kwargs):
         super().__init__(**kwargs)
         # name of the extinction map used
         self.extinction_map_name = "Lallement"
@@ -128,7 +128,7 @@ class Lallement(ExtinctionMap):
         dm_dr_pts = self.map_data[xm_pts,ym_pts,zm_pts]
         # Sum up dA/dr * dr for each point in foreground
         # to get total extinction for each star
-        return np.sum(dm_dr_pts*self.dr*1e3*(dist_pts<(dist[:,np.newaxis])), axis=1)
+        return np.sum(dm_dr_pts*self.dr*1.0e3*(dist_pts<(dist[:,np.newaxis])), axis=1)
 
     def update_extinction_in_map(self, radius, force=False, **kwargs):
         """
