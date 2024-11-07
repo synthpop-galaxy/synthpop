@@ -17,10 +17,14 @@ import gzip
 import h5py
 import shutil
 import numpy as np
-from ._extinction import ExtinctionMap, EXTINCTION_DIR
+try: 
+    from ._extinction import ExtinctionMap, EXTINCTION_DIR
+    from ... import constants as const
+except ImportError:
+    from _extinction import ExtinctionMap, EXTINCTION_DIR
+    import constants as const
 import time
 import os
-from .. import const
 import requests
 
 current_map_name = None
@@ -113,7 +117,7 @@ class Lallement(ExtinctionMap):
         self.z_extent=0.4
         # Data units are dmag/dpc at A0, 5500 angstrom
         
-    def ext_func(self,l_deg,b_deg,dist):
+    def lallement_ext_func(self,l_deg,b_deg,dist):
         '''
         Get extinction value for multiple stars given their positions.
         '''
@@ -126,11 +130,19 @@ class Lallement(ExtinctionMap):
         xm_pts = np.maximum(np.minimum(np.around(dist_pts*np.cos(b_rad)*np.cos(l_rad)/self.grid_dr).astype(int), self.grid_x_mid), -self.grid_x_mid) + self.grid_x_mid
         ym_pts = np.maximum(np.minimum(np.around(dist_pts*np.cos(b_rad)*np.sin(l_rad)/self.grid_dr).astype(int), self.grid_y_mid), -self.grid_y_mid) + self.grid_y_mid
         zm_pts = np.maximum(np.minimum(np.around(dist_pts*np.sin(b_rad)/self.grid_dr).astype(int), self.grid_z_mid), -self.grid_z_mid) + self.grid_z_mid
+        #
+        xm_dists = dist_pts*np.cos(b_rad)*np.cos(l_rad)
+        ym_dists = dist_pts*np.cos(b_rad)*np.sin(l_rad)
+        zm_dists = dist_pts*np.sin(b_rad)
+        # Find where each line exits the grid
+        within_grid = (np.abs(xm_dists)<self.x_extent) & \
+                        (np.abs(ym_dists)<self.y_extent) & \
+                        (np.abs(zm_dists)<self.z_extent)
         # Get differential extinction along sightlines
         dm_dr_pts = self.map_data[xm_pts,ym_pts,zm_pts]
         # Sum up dA/dr * dr for each point in foreground
         # to get total extinction for each star
-        return np.sum(dm_dr_pts*self.dr*1.0e3*(dist_pts<(dist[:,np.newaxis])), axis=1)
+        return np.sum(dm_dr_pts*self.dr*1.0e3*(dist_pts<(dist[:,np.newaxis])) * within_grid, axis=1)
 
     def update_extinction_in_map(self, radius, force=False, **kwargs):
         """
@@ -143,6 +155,6 @@ class Lallement(ExtinctionMap):
         """
 
         if self.return_functions:
-            self.extinction_in_map = self.ext_func
+            self.extinction_in_map = self.lallement_ext_func
         else:
-            self.extinction_in_map = self.ext_func(self.l_deg, self.b_deg, radius)
+            self.extinction_in_map = self.lallement_ext_func(self.l_deg, self.b_deg, radius)

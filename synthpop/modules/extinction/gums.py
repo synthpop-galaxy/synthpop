@@ -14,18 +14,20 @@ import gzip
 import h5py
 import shutil
 import numpy as np
-from ._extinction import ExtinctionMap, EXTINCTION_DIR
+#from ._extinction import ExtinctionMap, EXTINCTION_DIR
 from lallement import Lallement
-from maps_from_dustmaps import MapsFromDustmaps
 import time
 import os
 from .. import const
 import requests
+import dustmaps.marshall
+import astropy.units as u
+from astropy.coordinates import SkyCoord
 
-current_map_name = None
-current_map_data = None
+# empty dictionary to store dustmaps query
+_query_dict = {}
 
-class GUMS(ExtinctionMap):
+class Gums(Lallement):
     """
     Extinction map from Lallement et al. 2019
 
@@ -64,20 +66,22 @@ class GUMS(ExtinctionMap):
     """
 
     def __init__(self, dr=0.001, return_functions=True, **kwargs):
+        # Start from Lallement law
         super().__init__(**kwargs)
-        # name of the extinction map used
         self.extinction_map_name = "GUMS"
-        self.return_functions = return_functions
-        self.lallement = Lallement(dr=dr)
-        self.marshall = MapsFromDustmaps(dustmap_name="marshall")
-        self.ref_wavelength = self.lallement.ref_wavelength
-        self.A_or_E_type = self.lallement.A_or_E_type
-        # placeholder for and location...
-        self.l_deg = None
-        self.b_deg = None
-        self.extinction_in_map = None
+        self.return_functions=return_functions
+        # Set up Marshall map
+        if not os.path.isdir(os.path.join(dustmaps.std_paths.data_dir(), "marshall")):
+            url = 'https://dustmaps.readthedocs.io/en/latest/installation.html'
+            module = dustmaps.marshall.MarshallQuery.__module__
+            print("Downloading Marshall map")
+            dustmaps.marshall.fetch()
+        global _query_dict
+        if 'marshall' not in _query_dict:
+            _query_dict['marshall'] = dustmaps.marshall.MarshallQuery
+        self.marshall_query = _query_dict['marshall']()
         
-    def ext_func(self,l_deg,b_deg,dist):
+    def gums_ext_func(self,l_deg,b_deg,dist):
         '''
         Get extinction value for multiple stars given their positions.
         '''
@@ -89,18 +93,23 @@ class GUMS(ExtinctionMap):
         ym_pts = dist_pts*np.cos(b_rad)*np.sin(l_rad)
         zm_pts = dist_pts*np.sin(b_rad)
         # Find where each line exits the grid
-        within_grid = (np.abs(xm)<self.lallement.x_extent) & \
-                        (np.abs(ym)<self.lallement.y_extent) & \
-                        (np.abs(zm)<self.lallement.z_extent)
-        end_pts = np.where(np.diff(within_grid))[1]
-        end_dists = dist_pts[0][end_pts]
+        within_grid = (np.abs(dist_pts*np.cos(b_rad)*np.cos(l_rad))<self.x_extent) & \
+                        (np.abs(dist_pts*np.cos(b_rad)*np.sin(l_rad))<self.y_extent) & \
+                        (np.abs(dist_pts*np.sin(b_rad))<self.z_extent)
+        star_idx,end_idx= np.where(np.diff(within_grid))
+        end_dists = 1.0*dist
+        #print(star_idx,end_idx)
+        #print(dist_pts)
+        if len(star_idx>0):
+            end_dists[star_idx] = dist_pts[0][end_idx]
+        #print(end_dists)
         # For stars within grid, use just Lallement.
         # For stars beyond, scale with addl distance as Marshall.
-        value = self.lallement.ext_func(l_deg,b_deg,dist) * \ # Lallement value
-                (self.marshall.get_map(l_deg,b_deg,dist) /  \ # Marshall value
-                 self.marshall.get_map(l_deg,b_deg,end_dists)) ** \ # Marshall value @ grid edge
-                (end_dists<dist) # Only apply Marshall if past grid
-        return 
+        value = self.lallement_ext_func(l_deg,b_deg,dist) * \
+                (self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=dist*u.kpc, frame='galactic')) /  \
+                 self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=end_dists*u.kpc, frame='galactic'))) ** \
+                (end_dists<dist)
+        return np.maximum(value + np.random.normal(value, value*0.1), 0)
 
     def update_extinction_in_map(self, radius, force=False, **kwargs):
         """
@@ -113,6 +122,6 @@ class GUMS(ExtinctionMap):
         """
 
         if self.return_functions:
-            self.extinction_in_map = self.ext_func
+            self.extinction_in_map = self.gums_ext_func
         else:
-            self.extinction_in_map = self.ext_func(self.l_deg, self.b_deg, radius)
+            self.extinction_in_map = self.gums_ext_func(self.l_deg, self.b_deg, radius)
