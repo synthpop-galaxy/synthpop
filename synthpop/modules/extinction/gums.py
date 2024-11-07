@@ -14,7 +14,7 @@ import gzip
 import h5py
 import shutil
 import numpy as np
-#from ._extinction import ExtinctionMap, EXTINCTION_DIR
+from ._extinction import ExtinctionMap, EXTINCTION_DIR
 from lallement import Lallement
 import time
 import os
@@ -27,7 +27,7 @@ from astropy.coordinates import SkyCoord
 # empty dictionary to store dustmaps query
 _query_dict = {}
 
-class Gums(Lallement):
+class Gums(Lallement,ExtinctionMap):
     """
     Extinction map from Lallement et al. 2019
 
