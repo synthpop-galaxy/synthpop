@@ -4,9 +4,9 @@ Combines Lallement et al (2019) & Marshall (2006)
 
 """
 
-__all__ = ["Lallement", ]
+__all__ = ["GUMS", ]
 __author__ = "M.J. Huston"
-__date__ = "2024-11-06"
+__date__ = "2024-11-07"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
@@ -81,27 +81,25 @@ class GUMS(ExtinctionMap):
         '''
         Get extinction value for multiple stars given their positions.
         '''
-        # Get values in Lallement grid coordinates
-        l_rad, b_rad = l_deg*np.pi/180, b_deg*np.pi/180
-        xm = dist*np.cos(b_rad)*np.cos(l_rad)
-        ym = dist*np.cos(b_rad)*np.sin(l_rad)
-        zm = dist*np.sin(b_rad)
-        # Are the stars in the grid?
-        within_grid = (np.abs(xm)<self.lallement.x_extent) & \
-                        (np.abs(ym)<self.lallement.y_extent) & \
-                        (np.abs(zm)<self.lallement.z_extent)
-        # Get position of grid edge along sightline
+        # Draw a sightline outward for each star
         dist_max = np.max(dist)
         dist_pts = np.arange(0,dist_max,self.dr)[np.newaxis,:]
         l_rad, b_rad = l_deg[:,np.newaxis]*np.pi/180, b_deg[:,np.newaxis]*np.pi/180
         xm_pts = dist_pts*np.cos(b_rad)*np.cos(l_rad)
         ym_pts = dist_pts*np.cos(b_rad)*np.sin(l_rad)
         zm_pts = dist_pts*np.sin(b_rad)
-        
+        # Find where each line exits the grid
+        within_grid = (np.abs(xm)<self.lallement.x_extent) & \
+                        (np.abs(ym)<self.lallement.y_extent) & \
+                        (np.abs(zm)<self.lallement.z_extent)
+        end_pts = np.where(np.diff(within_grid))[1]
+        end_dists = dist_pts[0][end_pts]
         # For stars within grid, use just Lallement.
         # For stars beyond, scale with addl distance as Marshall.
-        value = self.lallement.ext_func(l_deg,b_deg,dist) * \
-                self.marshall.get_map(l_deg,b_deg,dist)
+        value = self.lallement.ext_func(l_deg,b_deg,dist) * \ # Lallement value
+                (self.marshall.get_map(l_deg,b_deg,dist) /  \ # Marshall value
+                 self.marshall.get_map(l_deg,b_deg,end_dists)) ** \ # Marshall value @ grid edge
+                (end_dists<dist) # Only apply Marshall if past grid
         return 
 
     def update_extinction_in_map(self, radius, force=False, **kwargs):
