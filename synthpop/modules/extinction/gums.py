@@ -104,10 +104,10 @@ class Gums(Lallement,ExtinctionMap):
             end_dists[star_idx] = dist_pts[0][end_idx]
         #print(end_dists)
         # For stars within grid, use just Lallement.
-        # For stars beyond, scale with addl distance as Marshall.
+        # For stars beyond and in plane, scale with addl distance as Marshall.
         value = self.lallement_ext_func(l_deg,b_deg,dist) * \
-                (self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=dist*u.kpc, frame='galactic')) /  \
-                 self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=end_dists*u.kpc, frame='galactic'))) ** \
+                np.nan_to_num(self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=dist*u.kpc, frame='galactic')) /  \
+                 self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=end_dists*u.kpc, frame='galactic')), nan=1.0) ** \
                 (end_dists<dist)
         return np.maximum(value + np.random.normal(value, value*0.1), 0)
 
