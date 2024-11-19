@@ -82,7 +82,7 @@
         "N_av_mass":20000,
 
         "#comment7":"Flag for estimate the velocities for all stars at once",
-        "kinematics_at_the_end":true,
+        "kinematics_at_the_end":false,
 
         "#comment8": "Scale down the number of generated stars n_gen = (n/scale_factor)",
         "scale_factor": 1,
