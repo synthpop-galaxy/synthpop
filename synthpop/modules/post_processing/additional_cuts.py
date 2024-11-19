@@ -1,5 +1,5 @@
 """
-This file contains post-processing to make additional cuts to the catalog
+Post-processing module to make additional cuts to the catalog.
 """
 __all__ = ["AdditionalCuts", ]
 __author__ = "M.J. Huston"
@@ -12,47 +12,35 @@ import numpy as np
 from ._post_processing import PostProcessing
 
 class AdditionalCuts(PostProcessing):
+    """
+    Post-processing module to make additional cuts on which stars are included in the catalog.
+    These may be based on a minimum or maximum value for any column(s),
+    or a minimum or maximum value of the difference between any column pair(s).
+    """
+
     def __init__(self, model, logger, standard_cuts=None, difference_cuts=None, **kwargs):
-        """
-        Parameters:
-            model:
-                SynthPop main model object
-            standard_cuts:
-                list of additional cuts to make to the catalog on individual columns
-                expected format:
-                [['param_name1', 'cut_type1', cut_limit1],
-                ['param_name2', 'cut_type2', cut_limit2]]
-                'param_nameN' can be any column in the DataFrame
-                'cut_typeN' must be 'min' or 'max'
-                cutlimitN should be the int or float value to cut at
-            difference_cuts:
-                list of additional cuts to make to the catalog on the difference between
-                columns (e.g. colors)
-                expected format:
-                [['param_name1a', 'param_name1b', 'cut_type1', cut_limit1],
-                ['param_name2a', 'param_name2b', 'cut_type2', cut_limit2]]
-                'param_nameNm' can be any column in the DataFrame
-                    note: the second will be subtracted from the first
-                'cut_typeN' must be 'min' or 'max'
-                cutlimitN should be the int or float value to cut at
-        """
-        self.model = model
+        super().__init__(model,logger, **kwargs)
+        #: List of additional cuts to make on single column(s)
+        #: expected format:
+        #:    [['param_name1', 'cut_type1', cut_limit1],
+        #:     ['param_name2', 'cut_type2', cut_limit2]]
+        #:   where 'param_nameN' can be any column in the DataFrame,
+        #:     'cut_typeN' must be 'min' or 'max', and
+        #:     cutlimitN should be the int or float value to cut at.
         self.standard_cuts = standard_cuts
+        #: List of additional cuts to make on column pair differences
+        #: expected format:
+        #:    [['param_name1a', 'param_name1b', 'cut_type1', cut_limit1],
+        #:     ['param_name2a', 'param_name2b', 'cut_type2', cut_limit2]]
+        #:   where 'param_nameNm' can be any column in the DataFrame
+        #:     (note: the second will be subtracted from the first),
+        #:     'cut_typeN' must be 'min' or 'max', and
+        #:     cutlimitN should be the int or float value to cut at.
         self.difference_cuts = difference_cuts
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """
-        It must accept the pandas data frame and must return a pandas data frame
-
-        Parameters
-        ----------
-        dataframe : dataframe
-            original SynthPop output as pandas data frame
-
-        Returns
-        -------
-        dataframe : dataframe
-            modified pandas data frame
+        Make the cuts and return the modified catalog.
         """
         dataframe = dataframe.reset_index()
         if not self.standard_cuts==None:
@@ -62,7 +50,7 @@ class AdditionalCuts(PostProcessing):
                 elif cut[1]=='max':
                     idxs = np.where(dataframe[cut[0]]>cut[2])[0]
                 else:
-                    print("INVALID CUT TYPE")
+                    raise ValueError('Invalid cut type: '+cut[1]+'. Valid types are min and max')
                 if len(idxs)>0:
                     dataframe = dataframe.drop(idxs)
         if not self.difference_cuts==None:
@@ -72,7 +60,7 @@ class AdditionalCuts(PostProcessing):
                 elif cut[2]=='max':
                     idxs = np.where(dataframe[cut[0]]-dataframe[cut[1]]>cut[3])[0]
                 else:
-                    print("INVALID CUT TYPE")
+                    raise ValueError('Invalid cut type: '+cut[2]+'. Valid types are min and max')
                 if len(idxs)>0:
                     dataframe = dataframe.drop(idxs)
         return dataframe

@@ -1,6 +1,5 @@
 """
-This file contains post-processing to account for dim compact objects,
-based on PopSyCLE (Rose et al 2022).
+Post-processing to account for dim compact objects, based on PopSyCLE (Rose et al 2022).
 """
 __all__ = ["ProcessDarkCompactObjects", ]
 __author__ = "M.J. Huston"
@@ -13,21 +12,19 @@ import numpy as np
 from ._post_processing import PostProcessing
 
 class ProcessDarkCompactObjects(PostProcessing):
+    """
+    Post-processing to account for dim compact objects, based on PopSyCLE (Rose et al 2022).
+    The module will take all objects that have evolved past the MIST grid, and assign them a final
+    mass, removing their photometry. Optionally, one can just remove all of these objects instead.
+    """
+
     def __init__(self, model, logger, remove=False, ifmr_name='SukhboldN20', **kwargs):
-        """
-        Parameters:
-            model:
-                SynthPop main model object
-    	    remove:
-    		  if True, remove compact objects from catalog; if False, keep them in
-    	    ifmr_name:
-    		  select initial final mass relation to determine compact object masses based on their initial mass
-    		  current options are Raithel18, SukhboldN20, Spera15
-        """
-        self.model = model
+        super().__init__(model, logger, **kwargs)
+        #: true to remove all dark compact objects; false to keep
         self.remove = remove
+        #: initial-final mass relation name to determine compact object masses.
+        #: options are Raithel18, SukhboldN20, Spera15
         self.ifmr_name= ifmr_name
-        self.logger = logger
 
     def mass_bh(self, m_zams, feh, f_ej=0.9):
         """
@@ -203,8 +200,8 @@ class ProcessDarkCompactObjects(PostProcessing):
         ----------
         m_zams
             array of float values for initial stellar mass in units of solar mass
-        phase
-            indicator that a star is in its final phase.
+        feh
+            array of float values for initial metallicity [Fe/H]
         Returns
         -------
         m_type
@@ -246,17 +243,7 @@ class ProcessDarkCompactObjects(PostProcessing):
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """
-        Function that executes the post-processing to assign compact object masses
-
-        Parameters
-        ----------
-        dataframe : dataframe
-            original SynthPop output as pandas data frame
-
-        Returns
-        -------
-        dataframe : dataframe
-            modified pandas data frame
+        Perform the post-processing and return the modified DataFrame.
         """
 
         # Pick out which stars need processed

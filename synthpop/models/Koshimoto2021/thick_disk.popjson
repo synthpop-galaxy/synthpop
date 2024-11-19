@@ -30,7 +30,5 @@
 
     "population_density_kwargs" : {
         "name" : "Koshimoto2021Thickdisk"
-    },
-    
-    "n_star_corr" : 1.8311
+    }
 }

@@ -129,7 +129,7 @@ MAPS_INFO = {
 _query_dict = {}
 
 class MapsFromDustmaps(ExtinctionMap):
-    def __init__(self, dustmap_name=None, return_functions=True, **kwargs):
+    def __init__(self, dustmap_name=None, return_functions=True, dist_2d = 0.0, **kwargs):
         super().__init__(**kwargs)
         #pre loaded query functions to share between populations.
         global _query_dict
@@ -161,6 +161,8 @@ class MapsFromDustmaps(ExtinctionMap):
                     f"please see '{url}' for further details")
 
         self.is_3D = map_props['dim'] == 3
+        if not self.is_3D:
+            self.dist_2d = dist_2d
 
         # select the query object for the given dustmap
         if dustmap_name not in _query_dict:
@@ -201,9 +203,11 @@ class MapsFromDustmaps(ExtinctionMap):
         """
         if self.is_3D:
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, distance=dist * u.kpc, frame='galactic')
+            dist_factor = 1.0
         else:
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, frame='galactic')
-        return self.query(coords, **self.kwargs)
+            dist_factor = (dist>self.dist_2d)
+        return self.query(coords, **self.kwargs)*dist_factor
 
     def update_extinction_in_map(self, radius):
         """

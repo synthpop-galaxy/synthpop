@@ -304,7 +304,7 @@
     "surf_avg_omega_crit": "full",
     "surf_avg_omega_div_omega_crit": "full",
     "surf_avg_v_crit": "full",
-    "surf_avg_v_div_v_crit": "full"          ,
+    "surf_avg_v_div_v_crit": "full",
     "surf_avg_Lrad_div_Ledd": "full",
     "v_div_csound_surf": "full",
     "surface_li7": "full",

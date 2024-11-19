@@ -1,13 +1,17 @@
-""" Module to convert the output into the Gulls input format"""
+"""
+Post-processing to put catalog in the Gulls input format.
+"""
 
+__all__ = ["GullsPostProcessing", ]
 __author__ = "Farzaneh Zohrabi"
+__license__ = "GPLv3"
+__version__ = "1.0.0"
 
 from ._post_processing import PostProcessing
 import time
 import pandas
 import numpy as np
 from synthpop.synthpop_utils.coordinates_transformation import lb_to_ad
-
 
 class GullsPostProcessing(PostProcessing):
     @staticmethod

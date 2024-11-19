@@ -1,10 +1,14 @@
 """
-Extinction law from Nishiyama 2009
-It uses a spline interpolation form the measurements provided in the paper.
+Extinction law from Nishiyama et al (2009), for the direction of the Galactic
+center. We apply a a spline interpolation over the measurements provided in the paper.
+
+Valid from 1.2 to 8.0 microns.
+
+Source DOI: 10.1088/0004-637X/696/2/1407
 """
 
 __all__ = ["Nishiyama2009"]
-__author__ = "J. Klüter"
+__author__ = "J. Klüter, M.J. Huston"
 __date__ = "2022-11-05"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
@@ -13,7 +17,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
 from ._extinction import ExtinctionLaw, EXTINCTION_DIR
-
 
 class Nishiyama2009(ExtinctionLaw):
     """
@@ -28,6 +31,8 @@ class Nishiyama2009(ExtinctionLaw):
         self.extinction_law_name = 'Nishiyama2009'
         self.table1, self.spline = self.determine_parameters()
         self.law_ref_wavelength = 2.14
+        self.min_wavelength = 1.2
+        self.max_wavelength = 8.0
 
     @staticmethod
     def determine_parameters():
@@ -62,7 +67,7 @@ class Nishiyama2009(ExtinctionLaw):
 
         return table1, spline
 
-    def Alambda_Aref(self, eff_wavelength: float or np.ndarray, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float or np.ndarray) -> float:
         """
         Estimates the Extinction
         returns linear extrapolation for lambda < 2.140

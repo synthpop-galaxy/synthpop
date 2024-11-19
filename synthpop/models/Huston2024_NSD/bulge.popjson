@@ -12,7 +12,7 @@
     },
 
     "metallicity_func_kwargs" : {
-        "#comment":"From Gonyaley, O.A.; et al. 2015",
+        "#comment":"From Gonzalez, O.A.; et al. 2015",
         "name" : "double_gaussian",
         "weight" : 0.323,
         "mean1" : -0.31,
@@ -45,9 +45,7 @@
 	"z0" : 0.27,
 	"rho0" : 1.32585e10,
 	"bar_angle" : 29.4
-    },
-    
-    "n_star_corr" : 1.77453
+    }
 }
 
 

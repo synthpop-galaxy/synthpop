@@ -1,25 +1,35 @@
-""" This file provides an implementation of the extinction Law from Cardelli 1989. """
+""" 
+Extinction Law from Cardelli, Clayton, and Mathis (1989). 
 
-__all__ = ["Cardelli1989", ]
-__author__ = "J. Klüter"
+Valid from 0.125 to 3.5 microns.
+
+R_V-dependent function, with default R_V=3.1.
+
+Source DOI: 10.1086/167900
+"""
+
+__all__ = ["Cardelli1989"]
+__author__ = "J. Klüter, M.J. Huston"
 __date__ = "2022-07-10"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
 from ._extinction import ExtinctionLaw
 
-
 class Cardelli1989(ExtinctionLaw):
     """Extinction law from Cardelli 1989,
        Gives the Extinction as function of wavelength and R_V
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, R_V: float = 3.1, **kwargs):
         super().__init__(**kwargs)
         self.extinction_law_name = "Cardelli1989"
         self.law_ref_wavelength = 0.549
+        self.R_V=3.1
+        self.min_wavelength = 0.125
+        self.max_wavelength = 3.5
 
-    def Alambda_Aref(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float) -> float:
         """
         Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
 
@@ -64,4 +74,4 @@ class Cardelli1989(ExtinctionLaw):
         else:
             a, b = None, None
 
-        return a + b / R_V
+        return a + b / self.R_V
