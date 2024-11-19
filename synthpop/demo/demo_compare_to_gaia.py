@@ -132,17 +132,11 @@ class CompareGaia:
         self.mod1.init_populations()
         self.mod2.init_populations()
 
-
-        (
-            self.complete_synth1, self.complete_synth2, self.complete_gaia, self.complete_gums
+        (self.complete_synth1, self.complete_synth2, self.complete_gaia, self.complete_gums
             ) = self.load_data(**kwargs)
 
-
-
-        self.complete_synth1_filtered = self.complete_synth1.loc[self.complete_synth1["Teff"] >= 0]
-        self.complete_synth2_filtered = self.complete_synth2.loc[self.complete_synth2["Teff"] >= 0]
-
-
+        self.complete_synth1_filtered = self.complete_synth1.loc[self.complete_synth1["logTeff"] >= 0]
+        self.complete_synth2_filtered = self.complete_synth2.loc[self.complete_synth2["logTeff"] >= 0]
 
     def download_cat(self):
         complete_gaia_list = []
@@ -217,6 +211,7 @@ class CompareGaia:
         """ load the data, if they do not exist it will call generate or downloaded routine."""
         print("Load Data")
         data = []
+        
         # check if generated data exist
         if os.path.isfile(self.files[0]) and os.path.isfile(self.files[1]) and (not regenerate):
             print(f"load {self.files[0]}", end='', flush=True)
@@ -680,13 +675,15 @@ if __name__ == "__main__":
     if len(sys.argv) > 3:
         redownload = (sys.argv[3])=='yes'
     else:redownload = True
-
+    
+    if not os.path.isdir(f'{DIRNAME}/images'):
+        os.mkdir(f'{DIRNAME}/images')
 
     if field.lower() == 'disk':
-        comp_gaia = CompareGaia(loc='Disk', regenerate=regen, radius_deg=1,
+        comp_gaia = CompareGaia(loc='Disk', regenerate=regen, radius_deg=0.1,
             redownload=redownload, n_locations=10)
     elif field.lower() == 'bulge':
-        comp_gaia = CompareGaia(loc='Bulge', regenerate=regen, radius_deg=0.05,
+        comp_gaia = CompareGaia(loc='Bulge', regenerate=regen, radius_deg=0.001,
             redownload=redownload, n_locations=10)
 
     comp_gaia.plot_hist_G()

@@ -73,7 +73,6 @@ class CoordTrans:
             r_warp: float = 0, alpha_warp: float = 0,
             phi_warp_deg: float = 0, phi_warp_rad: float = 0):
 
-        # sun sun sun, here it comes!
         self.sun = sun if sun is not None else default_sun
         self.amp_warp_pos = amp_warp_pos if amp_warp_pos is not None else amp_warp
         self.amp_warp_neg = amp_warp_neg if amp_warp_neg is not None else amp_warp
