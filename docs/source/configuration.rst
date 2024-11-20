@@ -175,7 +175,7 @@ POPULATION_GENERATION
 
 * 1: For each population, a test batch of N_av_mass stars is generated and evolved to estimate the total initial stellar mass required to meet the desired present day total stellar mass. These values are saved for all sightlines run with the initialized populations.
 * 2: For each population a test batch of N_av_mass stars is generated and evolved to estimate the total initial stellar mass required to meet the desired present day total stellar mass. These value is re-calculated for each sightline run.
-* 3: TEMPORARILY UNAVAILABLE
+* 3: Initially treat the population density as an initial mass density, then add or remove stars as needed.
 * 4: Use the precomputed value given by either "av_mass_corr" or "n_star_corr" in each population file to scale the required total initial stellar mass needed to achieve the desired present day total stellar mass.
 
 **N_av_mass**: number of stars to use to estimate average evolved stellar mass
