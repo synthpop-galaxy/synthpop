@@ -1,3 +1,15 @@
+"""
+NOT READY FOR USE YET - STILL UNDER TESTING / CLEANUP
+Post-processing module adds binary companions into a generated
+SynthPop catalog.
+[additional information here]
+"""
+__all__ = ["Binary"]
+__author__ = "M. Newman"
+__date__ = "2024-10-01"
+__license__ = "GPLv3"
+__version__ = "1.0.0"
+
 import pandas as pd
 import numpy as np
 import math
@@ -6,7 +18,6 @@ import os
 np.random.seed(1234)
 from ._post_processing import PostProcessing
 import sys
-sys.path.append('/home/marznewman/.local/lib/python3.8/site-packages/')
 import synthpop.constants as const
 from synthpop.star_generator import StarGenerator
 from synthpop.synthpop_utils.synthpop_logging import logger
@@ -17,11 +28,10 @@ from synthpop.modules.initial_mass_function import InitialMassFunction
 from synthpop.modules.age import Age
 from synthpop.modules.metallicity import Metallicity
 
-
-#print('Running post processing')
-
-# Make a subclass of StarGenerator
 class BinaryGenerator(StarGenerator):
+	"""
+	Subclass of StarGenerator to generate new stars as binary companions
+	"""
 	def __init__(self, imf_module, age_module, met_module, evolution_module, glbl_params, logger, binary_property):
 		super().__init__(imf_module, age_module, met_module, evolution_module, glbl_params, logger)
 		self.binary_property = binary_property

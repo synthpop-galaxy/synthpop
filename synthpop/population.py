@@ -21,7 +21,7 @@ __version__ = "0.1.0"
 # Standard Imports
 import time
 from typing import Tuple, Dict, Union
-
+import pdb
 # Non-Standard Imports
 import numpy as np
 import pandas
@@ -47,7 +47,6 @@ except ImportError:
     from modules.metallicity import Metallicity
     from modules.population_density import PopulationDensity
 
-
 else:  # continue import when if synthpop is imported
     from . import synthpop_utils as sp_utils
     from .position import Position
@@ -69,8 +68,6 @@ class Population:
     """
     Population subclass for model class.
     Requires a population parameter file to be initialized.
-
-    ...
 
     Attributes
     ----------
@@ -113,10 +110,6 @@ class Population:
     evolve_field(self,data) : float x 4
         estimates the evolved parameter for each star in the field
     """
-
-    # still deciding on what goes in init...
-    # we could also make an update function to reset values like coordinates and solid angle
-    # new args ideas : population_file, field class, evolution class, extinction class
     def __init__(
             self, pop_params: str, population_index: int, glbl_params: Parameters,
             **positional_kwargs
@@ -124,8 +117,6 @@ class Population:
         # machinery to import parameter file for a population only given filename
         self.glbl_params = glbl_params
         self.sun = glbl_params.sun
-        # reduces the number of stars by a given scale_factor
-        # i.e. if set to 100 only 1% of the stars are generated
         self.scale_factor = getattr(glbl_params, "scale_factor", 1)
 
         self.pop_params = pop_params
@@ -133,7 +124,6 @@ class Population:
         self.popid = population_index
 
         logger.create_info_subsection(f"Population {self.popid};  {self.name}")
-        # independent index issued by model class
 
         logger.info(f"# Initialize Population {self.popid} ({self.name}) from ")
         logger.info(f"pop_file = {self.pop_params._filename!r}")
@@ -367,7 +357,6 @@ class Population:
             ext_law_kwargs=self.glbl_params.extinction_law_kwargs,
             logger=logger
         )
-        extinction.set_R_V(self.glbl_params.R_V)
         return extinction
 
     def get_population_density_class(self):
@@ -553,8 +542,12 @@ class Population:
                 use_save_value=use_save_av_mass)
             logger.debug('%s : average mass loss: %.1f%s', self.name, av_mass_corr * 100, '%')
         else:
-            av_mass_corr = self.pop_params.get("av_mass_corr",
-                1 / self.pop_params.get('n_star_corr', 1.4))
+            if self.pop_params.av_mass_corr is not None:
+                av_mass_corr = self.pop_params.av_mass_corr
+            elif self.pop_params.n_star_corr is not None:
+                av_mass_corr = 1 / self.pop_params.n_star_corr
+            else:
+                av_mass_corr = 1
         if self.population_density.density_unit == 'number':
             n_star_expected = total_stellar_mass
             total_stellar_mass = n_star_expected * (average_star_mass * av_mass_corr)
@@ -635,7 +628,7 @@ class Population:
                 n_stars=self.N_av_mass, use_save_value=False
                 )
 
-        elif lost_mass_option == 6:
+        elif lost_mass_option == 4:
             # use the av_mass_corr or n_star_corr keyword  specified in the population_config_file
             if self.pop_params.av_mass_corr is not None:
                 av_mass_corr = self.pop_params.av_mass_corr
@@ -730,7 +723,7 @@ class Population:
             extinction_index = headers.index("ExtinctionInMap")
             headers[extinction_index] = self.extinction.A_or_E_type
         # requested properties
-        props = set(const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props + self.bands)
+        props_list = set(const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props + self.bands)
 
         # get average_mass from imf
         average_imass_per_star = self.imf.average_mass(min_mass=self.min_mass,
@@ -816,15 +809,28 @@ class Population:
         missing_stars = total_stars
         loop_counts = 0
         logger.debug("generate stellar properties")
-
+        if self.lost_mass_option==3:
+            all_m_initial = []
+            all_m_evolved = []
+            all_r_inner = []
+        opt3_mass_loss_done=False
         while any(missing_stars > 0):
-            #r_inner = np.repeat(radii[:-1], missing_stars)
+            neg_missing_stars = np.minimum(missing_stars,0)
+            missing_stars = np.maximum(missing_stars,0)
+            if sum(missing_stars)>self.glbl_params.chunk_size:
+                final_expected_loop=False
+                idx_cs = np.searchsorted(np.cumsum(missing_stars), self.glbl_params.chunk_size)
+                rem_chunk = np.cumsum(missing_stars)[idx_cs] - self.glbl_params.chunk_size
+                missing_stars_chunk = missing_stars * (np.cumsum(missing_stars)<self.glbl_params.chunk_size)
+                missing_stars_chunk[idx_cs] = rem_chunk
+            else:
+                final_expected_loop=True
+                missing_stars_chunk = np.copy(missing_stars)
 
             position, r_inner, proper_motions, velocities, vr_lsr, \
             (m_initial, age, met, ref_mag, s_props, final_phase_flag, 
                 inside_grid, not_evolved) = self.generator.generate_stars(radii, 
-                missing_stars, mass_per_slice, 
-                mass_limit, self.do_kinematics, props)
+                missing_stars_chunk, mass_limit, self.do_kinematics, props_list)
 
             initial_parameters = np.column_stack([m_initial, age, met])
 
@@ -837,10 +843,19 @@ class Population:
                 m_initial, s_props, const.REQ_ISO_PROPS,
                 self.glbl_params.opt_iso_props, inside_grid, not_evolved)
 
-            # check field, e.g. does the density matches the expectations
-            missing_stars = self.check_field(
-                radii, average_imass_per_star, m_initial, m_evolved, r_inner, loop_counts,
-                mass_per_slice, frac_lowmass)
+            # Keep track of all stars generated for option 3
+            if self.lost_mass_option==3 and not opt3_mass_loss_done:
+                all_m_initial += list(m_initial)
+                all_m_evolved += list(m_evolved)
+                all_r_inner   += list(r_inner)
+                if final_expected_loop:
+                    missing_stars_evol = self.check_field(
+                                radii, average_imass_per_star, np.array(all_m_initial), np.array(all_m_evolved), np.array(all_r_inner),
+                                mass_per_slice, frac_lowmass)
+                    missing_stars += missing_stars_evol
+                    opt3_mass_loss_done=True
+            # Subtract out this chunk from the "missing stars"
+            missing_stars -= missing_stars_chunk
 
             # Convert Table to pd.DataFrame
             df = self.convert_to_dataframe(
@@ -849,12 +864,9 @@ class Population:
                 vr_lsr, extinction_in_map, props, user_props, mags, headers
                 )
 
-            # remove stars if we have overestimated the number of stars
-            # might happen for mass loss option 3 and 4:
-            if any(missing_stars < 0):
-                df = self.remove_stars(df, pop_array[:, 0], missing_stars, radii)
-                missing_stars = np.maximum(missing_stars, 0)
             # add to previous drawn data
+            if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) and (not self.glbl_params.lost_mass_option==3):
+                df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             df_list.append(df)
             loop_counts += 1
 
@@ -863,6 +875,12 @@ class Population:
             population_df = pandas.DataFrame(columns=headers, dtype=float)
         else:
             population_df = pandas.concat(df_list, ignore_index=True)
+        
+        # Remove any excess stars
+        if self.lost_mass_option==3:
+            r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
+            population_df = self.remove_stars(population_df, r_inner, neg_missing_stars, radii)
+            population_df.reset_index(drop=True,inplace=True)
 
         to = time.time()  # end timer
 
@@ -942,13 +960,13 @@ class Population:
             m_initial: np.ndarray,
             m_evolved: np.ndarray,
             radii_star: np.ndarray,
-            loop_counts: int,
             mass_per_slice: np.ndarray,
             fract_mass_limit: Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
             ) -> np.ndarray:
         """
         Check if stars are missing in a given slice
         Estimates the number of stars that are missing
+        Only used for lost_mass_option 3
 
         Parameters
         ----------
@@ -956,7 +974,6 @@ class Population:
         m_initial : ndarray
         m_evolved : ndarray
         radii_star : ndarray
-        loop_counts : int
         mass_per_slice : ndarray
         fract_mass_limit : ndarray or float
         Returns
@@ -964,39 +981,30 @@ class Population:
         missing_stars : ndarray
             number of missing stars in each slice
         """
-
         # estimate current initial mass
         m_in = np.array([np.sum(m_initial[radii_star == r]) for r in radii[:-1]])
-        # estimate current evoled mass
+        # estimate current evolved mass
         m_evo = np.array([np.sum(m_evolved[radii_star == r]) for r in radii[:-1]])
 
         if self.population_density.density_unit in ['number', 'init_mass']:
-            return np.zeros(1)
+            return np.zeros(len(mass_per_slice))
 
-        # Option 1, 2 and 6 does not make use of check_field
-        elif self.lost_mass_option == 3:
-            # option 3.
-            # if the sample is large enough otherwise determine the average mass before.
-            # otherwise use the determined stars to estimate the average evolved mass:
-            # only pick a second time
-            if loop_counts > 0:
-                return np.zeros(1)
+        # option 3.
+        # if the sample is large enough otherwise determine the average mass before.
+        # otherwise use the determined stars to estimate the average evolved mass:
+        # only pick a second time
+        average_emass_per_star_mass = (
+            fract_mass_limit[0] * fract_mass_limit[1]  # not generated
+            + (1 - fract_mass_limit[1]) * np.mean(m_evolved)  # generated
+            )
+        n_star_expected = mass_per_slice / average_emass_per_star_mass
+        total_stars = np.random.poisson(
+            n_star_expected * (1 - fract_mass_limit[1]) / self.scale_factor)
 
-            average_emass_per_star_mass = (
-                fract_mass_limit[0] * fract_mass_limit[1]  # not generated
-                + (1 - fract_mass_limit) * np.mean(m_evolved)  # generated
-                )
-            n_star_expected = mass_per_slice / average_emass_per_star_mass
-            total_stars = np.random.poisson(
-                n_star_expected * (1 - fract_mass_limit[1]) / self.scale_factor)
-
-            # reduce number of stars by the scale factor
-            exist = np.array([np.sum(radii_star == r) for r in radii[:-1]])
-            missing_stars = total_stars - exist
-            return missing_stars
-
-        else:
-            return np.zeros(1)
+        # reduce number of stars by the scale factor
+        exist = np.array([np.sum(radii_star == r) for r in radii[:-1]])
+        missing_stars = total_stars - exist
+        return missing_stars
 
     def do_kinematics(
             self, dist: np.ndarray, star_l_deg: np.ndarray, star_b_deg: np.ndarray,

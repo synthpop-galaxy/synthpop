@@ -29,9 +29,7 @@
     "population_density_kwargs" : {
         "name" : "density_from_grid",
         "moment_file":"sormani2022_koshimoto_grid.dat"
-    },
-
-    "n_star_corr" : 1.77453
+    }
 }
 
 
