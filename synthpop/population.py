@@ -843,7 +843,7 @@ class Population:
                 m_initial, s_props, const.REQ_ISO_PROPS,
                 self.glbl_params.opt_iso_props, inside_grid, not_evolved)
 
-            # Keep track of all stars generated for option 3
+            # Keep track of all stars generated for option 3, until mass loss estimation is complete
             if self.lost_mass_option==3 and not opt3_mass_loss_done:
                 all_m_initial += list(m_initial)
                 all_m_evolved += list(m_evolved)

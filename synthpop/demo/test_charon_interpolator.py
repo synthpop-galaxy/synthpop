@@ -169,5 +169,5 @@ figimass(axes[1],mod, imass, output["Gaia_G_EDR3"], output2["Gaia_G_EDR3"], iso1
 figimass_zoom(axes[2], mod, imass, output["Gaia_G_EDR3"], iso1, iso2)
 fig.subplots_adjust(wspace=0,bottom=0.2, left=0.1)
 
-plt.savefig('charon_fig_test.png')
+plt.savefig('validation_charon.png')
 
