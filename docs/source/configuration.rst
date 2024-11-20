@@ -304,7 +304,7 @@ OUTPUT
 
 **output_filename_pattern**: string describing naming system for output files. Accessible values are model_base_name (str), model_name (str), l_deg (float), b_deg(float), solid_angle (float), date (datetime.date object), time (datetime.time object).
 
-**output_file_type**: list containing output file type and dictionary for additional kwargs
+**output_file_type**: list containing output file type and dictionary for additional kwargs, saved via pandas or astropy. valid options: csv, json, html, xml, excel, hdf5, feather, parquet, stata, pickle, sql, fits, vot
 
 **overwrite**: boolean option to overwrite existing output files of the same name
 
