@@ -808,10 +808,17 @@ class Population:
         ti = time.time()  # start timer
         missing_stars = total_stars
         loop_counts = 0
-        final_expected_loop=False
         logger.debug("generate stellar properties")
+        if self.lost_mass_option==3:
+            all_m_initial = []
+            all_m_evolved = []
+            all_r_inner = []
+        opt3_mass_loss_done=False
         while any(missing_stars > 0):
+            neg_missing_stars = np.minimum(missing_stars,0)
+            missing_stars = np.maximum(missing_stars,0)
             if sum(missing_stars)>self.glbl_params.chunk_size:
+                final_expected_loop=False
                 idx_cs = np.searchsorted(np.cumsum(missing_stars), self.glbl_params.chunk_size)
                 rem_chunk = np.cumsum(missing_stars)[idx_cs] - self.glbl_params.chunk_size
                 missing_stars_chunk = missing_stars * (np.cumsum(missing_stars)<self.glbl_params.chunk_size)
@@ -836,7 +843,18 @@ class Population:
                 m_initial, s_props, const.REQ_ISO_PROPS,
                 self.glbl_params.opt_iso_props, inside_grid, not_evolved)
 
-            # update number of missing stars
+            # Keep track of all stars generated for option 3
+            if self.lost_mass_option==3 and not opt3_mass_loss_done:
+                all_m_initial += list(m_initial)
+                all_m_evolved += list(m_evolved)
+                all_r_inner   += list(r_inner)
+                if final_expected_loop:
+                    missing_stars_evol = self.check_field(
+                                radii, average_imass_per_star, np.array(all_m_initial), np.array(all_m_evolved), np.array(all_r_inner),
+                                mass_per_slice, frac_lowmass)
+                    missing_stars += missing_stars_evol
+                    opt3_mass_loss_done=True
+            # Subtract out this chunk from the "missing stars"
             missing_stars -= missing_stars_chunk
 
             # Convert Table to pd.DataFrame
@@ -857,14 +875,11 @@ class Population:
             population_df = pandas.DataFrame(columns=headers, dtype=float)
         else:
             population_df = pandas.concat(df_list, ignore_index=True)
-            
-        # Remove stars if we generated too many
+        
+        # Remove any excess stars
         if self.lost_mass_option==3:
             r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
-            missing_stars_evol = self.check_field(
-                        radii, average_imass_per_star, population_df['iMass'], population_df['Mass'], r_inner,
-                        mass_per_slice, frac_lowmass)
-            population_df = self.remove_stars(population_df, r_inner, missing_stars_evol, radii)
+            population_df = self.remove_stars(population_df, r_inner, neg_missing_stars, radii)
             population_df.reset_index(drop=True,inplace=True)
 
         to = time.time()  # end timer
