@@ -121,17 +121,8 @@ class SpiseaGenerator(StarGenerator):
         single_feh = (self.met_module.metallicity_func_name=='single_value')
         
         # NOTE: MAY NEED TO DEAL WITH FE/H vs M/H
-        clusters=[]
         if single_age and single_feh:
-            # First - determine whether to recomp
-            isochrone = spisea.synthetic.IsochronePhot(logAge=np.log10(self.age_module.age_value*1e9), AKs=0,
-                                distance=10, metallicity=self.met_module.metallicity_value,
-                                evo_model=self.evo_model, atm_func=self.spisea_atm_func,
-                                wd_atm_func=self.spisea_wd_atm_func, iso_dir=self.spisea_dir,
-                                min_mass=min_mass, max_mass=max_mass,
-                                filters=self.spisea_filters)
-            cluster = spisea.synthetic.ResolvedCluster(isochrone, self.spisea_imf, n_stars*avg_mass_per_star, ifmr=self.spisea_ifmr)
-            clusters.append(cluster)
+            bins2d = [[self.age_module.age_value, self.met_module.metallicity_value, n_stars]]
         elif single_age:
             age = self.age_module.age_value
             fehs = self.met_module.draw_random_metallicity(
@@ -139,29 +130,29 @@ class SpiseaGenerator(StarGenerator):
             pass
         elif single_metallicity:
             ages = self.age_module.draw_random_age(n_stars)
-            feh = self.met_module.metallicity_value
             ages_hist, ages_bin_edges = np.histogram(ages, bins=self.spisea_age_bins,
                                         range=(10**self.spisea_min_log_age/1e9, 10**self.spisea_max_log_age/1e9))
             ages_hist_run = ages_hist[ages_hist>0]
             ages_bin_vals = np.diff(ages_bin_edges)[ages_hist>0]
-            for i,age_bin in enumerate(ages_bin_vals):
-                isochrone = spisea.synthetic.IsochronePhot(logAge=np.log10(self.age_module.age_value*1e9), AKs=0,
-                                distance=10, metallicity=self.met_module.metallicity_value,
-                                evo_model=self.evo_model, atm_func=self.spisea_atm_func,
-                                wd_atm_func=self.spisea_wd_atm_func, iso_dir=self.spisea_dir,
-                                min_mass=min_mass, max_mass=max_mass,
-                                filters=self.spisea_filters)
-                cluster = spisea.synthetic.ResolvedCluster(isochrone, self.spisea_imf, ages_hist_run[i]*avg_mass_per_star, ifmr=self.spisea_ifmr)
-                clusters.append(cluster)
+            bins2d = np.transpose([np.ones(len(ages_bin_vals))*self.met_module.metallicity_value, ages_bin_vals, ages_hist_run])
         else:
             ages = self.age_module.draw_random_age(n_stars)
             fehs = self.met_module.draw_random_metallicity(
                 N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=ages)
             pass
-            
 
-        ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = self.get_evolved_props(
-            m_initial, met, age, props)
+        clusters=[]
+        for bin2d in bins2d:
+            isochrone = spisea.synthetic.IsochronePhot(logAge=np.log10(bin2d[0]*1e9), AKs=0,
+                                distance=10, metallicity=bin2d[1],
+                                evo_model=self.evo_model, atm_func=self.spisea_atm_func,
+                                wd_atm_func=self.spisea_wd_atm_func, iso_dir=self.spisea_dir,
+                                min_mass=min_mass, max_mass=max_mass,
+                                filters=self.spisea_filters)            
+            cluster = spisea.synthetic.ResolvedCluster(isochrone, self.spisea_imf, bin2d[2]*avg_mass_per_star, ifmr=self.spisea_ifmr)
+            clusters.append(cluster)
+
+        
 
         return m_initial, age, met, ref_mag, s_props, final_phase_flag, inside_grid, not_evolved
 
