@@ -55,6 +55,7 @@ class SpiseaGenerator(StarGenerator):
     def __init__(self, imf_module, age_module, met_module, evolution_module,
             glbl_params, position, max_mass, logger, spisea_dir=const.DATA_DIR+'/isochrones/spisea/'):
         # General synthpop things
+        self.generator_name = 'SpiseaGenerator'
         self.age_module = age_module
         self.met_module = met_module
         self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
@@ -143,14 +144,22 @@ class SpiseaGenerator(StarGenerator):
 
         clusters=[]
         for bin2d in bins2d:
-            isochrone = spisea.synthetic.IsochronePhot(logAge=np.log10(bin2d[0]*1e9), AKs=0,
-                                distance=10, metallicity=bin2d[1],
-                                evo_model=self.evo_model, atm_func=self.spisea_atm_func,
-                                wd_atm_func=self.spisea_wd_atm_func, iso_dir=self.spisea_dir,
-                                min_mass=min_mass, max_mass=max_mass,
-                                filters=self.spisea_filters)            
-            cluster = spisea.synthetic.ResolvedCluster(isochrone, self.spisea_imf, bin2d[2]*avg_mass_per_star, ifmr=self.spisea_ifmr)
-            clusters.append(cluster)
+            # Use a minimum mass per cluster so we don't get an error
+            cluster_stars_needed = bin2d[2]
+            generate_mass = np.max(cluster_stars_needed*avg_mass_per_star, 10.0)
+            # Loop until we have enough stars
+            while cluster_stars_needed > 0:
+                isochrone = spisea.synthetic.IsochronePhot(logAge=np.log10(bin2d[0]*1e9), AKs=0,
+                                    distance=10, metallicity=bin2d[1],
+                                    evo_model=self.evo_model, atm_func=self.spisea_atm_func,
+                                    wd_atm_func=self.spisea_wd_atm_func, iso_dir=self.spisea_dir,
+                                    min_mass=min_mass, max_mass=max_mass,
+                                    filters=self.spisea_filters)
+                cluster = spisea.synthetic.ResolvedCluster(isochrone, self.spisea_imf, mass_needed, ifmr=self.spisea_ifmr)
+                clusters.append(cluster)
+            if cluster_stars_needed>0:
+                # Drop excess stars
+                pass
 
         
 
