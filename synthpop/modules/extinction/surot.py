@@ -48,28 +48,14 @@ class Surot(ExtinctionMap):
 
     Methods
     -------
-    update_line_of_sight(l_deg, b_deg) :
-        specified the new galactic coordinates
-        calls find_sightline() and init_sightline()
-    update_extinction_in_map() :
-
-    init_sightline(self) :
-
-    find_sightline(self) :
-
-    update_extinction_in_map():
-        placeholder for function that updates the total extinction or color excess
-        in self.extinction_map_name
-    set_R_V(self,R_V):
-        set interstellar reddening parameter
-
+    extinction_in_map():
+        function that returns extinction at input positions
     get_map_properties():
         returns the basic parameters of the extinction map
         used for Communication between ExtinctionLaw and ExtinctionMap
-
     """
 
-    def __init__(self, project_3d=True, dist_2d=8.15, return_functions=True, **kwargs):
+    def __init__(self, project_3d=True, dist_2d=8.15, **kwargs):
         super().__init__(**kwargs)
         # name of the extinction map used
         self.extinction_map_name = "Surot"
@@ -78,12 +64,6 @@ class Surot(ExtinctionMap):
         self.A_or_E_type = "A_Ks"
         self.project_3d = project_3d
         self.dist_2d = dist_2d
-        self.return_functions = return_functions
-        
-        # placeholder for and location...
-        self.l_deg = None
-        self.b_deg = None
-        self.extinction_in_map = None
 
         # Fetch extinction map data if needed
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
@@ -152,7 +132,7 @@ class Surot(ExtinctionMap):
             self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid),
                 map_data_3d)
 
-    def ext_func(self, l_deg, b_deg, dist):
+    def extinction_in_map(self, l_deg, b_deg, dist):
         use_l = l_deg - (l_deg>180)*360
         _, min_dist_arg = self.coord_tree.query(np.transpose([use_l,b_deg]))
         ext_value = self.A_Ks_list[min_dist_arg]
@@ -167,20 +147,3 @@ class Surot(ExtinctionMap):
             scale_factor = (dist>self.dist_2d)
 
         return ext_value * scale_factor
-
-    def update_extinction_in_map(self, radius, force=False, **kwargs):
-        """
-        Estimates the extinction for the current sight-line and radial distance
-        store the result into self.extinction_in_map.
-
-        Parameters
-        ----------
-        radius: float [kpc]
-            radial distance of the current slice
-        """
-
-        if self.return_functions:
-            self.extinction_in_map = self.ext_func
-        else:
-            self.extinction_in_map = self.ext_func(self.l_deg, self.b_deg, radius)
-

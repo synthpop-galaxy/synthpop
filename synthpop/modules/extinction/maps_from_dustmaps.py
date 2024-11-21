@@ -129,12 +129,11 @@ MAPS_INFO = {
 _query_dict = {}
 
 class MapsFromDustmaps(ExtinctionMap):
-    def __init__(self, dustmap_name=None, return_functions=True, dist_2d = 0.0, **kwargs):
+    def __init__(self, dustmap_name=None, dist_2d = 0.0, **kwargs):
         super().__init__(**kwargs)
         #pre loaded query functions to share between populations.
         global _query_dict
         self.extinction_map_name = f"dustmaps.{dustmap_name}"
-        self.return_functions = return_functions
 
         if dustmap_name is None:
             raise ValueError("dustmap_name needs to be defined")
@@ -175,17 +174,12 @@ class MapsFromDustmaps(ExtinctionMap):
         if self.A_or_E_type.startswith("E"):
             self.ref_wavelength2 = map_props['lambda_eff2']
 
-        # placeholder for location, filter properties, etc.
-        self.l_deg = None
-        self.b_deg = None
-
         self.bands = []  # list of filters
         self.eff_wavelengths = {}  # effective wavelength for each band
 
-    def get_map(self, l_deg, b_deg, dist):
+    def extinction_in_map(self, l_deg, b_deg, dist):
         """
         read extinction from map
-
 
         Parameters
         ----------
@@ -208,19 +202,3 @@ class MapsFromDustmaps(ExtinctionMap):
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, frame='galactic')
             dist_factor = (dist>self.dist_2d)
         return self.query(coords, **self.kwargs)*dist_factor
-
-    def update_extinction_in_map(self, radius):
-        """
-        Estimates the extinction for the current sight-line and radial distance
-        store the result into self.extinction_in_map.
-
-        Parameters
-        ----------
-        radius: float [kpc]
-            radial distance of the current slice
-        """
-
-        if self.return_functions:
-            self.extinction_in_map = self.get_map
-        else:
-            self.extinction_in_map = self.get_map(self.l_deg, self.b_deg, radius)
