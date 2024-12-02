@@ -70,22 +70,22 @@ This model version is also being used as the Galactic model input for gulls (@Pe
 
 # Acknowledgements
 
-    We appreciate conversations with N. Koshimoto in implementing the (@Koshimoto2021) model and (@Sormani2022) nuclear stellar disk into SynthPop.
-    We also thank the Roman Galactic Exoplanet Survey Project Infrastructure team members and others who helped improve the software through discussions, use during development, and feedback.
+We appreciate conversations with N. Koshimoto in implementing the (@Koshimoto2021) model and (@Sormani2022) nuclear stellar disk into SynthPop.
+We also thank the Roman Galactic Exoplanet Survey Project Infrastructure team members and others who helped improve the software through discussions, use during development, and feedback.
 
-    J.K. acknowledges support from NASA award NNX16AC62G and the Gordon and Betty Moore Foundation award GBMF10467.
-    
-    M.J.H. acknowledges support from the Heising-Simons Foundation under grant No. 2022-3542. 
-    Early work on this software by M.J.H. and A.A. was supported by the Ohio State University Summer Undergraduate Research Program.
-    
-    S.A.J.’s work was supported by NASA Grant 80NSSC24M0022 and an appointment to the NASA Postdoctoral Program at the NASA Jet Propulsion Laboratory, administered by Oak Ridge Associated Universities under contract with NASA. 
-    
-    M.T.P. acknowledges support from NASA awards NNX14AF63G, NNX16AC62G, 80NSSC24M0022, 80NSSC24K0881, and Louisiana Board of Regents Support Fund (RCS Award Contract Simple: LEQSF(2020-23)-RD-A-10). 
-    Early work by M.T.P. was performed in part under contract with the Jet Propulsion Laboratory (JPL) funded by NASA through the Sagan Fellowship Program executed by the NASA Exoplanet Science Institute.
+J.K. acknowledges support from NASA award NNX16AC62G and the Gordon and Betty Moore Foundation award GBMF10467.
 
-    M.N. acknowledges support from NASA award 80NSSC24K0881.
-    A.L.C. and F.Z. acknowledge support from NASA grant 80NSSC24M0022. 
-    A.C.'s work was supported by the National Science Foundation under Grant Number 1852454.
-    Portions of this research were conducted with high performance computational resources provided by Louisiana State University (\url{http://www.hpc.lsu.edu}).
+M.J.H. acknowledges support from the Heising-Simons Foundation under grant No. 2022-3542. 
+Early work on this software by M.J.H. and A.A. was supported by the Ohio State University Summer Undergraduate Research Program.
+
+S.A.J.’s work was supported by NASA Grant 80NSSC24M0022 and an appointment to the NASA Postdoctoral Program at the NASA Jet Propulsion Laboratory, administered by Oak Ridge Associated Universities under contract with NASA. 
+
+M.T.P. acknowledges support from NASA awards NNX14AF63G, NNX16AC62G, 80NSSC24M0022, 80NSSC24K0881, and Louisiana Board of Regents Support Fund (RCS Award Contract Simple: LEQSF(2020-23)-RD-A-10). 
+Early work by M.T.P. was performed in part under contract with the Jet Propulsion Laboratory (JPL) funded by NASA through the Sagan Fellowship Program executed by the NASA Exoplanet Science Institute.
+
+M.N. acknowledges support from NASA award 80NSSC24K0881.
+A.L.C. and F.Z. acknowledge support from NASA grant 80NSSC24M0022. 
+A.C.'s work was supported by the National Science Foundation under Grant Number 1852454.
+Portions of this research were conducted with high performance computational resources provided by Louisiana State University ([http://www.hpc.lsu.edu](http://www.hpc.lsu.edu)).
 
 # References
