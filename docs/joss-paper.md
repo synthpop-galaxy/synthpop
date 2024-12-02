@@ -61,16 +61,16 @@ Motivated by a lack flexibility in existing Galactic models, SynthPop is coded e
 
 We have built SynthPop to address the need we perceived for a publicly available population synthesis code that can be easily modified, provides an interface that can be run via script, and ideally can allow comparisons between different models within a single framework. To achieve these goals, we built the package in python, which is likely the most widely used language in astronomy. This choice results in slower performance than a compiled language, but a minimal bar to code modification, and an easy way to import the package into other code. We have designed the package so that it can be modified either through the adjustment of parameter files or by adding new code modules to achieve results that are not enabled by existing tools.
 
-The primary driving use case for SynthPop is to provide synthetic stellar population catalogs for microlensing simulations \citep[e.g.,][]{Penny2013, Penny2019, Johnson2020}.
+The primary driving use case for SynthPop is to provide synthetic stellar population catalogs for microlensing simulations (@Penny2013, @Penny2019, @Johnson2020).
 
 # Ongoing use
 
 Huston et al. (in prep.) will illustrate the development of a SynthPop Model version that matches well to data, and apply the model to the Roman Galactic Bulge Time Domain Survey to explore the Galactic distributions of anticipated microlensing event lenses and sources. 
-This model version is also being used as the Galactic model input for gulls (@Penny2013, @Penny2019) and PyLIMASS \citep{Bachelet2024} by the Roman Galactic Exoplanet Survey Project Infrastructure Team for updated exoplanet mass yield estimates  and field optimization (Terry et al., in prep.; Zohrabi et al., in prep.).
+This model version is also being used as the Galactic model input for gulls (@Penny2013, @Penny2019) and PyLIMASS (@Bachelet2024) by the Roman Galactic Exoplanet Survey Project Infrastructure Team for updated exoplanet mass yield estimates  and field optimization (Terry et al., in prep.; Zohrabi et al., in prep.).
 
 # Acknowledgements
 
-    We appreciate conversations with N. Koshimoto in implementing the \citet{Koshimoto2021} model and \citet{Sormani2022} nuclear stellar disk into {\sc SynthPop}.
+    We appreciate conversations with N. Koshimoto in implementing the (@Koshimoto2021) model and (@Sormani2022) nuclear stellar disk into SynthPop.
     We also thank the Roman Galactic Exoplanet Survey Project Infrastructure team members and others who helped improve the software through discussions, use during development, and feedback.
 
     J.K. acknowledges support from NASA award NNX16AC62G and the Gordon and Betty Moore Foundation award GBMF10467.
