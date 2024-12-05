@@ -111,7 +111,7 @@ class Gums(Lallement,ExtinctionMap):
                 (end_dists<dist)
         return np.maximum(value + np.random.normal(value, value*0.1), 0)
 
-    def update_extinction_in_map(self, radius, force=False, **kwargs):
+    def extinction_in_map(self,l_deg,b_deg,dist):
         """
         Returns the extinction for the current sight line and radial distance, or returns function to do so.
 
@@ -120,8 +120,4 @@ class Gums(Lallement,ExtinctionMap):
         radius: float [kpc]
             radial distance of the current slice
         """
-
-        if self.return_functions:
-            self.extinction_in_map = self.gums_ext_func
-        else:
-            self.extinction_in_map = self.gums_ext_func(self.l_deg, self.b_deg, radius)
+        return self.gums_ext_func(l_deg, b_deg, dist)

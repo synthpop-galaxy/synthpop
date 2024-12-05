@@ -68,18 +68,13 @@ class Lallement(ExtinctionMap):
 
     """
 
-    def __init__(self, dr=0.001, return_functions=True, **kwargs):
+    def __init__(self, dr=0.001, **kwargs):
         super().__init__(**kwargs)
         # name of the extinction map used
         self.extinction_map_name = "Lallement"
-        self.return_functions = return_functions
         # A0 = value at 5500 angstroms
         self.ref_wavelength = 0.55
         self.A_or_E_type = 'A0'
-        # placeholder for and location...
-        self.l_deg = None
-        self.b_deg = None
-        self.extinction_in_map = None
         self.dr = dr #: step size for extinction integration in kpc
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/map3D_GAIAdr2_feb2019.h5'):
             print("Missing Lallement extinction table. Download and unpacking may take several minutes but only needs done once.")
@@ -144,17 +139,13 @@ class Lallement(ExtinctionMap):
         # to get total extinction for each star
         return np.sum(dm_dr_pts*self.dr*1.0e3*(dist_pts<(dist[:,np.newaxis])) * within_grid, axis=1)
 
-    def update_extinction_in_map(self, radius, force=False, **kwargs):
+    def extinction_in_map(self,l_deg,b_deg,dist):
         """
-        Returns the extinction for the current sight line and radial distance, or returns function to do so.
+        Returns the extinction for input positions
 
         Parameters
         ----------
         radius: float [kpc]
             radial distance of the current slice
         """
-
-        if self.return_functions:
-            self.extinction_in_map = self.lallement_ext_func
-        else:
-            self.extinction_in_map = self.lallement_ext_func(self.l_deg, self.b_deg, radius)
+        return self.lallement_ext_func(l_deg, b_deg, dist)

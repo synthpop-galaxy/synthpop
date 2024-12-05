@@ -443,7 +443,6 @@ class Population:
 
         # flag to mark that coordinates have been set
         self.position.update_location(l_deg, b_deg, self.solid_angle_sr)
-        self.extinction.update_line_of_sight(l_deg, b_deg)
 
         logger.debug(
             f"{self.name} : position is set to "
@@ -843,7 +842,7 @@ class Population:
                 m_initial, s_props, const.REQ_ISO_PROPS,
                 self.glbl_params.opt_iso_props, inside_grid, not_evolved)
 
-            # Keep track of all stars generated for option 3
+            # Keep track of all stars generated for option 3, until mass loss estimation is complete
             if self.lost_mass_option==3 and not opt3_mass_loss_done:
                 all_m_initial += list(m_initial)
                 all_m_evolved += list(m_evolved)
@@ -1082,20 +1081,16 @@ class Population:
             ref_mag[inside_grid] += dist_module[inside_grid]
             mags[inside_grid] += dist_module[inside_grid, np.newaxis]
 
-        for ri in np.unique(radii_inner):
-            current_slice = radii_inner == ri
+        extinction_in_map, extinction_dict = self.extinction.get_extinctions(
+            galactic_coordinates[:, 1],
+            galactic_coordinates[:, 2],
+            galactic_coordinates[:, 0])
 
-            self.extinction.update_extinction_in_map(radius=ri)
-            extinction_in_map[current_slice], extinction_dict = self.extinction.get_extinctions(
-                galactic_coordinates[current_slice, 1],
-                galactic_coordinates[current_slice, 2],
-                galactic_coordinates[current_slice, 0])
-
-            if self.glbl_params.obsmag:
-                ext_mag = extinction_dict.get(self.glbl_params.maglim[0], 0)
-                ref_mag[current_slice] += ext_mag
-                for i, band in enumerate(self.bands):
-                    mags[current_slice, i] += extinction_dict.get(band, 0)
+        if self.glbl_params.obsmag:
+            ext_mag = extinction_dict.get(self.glbl_params.maglim[0], 0)
+            ref_mag[:] += ext_mag
+            for i, band in enumerate(self.bands):
+                mags[:, i] += extinction_dict.get(band, 0)
 
         mag_le_limit = ref_mag < self.glbl_params.maglim[1]
 
