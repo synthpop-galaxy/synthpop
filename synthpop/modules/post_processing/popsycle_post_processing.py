@@ -30,8 +30,8 @@ class PopsyclePostProcessing(PostProcessing):
         # Translate extinction to Ebv extinction
         extinction = self.model.populations[0].extinction
         ext_in_map = dataframe.iloc[:, 19]
-        dataframe["Av"] = extinction.extinction_at_lambda(0.544579, ext_in_map, extinction.R_V)
-        R_V = self.model.parms.R_V
+        dataframe["Av"] = extinction.extinction_at_lambda(0.544579, ext_in_map)
+        R_V = 2.5
         dataframe["exbv"] = R_V * 1/dataframe["Av"]
 
         ebf_df = pd.DataFrame()
