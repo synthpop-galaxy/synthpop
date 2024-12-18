@@ -14,11 +14,16 @@ import gzip
 import h5py
 import shutil
 import numpy as np
-from ._extinction import ExtinctionMap, EXTINCTION_DIR
-from lallement import Lallement
+try:
+    from ._extinction import ExtinctionMap, EXTINCTION_DIR
+    from .lallement import Lallement
+    from ... import constants as const
+except ImportError:
+    from _extinction import ExtinctionMap, EXTINCTION_DIR
+    from lallement import Lallement
+    import constants as const
 import time
 import os
-from .. import const
 import requests
 import dustmaps.marshall
 import astropy.units as u
