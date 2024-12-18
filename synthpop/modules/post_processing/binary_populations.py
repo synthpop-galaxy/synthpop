@@ -1,3 +1,11 @@
+"""
+This file contains post-processing to account for binary populations, based on Raghavan et al. 2010
+
+Not ready for use
+"""
+
+__author__ = "Marz Newman"
+
 import pandas as pd
 import numpy as np
 import math
@@ -6,7 +14,7 @@ import os
 np.random.seed(1234)
 from ._post_processing import PostProcessing
 import sys
-sys.path.append('/home/marznewman/.local/lib/python3.8/site-packages/')
+#sys.path.append('/home/marznewman/.local/lib/python3.8/site-packages/')
 import synthpop.constants as const
 from synthpop.star_generator import StarGenerator
 from synthpop.synthpop_utils.synthpop_logging import logger
@@ -16,6 +24,12 @@ from synthpop.population import Population
 from synthpop.modules.initial_mass_function import InitialMassFunction
 from synthpop.modules.age import Age
 from synthpop.modules.metallicity import Metallicity
+try:
+    from constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
+                                    DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
+except (ImportError, ValueError):
+    from ..constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR,
+                                    DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 
 
 #print('Running post processing')
@@ -54,6 +68,7 @@ class Binary(PostProcessing):
 		----------
 		temperatures
 			array of float values for star temperatures.
+			
 		Returns
 		-------
 		is_binary
@@ -100,7 +115,14 @@ class Binary(PostProcessing):
 		return is_binary
 		
 	def draw_companion_m_ratio(self):
-		'Mass ratio is M2/M1'
+		"""
+		Mass ratio (M2/M1) calculation from toy probability function based on Figure 16 of Raghavan et. al 2010
+		
+		Returns
+		-------
+		random_mass_ratio
+			float value for the mass ratio (M2/M1) of the binary system
+		"""
 		# Normalization factor (maximum value of N on Figure 16 of Raghavan 2010)
 		normalization_factor = 13
 		
@@ -152,6 +174,14 @@ class Binary(PostProcessing):
 		return random_mass_ratio
 		
 	def draw_period(self):
+		"""
+		Find binary orbital period from Gaussian distribution in Figure 13 of Raghavan et al. 2010
+		
+		Returns
+		-------
+		logP
+			float value of the logarithn of period
+		"""
 		# Draw a log(Period) from the Raghavan Figure 13 Gaussian
 		mu = 5.03	# Value from Raghavan Figure 13
 		sigma = 2.28	# Value from Raghavan Figure 13
@@ -165,7 +195,20 @@ class Binary(PostProcessing):
 		return logP
 		
 	def do_post_processing(self, dataframe: pd.DataFrame) -> pd.DataFrame:
-		print('\nRunning post processing')
+		"""
+        	Evolves binary companion to obtain properties
+
+        	Parameters
+        	----------
+        	dataframe : dataframe
+        	    original SynthPop output as pandas data frame
+
+	        Returns
+	        -------
+	        dataframe : dataframe
+	            modified pandas data frame
+	        """
+		print('\nRunning binary post processing')
 		
 		# Add a new column with random 6-digit identification numbers
 		num_samples = len(dataframe)
@@ -216,21 +259,21 @@ class Binary(PostProcessing):
 				prim_sec_data.append({'primary_ID': primary_id, 'secondary_ID': secondary_id})
 			added_companions_df = pd.concat(new_rows, ignore_index=True)
 		prim_sec_df = pd.DataFrame(prim_sec_data)
-		prim_sec_df.to_csv('/home/marznewman/spdev-3/synthpop-dev/synthpop/outputfiles/binary_populations/prim_sec.csv', index=False)
+		#prim_sec_df.to_csv('/home/marznewman/spdev-3/synthpop-dev/synthpop/outputfiles/binary_populations/prim_sec.csv', index=False)
+		prim_sec_df.to_csv(self.model.parms.output_location+'/prim_sec.csv', index=False)
 		
-		'''
+		
 		# Add a new column with a six-digit identification number
-		identification_numbers = np.random.randint(100000, 999999, size=len(added_companions_df))
+#		identification_numbers = np.random.randint(100000, 999999, size=len(added_companions_df))
 		# Multiply by 10 so that there is a zero at the end of all IDs
-		added_companions_df['System_ID'] = identification_numbers * 10#+ added_companions_df['Is_Binary']
-		'''
+#		added_companions_df['System_ID'] = identification_numbers * 10#+ added_companions_df['Is_Binary']
 		
-		################### I have successfully added new rows for secondary stars
-		######## Make an Instance of Populations ########
 		# Hard-coded files/directories for making an instance of Parameters
-		specific_config = "/home/marznewman/spwork/config_files/binary_pop_test.synthpop_conf"
-		default_config = "/home/marznewman/spwork/config_files/_default.synthpop_conf"
-		model_dir = "/home/marznewman/spwork/models/besancon_Robin2003"
+		####specific_config = "/home/marznewman/spwork/config_files/binary_pop_test.synthpop_conf"
+		#default_config = "/home/marznewman/spwork/config_files/_default.synthpop_conf"
+		default_config = DEFAULT_CONFIG_FILE
+		#model_dir = "/home/marznewman/spwork/models/besancon_Robin2003"
+		model_dir = DEFAULT_MODEL_DIR+"/"+self.model.parms.model_name
 
 		# Get a list of population json files
 		population_files = sorted(glob.glob(os.path.join(model_dir, "*pop.json")) + glob.glob(os.path.join(model_dir, "*popjson")))
@@ -242,7 +285,15 @@ class Binary(PostProcessing):
 		}
 
 		# Parameters for making an instance of Populations, taken from the config files and model directory
-		glbl_params = sp_utils.Parameters(specific_config, default_config, model_dir)
+		####glbl_params = sp_utils.Parameters(specific_config, default_config, model_dir)
+		
+		# Get glbl_params by iterating over population numbers 0 through 9
+		#print(self.model.populations[0].glbl_params)
+		for i in range(0,10):
+			#print(i)
+			glbl_params = self.model.populations[i].glbl_params
+			
+			
 
 		# Instance of Populations
 		populations = [
@@ -321,34 +372,34 @@ class Binary(PostProcessing):
 		r_inner = radii[:-1]
 		#print(r_inner.shape)
 		
-		'''
-		for pop_id, population in enumerate(populations):
+		
+#		for pop_id, population in enumerate(populations):
 			#position = np.vstack([np.column_stack(populations[pop_id].position.draw_random_point_in_slice(r_inner, r_outer, n_stars)) for r_inner, r_outer, n_stars in zip(radii, radii[1:], 1)])
-			positions_list = []
-			for r_inner, r_outer in zip(radii, radii[1:]):
-				x, y, z, d_kpc, star_l_deg, star_b_deg = populations[pop_id].position.draw_random_point_in_slice(r_inner, r_outer, total_stars)
-				positions_list.append(np.column_stack((x, y, z, d_kpc, star_l_deg, star_b_deg)))
-		'''
+#			positions_list = []
+#			for r_inner, r_outer in zip(radii, radii[1:]):
+#				x, y, z, d_kpc, star_l_deg, star_b_deg = populations[pop_id].position.draw_random_point_in_slice(r_inner, r_outer, total_stars)
+#				positions_list.append(np.column_stack((x, y, z, d_kpc, star_l_deg, star_b_deg)))
+		
 		# Define the position array from existing primaries
 		position = primaries[['x', 'y', 'z', 'Dist', 'l', 'b']].to_numpy()
 		#print(position[:, 3:6])
 		
-		'''
+		
 		# Extract magnitudes and convert to observed magnitudes im needed
-		for pop_id, population in enumerate(populations):
-			#print(pop_id)
-			#print(population)
-			#print(populations[pop_id])
-			mags, extinction_in_map = populations[pop_id].extract_magnitudes(r_inner, position[:, 3:6], ref_mag, s_props)
-			print(len(mags))
-			print(mags)
-			print('\n\n\n\n\n')
+#		for pop_id, population in enumerate(populations):
+#			#print(pop_id)
+#			#print(population)
+#			#print(populations[pop_id])
+#			mags, extinction_in_map = populations[pop_id].extract_magnitudes(r_inner, position[:, 3:6], ref_mag, s_props)
+#			print(len(mags))
+#			print(mags)
+#			print('\n\n\n\n\n')
 			#mags, extinction_in_map = populations[pop_id].extract_magnitudes(r_inner, [3, 4, 5], ref_mag, s_props)
-		'''
+		
 		#print("population_params")
 		#print(population_params)
 		mags, extinction_in_map = populations[0].extract_magnitudes(r_inner, position[:, 3:6], ref_mag, s_props)
-		print(mags)
+		#print(mags)
 		
 		############ Add new properties to companion stars in dataframe ############
 		# Define a list of initial parameters
@@ -385,7 +436,7 @@ class Binary(PostProcessing):
 		#combined_magnitudes = []	# I don't think I need this
 		combined_luminosities = []
 		combined_masses = []	
-		print('\n\n\n\nLuminosities')
+		#print('\n\n\n\nLuminosities')
 		for i in range(len(primary_stars)):
     			# Combine luminosities
     			logL1 = primary_stars.loc[i, 'logL']
@@ -416,7 +467,10 @@ class Binary(PostProcessing):
 		}
 
 		combined_props_df = pd.DataFrame(combined_props)
-		combined_props_df.to_csv('/home/marznewman/spdev-3/synthpop-dev/synthpop/outputfiles/binary_populations/combined_props.csv', index=False)
+		
+		# Output
+		#combined_props_df.to_csv('/home/marznewman/spdev-3/synthpop-dev/synthpop/outputfiles/binary_populations/combined_props.csv', index=False)
+		combined_props_df.to_csv(self.model.parms.output_location+'/combined_props.csv', index=False)
 		
 		### Check if I even have the luminosities of companions
 		#print(added_companions_df['logL'])
