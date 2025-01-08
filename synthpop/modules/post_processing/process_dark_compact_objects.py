@@ -276,7 +276,7 @@ class ProcessDarkCompactObjects(PostProcessing):
         m_final = (in_final_phase * m_compact +
                    (1 - in_final_phase) * m_final_pre)
         dataframe['Mass'] = m_final
-        dataframe['Dim_Compact_Object_Flag'] = m_type
+        dataframe['Dim_Compact_Object_Flag'] = m_type*in_final_phase
 
         # Set dim object magnitudes to nan
         for magcol in self.model.parms.chosen_bands:
