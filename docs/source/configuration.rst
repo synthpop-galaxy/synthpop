@@ -273,6 +273,61 @@ PHOTOMETRIC_OUTPUTS
 
 **chosen_bands**: list of filters to include for synthetic photometry
 
+.. list-table:: Filters available from MIST evolution module
+   :header-rows: 1
+
+    * - System
+      - Filters (use these names as written here)
+    * - CFHT
+      - CFHT_u, CFHT_CaHK, CFHT_g, CFHT_r, CFHT_i_new, CFHT_i_old, CFHT_z
+    * - DECam
+      - 
+    * - GALEX
+      - 
+    * - HST_ACSHR
+      - 
+    * - HST_ACSWF
+      - 
+    * - HST_WFC3
+      - 
+    * - HST_WFPC2
+      - 
+    * - IPHAS
+      - 
+    * - JWST
+      - 
+    * - LSST
+      - 
+    * - PanSTARRS
+      - 
+    * - SDSSugriz
+      - 
+    * - SkyMapper
+      - 
+    * - SPITZER
+      - 
+    * - HSC
+      - 
+    * - Swift
+      - 
+    * - UBVRIplus
+      - Bessell_U, Bessell_B, Bessell_V, Bessell_R, Bessell_I, 2MASS_J, 2MASS_H, 2MASS_Ks, Kepler_Kp, Kepler_D51, Hipparcos_Hp, Tycho_B, Tycho_V, Gaia_G_DR2Rev, Gaia_BP_DR2Rev, Gaia_RP_DR2Rev, Gaia_G_MAW, Gaia_BP_MAWb, Gaia_BP_MAWf, Gaia_RP_MAW, TESS, Gaia_G_EDR3, Gaia_BP_EDR3, Gaia_RP_EDR3
+    * - UKIDSS
+      - 
+    * - VISTA
+      - 
+    * - WashDD0uvby
+      - 
+    * - WFIRST
+      - 
+    * - WISE
+      - 
+    * - SPLUS
+      - 
+    * UVIT
+      - 
+    
+
 **eff_wavelengths**: dictionary specifying effective wavelength for each chosen filter [Note: use option {"json_file":"AAA_effective_wavelengths.json"} to load these from a pre-existing file]
 
 **obs_mag**: boolean option to generate observed magnitudes (generates absolute magnitudes if set to false)
