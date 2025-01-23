@@ -334,6 +334,8 @@ PHOTOMETRIC_OUTPUTS
 
 **opt_iso_props**: optional stellar properties to save, with original column names from isochrones
 
+For MIST isochrone stellar property options, see `their documentation here <https://waps.cfa.harvard.edu/MIST/README_tables.pdf>`_
+
 **col_names**: columns names for output for the columns determined in **opt_iso_props**
 
 example::
