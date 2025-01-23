@@ -325,9 +325,8 @@ PHOTOMETRIC_OUTPUTS
       - 
     * - SPLUS
       - 
-    * UVIT
+    * - UVIT
       - 
-    
 
 **eff_wavelengths**: dictionary specifying effective wavelength for each chosen filter [Note: use option {"json_file":"AAA_effective_wavelengths.json"} to load these from a pre-existing file]
 
