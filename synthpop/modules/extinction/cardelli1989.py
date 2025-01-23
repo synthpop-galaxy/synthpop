@@ -14,8 +14,11 @@ __date__ = "2022-07-10"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
-from ._extinction import ExtinctionLaw
-
+try:
+    from ._extinction import ExtinctionLaw
+except ImportError:
+    from _extinction import ExtinctionLaw
+    
 class Cardelli1989(ExtinctionLaw):
     """Extinction law from Cardelli 1989,
        Gives the Extinction as function of wavelength and R_V

@@ -12,7 +12,10 @@ __version__ = "1.0.0"
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from .. import const
-from ._extinction import ExtinctionMap #, EXTINCTION_DIR
+try:
+    from ._extinction import ExtinctionMap
+except ImportError:
+    from _extinction import ExtinctionMap
 import time
 import ebf
 

@@ -16,7 +16,10 @@ __version__ = "1.0.0"
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
-from ._extinction import ExtinctionLaw, EXTINCTION_DIR
+try:
+    from ._extinction import ExtinctionLaw
+except ImportError:
+    from _extinction import ExtinctionLaw
 
 class Nishiyama2009(ExtinctionLaw):
     """

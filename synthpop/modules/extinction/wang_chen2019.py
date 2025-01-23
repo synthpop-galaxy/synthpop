@@ -14,9 +14,11 @@ __date__ = "2022-11-05"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
-from ._extinction import ExtinctionLaw
-
-
+try:
+    from ._extinction import ExtinctionLaw
+except ImportError:
+    from _extinction import ExtinctionLaw
+    
 class WangChen2019(ExtinctionLaw):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

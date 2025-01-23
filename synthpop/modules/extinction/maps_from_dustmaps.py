@@ -33,8 +33,11 @@ import dustmaps.planck
 import dustmaps.sfd
 
 from astropy.coordinates import SkyCoord
-from ._extinction import ExtinctionMap
-
+try:
+    from ._extinction import ExtinctionMap
+except ImportError:
+    from _extinction import ExtinctionMap
+    
 MAPS_INFO = {
     "bayestar": {
         'dim': 3,
