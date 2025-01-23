@@ -276,7 +276,7 @@ PHOTOMETRIC_OUTPUTS
 For the MIST evolution module, the following filters are available:
 
 .. list-table::
-    :widths: 25 100
+    :width: 20 80
     :header-rows: 1
 
     * - System
