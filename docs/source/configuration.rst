@@ -273,7 +273,9 @@ PHOTOMETRIC_OUTPUTS
 
 **chosen_bands**: list of filters to include for synthetic photometry
 
-.. list-table:: Filters available from MIST evolution module
+For the MIST evolution module, the following filters are available:
+
+.. list-table::
     :widths: 25 100
     :header-rows: 1
 
