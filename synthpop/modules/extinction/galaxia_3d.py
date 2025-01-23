@@ -63,7 +63,7 @@ class Galaxia3D(ExtinctionMap):
         b_grid_3d = np.append(np.arange(*map_grid_3d[1]),map_grid_3d[1][1])
         self.r_grid = 10**np.append(np.arange(*map_grid_3d[2]),map_grid_3d[2][1])
         self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid), 
-            map_data_3d)
+            map_data_3d, bounds_error=False, fill_value=None, method='nearest')
 
         # Set up 3d grid
         if which_2d=='Shlegel':
