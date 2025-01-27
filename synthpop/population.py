@@ -25,6 +25,7 @@ import pdb
 # Non-Standard Imports
 import numpy as np
 import pandas
+from tqdm import tqdm
 
 # Local Imports
 # used to allow running as main and importing to another script
@@ -813,6 +814,7 @@ class Population:
             all_m_evolved = []
             all_r_inner = []
         opt3_mass_loss_done=False
+        pbar = tqdm(total=sum(missing_stars))
         while any(missing_stars > 0):
             neg_missing_stars = np.minimum(missing_stars,0)
             missing_stars = np.maximum(missing_stars,0)
@@ -868,6 +870,7 @@ class Population:
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             df_list.append(df)
             loop_counts += 1
+            pbar.update(np.sum(missing_stars_chunk))
 
         # combine the results from the different loops
         if len(df_list) == 0:

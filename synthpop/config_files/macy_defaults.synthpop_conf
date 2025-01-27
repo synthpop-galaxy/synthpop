@@ -95,22 +95,9 @@
         "#comment":"examples to use the code with different Isochrones System and different Interpolators",
         "#comment2":"#if set to null/None: use a default one read from models/{model_name}/defaults/evolution.json",
         "evolution_class":[
-                {"name":"MIST", "#comment":"use the MIST isochrones outside of the previous defined ranges"}
+               {"name":"MIST", "interpolator":"LagrangeInterpolator","min_mass":0.1, "max_mass":0.7},
+                {"name":"MIST", "interpolator":"CharonInterpolator"}
             ],
-        "# multi evolution_class":[
-                {"name":"MIST", "min_mass":0.2, "max_mass":0.3, "#comment":"use the MIST isochrones for masses between 0.1, 0.2 with the standard interpolator"},
-                {"name":"MIST", "interpolator":"CharonInterpolator","min_mass":0.1, "max_mass":0.7,
-                "#comment":"use the MIST isochrones with an user_defined interpolator for masses between 0.1, 0.2 with the standard interpolator"},
-                {"name":"MIST", "#comment":"use the MIST isochrones outside of the previous defined ranges"}
-            ],
-        "# special evolution_class":{
-            "default":[
-                {"name":"MIST", "#comment":"use the MIST isochrones outside of the previous defined ranges"}
-                ],
-            "population_name":[
-                        {"name":"MIST", "#comment":"use the MIST isochrones outside of the previous defined ranges"}
-            ]
-        }
         },
 
     "PHOTOMETRIC_OUTPUTS":{
