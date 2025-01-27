@@ -208,6 +208,7 @@ class Population:
             self.imf, self.age, self.metallicity, self.evolution,
             self.glbl_params, self.position, self.max_mass, logger
             )
+        self.temp_filename = self.glbl_params.output_location+'temp_{np.random.randint(0, 999999):06d}'
 
     def assign_subclasses(self):
         """initialization of all the subclass
@@ -814,6 +815,7 @@ class Population:
             all_m_evolved = []
             all_r_inner = []
         opt3_mass_loss_done=False
+        store = pandas.HDFStore(self.temp_filename+'.h5')
         pbar = tqdm(total=sum(missing_stars))
         while any(missing_stars > 0):
             neg_missing_stars = np.minimum(missing_stars,0)
@@ -868,21 +870,31 @@ class Population:
             # add to previous drawn data
             if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) and (not self.glbl_params.lost_mass_option==3):
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
-            df_list.append(df)
+            #df_list.append(df)
+            #df.to_hdf(self.temp_filename, key='data', mode='a', format='table', append=True)
+            store.put('df', df, format='table', append=True)
             loop_counts += 1
             pbar.update(np.sum(missing_stars_chunk))
 
         # combine the results from the different loops
-        if len(df_list) == 0:
+        '''if len(df_list) == 0:
             population_df = pandas.DataFrame(columns=headers, dtype=float)
         else:
-            population_df = pandas.concat(df_list, ignore_index=True)
+            population_df = pandas.concat(df_list, ignore_index=True)'''
+        population_df = store.select('df', columns=['Dist', 'Mass','iMass',self.glbl_params.maglim[0]])
+        df_dist = np.array(population_df['Dist'])
+        df_mass = np.array(population_df['Mass'])
+        df_imass = np.array(population_df['iMass'])
+        del population_df
         
         # Remove any excess stars
-        if self.lost_mass_option==3:
-            r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
-            population_df = self.remove_stars(population_df, r_inner, neg_missing_stars, radii)
-            population_df.reset_index(drop=True,inplace=True)
+        if self.lost_mass_option==3 and ~(np.sum(neg_missing_stars)==0):
+            r_inner=radii[np.searchsorted(radii, df_dist-1]
+            remove_idxs = self.remove_stars(store, r_inner, neg_missing_stars, radii)
+            new_store = pandas.HDFStore(self.temp_filename+'2.h5')
+            for ii, store_chunk in enumerate(store.select('df', chunksize=100000)):
+                store_chunk.drop(
+            #population_df.reset_index(drop=True,inplace=True)
 
         to = time.time()  # end timer
 
@@ -953,7 +965,7 @@ class Population:
                 t = preserve[radii_star == r]
                 t[n:] = False
                 preserve[radii_star == r] = t
-        return df[preserve]
+        return np.where(~preserve)[0] #df[preserve]
 
     def check_field(
             self,
