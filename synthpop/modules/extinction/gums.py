@@ -4,7 +4,7 @@ Combines Lallement et al (2019) & Marshall (2006)
 
 """
 
-__all__ = ["GUMS", ]
+__all__ = ["Gums", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-11-07"
 __license__ = "GPLv3"
@@ -17,7 +17,7 @@ import numpy as np
 try:
     from ._extinction import ExtinctionMap, EXTINCTION_DIR
     from .lallement import Lallement
-    from ... import constants as const
+    from .. import const
 except ImportError:
     from _extinction import ExtinctionMap, EXTINCTION_DIR
     from lallement import Lallement
@@ -34,23 +34,15 @@ _query_dict = {}
 
 class Gums(Lallement,ExtinctionMap):
     """
-    Extinction map from Lallement et al. 2019
+    Extinction map from Gaia Universe Model Snapshot
 
     Attributes
     ----------
     extinction_map_name : str
         name of the Extinction Map
-    l_deg : float
-        galactic longitude in degree set by "update_sight-line"
-    b_deg : float
-        galactic latitude in degree set by "update_sight-line"
 
     ref_wavelength : float
         reference wavelength for the extinction
-
-    A_or_E : float or function
-        total extinction or color excess, from the extinction map.
-        if it is a function it will be called
 
     A_or_E_type : str
         Output type from the extinction map.
@@ -72,7 +64,7 @@ class Gums(Lallement,ExtinctionMap):
 
     def __init__(self, dr=0.001, return_functions=True, **kwargs):
         # Start from Lallement law
-        super().__init__(**kwargs)
+        super().__init__(dr=dr, **kwargs)
         self.extinction_map_name = "GUMS"
         self.return_functions=return_functions
         # Set up Marshall map
