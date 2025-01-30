@@ -25,7 +25,7 @@ import pdb
 # Non-Standard Imports
 import numpy as np
 import pandas
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 # Local Imports
 # used to allow running as main and importing to another script
@@ -821,7 +821,7 @@ class Population:
             if sum(missing_stars)>self.glbl_params.chunk_size:
                 final_expected_loop=False
                 idx_cs = np.searchsorted(np.cumsum(missing_stars), self.glbl_params.chunk_size)
-                rem_chunk = np.cumsum(missing_stars)[idx_cs] - self.glbl_params.chunk_size
+                rem_chunk = self.glbl_params.chunk_size - (np.cumsum(missing_stars)[idx_cs-1])*(idx_cs>0)
                 missing_stars_chunk = missing_stars * (np.cumsum(missing_stars)<self.glbl_params.chunk_size)
                 missing_stars_chunk[idx_cs] = rem_chunk
             else:
