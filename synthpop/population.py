@@ -814,7 +814,9 @@ class Population:
             all_m_evolved = []
             all_r_inner = []
         opt3_mass_loss_done=False
-        pbar = tqdm(total=sum(missing_stars))
+        use_pbar = np.sum(total_stars)>self.glbl_params.chunk_size
+        if use_pbar:
+            pbar = tqdm(total=sum(missing_stars))
         while any(missing_stars > 0):
             neg_missing_stars = np.minimum(missing_stars,0)
             missing_stars = np.maximum(missing_stars,0)
@@ -870,7 +872,8 @@ class Population:
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             df_list.append(df)
             loop_counts += 1
-            pbar.update(np.sum(missing_stars_chunk))
+            if use_pbar:
+                pbar.update(np.sum(missing_stars_chunk))
 
         # combine the results from the different loops
         if len(df_list) == 0:

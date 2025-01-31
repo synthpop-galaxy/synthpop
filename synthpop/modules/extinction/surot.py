@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from .. import const
 from scipy.spatial import KDTree
-from ._extinction import ExtinctionMap #, EXTINCTION_DIR
+from ._extinction import ExtinctionMap, EXTINCTION_DIR
 import time
 import ebf
 from scipy.interpolate import RegularGridInterpolator
@@ -25,10 +25,8 @@ current_map_data = None
 class Surot(ExtinctionMap):
     """
     Extinction map from Surot et al. 2020
-    Map must first be converted from E(J-Ks) to A_Ks values
-    Note: 
-        This is a quick implementation of a 2D extinction map which repurposes the methods desgined for a 3D map used in marshall.py. While the current version will primarily be used for extinction map comparison purposes, a more careful design will likely be beneficial in the future.  
-
+    On first use, the map is downloaded and converted from E(J-Ks) to A_Ks values
+    
     Attributes
     ----------
     extinction_map_name : str
