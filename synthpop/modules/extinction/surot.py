@@ -131,6 +131,23 @@ class Surot(ExtinctionMap):
                 map_data_3d)
 
     def extinction_in_map(self, l_deg, b_deg, dist):
+        """
+        Estimates the extinction for a list of star positions.
+
+        Parameters
+        ----------
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
+        """
         use_l = l_deg - (l_deg>180)*360
         _, min_dist_arg = self.coord_tree.query(np.transpose([use_l,b_deg]))
         ext_value = self.A_Ks_list[min_dist_arg]

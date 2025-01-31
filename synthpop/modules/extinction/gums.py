@@ -1,7 +1,6 @@
 """
 Extinction map used in the GAIA Universe Model, DR3 version.
 Combines Lallement et al (2019) & Marshall (2006)
-
 """
 
 __all__ = ["Gums", ]
@@ -34,32 +33,27 @@ _query_dict = {}
 
 class Gums(Lallement,ExtinctionMap):
     """
-    Extinction map from Gaia Universe Model Snapshot
+    Extinction map from Gaia Universe Model Snapshot version DR3
 
     Attributes
     ----------
     extinction_map_name : str
         name of the Extinction Map
-
     ref_wavelength : float
         reference wavelength for the extinction
-
     A_or_E_type : str
-        Output type from the extinction map.
+        output type from the extinction map.
         If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E": A_or_E is handled as a color excess.
+        If it starts with "E", A_or_E is handled as a color excess.
 
     Methods
     -------
-
     update_extinction_in_map():
         placeholder for function that updates the total extinction or color excess
         in self.extinction_map_name
-
     get_map_properties():
         returns the basic parameters of the extinction map
         used for Communication between ExtinctionLaw and ExtinctionMap
-
     """
 
     def __init__(self, dr=0.001, return_functions=True, **kwargs):
@@ -110,11 +104,20 @@ class Gums(Lallement,ExtinctionMap):
 
     def extinction_in_map(self,l_deg,b_deg,dist):
         """
-        Returns the extinction for the current sight line and radial distance, or returns function to do so.
+        Estimates the extinction for a list of star positions.
 
         Parameters
         ----------
-        radius: float [kpc]
-            radial distance of the current slice
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         """
         return self.gums_ext_func(l_deg, b_deg, dist)
