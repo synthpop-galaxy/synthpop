@@ -18,8 +18,11 @@ __date__ = "2024-06-01"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
-from ._extinction import ExtinctionLaw
-
+try:
+    from ._extinction import ExtinctionLaw
+except ImportError:
+    from _extinction import ExtinctionLaw
+    
 class Fitzpatrick2009(ExtinctionLaw):
     def __init__(self,R_V: float = 3.1, alpha: float = 2.5, **kwargs):
         self.extinction_law_name = 'Fitzpatrick2009'

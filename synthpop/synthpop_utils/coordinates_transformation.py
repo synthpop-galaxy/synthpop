@@ -96,10 +96,9 @@ class CoordTrans:
     def dlb_to_rphiz(self, d_kpc: np.ndarray, l_deg: np.ndarray, b_deg: np.ndarray) \
             -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        translates d, l, b  into  r, theta, z
+        translates d, l, b  into  r, phi, z
 
         phi increases along the galactic rotation with a zero point at the position of the sun
-
 
         Parameters
         ----------

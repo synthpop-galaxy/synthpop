@@ -1,6 +1,5 @@
 """ 
 Extinction from Galaxia, based on Schlegel et al 1998 2-D map, with 3-D dust disk model
-NOTE: uses extinction_in_map value form; consider function form
 """
 
 __all__ = ["Galaxia3D", ]
@@ -12,7 +11,10 @@ __version__ = "1.0.0"
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from .. import const
-from ._extinction import ExtinctionMap #, EXTINCTION_DIR
+try:
+    from ._extinction import ExtinctionMap
+except ImportError:
+    from _extinction import ExtinctionMap
 import time
 import ebf
 
@@ -25,17 +27,13 @@ class Galaxia3D(ExtinctionMap):
     extinction_map_name : str
         name of the Extinction Map
 
-    ref_wavelength : float
-        reference wavelength for the extinction
-
-    A_or_E : float or function
-        total extinction or color excess, from the extinction map.
-        if it is a function it will be called
+    ref_wavelength[2] : float
+        reference wavelength(s) for the extinction or color excess
 
     A_or_E_type : str
         Output type from the extinction map.
         If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E": A_or_E is handled as a color excess.
+        If it starts with "E", A_or_E is handled as a color excess.
 
     Methods
     -------
@@ -44,7 +42,6 @@ class Galaxia3D(ExtinctionMap):
     get_map_properties():
         returns the basic parameters of the extinction map
         used for Communication between ExtinctionLaw and ExtinctionMap
-
     """
 
     def __init__(self, which_2d='Shlegel',**kwargs):
@@ -63,7 +60,7 @@ class Galaxia3D(ExtinctionMap):
         b_grid_3d = np.append(np.arange(*map_grid_3d[1]),map_grid_3d[1][1])
         self.r_grid = 10**np.append(np.arange(*map_grid_3d[2]),map_grid_3d[2][1])
         self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid), 
-            map_data_3d)
+            map_data_3d, bounds_error=False, fill_value=None, method='nearest')
 
         # Set up 3d grid
         if which_2d=='Shlegel':
@@ -80,14 +77,21 @@ class Galaxia3D(ExtinctionMap):
 
     def extinction_in_map(self, l_deg, b_deg, dist):
         """
-        Estimates the extinction for the current sight-line and radial distance
-        store the result into self.extinction_in_map.
+        Estimates the extinction for a list of star positions.
 
         Parameters
         ----------
-        radius: float [kpc]
-            radial distance of the current slice
-
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         """
         use_l = l_deg + (l_deg<0)*360
         mapval_3d = self.grid_interpolator_3d((use_l, b_deg, dist))

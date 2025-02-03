@@ -33,8 +33,11 @@ import dustmaps.planck
 import dustmaps.sfd
 
 from astropy.coordinates import SkyCoord
-from ._extinction import ExtinctionMap
-
+try:
+    from ._extinction import ExtinctionMap
+except ImportError:
+    from _extinction import ExtinctionMap
+    
 MAPS_INFO = {
     "bayestar": {
         'dim': 3,
@@ -179,21 +182,21 @@ class MapsFromDustmaps(ExtinctionMap):
 
     def extinction_in_map(self, l_deg, b_deg, dist):
         """
-        read extinction from map
+        Estimates the extinction for a list of star positions.
 
         Parameters
         ----------
-        l_deg: float or nd_array [degree]
+        l_deg: ndarray [degrees]
             galactic longitude
-        b_deg: float or nd_array [degree]
+        b_deg: ndarray [degrees]
             galactic latitude
-        dist: float or nd_array [kpc]
-            distance
-
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
         Returns
         -------
-        A_or_E: float or nd_array
-            Extinction ore color excess
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         """
         if self.is_3D:
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, distance=dist * u.kpc, frame='galactic')
