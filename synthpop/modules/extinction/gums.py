@@ -100,7 +100,7 @@ class Gums(Lallement,ExtinctionMap):
                 np.nan_to_num(self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=dist*u.kpc, frame='galactic')) /  \
                  self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=end_dists*u.kpc, frame='galactic')), nan=1.0) ** \
                 (end_dists<dist)
-        return np.maximum(value + np.random.normal(value, value*0.1), 0)
+        return np.maximum(np.random.normal(value, value*0.1), 0)
 
     def extinction_in_map(self,l_deg,b_deg,dist):
         """
