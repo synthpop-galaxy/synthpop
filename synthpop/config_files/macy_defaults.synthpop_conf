@@ -97,7 +97,7 @@
         "evolution_class":[
                {"name":"MIST", "interpolator":"LagrangeInterpolator","min_mass":0.1, "max_mass":0.7},
                 {"name":"MIST", "interpolator":"CharonInterpolator"}
-            ],
+            ]
         },
 
     "PHOTOMETRIC_OUTPUTS":{
