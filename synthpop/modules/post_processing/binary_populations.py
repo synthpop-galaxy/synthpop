@@ -77,10 +77,21 @@ class Binary(PostProcessing):
 		#print("Length of temperatures: ",len(temperatures))
         	# Temperature bins
 		#T_bins = np.array([3850, 5300, 5920, 7240, 9500, 31000, 41000])
-		T_bins = np.array([3000, 3500, 4000, 4500, 5000, 5500, 6000])
+#		T_bins = np.array([3000, 3500, 4000, 4500, 5000, 5500, 6000])
 		# probability for each type for each temperature bin
-		T_binary = np.array([0.05, 0.15, 0.3, 0.35, 0.1, 0.05, 0.0])
+#		T_binary = np.array([0.05, 0.15, 0.3, 0.35, 0.1, 0.05, 0.0])
 		# determine if each temperature is a binary star
+		#print(temperatures)
+		
+		# Mamajek 2013 Table 5 temperature bins
+		#T_bins = np.array([44900, 31400, 7220, 6350, 5770, 4830, 3850, 2570, 450])
+		T_bins = np.array([2570, 3850, 4830, 5770, 6350, 7220, 31400, 44900])
+#		spTyp_bins = np.array([0, 1, 2, 3, 4, 5, 6, 7])	# Spectral type indices: 0 for O-B, 1 for B-F, 2 for F0-F6, 3 for F6-G2, 4 for G2-K3, 5 for K3-M0, 6 for M0-M8, and 7 for M8-Y
+		spTyp_bins = np.array([0, 1, 2, 3, 4, 5, 6, 7])	# Spectral type indices: 0 for M8-Y, 1 for M0-M8, 2 for K3-M0, 3 for G2-K3, 4 for F6-G2, 5 for F0-F6, 6 for B-F, and 7 for O-B
+		percentage_bins = [20, 35, 37.5, 40, 50, 60, 70, 75]
+		probability_bins = percentage_bins / np.sum(percentage_bins)
+		#print(probability_bins)
+		
 		is_binary = []
 			
 		# Initialize a count for identified binary stars
@@ -89,27 +100,50 @@ class Binary(PostProcessing):
 		num_isnan = 0
 		
 
-		for temp in temperatures:
+#		for temp in temperatures:
 			# Sort star temperature into the correct temperature bin
 			#print("Temperature: "+str(temp))
+#			if math.isnan(temp):
+				#print(str(temp)+" Temperature is nan")
+#				bin_index = 0
+#				num_isnan = num_isnan+1
+#			else:
+#				bin_index = np.searchsorted(T_bins, temp)
+			#print("Bin index: "+str(bin_index))
+			# Get the probability for the star to be binary, given the temperature bin
+			#probability = T_binary[bin_index - 1] if bin_index > 0 else 0
+#			probability = T_binary[bin_index] if bin_index < len(T_binary) else 0
+			#print("Probability: "+str(probability))
+#			rand_num=np.random.rand()
+			#print("Random number draw: "+str(rand_num))
+#			binary_status = rand_num < probability
+#			is_binary.append(binary_status)
+			#print(rand_num < probability)
+	
+#		binary_count = sum(is_binary)
+
+		for temp in temperatures:
 			if math.isnan(temp):
 				#print(str(temp)+" Temperature is nan")
 				bin_index = 0
 				num_isnan = num_isnan+1
+				#print("NaN")
 			else:
 				bin_index = np.searchsorted(T_bins, temp)
-			#print("Bin index: "+str(bin_index))
-			# Get the probability for the star to be binary, given the temperature bin
-			#probability = T_binary[bin_index - 1] if bin_index > 0 else 0
-			probability = T_binary[bin_index] if bin_index < len(T_binary) else 0
-			#print("Probability: "+str(probability))
+				#print(bin_index)
+			#print(bin_index, len(spTyp_bins))
+			#probability = spTyp_bins[bin_index] if bin_index < len(spTyp_bins) else 0
+			#print(temp, probability)
+			#print(temp, bin_index)
+			#print(bin_index, probability)
+			probability = probability_bins[bin_index]
+			#print(temp, bin_index, probability)
 			rand_num=np.random.rand()
-			#print("Random number draw: "+str(rand_num))
 			binary_status = rand_num < probability
 			is_binary.append(binary_status)
-			#print(rand_num < probability)
-	
+		
 		binary_count = sum(is_binary)
+
 		print(f"Number of identified binary stars: {binary_count}")
 
 		return is_binary
@@ -129,18 +163,51 @@ class Binary(PostProcessing):
 		# Randomly pull a number between zero and 1
 		#random_number = np.random.rand()
 		
+		# Separate systems into 3 different sections based on Raghavan 2010, Figure 16
+		#sectors = [1, 2, 3]
+		#probability_bins = np.array([0.0909, 0.7909, 0.1182])*normalization_factor
+		probability_bins = [0.0909, 0.7909, 0.1182]
+		#sector_from_probability = {0.0909:1, 0.7909:2, 0.1182:3}
+		
 		# Plug in random number and pull a mass ratio from the toy probability function inspired by Figure 16 of D. Raghavan 2010
 		def pull_from_distribution(random_number):
-			random_probability = random_number * normalization_factor
-			if random_probability < 5.5:
-				mass_ratio = random_probability / 22
-			elif random_probability < 7.0:
+#			random_probability = random_number * normalization_factor
+#			if random_probability < 5.5:
+				#mass_ratio = random_probability / 22
+				#mass_ratio = random_probability * 22
+				#mass_ratio = random_probability * 27.5
+#				mass_ratio = random_probability / 27.5
+#			elif random_probability < 7.0:
 				#mass_ratio = np.random.uniform(0.25, 1)
-				mass_ratio = np.random.uniform(0.25, 0.95)
-			else:
+				#mass_ratio = np.random.uniform(0.25, 0.95)
+#				mass_ratio = np.random.uniform(0.2, 0.95)
+#			else:
 				#mass_ratio = 1.0
 				#mass_ratio = 0.95
+#				mass_ratio = np.random.uniform(0.95, 1)
+			####if random_number < (5.5 / normalization_factor):
+			####	mass_ratio = random_number / 27.5
+			####elif random_number < (7.0 / normalization_factor):
+			####	mass_ratio = np.random.uniform(0.2, 0.95)
+			####else:
+			####	mass_ratio = np.random.uniform(0.95, 1)
+			
+			# Probability function for the first, linear section
+			if random_number < probability_bins[0]:
+				print("Sector 1")
+				#mass_ratio = random_number / 27.5
+				#mass_ratio = random_number / 22
+				P = np.random.rand()  # Uniform random number for inversion method
+				mass_ratio = np.sqrt((2 * P) / 27.5)
+			elif random_number < probability_bins[1]:
+				print("Sector 2")
+				mass_ratio = np.random.uniform(0.2, 0.95)
+				#mass_ratio = np.random.uniform(0.25, 0.95)
+			else: 
+				print("Sector 3")
 				mass_ratio = np.random.uniform(0.95, 1)
+			#print(random_number, random_probability, mass_ratio)
+			print(random_number, mass_ratio)
 			return mass_ratio
         			
         	# Normalize mass ratio distribution
@@ -212,12 +279,17 @@ class Binary(PostProcessing):
 		
 		# Add a new column with random 6-digit identification numbers
 		num_samples = len(dataframe)
+		#print(len(dataframe))
+		#print(dataframe)
 		###identification_numbers = np.random.randint(100000, 999999, size=num_samples)
 		###dataframe['ID'] = identification_numbers
 		
 		# Make a new column for identifying binaries [0=single, 1=primary, 2=secondary]
-		dataframe['Is_Binary'] = 0.
+		dataframe['Is_Binary'] = 0
 		#dataframe['Is_Binary'] = dataframe['Is_Binary'].astype(int)
+		
+		# Make a new column that will point secondaries to the primary id (0 by default since initial dataframe stars are single)
+		dataframe['primary_ID'] = 0
 		
 		print("Range of temperatures: "+str(min(10**dataframe['Teff']))+", "+str(max(10**dataframe['Teff'])))
 		
@@ -225,48 +297,70 @@ class Binary(PostProcessing):
 		binary_flags = Binary.temp_is_binary(10**dataframe['Teff'])	# 10** because Teff is log
 		
 		for i, is_binary in enumerate(binary_flags):
+			#print(i, is_binary)
 			if is_binary:
 				# Set the Is_Binary column to True for the identified binary star
-				dataframe.at[i, 'Is_Binary'] = 1.
+				dataframe.at[i, 'Is_Binary'] = 1
+				#print(dataframe.at[i, 'Is_Binary'])
 				
-		# Add a new column with a six-digit identification number
-		identification_numbers = np.random.randint(100000000, 999999999, size=len(dataframe))
+		# Add a new column with a nine-digit identification number
+		####identification_numbers = np.random.randint(100000000, 999999999, size=len(dataframe))
+		#dataframe['ID'] = np.array([f"{i:09d}" for i in range(1, len(dataframe) + 1)])
+		#print(dataframe['ID'])
 		# Multiply by 10 so that there is a zero at the end of all IDs
-		dataframe['ID'] = identification_numbers * 10#+ added_companions_df['Is_Binary']
+		####dataframe['ID'] = identification_numbers * 10#+ added_companions_df['Is_Binary']
+		
 
 		# Insert rows below binary stars
 		new_rows = []
-		prim_sec_data = []
+		####prim_sec_data = []
+		#print("##################################")
 		for index, row in dataframe.iterrows():
+			#print(index)
 			#new_rows.append(row)
 			new_rows.append(row.to_frame().transpose())  # Convert the row to a DataFrame and append
 			#print(new_rows)
 			if row['Is_Binary'] == 1:
+				#print("Is_Binary=1")
 				# Insert a row with zeros below binary stars
 				new_row = pd.DataFrame([[0] * dataframe.shape[1]], columns=dataframe.columns)
-				new_row["Is_Binary"] = 2.
+				new_row["Is_Binary"] = 2
 				#print(new_row)
 				new_rows.append(new_row)
 				
 				# Set identification numbers (add 1 for primaries and 2 to secondaries)
-				primary_id = row['ID'] + 1
-				secondary_id = row['ID'] + 2
+				#primary_id = row['ID'] + 1
+				#secondary_id = row['ID'] + 2
 				
-				row['ID'] = primary_id
-				new_row['ID'] = secondary_id
+				#row['ID'] = primary_id
+				#new_row['ID'] = secondary_id
 				
 				# Make a second dataframe with primary and secondary IDs
-				prim_sec_data.append({'primary_ID': primary_id, 'secondary_ID': secondary_id})
+				#prim_sec_data.append({'primary_ID': primary_id, 'secondary_ID': secondary_id})
 			added_companions_df = pd.concat(new_rows, ignore_index=True)
-		prim_sec_df = pd.DataFrame(prim_sec_data)
+			#print(added_companions_df)
+			#print(index)
+		#print("complete")
+		####prim_sec_df = pd.DataFrame(prim_sec_data)
 		#prim_sec_df.to_csv('/home/marznewman/spdev-3/synthpop-dev/synthpop/outputfiles/binary_populations/prim_sec.csv', index=False)
-		prim_sec_df.to_csv(self.model.parms.output_location+'/prim_sec.csv', index=False)
+		#print(prim_sec_df)
+		####prim_sec_df.to_csv(self.model.parms.output_location+'/prim_sec.csv', index=False)
+		#print("complete")
 		
 		
 		# Add a new column with a six-digit identification number
 #		identification_numbers = np.random.randint(100000, 999999, size=len(added_companions_df))
 		# Multiply by 10 so that there is a zero at the end of all IDs
 #		added_companions_df['System_ID'] = identification_numbers * 10#+ added_companions_df['Is_Binary']
+		added_companions_df['ID'] = np.array([f"{i:09d}" for i in range(1, len(added_companions_df) + 1)])
+		#print(added_companions_df['ID'])
+		#print("complete")
+		
+		# Add the primary IDs to "primary_ID" columns of the secondary
+		for i in range(1, len(added_companions_df)):
+			#print(i)
+			if added_companions_df.loc[i, "Is_Binary"] == 2:
+				added_companions_df.loc[i, "primary_ID"] = added_companions_df.loc[i - 1, "ID"]
 		
 		# Hard-coded files/directories for making an instance of Parameters
 		####specific_config = "/home/marznewman/spwork/config_files/binary_pop_test.synthpop_conf"
@@ -326,15 +420,32 @@ class Binary(PostProcessing):
 		ages = primaries['age']
 		#print(ages)
 		prim_masses = primaries['iMass']
+		#print(prim_masses)
+		#print(min(prim_masses), max(prim_masses))
 
 		# Create an instance of the Binary subclass for each companion
 		companions = [Binary() for i in range(len(primaries))]
+		#print(companions)
 		
+		'''
 		# Make an array of initial masses, pulled from a mass ratio distribution
 		mass_ratios = []
 		for i in range(len(primaries)):
 			mass_ratios.append(companions[i].draw_companion_m_ratio())
 		masses = np.array(mass_ratios * prim_masses)	# Array of initial masses
+		'''
+		
+		mass_ratios = [companion.draw_companion_m_ratio() for companion in companions]
+		#print("\n\nMass Ratios")
+		#print(mass_ratios)
+		masses = np.array(mass_ratios * prim_masses)	# Array of companion initial masses
+		#print(masses)
+		
+		# Debug check
+		#for i in range(0, len(prim_masses)):
+		#	print(prim_masses[i], masses[i])
+		
+		#print(mass_ratios)
 
 		# Run get_evolved_props
 		ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = generator.get_evolved_props(masses, metallicities, ages, props)
@@ -423,54 +534,95 @@ class Binary(PostProcessing):
 		
 		############# Add new df information to final catalog dataframe #############
 		companion_indices = added_companions_df[added_companions_df['Is_Binary'] == 2].index
+		#print(companion_indices)
 		
 		for i, idx in enumerate(companion_indices):
 			added_companions_df.loc[idx, companion_properties_df.columns] = companion_properties_df.iloc[i]
 		
 		############# Make a new dataframe of combined properties #############
 		# Separate primary and secondary stars
-		primary_stars = added_companions_df[added_companions_df['Is_Binary'] == 1].reset_index(drop=True)
-		secondary_stars = added_companions_df[added_companions_df['Is_Binary'] == 2].reset_index(drop=True)
+		###primary_stars = added_companions_df[added_companions_df['Is_Binary'] == 1].reset_index(drop=True)
+		###secondary_stars = added_companions_df[added_companions_df['Is_Binary'] == 2].reset_index(drop=True)
+		primary_stars = added_companions_df[added_companions_df['Is_Binary'] == 1]	# Dont drop the index because we'll add it to the main dataframe
+		secondary_stars = added_companions_df[added_companions_df['Is_Binary'] == 2]
 		
-		# Calculate combined magnitudes using a loop
+		#print(primary_stars)
+		#print("----------------------------")
+		#print(secondary_stars)
+		#print("\n\n\n")
+		
+		# Initialize new combined property columns with NaN values
+		added_companions_df['combined_logL'] = np.nan
+		added_companions_df['total_mass'] = np.nan
+		added_companions_df['q'] = np.nan
+		added_companions_df['combined_logP'] = np.nan
+		
+		# Draw periods for binary stars
+		periods = [companion.draw_period() for companion in companions]
+		
+		# Calculate combined luminosities using a loop
 		#combined_magnitudes = []	# I don't think I need this
-		combined_luminosities = []
-		combined_masses = []	
+		###combined_luminosities = []
+		###combined_masses = []	
 		#print('\n\n\n\nLuminosities')
-		for i in range(len(primary_stars)):
-    			# Combine luminosities
-    			logL1 = primary_stars.loc[i, 'logL']
-    			logL2 = secondary_stars.loc[i, 'logL']
-    			combined_lum = np.log10(10**logL1 + 10**logL2)
-    			combined_luminosities.append(combined_lum)
-    			print(logL1, logL2)
-    			
-    			# Combine mass
-    			mass1 = primary_stars.loc[i, 'Mass']
-    			mass2 = secondary_stars.loc[i, 'Mass']
-    			combined_mass = mass1 + mass2
-    			combined_masses.append(combined_mass)
-    			
+		#for i in range(len(primary_stars)):
+		for prim_index, row in primary_stars.iterrows():
+			#print(prim_index)
+			# Combine luminosities
+			logL1 = primary_stars.loc[prim_index, 'logL']
+			logL2 = secondary_stars.loc[prim_index+1, 'logL']
+			combined_lum = np.log10(10**logL1 + 10**logL2)
+			###combined_luminosities.append(combined_lum)
+			#print(logL1, logL2)
+			
+			# Combine mass
+			mass1 = primary_stars.loc[prim_index, 'Mass']
+			mass2 = secondary_stars.loc[prim_index+1, 'Mass']
+			combined_mass = mass1 + mass2
+			###combined_masses.append(combined_mass)
+			
+			# Add combined properties to the primary star and secondary star rows
+			added_companions_df.loc[prim_index, 'combined_logL'] = combined_lum
+			added_companions_df.loc[prim_index, 'total_mass'] = combined_mass
+			#added_companions_df.loc[prim_index, 'logP'] = 
+			added_companions_df.loc[prim_index+1, 'combined_logL'] = combined_lum
+			added_companions_df.loc[prim_index+1, 'total_mass'] = combined_mass
+			
+			
+		#print(combined_luminosities)
+		'''
     		# Make a list of periods
 		periods = []
 		for i in range(len(primary_stars)):
 			periods.append(companions[i].draw_period())
-    			
+		'''
+		
+		for i, companion_index in enumerate(companion_indices):
+			#print(i, companion_index)
+			added_companions_df.loc[companion_index-1, 'q'] = mass_ratios[i]
+			added_companions_df.loc[companion_index-1, 'combined_logP'] = periods[i]
+			added_companions_df.loc[companion_index, 'q'] = mass_ratios[i]
+			added_companions_df.loc[companion_index, 'combined_logP'] = periods[i]
+			
+			
+		'''	
 		# Create the combined_props_df DataFrame
 		combined_props = {
-			'system_ID': primary_stars['ID']-1,
+			#'system_ID': primary_stars['ID']-1,
+			'primary_ID': primary_stars['ID'],
 			#'mag': combined_magnitudes,
-			'logL': combined_luminosities,
+			'combined_logL': combined_luminosities,
 			'total_mass' : combined_masses,
 			'q': mass_ratios,
 			'logP': periods
 		}
 
 		combined_props_df = pd.DataFrame(combined_props)
+		'''
 		
 		# Output
 		#combined_props_df.to_csv('/home/marznewman/spdev-3/synthpop-dev/synthpop/outputfiles/binary_populations/combined_props.csv', index=False)
-		combined_props_df.to_csv(self.model.parms.output_location+'/combined_props.csv', index=False)
+		####combined_props_df.to_csv(self.model.parms.output_location+'/combined_props.csv', index=False)	# This was when I created a separate output file for combined properties
 		
 		### Check if I even have the luminosities of companions
 		#print(added_companions_df['logL'])
