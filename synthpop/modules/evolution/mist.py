@@ -26,11 +26,11 @@ import requests
 from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
 # import a "standard" interpolator
 from .charon_interpolator import CharonInterpolator
+#from .lagrange_interpolator import LagrangeInterpolator
 
-# global variable to stor the isochrones
+# global variable to store the isochrones
 mist_isochrones = None
 mist_columns = {}
-
 
 class MIST(EvolutionIsochrones, CharonInterpolator):
     """
@@ -130,7 +130,10 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         if use_global:
             global mist_isochrones
             if mist_isochrones is not None:
-                self.isochrones = mist_isochrones
+                if np.array_equal(np.sort(np.unique(self.bands+self.none_mag_cols)).astype(str), np.sort(np.unique(mist_isochrones.keys())).astype(str)):
+                    self.isochrones = mist_isochrones
+                else:
+                    mist_isochrones = self.isochrones = self.load_isochrones(self.magsys)
             else:
                 mist_isochrones = self.isochrones = self.load_isochrones(self.magsys)
         else:
@@ -351,7 +354,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         # get column names
         cols = cls.get_columns(filename)
         # load table from ascii file
-        df = pandas.read_csv(filename, delim_whitespace=True, comment='#',
+        df = pandas.read_csv(filename, sep='\s+', comment='#',
             skip_blank_lines=True, low_memory=False, header=None, names=cols)
         return df
 
@@ -372,7 +375,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         print(f"convert {filename} to hdf5", end="\r")
         df = cls.read_csv(filename)
         # save table as h5 file
-        df.to_hdf(f'{filename}.h5', 'data', mode='w')
+        df.to_hdf(f'{filename}.h5', key='data', mode='w')
         return df
 
     def download_isochrones(self, magsys_name):

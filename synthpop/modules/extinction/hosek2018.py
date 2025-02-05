@@ -1,6 +1,12 @@
 """
-This file provides an implementation of the extinction Law from Hosek et al 2018
-THIS IS A PRELIMINARY VERSION OF THE EXTINCTION LAW
+Extinction law from Hosek et al (2018), representative of highly reddened
+regions like young star clusters and the Galactic center.
+
+Valid from 0.8 to 2.2 microns.
+
+Source DOI: 10.3847/1538-4357/aaabbb
+
+Code also available at https://github.com/mwhosek/extlaw_H18
 """
 
 __all__ = ["Hosek2018", ]
@@ -9,7 +15,10 @@ __date__ = "2022-07-10"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
-from ._extinction import ExtinctionLaw
+try:
+    from ._extinction import ExtinctionLaw
+except ImportError:
+    from _extinction import ExtinctionLaw
 from scipy import interpolate
 import numpy as np
 
@@ -22,8 +31,10 @@ class Hosek2018(ExtinctionLaw):
     def __init__(self, **kwargs, ):
         self.extinction_law_name = 'Hosek2018'
         self.law_ref_wavelength = 2.14
+        self.min_wavelength = 0.8
+        self.max_wavelength = 2.2
 
-    def Alambda_Aref(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float) -> float:
         """
         Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
 
@@ -32,14 +43,7 @@ class Hosek2018(ExtinctionLaw):
         eff_wavelength : float
             Effective Wavelength of the filter for which the extinction should be determined.
             in micrometer
-        R_V : float
-            interstellar reddening parameter
         """
-            
-        # Check wavelegth range
-        #if ((min(wavelength) < 0.8) | (max(wavelength) > 2.2)):
-        #    msg = 'Extinction law not defined at wavelength. Please select value between 0.8 - 2.2 microns'
-        #    raise ValueError(msg)
     
         # Define extinction law (A_lambda / A_Ks) according to Hosek+17
         wave_law = np.array([0.8059, 0.962, 1.25, 1.53, 2.14, 3.545])

@@ -61,7 +61,7 @@ The equivalent process in a script that imports synthpop is::
 
 where ``default_config`` is an optional keyword argument.
 
-Configuration file formatting
+Configuration File Contents
 -----------------------------
 
 Our ``_default_config.json`` is sorted into different categories, which are not required but may be used for any configuration. Note that any arguments starting with an '#' are ignored, so we use these for comments. The optional category headings are: MANDITORY, SIGHTLINES, SEED, COORDINATE_SYSTEM, POPULATION_GENERATION, EXTINCTION_MAP, ISOCHRONE_INTERPOLATION, PHOTOMETRIC_OUTPUTS, and OUTPUT.

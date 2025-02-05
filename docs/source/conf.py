@@ -2,9 +2,22 @@
 
 # -- Project information
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../synthpop/'))
+sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../synthpop/_modules/'))
+sys.path.insert(0, os.path.abspath('../../synthpop/_modules/age/'))
+sys.path.insert(0, os.path.abspath('../../synthpop/_modules/metallicity/'))
+
+#import migrate_interactive_part
+#migrate_interactive_part.migrate('../../synthpop')
+
 project = 'SynthPop'
 copyright = 'tbd'
 author = 'M Huston'
+master_doc = 'index'
 
 release = '0.1'
 version = '0.1.0'
@@ -18,6 +31,11 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
 ]
+
+extensions.append('autoapi.extension')
+extensions.append('sphinx.ext.autosectionlabel')
+autoapi_dirs = ['../../synthpop','../../synthpop/_modules/']
+autoapi_ignore = ['conf.py']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),

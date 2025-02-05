@@ -1,16 +1,17 @@
-# Import all the shit
+'''
+Script to compare SynthPop output to GAIA DR3 Universe Model and Source Catalog
+'''
+
+# Imports
 import sys
 import os
-
 from tqdm import tqdm
-
 import pandas
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap, LogNorm
-
 from scipy import stats
 
 from astropy.coordinates import SkyCoord, Galactic
@@ -27,15 +28,13 @@ from synthpop_utils.coordinates_transformation import CoordTrans
 coordtrans = CoordTrans()
 DIRNAME = os.path.dirname(__file__)
 if DIRNAME == '': DIRNAME = '.'
+# Gaia database query setup
 GaiaModel = GaiaClass()
 GaiaModel.MAIN_GAIA_TABLE = "gaiadr3.gaia_universe_model"
 GaiaModel.ROW_LIMIT = 10000000
 Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"
 Gaia.ROW_LIMIT = 10000000
-
-GUMS_QUERY = Vizier(
-    row_limit=-1,
-    catalog="VI/137/gum_mw")
+GUMS_QUERY = Vizier(row_limit=-1, catalog="VI/137/gum_mw")
 
 gums_ids= {
     1:(1, 0.075),
@@ -54,7 +53,8 @@ GREEN = np.array([1, 143, 53, 255]) / 255
 BLUE = np.array([0, 66, 148, 255]) / 255
 RED = np.array([225, 0, 35, 255]) / 255
 ORANGE = np.array([225, 190, 35, 255])/255
-def write_csv_in_chunks(filename, df, chunksize=1000):
+
+def write_csv_in_chunks(filename, df, chunksize=1000,columns=None):
     """
     Write a pandas DataFrame to a CSV file in chunks of a specific size.
 
@@ -76,75 +76,80 @@ def write_csv_in_chunks(filename, df, chunksize=1000):
             pbar.update(len(chunk))
             header = False
 
-
 class CompareGaia:
+    '''
+    Comparison between Gaia data/model and SynthPop model
+    '''
     def __init__(
             self, n_locations=10, radius_deg=(1 / np.sqrt(np.pi) / 10 ** 0.5), loc='disk',
             **kwargs
             ):
         np.random.seed(14)
+        
+        # Set up sightlines
         self.loc = loc
         if loc.lower() == 'disk':
             self.files = [
-                f'{DIRNAME}/comp/gaia_synthpop_compare_synth_gums_coor.csv',
-                f'{DIRNAME}/comp/gaia_synthpop_compare_synth_gums.csv',
+                f'{DIRNAME}/comp/gaia_synthpop_compare_synth_gums_coor.h5',
+                f'{DIRNAME}/comp/gaia_synthpop_compare_synth_gums.h5',
                 f'{DIRNAME}/comp/gaia_synthpop_compare_gaia.csv',
                 f'{DIRNAME}/comp/gaia_synthpop_compare_gums.csv'
                 ]
             self.kwargs = {}
-            self.l_deg = np.random.uniform(0, 90, n_locations).round(6) % 360
-            min_b = 15 * (self.l_deg < 15)
-            self.b_deg = np.random.uniform(min_b, 45).round(6)
+            #self.l_deg = np.random.uniform(20, 90, n_locations).round(6) % 360
+            #min_b = 15 # * (self.l_deg < 15)
+            #self.b_deg = np.random.uniform(min_b, 45, n_locations).round(6)
+            coord_list = np.transpose([[55.976034, 39.194441],[74.121554, 25.267639],[80.929938, 31.166665],[20.563286, 15.176214],[41.681515, 35.194574],[87.032262, 21.300728],[55.91817, 42.976728],[42.27991, 26.227342],[57.743996, 37.572568],[35.487846, 37.89417]])
+            self.l_deg =coord_list[0]
+            self.b_deg =coord_list[1]
             self.solid_angle = half_cone_angle_to_solidangle(
                 radius_deg / 180 * np.pi) * (180 / np.pi) ** 2
             self.radius_deg = radius_deg * u.degree
 
         elif loc.lower() == 'bulge':
             self.files = [
-                f'{DIRNAME}/comp/gaia_synthpop_compare_synth_gums_coor_bulge.csv',
-                f'{DIRNAME}/comp/gaia_synthpop_compare_synth_gums_bulge.csv',
+                f'{DIRNAME}/comp/gaia_synthpop_compare_synth_gums_coor_bulge.h5',
+                f'{DIRNAME}/comp/gaia_synthpop_compare_synth_gums_bulge.h5',
                 f'{DIRNAME}/comp/gaia_synthpop_compare_gaia_bulge.csv',
                 f'{DIRNAME}/comp/gaia_synthpop_compare_gums_bulge.csv'
                 ]
-            self.kwargs = {
-                "extinction_map_kwargs": {"name": "MapsFromDustmaps", "dustmap_name": "marshall"}
-                }
-            self.l_deg = np.zeros(n_locations)
+            self.kwargs = {}
+            '''self.l_deg = np.zeros(n_locations)
             self.b_deg = np.zeros(n_locations)
             while any((self.l_deg **2+self.b_deg **2)<1):
                 self.l_deg = np.random.uniform(0, 15, n_locations).round(6)
-                self.b_deg = np.random.uniform(0, 10, n_locations).round(6)
+                self.b_deg = np.random.uniform(-15, 15, n_locations).round(6)'''
+            coord_list = np.transpose([[7.70915, 9.194441],[11.597476, -4.732361],[13.056415, 1.166665],[0.120704, -14.823786],[4.646039, 5.194574],[14.364056, -8.699272],[7.696751, 12.976728],[4.774266, -3.772658],[8.087999, 7.572568],[3.318824, 7.89417]])
+            self.l_deg = coord_list[0]
+            self.b_deg = coord_list[1]
             print(loc)
             self.radius_deg = radius_deg * u.degree
             self.solid_angle = \
                 half_cone_angle_to_solidangle(radius_deg / 180 * np.pi) * (180 / np.pi) ** 2
 
+        # SynthPop model objects, initialization
         self.mod1 = synthpop.SynthPop(
-            os.path.join(DIRNAME, 'gaia_config.json'),
-            model_name='gaia_universe_model_dr3',
+            os.path.join(DIRNAME, 'gaia_compare.synthpop_conf'),
+            model_name='GUMS_dr3',
             **self.kwargs)
-
         self.mod2 = synthpop.SynthPop(
-            os.path.join(DIRNAME, 'gaia_config.json'),
-            model_name='gaia_universe_model_dr3_mod_dens',
+            os.path.join(DIRNAME, 'gaia_compare.synthpop_conf'),
+            model_name='GUMS_dr3_mod_dens',
             **self.kwargs)
-
         self.mod1.init_populations()
         self.mod2.init_populations()
 
-
-        (
-            self.complete_synth1, self.complete_synth2, self.complete_gaia, self.complete_gums
+        # Generate new catalogs or read existing
+        (self.complete_synth1, self.complete_synth2, self.complete_gaia, self.complete_gums
             ) = self.load_data(**kwargs)
 
+        # Filter out stars with no properties
+        self.complete_synth1_filtered = self.complete_synth1.loc[self.complete_synth1["logTeff"] >= 0]
+        self.complete_synth2_filtered = self.complete_synth2.loc[self.complete_synth2["logTeff"] >= 0]
 
-
-        self.complete_synth1_filtered = self.complete_synth1.loc[self.complete_synth1["Teff"] >= 0]
-        self.complete_synth2_filtered = self.complete_synth2.loc[self.complete_synth2["Teff"] >= 0]
-
-
-
+    # Download data from Gaia
     def download_cat(self):
+        print(self.radius_deg)
         complete_gaia_list = []
         complete_gums_list = []
         for i, loc in enumerate(zip(self.l_deg, self.b_deg, )):
@@ -161,7 +166,6 @@ class CompareGaia:
             complete_gums_list.append(gums_tab.to_pandas())
             complete_gaia_list.append(gaia_tab.to_pandas())
 
-
         complete_gaia = pd.concat(complete_gaia_list)
         print(len(complete_gaia))
         complete_gaia_stars = complete_gaia[complete_gaia["classprob_dsc_combmod_star"] >= 0.6]
@@ -169,13 +173,18 @@ class CompareGaia:
         complete_gums = pd.concat(complete_gums_list)
 
         print('save gaia', flush=True)
-        write_csv_in_chunks(self.files[2], complete_gaia_stars)
+        #print(complete_gums)
+        write_csv_in_chunks(self.files[2], complete_gaia_stars, columns=['phot_g_mean_mag','phot_bp_mean_mag','phot_rp_mean_mag','bp_rp'])
+        #complete_gaia_stars.to_hdf(self.files[2],key='data',dropna=True, data_columns=['phot_g_mean_mag','phot_bp_mean_mag','phot_rp_mean_mag','bp_rp'])
 
         print('save gums', flush=True)
-        write_csv_in_chunks(self.files[3], complete_gums)
+        #print(complete_gums)
+        write_csv_in_chunks(self.files[3], complete_gaia_stars, columns=['mag_g','mag_bp','mag_rp','mass','barycentric_distance','population','age'])
+        #complete_gums.to_hdf(self.files[3],key='data', data_columns=['mag_g','mag_bp','mag_rp','mass','barycentric_distance','population','age'])
 
         return complete_gaia_stars, complete_gums
 
+    # Generate SynthPop catalogs
     def run_synthpop(self):
         """ generate the GUMS model"""
         complete_synth_list1 = []
@@ -203,29 +212,29 @@ class CompareGaia:
             complete_synth2.l.values, complete_synth2.b.values, complete_synth2.Dist.values,
             complete_synth2.U.values, complete_synth2.V.values, complete_synth2.W.values)
 
-
-
         print('save model', flush=True)
-        write_csv_in_chunks(self.files[0], complete_synth1)
+        #write_csv_in_chunks(self.files[0], complete_synth1)
+        complete_synth1.to_hdf(self.files[0],key='data')
         print()
         print('save modified model', flush=True)
-        write_csv_in_chunks(self.files[1], complete_synth2)
+        #write_csv_in_chunks(self.files[1], complete_synth2)
+        complete_synth2.to_hdf(self.files[1],key='data')
 
         return complete_synth1, complete_synth2
 
+    # Load the data if it exists, or regenerate
     def load_data(self, regenerate=False, redownload=True):
-        """ load the data, if they do not exist it will call generate or downloaded routine."""
         print("Load Data")
         data = []
+        
         # check if generated data exist
         if os.path.isfile(self.files[0]) and os.path.isfile(self.files[1]) and (not regenerate):
             print(f"load {self.files[0]}", end='', flush=True)
-            data.append(pandas.read_csv(self.files[0]))
+            data.append(pandas.read_hdf(self.files[0], key='data'))
             print("\rload GUMS model    ", end='', flush=True)
-            data.append(pandas.read_csv(self.files[1]))
+            data.append(pandas.read_hdf(self.files[1], key='data'))
             # use downloaded data (if exist)
             print("\rSynthpop data loaded", flush=True)
-
             redownload = False
         else:
             print("generate Data")
@@ -241,6 +250,7 @@ class CompareGaia:
 
         return data
 
+    # Histogram, Gaia G band
     def plot_hist_G(self):
         colors = iter(plt.rcParams['axes.prop_cycle'].by_key()['color'])
         fig, axes = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 2]}, sharex=True)
@@ -272,6 +282,8 @@ class CompareGaia:
         axes[1].set_ylabel("$N_{x}/N_{SynthPop}$")
         axes[1].axhline(1, ls='--')
         plt.savefig(f"images/{self.loc}_G_hist.pdf")
+        
+    # Color-magnitude diagram
     def plot_cmd(self):
         which2 = self.complete_synth2['Gaia_G_EDR3'] < 21
         which_gaia = self.complete_gaia['phot_g_mean_mag'] < 21
@@ -299,8 +311,9 @@ class CompareGaia:
         plt.xlabel("BP - RP")
         plt.ylabel("G")
         plt.savefig(f"images/{self.loc}_cmds", dpi=300)
+        
+    # Color-magnitude diagram comparison
     def plot_cmd_diff(self):
-
         xmin = 0
         xmax = 6
         ymin = 14
@@ -371,6 +384,7 @@ class CompareGaia:
         ax5.set_title("GUMS - Gaia")
         return Z_synthpop, Z_gums, Z_gaia
 
+    # Plot stellar density by distance
     def plot_density(self, maglim=20.5, bin_width=0.15):
         plt.figure('plot_density')
         which2 = self.complete_synth2['Gaia_G_EDR3'] < maglim
@@ -391,6 +405,7 @@ class CompareGaia:
         plt.yscale('log')
         plt.legend()
 
+    # Plot stellar density by distance
     def plot_density_hist(self):
         plt.figure('plot_density_hist')
         d = 0
@@ -433,6 +448,7 @@ class CompareGaia:
         plt.ylabel('Density [Msun/kpc^3]')
         plt.xlabel('Dist [kpc]')
 
+    # Get model density from SynthPop modules, summed over populations
     def get_combined_density(self, pop_ids, d_kpc):
         dens = np.zeros(d_kpc.shape)
         for loc in zip(self.l_deg, self.b_deg):
@@ -442,7 +458,7 @@ class CompareGaia:
                 dens += population.population_density.density(*rphiz)/len(self.b_deg)
         return dens
 
-
+    # Plot comparison color-magnitude diagrams
     def plot_comp_cmds(self, alpha=0.1, ms=0.1,**kwargs):
         gums = self.complete_gums
         synth = self.complete_synth2
@@ -458,11 +474,14 @@ class CompareGaia:
             synth['ag'] = 0.864 * synth['E(B-V)'] * 3.1
             synth['abp'] = 1.10 * synth['E(B-V)'] * 3.1
             synth['arp'] = 0.629 * synth['E(B-V)'] * 3.1
+        if 'A0' in synth.columns:
+            synth['ag'] = 0.864 * synth['A0']
+            synth['abp'] = 1.10 * synth['A0']
+            synth['arp'] = 0.629 * synth['A0']
         if 'A_Ks' in synth.columns:
             synth['ag'] = 0.864 * synth.A_Ks / 0.125
             synth['abp'] = 1.10 * synth.A_Ks / 0.125
             synth['arp'] = 0.629 * synth.A_Ks / 0.125
-
 
         fig, ax = plt.subplots(2, 3, num='comp_cmd', figsize=(12, 8), sharex='row', sharey='row')
 
@@ -491,17 +510,18 @@ class CompareGaia:
 
         ax[0, 0].set_ylabel('G$_{obs}$ [mag])')
         ax[1, 0].set_ylabel('G$_{abs}$ [mag]')
-        ax[0, 0].set_xlabel('BP - RP [mag]')
-        ax[0, 1].set_xlabel('BP - RP [mag]')
-        ax[0, 2].set_xlabel('BP - RP [mag]')
-        ax[1, 0].set_xlabel('BP - RP [mag]')
-        ax[1, 1].set_xlabel('BP - RP [mag]')
-        ax[1, 2].set_xlabel('BP - RP [mag]')
+        ax[0, 0].set_xlabel('BP$_{obs}$ - RP$_{obs}$ [mag]')
+        ax[0, 1].set_xlabel('BP$_{obs}$ - RP$_{obs}$ [mag]')
+        ax[0, 2].set_xlabel('BP$_{obs}$ - RP$_{obs}$ [mag]')
+        ax[1, 0].set_xlabel('BP$_{abs}$ - RP$_{abs}$ [mag]')
+        ax[1, 1].set_xlabel('BP$_{abs}$ - RP$_{abs}$ [mag]')
+        ax[1, 2].set_xlabel('BP$_{abs}$ - RP$_{abs}$ [mag]')
         ax[0, 0].set_title('SynthPop')
         ax[0, 1].set_title('Gaia Universe Model')
         ax[0, 2].set_title('Gaia DR3')
+        plt.savefig(f"images/{self.loc}_comp_cmd.pdf")
 
-
+    # Plot density histograms by population
     def plot_dens_hist_pop(self, g_lim=20, bin_width=0.2):
         gums = self.complete_gums
         synth1 = self.complete_synth1
@@ -509,7 +529,6 @@ class CompareGaia:
         gums_mag_lim = gums.mag_g < g_lim
         synth1_mag_lim = synth1.Gaia_G_EDR3 < g_lim
         synth2_mag_lim = synth2.Gaia_G_EDR3 < g_lim
-
 
         solid_angle = half_cone_angle_to_solidangle(self.radius_deg).value * len(self.l_deg)
         gums_corr = gums.mass < 2.2 * gums.age**(-0.4)+0.26
@@ -519,15 +538,12 @@ class CompareGaia:
                 if gums_pop_id == 4:
                     title = 'bulge'
                     synth_pop_id = {0}
-
                 elif gums_pop_id == 3:
                     title = 'halo'
                     synth_pop_id = {8}
-
                 elif gums_pop_id == 2:
                     title = 'thick disk'
                     synth_pop_id = {9, 10}
-
                 elif gums_pop_id == 1:
                     title = 'thin disk'
                     synth_pop_id = {1, 2, 3, 4, 5, 6, 7}
@@ -600,6 +616,7 @@ class CompareGaia:
                 plt.yscale('log')
                 plt.legend()
                 plt.savefig(f'images/{self.loc}_{title}{corr}.pdf', dpi=300)
+              
 def _plot_density(mass, dist, solid_angle, bin_width, label='', **kwargs):
     bins = np.arange(0, max(dist) + bin_width, bin_width)
     return plt.hist(dist, bins=bins,
@@ -622,7 +639,6 @@ def plot_log_ratio(data, xlim, ylim, vmin=1e-1, vmax=1e1, cmap='bwr', **kwargs):
     ax.set_aspect("auto")
     return fig, ax, im
 
-
 def plot_lin_diff(data, xlim, ylim, vmin=None, vmax=None, cmap='bwr', **kwargs):
     if vmin is None:
         vmin = np.nanmin(data)
@@ -637,18 +653,16 @@ def plot_lin_diff(data, xlim, ylim, vmin=None, vmax=None, cmap='bwr', **kwargs):
     im = ax.imshow(
         np.rot90(data), extent=[*xlim, *ylim],
         vmin=vmin, vmax=vmax, cmap=cmap_shift, **kwargs)
-
     cb = plt.colorbar(im, ax=ax)
     cb.set_label('$\Delta$ Stars per mag$^2$')
     ax.set_xlim(xlim)
     ax.set_ylim(ylim[::-1])
     ax.set_xlabel("BB - RP [mag]")
     ax.set_ylabel("G [mag]")
-
     return fig, ax, im
 
-
 def _dense_hist(weights, dist, bins, solid_angle, **kwargs):
+    print(dist)
     if isinstance(bins, (int, float)):
         bins = np.arange(0, max(dist) + bins, bins)
     if isinstance(weights, (int, float)):
@@ -680,16 +694,18 @@ if __name__ == "__main__":
     if len(sys.argv) > 3:
         redownload = (sys.argv[3])=='yes'
     else:redownload = True
-
+    
+    if not os.path.isdir(f'{DIRNAME}/images'):
+        os.mkdir(f'{DIRNAME}/images')
 
     if field.lower() == 'disk':
-        comp_gaia = CompareGaia(loc='Disk', regenerate=regen, radius_deg=1,
+        comp_gaia = CompareGaia(loc='Disk', regenerate=regen, radius_deg=0.5,
             redownload=redownload, n_locations=10)
     elif field.lower() == 'bulge':
-        comp_gaia = CompareGaia(loc='Bulge', regenerate=regen, radius_deg=0.05,
+        comp_gaia = CompareGaia(loc='Bulge', regenerate=regen, radius_deg=0.025,
             redownload=redownload, n_locations=10)
 
     comp_gaia.plot_hist_G()
-    comp_gaia.plot_comp_cmds
-    comp_gaia.plot_dens_hist_pop
+    comp_gaia.plot_comp_cmds()
+    comp_gaia.plot_dens_hist_pop()
     plt.show()

@@ -74,7 +74,7 @@
 
         "#comment4":"Limiting mass [min_mass, max_mass]",
         "mass_lims":{"min_mass":0.08,"max_mass":100},
-        "#comment5":"Number of stars used for estimating the total mass in a slice ",
+        "#comment5":"Number of points used for estimating the total mass in a slice ",
         "N_mc_totmass":10000,
 
         "#comment6":"method to estimate the mass loss correction",
@@ -82,7 +82,7 @@
         "N_av_mass":20000,
 
         "#comment7":"Flag for estimate the velocities for all stars at once",
-        "kinematics_at_the_end":true,
+        "kinematics_at_the_end":false,
 
         "#comment8": "Scale down the number of generated stars n_gen = (n/scale_factor)",
         "scale_factor": 1,
@@ -100,9 +100,8 @@
             },
         "extinction_law_kwargs":
             [
-            {"name":"ODonnell1994"}
-            ],
-        "R_V":3.1
+            {"name":"ODonnell1994", "R_V":3.1}
+            ]
         },
 
     "ISOCHRONE_INTERPOLATION":{
@@ -148,7 +147,7 @@
             "opt_iso_props are the original column names in the Isochrones",
             "col_names are the column names in the output table "],
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"],
-        "col_names":["logL", "Teff", "logg" ,"Fe/H_evolved","log_radius", "phase"]
+        "col_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius", "phase"]
     },
 
     "OUTPUT": {

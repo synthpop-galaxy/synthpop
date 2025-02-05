@@ -1,8 +1,5 @@
 """ 
 Extinction from Galaxia, based on Schlegel et al 1998 2-D map, with 3-D dust disk model
-NOTE: uses extinction_in_map value form; consider function form
-NOTE: still undergoing testing
-
 """
 
 __all__ = ["Galaxia3D", ]
@@ -14,7 +11,10 @@ __version__ = "1.0.0"
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from .. import const
-from ._extinction import ExtinctionMap #, EXTINCTION_DIR
+try:
+    from ._extinction import ExtinctionMap
+except ImportError:
+    from _extinction import ExtinctionMap
 import time
 import ebf
 
@@ -22,51 +22,26 @@ class Galaxia3D(ExtinctionMap):
     """
     Extinction map used in Galaxia
 
-
     Attributes
     ----------
     extinction_map_name : str
         name of the Extinction Map
-    l_deg : float
-        galactic longitude in degree set by "update_sight-line"
-    b_deg : float
-        galactic latitude in degree set by "update_sight-line"
 
-    ref_wavelength : float
-        reference wavelength for the extinction
-
-    A_or_E : float or function
-        total extinction or color excess, from the extinction map.
-        if it is a function it will be called
+    ref_wavelength[2] : float
+        reference wavelength(s) for the extinction or color excess
 
     A_or_E_type : str
         Output type from the extinction map.
         If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E": A_or_E is handled as a color excess.
-    R_V : float
-        interstellar reddening parameter
+        If it starts with "E", A_or_E is handled as a color excess.
 
     Methods
     -------
-    update_line_of_sight(l_deg, b_deg) :
-        specified the new galactic coordinates
-        calls find_sightline() and init_sightline()
-    update_extinction_in_map() :
-
-    init_sightline(self) :
-
-    find_sightline(self) :
-
-    update_extinction_in_map():
-        placeholder for function that updates the total extinction or color excess
-        in self.extinction_map_name
-    set_R_V(self,R_V):
-        set interstellar reddening parameter
-
+    extinction_in_map():
+        gets extinction value from map for star positions
     get_map_properties():
         returns the basic parameters of the extinction map
         used for Communication between ExtinctionLaw and ExtinctionMap
-
     """
 
     def __init__(self, which_2d='Shlegel',**kwargs):
@@ -75,13 +50,6 @@ class Galaxia3D(ExtinctionMap):
         self.ref_wavelength = 0.4361
         self.ref_wavelength2 = 0.5448
         self.A_or_E_type = 'E(B-V)' 
-
-        # placeholder for the coordinates of the sight-line
-        # set by update_line_of_sight
-        self.l_deg = None
-        self.b_deg = None
-        self.extinction_in_map = None
-        self.base_extinction = None
 
         # Set up 3D grid
         mapfile_3d = ebf.read(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')
@@ -92,7 +60,7 @@ class Galaxia3D(ExtinctionMap):
         b_grid_3d = np.append(np.arange(*map_grid_3d[1]),map_grid_3d[1][1])
         self.r_grid = 10**np.append(np.arange(*map_grid_3d[2]),map_grid_3d[2][1])
         self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid), 
-            map_data_3d)
+            map_data_3d, bounds_error=False, fill_value=None, method='nearest')
 
         # Set up 3d grid
         if which_2d=='Shlegel':
@@ -105,71 +73,32 @@ class Galaxia3D(ExtinctionMap):
         l_grid_2d = np.append(np.arange(*map_grid_2d[0]),map_grid_2d[0][1])
         b_grid_2d = np.append(np.arange(*map_grid_2d[1]),map_grid_2d[1][1])
         self.grid_interpolator_2d = RegularGridInterpolator((l_grid_2d,b_grid_2d), 
-            map_data_2d)
-            
-    def update_line_of_sight(self, l_deg, b_deg):
+            map_data_2d, bounds_error=False, fill_value=None, method='nearest')
+
+    def extinction_in_map(self, l_deg, b_deg, dist):
         """
-        Set a new sight-line
+        Estimates the extinction for a list of star positions.
 
         Parameters
         ----------
-        l_deg : float [degree]
+        l_deg: ndarray [degrees]
             galactic longitude
-        b_deg : float [degree]
+        b_deg: ndarray [degrees]
             galactic latitude
-
-        """
-        self.l_deg = l_deg
-        if self.l_deg<0:
-            self.l_deg+=360.0
-        self.b_deg = b_deg
-        self.find_sightline()
-        self.init_sightline()
-            
-    def init_sightline(self):
-        """
-        Routine to prep the sightline, get first values, etc.
-        """
-        self.sightline_l_deg = self.sightline[0]
-        self.sightline_b_deg = self.sightline[1]
-        self.A_Ks = 0
-        self.update_extinction_in_map(0)
-
-    def find_sightline(self):
-        """
-        A function for the Surot map that finds the closest
-        sightline to the coordinates specified.
+        dist: ndarray [kpc]
+            radial distance from the Sun
         
-        Can be used to reset the class to a new sightline,
-        could be more efficient.
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         """
-        self.sightline = [self.l_deg, self.b_deg, self.grid_interpolator_2d([self.l_deg,self.b_deg])[0]]
-
-    def update_extinction_in_map(self, radius: float):
-        """
-        Estimates the extinction for the current sight-line and radial distance
-        store the result into self.extinction_in_map.
-
-        Parameters
-        ----------
-        radius: float [kpc]
-            radial distance of the current slice
-
-        """
-
-        # 3D portion for base fraction
-        # Edge case: 0 for too low radius
-        if radius < self.r_grid[0]:
-            self.extinction_in_map = 0.0
-        # Edge case: use extinction at furthest point for too high radius
-        elif radius > self.r_grid[-1]:
-            self.extinction_in_map = self.grid_interpolator_3d([self.l_deg,self.b_deg, rgrid[-1]])[0]
-        # Regular case, 3-D interpolation
-        else:
-            self.extinction_in_map = self.grid_interpolator_3d([self.l_deg,self.b_deg, radius])[0]
+        use_l = l_deg + (l_deg<0)*360
+        mapval_3d = self.grid_interpolator_3d((use_l, b_deg, dist))
+        mapval_2d = self.grid_interpolator_2d((use_l, b_deg))
 
         # 2D scaling
-        self.extinction_in_map *= self.sightline[2]
+        return mapval_2d*mapval_3d
 
 
 

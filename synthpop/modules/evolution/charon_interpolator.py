@@ -19,7 +19,6 @@ from scipy.interpolate import interp1d, RectBivariateSpline
 import matplotlib.pyplot as plt
 from ._evolution import EvolutionInterpolator
 
-
 class CharonInterpolator(EvolutionInterpolator):
     """
     Performs an interpolation using lagrangian polynomials
@@ -45,9 +44,10 @@ class CharonInterpolator(EvolutionInterpolator):
     def __init__(self, isochrones=None, props_no_charon=None, coins=2, **kwargs):
         super().__init__(**kwargs)
         if coins < 2:
-            raise ValueError("you needed 2 coins to pay Charon to cross the river Styx.")
+            raise ValueError("You needed 2 coins to pay Charon to cross the river Styx.")
         if isochrones is not None:
             self.isochrones = isochrones
+            self.isochrones_grouped = isochrones.groupby(["[Fe/H]_init", "log10_isochrone_age_yr"])
 
         (self.tips, self.tips0_func, self.tips1_func,
         self.tips2_func, self.endp_func) = self.get_tip_func()
@@ -335,7 +335,6 @@ class CharonInterpolator(EvolutionInterpolator):
                 grid[common_met_and_age, 0, :] = grid_masses
                 max_mass[common_met_and_age] = current_iso.initial_mass.max()
                 # evaluate the properties at the selected grid points
-
                 for i, item in enumerate(props):
                     data[common_met_and_age, i] = (
                         current_iso.iloc[grid_index.ravel()][item]
@@ -369,11 +368,8 @@ class CharonInterpolator(EvolutionInterpolator):
         log_age_grid: ndarray
             numpy array of iso_ages as defined in the isochrones,
 
-
         props : Set
             list of properties which should be derived from the interpolation
-
-
 
         Returns
         -------
@@ -621,8 +617,6 @@ class CharonInterpolator(EvolutionInterpolator):
                     | (max_mass_2 < mass2)
                     | (max_mass_3 < mass3)
                     | (max_mass_4 < mass4))
-
-
 
         output = {item: result[..., i] for i, item in enumerate(props_no_charon)}
         output.update({item: result_charon[..., i] for i, item in enumerate(props_with_charon)})

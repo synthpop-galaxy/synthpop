@@ -10,7 +10,6 @@ __data__ = "2023-05-05"
 __license__ = "GPLv3"
 __version__ = "0.1.0"
 
-
 from functools import cached_property
 import numpy as np
 from pydantic import BaseModel
@@ -38,7 +37,10 @@ class SunInfo(BaseModel):
     b_apex_deg: float = 25.
 
     class Config():
-        keep_untouched = (cached_property,)
+        try: #pydantic version compatibility
+            keep_untouched = (cached_property,)
+        except:
+            ignored_types = (cached_property,)
 
     @cached_property
     def gal_dist(self) -> float:
