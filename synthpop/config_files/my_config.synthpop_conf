@@ -8,8 +8,8 @@
 
     "model_name":"besancon_Robin2003",
 
-    "extinction_map_kwargs": {"name":"Marshall"},
-    "extinction_law_kwargs": {"name":"ODonnell1994"},
+    "extinction_map_kwargs": {"name":"maps_from_dustmaps", "dustmap_name":"marshall"},
+    "extinction_law_kwargs": [{"name":"SODC", "R_V":2.5}],
     "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
 
     "maglim":["2MASS_Ks",21, "remove"],

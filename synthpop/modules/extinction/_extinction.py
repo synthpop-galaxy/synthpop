@@ -34,25 +34,31 @@ EXTINCTION_DIR = os.path.dirname(__file__)
 class ExtinctionLaw(ABC):
     """
     Parent class for an extinction law.
-    It is enough to provide only a function for Alambda_AV within the Subclasses.
+    It is enough to provide only a function for Alambda_Aref within the Subclasses.
     However, only extinction_at_lambda will be called by SynthPop.
     So a complete different handling of the extinction can be implemented
 
-    IMPORTANT the R_V attribute must be specified when working with the
-    default extinction_at_lambda function!!
-
-
     Attributes
     ----------
+    extinction_law_name: str
+        name of extinction law
+    law_ref_wavelength: float
+        reference wavelength for the extinction law in microns
+        lambda where Alambda_Aref = 1
+    min_wavelength: float
+        lower limit of valid wavelengths for the law given in microns
+    max_wavelength: float
+        upper limit of valid wavelengths for the law given in microns
+        
     map_name: str
         name of the extinction map, when combined into an Extinction Object.
         will be set by the set_map_properties function
     ref_wavelength : float
-        reference wavelength for the extinction
+        reference wavelength for the extinction map in microns
         for an A_lambda map, lambda
         for an E(lambda1-lambda2) map, lambda1
     ref_wavelength2 : float
-        secondary reference wavelength for the extinction
+        secondary reference wavelength for the extinction map in microns
         for an A_lambda map, none
         for an E(lambda1-lambda2) map, lambda2
     A_or_E_type : str
@@ -61,14 +67,13 @@ class ExtinctionLaw(ABC):
         if it starts with "E": A_or_E is a color excess
         will be set by the set_map_properties function
 
-
     Methods
     ------- 
-    Alambda_Aref(eff_wavelength, R_V)
+    Alambda_Aref(eff_wavelength)
         returns the absorption coefficient for a given effective wavelength,
         relative to the reference extinction.
 
-    Alambda_Amap(eff_wavelength, R_V)
+    Alambda_Amap(eff_wavelength)
         wrapper such that the returned absorption is relative to the
         reference wavelength of the Extinction map
 
@@ -84,13 +89,19 @@ class ExtinctionLaw(ABC):
 
     def __init__(self, logger: ModuleType = None,  **kwargs):
         self.logger =logger
-        self.map_name = None
+        # Extinction law parameters
+        self.extinction_law_name = "NONE"
+        self.law_ref_wavelength = None
+        self.min_wavelength = None 
+        self.max_wavelength = None
+        # Parameters to link this to the extinction map
+        self.map_name = "NONE"
         self.ref_wavelength = None
         self.A_or_E_type = None
-        pass
+        self.ref_wavelength2 = None
 
     @abstractmethod
-    def Alambda_Aref(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+    def Alambda_Aref(self, eff_wavelength: float) -> float:
         """
         estimate A_lambda / A_ref,
 
@@ -99,12 +110,11 @@ class ExtinctionLaw(ABC):
         eff_wavelength : float
             Effective Wavelength of the filter for which the extinction should be determined.
             in micrometer
-        R_V : float
-            interstellar reddening parameter
+
         """
         raise NotImplementedError('No extinction law set')
 
-    def Alambda_Amap(self, eff_wavelength: float, R_V: float = 3.1) -> float:
+    def Alambda_Amap(self, eff_wavelength: float) -> float:
         """
         Calculate the extinction relative to the specified filter
         for a given effective wavelength.
@@ -114,20 +124,14 @@ class ExtinctionLaw(ABC):
         eff_wavelength : float
             Effective Wavelength of the filter for which the extinction should be determined.
             in micrometer
-        R_V : float
-            interstellar reddening parameter
         """
-        Afilt_Aref = self.Alambda_Aref(self.ref_wavelength, R_V)
-        Alambda_Aref = self.Alambda_Aref(eff_wavelength, R_V)
-        # Return  A_lambda   A_lambda    A_V
-        #        -------- = -------- * ------
-        #         A_filt      A_V      A_filt
+        Afilt_Aref = self.Alambda_Aref(self.ref_wavelength)
+        Alambda_Aref = self.Alambda_Aref(eff_wavelength)
         return Alambda_Aref / Afilt_Aref
 
     def extinction_at_lambda(
             self, eff_wavelength: float,
-            A_or_E: float or np.ndarray, R_V: float = 3.1
-            ) -> float or np.ndarray:
+            A_or_E: float or np.ndarray) -> float or np.ndarray:
 
         """
         Returns the extinction at a given effective wavelength
@@ -139,12 +143,8 @@ class ExtinctionLaw(ABC):
         A_or_E : float, numpy array
             total extinction or color excess provided by the Extinction Map
             the type is stored as A_or_E_type
-        R_V : float
-            interstellar reddening parameter
-
-
         """
-        Alambda_Aref = self.Alambda_Amap(eff_wavelength, R_V=R_V)
+        Alambda_Aref = self.Alambda_Amap(eff_wavelength)
         if self.A_or_E_type.startswith("A"):
             # a total extinction was provided.
             A_ref = A_or_E
@@ -153,7 +153,7 @@ class ExtinctionLaw(ABC):
         if self.A_or_E_type.startswith("E"):
             # a color excess is provided
             E_ref_ref2 = A_or_E
-            Aref2_Aref = self.Alambda_Amap(self.ref_wavelength2, R_V)
+            Aref2_Aref = self.Alambda_Amap(self.ref_wavelength2)
             A_ref = E_ref_ref2 / (1 - Aref2_Aref)
             return Alambda_Aref * A_ref
 
@@ -196,8 +196,6 @@ class ExtinctionMap(ABC):
         Output type from the extinction map.
         If it starts with "A", A_or_E is handled  as a total extinction.
         If it starts with "E": A_or_E is handled as a color excess.
-    R_V : float
-        interstellar reddening parameter
 
     Methods
     -------
@@ -207,8 +205,6 @@ class ExtinctionMap(ABC):
     update_extinction():
         placeholder for function that updates the total extinction or color excess
         in self.extinction_map_name
-    set_R_V(self,R_V):
-        set interstellar reddening parameter
 
     get_map_properties():
         returns the basic parameters of the extinction map
@@ -224,38 +220,8 @@ class ExtinctionMap(ABC):
         self.ref_wavelength2 = None
         self.A_or_E_type = 'for example A_V or E(B-V)'
 
-        # placeholder for the coordinates of the sight-line
-        # set by update_line_of_sight
-        self.l_deg = None
-        self.b_deg = None
-        # placeholder for interstellar reddening parameter
-        # set by set_RV
-        self.R_V = None
-
-        # current extinction, set by update_extinction_in_map
-        # can also be a function
-        self.extinction_in_map = None
-
-    def set_R_V(self, R_V: float):
-        """set interstellar reddening parameter"""
-        self.R_V = R_V
-
-    def update_line_of_sight(self, l_deg: float, b_deg: float):
-        """
-        Set a new sight-line
-        Parameters
-        ----------
-        l_deg : float [degree]
-            galactic longitude should work with both ranges  [0-360) and (-180, 180]
-        b_deg : float [degree]
-            galactic latitude
-
-        """
-        self.l_deg = l_deg
-        self.b_deg = b_deg
-
     @abstractmethod
-    def update_extinction_in_map(self, radius: float):
+    def extinction_in_map(self, radius: float):
         """
         Estimates the extinction for the current sight-line and radial distance
         store the result into self.extinction_in_map.
@@ -266,7 +232,6 @@ class ExtinctionMap(ABC):
             radial distance of the current slice
 
         """
-
         self.extinction_in_map = None
         raise NotImplementedError('No extinction map set')
 
@@ -366,14 +331,12 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw) \
                 extinction for each band
             """
 
-            if callable(self.extinction_in_map):
-                ext_in_map = self.extinction_in_map(l_deg, b_deg, distance_kpc)
-            else:
-                ext_in_map = self.extinction_in_map
+            ext_in_map = self.extinction_in_map(l_deg, b_deg, distance_kpc)
+            
             if self.multi_laws:  # multiple extinction laws.
                 extinction_dict = {
                     band: self.ext_law_dict[self.ext_law_index[band]].extinction_at_lambda(
-                        self.eff_wavelengths[band], ext_in_map, self.R_V
+                        self.eff_wavelengths[band], ext_in_map
                         )
                     for band in self.bands
                     }
@@ -381,8 +344,7 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw) \
             else:  # only one extinction law
                 extinction_dict = {
                     band: self.extinction_at_lambda(
-                        self.eff_wavelengths[band], ext_in_map, self.R_V
-                        )
+                        self.eff_wavelengths[band], ext_in_map)
                     for band in self.bands
                     }
 

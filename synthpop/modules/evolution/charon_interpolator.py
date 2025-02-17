@@ -19,7 +19,6 @@ from scipy.interpolate import interp1d, RectBivariateSpline
 import matplotlib.pyplot as plt
 from ._evolution import EvolutionInterpolator
 
-
 class CharonInterpolator(EvolutionInterpolator):
     """
     Performs an interpolation using lagrangian polynomials
@@ -369,11 +368,8 @@ class CharonInterpolator(EvolutionInterpolator):
         log_age_grid: ndarray
             numpy array of iso_ages as defined in the isochrones,
 
-
         props : Set
             list of properties which should be derived from the interpolation
-
-
 
         Returns
         -------
@@ -621,8 +617,6 @@ class CharonInterpolator(EvolutionInterpolator):
                     | (max_mass_2 < mass2)
                     | (max_mass_3 < mass3)
                     | (max_mass_4 < mass4))
-
-
 
         output = {item: result[..., i] for i, item in enumerate(props_no_charon)}
         output.update({item: result_charon[..., i] for i, item in enumerate(props_with_charon)})

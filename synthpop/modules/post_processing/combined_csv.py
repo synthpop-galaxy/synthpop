@@ -1,8 +1,5 @@
 """
-This postprocessing subclass saves the result from all locations in a combined csv file.
-This is in addition to the single location files.
-
-NOTE that the file is overwritten every time the class is initialized.
+Post-processing subclass that saves the result from all locations in a combined csv file.
 """
 
 __all__ = ["CombinedCsv", ]
@@ -17,40 +14,27 @@ from ._post_processing import PostProcessing
 
 
 class CombinedCsv(PostProcessing):
+    """
+    Post-processing subclass that saves the result from all locations in a combined csv file.
+    This is in addition to the single location files.
+
+    NOTE that the file is overwritten every time the class is initialized.
+    """
+
     def __init__(self, model, logger, combined_filename=None, **kwargs):
-        """
-
-        Parameters
-        ----------
-        model:
-            SynthPop main model object
-        combined_filename:
-            option to provide a filename of the saved file
-        kwargs:
-
-        """
         super().__init__(model, logger, **kwargs)
         if combined_filename is None:
             self.combined_filename = os.path.join(model.parms.output_location,
-                                                  f"{model.parms.model_name}.combined.csv")
+                                f"{model.parms.model_name}.combined.csv")
         else:
+            #: File name for combined output
             self.combined_filename = combined_filename
         if os.path.isfile(self.combined_filename):
             os.remove(self.combined_filename)
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """
-        This postprocessing combines all locations int an additional csv table.
-
-        Parameters
-        ----------
-        dataframe : dataframe
-            original SynthPop output as pandas data frame
-
-        Returns
-        -------
-        dataframe : dataframe
-            modified pandas data frame
+        Combine all catalogs into one output csv file, and returns the unchanged DataFrame.
         """
         # check if the file exist, if so it will not write a new header
         file_exist = os.path.isfile(self.combined_filename)

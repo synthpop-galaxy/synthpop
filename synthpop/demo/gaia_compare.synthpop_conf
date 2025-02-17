@@ -1,0 +1,23 @@
+
+{   "sun":{
+    "x": 8,
+    "y": 0,
+    "z":0.015
+    },
+    "name_for_output":"gaia_model",
+    "model_name": "GUMS_dr3",
+    "max_distance":25,
+    "extinction_map_kwargs": {
+        "name":"GUMS"
+        },
+    "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
+    "chosen_bands": ["Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3"],
+    "maglim": ["Gaia_G_EDR3", 30, "keep"],
+    "lost_mass_option": 1,
+    "#post_processing_kwargs": {"name": "ProcessDarkCompactObjects"},
+    "output_location": "/u/mhuston/code/synthpop/outputfiles/demo/comp",
+    "output_file_type":"csv",
+    "overwrite":true,
+    "chunk_size":250000
+}
+

@@ -14,15 +14,13 @@ columns = ["EEP","UBVRIplus", "log10_isochrone_age_yr", "initial_mass", "[Fe/H]_
 mist = MIST(columns)
 
 aa = mist.read_csv("pop5.cmd")
+#aa = mist.read_csv("MIST_iso_63fea4a6b8c42.iso.cmd")
 
+#isochrones = pd.concat(mist.isochrones.values)
+grouped = mist.isochrones_grouped
 
-
-
-isochrones = pd.concat(mist.isochrones.values())
-grouped = isochrones.groupby(['[Fe/H]_init', 'log10_isochrone_age_yr', ])
-
-mod = CharonInterpolator(isochrones=pd.concat(mist.isochrones.values()))
-mod2 = CharonInterpolator(isochrones=pd.concat(mist.isochrones.values()), props_no_charon={"Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3"})
+mod = CharonInterpolator(isochrones=mist.isochrones)
+mod2 = CharonInterpolator(isochrones=mist.isochrones, props_no_charon={"Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3"})
 age = np.linspace(7,10.3,100000)
 """
 plt.semilogy(mod.tips.loc[-0.25].tip0,"r+")
@@ -47,8 +45,8 @@ imass3 = np.logspace(-10, np.log10(max(aa.initial_mass)-min_mass2+1), nn-nn//3*2
 imass = np.hstack([imass1,imass2,imass3])
 
 metlow,methigh,lower,upper, _, _ = mod.get_adjacent_gridpoints(met, np.log10(age)+9)
-iso1 = mod.grouped_iso.get_group((methigh[0], lower[0]))
-iso2 = mod.grouped_iso.get_group((methigh[0], upper[0]))
+iso1 = mod.isochrones.groupby(["[Fe/H]_init", "log10_isochrone_age_yr"]).get_group((methigh[0], lower[0]))
+iso2 = mod.isochrones.groupby(["[Fe/H]_init", "log10_isochrone_age_yr"]).get_group((methigh[0], upper[0]))
 prop = "EEP"
 output = mod.get_evolved_props(imass, met, age, {prop, "Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3"})[0]
 output2 = mist.get_evolved_props(imass, met, age,{prop, "Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3"})[0]
@@ -112,57 +110,71 @@ plt.gca().invert_yaxis()
 
 """
 def figcmd(ax, G, BP, RP, G1, BP1, RP1):
-    ax.plot( BP - RP, G, color="b", label="interpolation using modified masses", zorder=4,)
-    ax.plot( BP1 - RP1, G1, color="r", label="interpolation without modified masses", zorder=3,)
+    ax.plot( BP - RP, G, color="b", label="CharonInterpolator", zorder=4,)
+    ax.plot( BP1 - RP1, G1, color="r", label="LagrangeInterpolator", zorder=3,)
 
-    ax.plot(aa.Gaia_BP_EDR3 - aa.Gaia_RP_EDR3, aa.Gaia_G_EDR3, 'g', lw=8, alpha=0.2, label= "Web Imterpolator")
+    ax.plot(aa.Gaia_BP_EDR3 - aa.Gaia_RP_EDR3, aa.Gaia_G_EDR3, 'g', lw=8, alpha=0.2, label= "MIST Web Interpolator")
 
     ax.set_xlabel("BP - RP")
     ax.set_ylabel("G")
-    ax.legend()
+    ax.legend(loc=4)
     ax.invert_yaxis()
+    ax.set_xlim(-1.2,4.9)
+    #ax.set_ylim(12.5, -5.0)
 
 def figimass(ax,mod, imass,G1, G2, iso1, iso2):
 
-    ax.plot(imass, G1, "b", zorder=4, label="interpolation using modified masses")
-    ax.plot(imass, G2, "r", zorder=4, label="interpolation without modified masses")
-    ax.plot(aa.initial_mass, aa.Gaia_G_EDR3, 'g', lw=8, alpha=0.2, label = "Web Imterpolator")
+    ax.plot(imass, G1, "b", zorder=4, label="CharonInterpolator")
+    ax.plot(imass, G2, "r", zorder=4, lw=2, label="LagrangeInterpolator")
+    ax.plot(aa.initial_mass, aa.Gaia_G_EDR3, 'g', lw=8, alpha=0.2, label = "MIST Web Interpolator")
 
-    ax.plot(iso1.initial_mass, iso1.Gaia_G_EDR3, 'k--', label="adjacent isochrone gridpoints")
-    ax.plot(iso2.initial_mass, iso2.Gaia_G_EDR3, 'k--')
+    ax.plot(iso1.initial_mass, iso1.Gaia_G_EDR3, 'k--', label="Adjacent grid points",zorder=5)
+    ax.plot(iso2.initial_mass, iso2.Gaia_G_EDR3, 'k--',zorder=5)
 
-    ax.set_xlabel("initial_mass")
-    ax.set_ylabel("G")
+    ax.set_xlabel(r"m$_{\rm init}$ (M$_\odot$)")
+    #ax.set_ylabel("G")
     ax.invert_yaxis()
     ax.legend(loc=4)
+    ax.set_xlim(0.952, 1.025)
+    
 def figimass_zoom(ax,mod, imass,G, iso1, iso2):
-    ax.plot(imass, G, "b", zorder=4, label="interpolation using modified masses")
-    ax.plot(aa.initial_mass, aa.Gaia_G_EDR3, 'g',lw=8, alpha=0.2, label = "Web Imterpolator")
+    tip = mod.tips2_func(aa["[Fe/H]_init"], aa["log10_isochrone_age_yr"], grid=False)[0]
+    offset = -tip
+    ax.plot(imass+offset, G, "b", zorder=4, label="CharonInterpolator")
+    ax.plot(aa.initial_mass+offset, aa.Gaia_G_EDR3, 'g',lw=8, alpha=0.2, label = "MSIT Web Interpolator")
 
     modmass1 = mod.get_modified_mass(iso1.initial_mass,
             iso1["[Fe/H]_init"], iso1["log10_isochrone_age_yr"],
             aa["[Fe/H]_init"].iloc[0]*np.ones(len(iso1.initial_mass)), aa["log10_isochrone_age_yr"].iloc[0]*np.ones(len(iso1.initial_mass)),)
-    ax.plot(modmass1, iso1.Gaia_G_EDR3, 'k:', label="shifted isochrone grid points\n according to modified mass")
+    ax.plot(modmass1+offset, iso1.Gaia_G_EDR3, 'k:', label="CharonInterpolator\n shifted grid points")
 
-    tip = mod.tips2_func(aa["[Fe/H]_init"], aa["log10_isochrone_age_yr"], grid=False)[0]
     modmass2 = mod.get_modified_mass(iso2.initial_mass,
             iso2["[Fe/H]_init"], iso2["log10_isochrone_age_yr"],
             aa["[Fe/H]_init"].iloc[0]*np.ones(len(iso2.initial_mass)), aa["log10_isochrone_age_yr"].iloc[0]*np.ones(len(iso2.initial_mass)),)
-    tip_iso = aa.initial_mass.loc[aa.EEP == 1409].iloc[0]
+    #tip_iso = aa.initial_mass.loc[aa.EEP == 1409].iloc[0]
 
-    ax.plot(modmass2, iso2.Gaia_G_EDR3, 'k:')
-    ax.axvline(tip,color="k", ls="--", label = "estimated end of the AGB")
-    ax.axvline(tip_iso,color="r", label = "end of the AGB from isochrones ")
+    ax.plot(modmass2+offset, iso2.Gaia_G_EDR3, 'k:')
+    ax.axvline(tip+offset,color="k", ls="--", label = "Est. end of AGB")
+    #ax.axvline(tip_iso,color="r", label = "end of the AGB from isochrones ")
     ax.invert_yaxis()
-    ax.set_xlabel("initial_mass")
-    ax.set_ylabel("G")
+    ax.set_xlabel(r"m$_{\rm init}$-m$_{\rm ABG}$ (10$^{-6}$ M$_\odot$)")
+    #ax.set_ylabel("G")
     ax.legend(loc=4)
+    ax.set_xlim(0.9938135+offset, 0.9938163+offset)
+    #ax.set_xscale('log')
+    #ax.figure.canvas.draw()
+    #offset = ax.xaxis.get_major_formatter().get_offset()
+    #print(offset)
+    ax.xaxis.offsetText.set_visible(False)
+    #ax.xaxis.set_label_text("initial_mass" + " " + offset)
 
-fig, axes = plt.subplots(1,3, figsize=(12,5), sharey = True)
+fig, axes = plt.subplots(1,3, figsize=(12,6), sharey = True)
 print(axes)
 figcmd(axes[0], output["Gaia_G_EDR3"], output["Gaia_BP_EDR3"], output["Gaia_RP_EDR3"],  \
        output2["Gaia_G_EDR3"],output2["Gaia_BP_EDR3"], output2["Gaia_RP_EDR3"])
 figimass(axes[1],mod, imass, output["Gaia_G_EDR3"], output2["Gaia_G_EDR3"], iso1, iso2)
 figimass_zoom(axes[2], mod, imass, output["Gaia_G_EDR3"], iso1, iso2)
+fig.subplots_adjust(wspace=0,bottom=0.2, left=0.1)
 
-plt.show()
+plt.savefig('charon_fig_test.pdf')
+

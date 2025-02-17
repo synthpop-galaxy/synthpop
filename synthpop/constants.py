@@ -8,7 +8,7 @@ import numpy as np
 # -------- Directories ---------
 SYNTHPOP_DIR = os.path.abspath(os.path.dirname(__file__))  # this directory
 DEFAULT_MODEL_DIR = f"{SYNTHPOP_DIR}/models"  # location where models are stored
-DEFAULT_CONFIG_DIR = f"{SYNTHPOP_DIR}/config_files/"
+DEFAULT_CONFIG_DIR = f"{SYNTHPOP_DIR}/config_files"
 DEFAULT_CONFIG_FILE = f"{DEFAULT_CONFIG_DIR}/_default.synthpop_conf"  # default config files
 ISOCHRONES_DIR = f"{SYNTHPOP_DIR}/data/isochrones"  # location where isochrones are stored
 EXTINCTIONS_DIR = f"{SYNTHPOP_DIR}/data/extinction"  # location where isochrones are stored
