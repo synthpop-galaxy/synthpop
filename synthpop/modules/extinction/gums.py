@@ -14,11 +14,11 @@ import h5py
 import shutil
 import numpy as np
 try:
-    from ._extinction import ExtinctionMap, EXTINCTION_DIR
+    from ._extinction import ExtinctionMap
     from .lallement import Lallement
     from .. import const
 except ImportError:
-    from _extinction import ExtinctionMap, EXTINCTION_DIR
+    from _extinction import ExtinctionMap
     from lallement import Lallement
     import constants as const
 import time

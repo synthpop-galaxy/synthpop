@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from .. import const
 from scipy.spatial import KDTree
-from ._extinction import ExtinctionMap, EXTINCTION_DIR
+from ._extinction import ExtinctionMap
 import time
 import ebf
 from scipy.interpolate import RegularGridInterpolator
