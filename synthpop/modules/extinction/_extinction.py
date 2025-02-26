@@ -21,9 +21,11 @@ import os
 import inspect
 from typing import Callable, Tuple, List, Dict
 from types import ModuleType
-
+from .. import const
 from abc import ABC, abstractmethod
 import numpy as np
+
+EXTINCTION_DIR = const.EXTINCTIONS_DIR
 
 class ExtinctionLaw(ABC):
     """
