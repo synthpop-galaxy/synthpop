@@ -2,7 +2,9 @@
     "name" : "bulge",
 
     "imf_func_kwargs" : {
-        "name" : "kroupa"
+        "name" : "PiecewisePowerlaw",
+		"alphas" : [0.22,1.16,2.32],
+		"splitpoints" : [0.08,0.90]
     },
     
     "age_func_kwargs" : {
