@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from .. import const
 from scipy.spatial import KDTree
-from ._extinction import ExtinctionMap #, EXTINCTION_DIR
+from ._extinction import ExtinctionMap
 import time
 import ebf
 from scipy.interpolate import RegularGridInterpolator
@@ -25,10 +25,8 @@ current_map_data = None
 class Surot(ExtinctionMap):
     """
     Extinction map from Surot et al. 2020
-    Map must first be converted from E(J-Ks) to A_Ks values
-    Note: 
-        This is a quick implementation of a 2D extinction map which repurposes the methods desgined for a 3D map used in marshall.py. While the current version will primarily be used for extinction map comparison purposes, a more careful design will likely be beneficial in the future.  
-
+    On first use, the map is downloaded and converted from E(J-Ks) to A_Ks values
+    
     Attributes
     ----------
     extinction_map_name : str
@@ -64,13 +62,13 @@ class Surot(ExtinctionMap):
         self.A_or_E_type = "A_Ks"
         self.project_3d = project_3d
         self.dist_2d = dist_2d
+        map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
 
         # Fetch extinction map data if needed
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
             if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]):
                 print("Missing Surot table. Download and formatting may take several minutes.")
                 print('Downloading map file from VizieR...')
-                map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
                 map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
                 with open(map_filename, "wb") as f:
                     r = requests.get(map_url)
@@ -133,6 +131,23 @@ class Surot(ExtinctionMap):
                 map_data_3d)
 
     def extinction_in_map(self, l_deg, b_deg, dist):
+        """
+        Estimates the extinction for a list of star positions.
+
+        Parameters
+        ----------
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
+        """
         use_l = l_deg - (l_deg>180)*360
         _, min_dist_arg = self.coord_tree.query(np.transpose([use_l,b_deg]))
         ext_value = self.A_Ks_list[min_dist_arg]

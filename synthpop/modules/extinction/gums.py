@@ -1,10 +1,9 @@
 """
 Extinction map used in the GAIA Universe Model, DR3 version.
 Combines Lallement et al (2019) & Marshall (2006)
-
 """
 
-__all__ = ["GUMS", ]
+__all__ = ["Gums", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-11-07"
 __license__ = "GPLv3"
@@ -15,11 +14,11 @@ import h5py
 import shutil
 import numpy as np
 try:
-    from ._extinction import ExtinctionMap, EXTINCTION_DIR
+    from ._extinction import ExtinctionMap
     from .lallement import Lallement
-    from ... import constants as const
+    from .. import const
 except ImportError:
-    from _extinction import ExtinctionMap, EXTINCTION_DIR
+    from _extinction import ExtinctionMap
     from lallement import Lallement
     import constants as const
 import time
@@ -34,45 +33,32 @@ _query_dict = {}
 
 class Gums(Lallement,ExtinctionMap):
     """
-    Extinction map from Lallement et al. 2019
+    Extinction map from Gaia Universe Model Snapshot version DR3
 
     Attributes
     ----------
     extinction_map_name : str
         name of the Extinction Map
-    l_deg : float
-        galactic longitude in degree set by "update_sight-line"
-    b_deg : float
-        galactic latitude in degree set by "update_sight-line"
-
     ref_wavelength : float
         reference wavelength for the extinction
-
-    A_or_E : float or function
-        total extinction or color excess, from the extinction map.
-        if it is a function it will be called
-
     A_or_E_type : str
-        Output type from the extinction map.
+        output type from the extinction map.
         If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E": A_or_E is handled as a color excess.
+        If it starts with "E", A_or_E is handled as a color excess.
 
     Methods
     -------
-
     update_extinction_in_map():
         placeholder for function that updates the total extinction or color excess
         in self.extinction_map_name
-
     get_map_properties():
         returns the basic parameters of the extinction map
         used for Communication between ExtinctionLaw and ExtinctionMap
-
     """
 
     def __init__(self, dr=0.001, return_functions=True, **kwargs):
         # Start from Lallement law
-        super().__init__(**kwargs)
+        super().__init__(dr=dr, **kwargs)
         self.extinction_map_name = "GUMS"
         self.return_functions=return_functions
         # Set up Marshall map
@@ -114,15 +100,24 @@ class Gums(Lallement,ExtinctionMap):
                 np.nan_to_num(self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=dist*u.kpc, frame='galactic')) /  \
                  self.marshall_query(SkyCoord(l_deg*u.deg,b_deg*u.deg,distance=end_dists*u.kpc, frame='galactic')), nan=1.0) ** \
                 (end_dists<dist)
-        return np.maximum(value + np.random.normal(value, value*0.1), 0)
+        return np.maximum(np.random.normal(value, value*0.1), 0)
 
     def extinction_in_map(self,l_deg,b_deg,dist):
         """
-        Returns the extinction for the current sight line and radial distance, or returns function to do so.
+        Estimates the extinction for a list of star positions.
 
         Parameters
         ----------
-        radius: float [kpc]
-            radial distance of the current slice
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         """
         return self.gums_ext_func(l_deg, b_deg, dist)

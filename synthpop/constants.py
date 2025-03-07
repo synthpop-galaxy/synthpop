@@ -33,6 +33,8 @@ COL_NAMES = [
 # ------- Physical Constants --------
 c = 3e8  # m/s
 G = 6.674e-11  # m^3 kg^-1 s^-2
+Msun_kg = 1.989e30 # solar mass in kg
+m_per_pc = 3.086e16 # meters per parsec
 Mbol_sun = 4.74  # Bolometric magnitude of the sun
 DEG2RAD = np.pi / 180
 # converts proper motion times distance in mas/yr and kpc to tangential velocity in km/s

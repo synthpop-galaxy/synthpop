@@ -31,6 +31,7 @@ import dustmaps.marshall
 import dustmaps.pg2010
 import dustmaps.planck
 import dustmaps.sfd
+import dustmaps.decaps
 
 from astropy.coordinates import SkyCoord
 try:
@@ -62,6 +63,12 @@ MAPS_INFO = {
         'dim': 2,
         'returns': 'E(B-V)',
         "Query": dustmaps.csfd.CSFDQuery,
+        "lambda_eff": 0.493,
+        "lambda_eff2": 0.551},
+    "decaps": {
+        'dim': 3,
+        'returns': 'E(B-V)',
+        "Query": dustmaps.decaps.DECaPSQuery,
         "lambda_eff": 0.493,
         "lambda_eff2": 0.551},
     "gaia_tge":{
@@ -182,21 +189,21 @@ class MapsFromDustmaps(ExtinctionMap):
 
     def extinction_in_map(self, l_deg, b_deg, dist):
         """
-        read extinction from map
+        Estimates the extinction for a list of star positions.
 
         Parameters
         ----------
-        l_deg: float or nd_array [degree]
+        l_deg: ndarray [degrees]
             galactic longitude
-        b_deg: float or nd_array [degree]
+        b_deg: ndarray [degrees]
             galactic latitude
-        dist: float or nd_array [kpc]
-            distance
-
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
         Returns
         -------
-        A_or_E: float or nd_array
-            Extinction ore color excess
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         """
         if self.is_3D:
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, distance=dist * u.kpc, frame='galactic')

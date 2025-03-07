@@ -18,10 +18,10 @@ import h5py
 import shutil
 import numpy as np
 try: 
-    from ._extinction import ExtinctionMap, EXTINCTION_DIR
+    from ._extinction import ExtinctionMap
     from ... import constants as const
 except ImportError:
-    from _extinction import ExtinctionMap, EXTINCTION_DIR
+    from _extinction import ExtinctionMap
     import constants as const
 import time
 import os
@@ -114,7 +114,22 @@ class Lallement(ExtinctionMap):
         
     def lallement_ext_func(self,l_deg,b_deg,dist):
         '''
-        Get extinction value for multiple stars given their positions.
+        Get extinction value from Lallement et al. (2019) map
+        for an array of star positions.
+        
+        Parameters
+        ----------
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         '''
         # Set up points along lines to integrate through
         n_pts, dr_rem = np.divmod(dist,self.dr)
@@ -141,11 +156,20 @@ class Lallement(ExtinctionMap):
 
     def extinction_in_map(self,l_deg,b_deg,dist):
         """
-        Returns the extinction for input positions
+        Estimates the extinction for a list of star positions.
 
         Parameters
         ----------
-        radius: float [kpc]
-            radial distance of the current slice
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         """
         return self.lallement_ext_func(l_deg, b_deg, dist)
