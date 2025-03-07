@@ -10,7 +10,7 @@ __version__ = "1.0.0"
 
 import numpy as np
 import pandas as pd
-from ._extinction import ExtinctionMap #, EXTINCTION_DIR
+from ._extinction import ExtinctionMap
 
 class NoExtinction(ExtinctionMap):
     """

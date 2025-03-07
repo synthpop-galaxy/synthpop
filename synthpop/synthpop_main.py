@@ -249,7 +249,7 @@ class SynthPop:
             self.filename_base = self.get_filename(l_deg, b_deg, solid_angle)
 
         if not self.parms.overwrite:
-            if os.path.isfile(ff := f"{self.filename_base}.{self.parms.output_file_type.lower()}"):
+            if os.path.isfile(ff := f"{self.filename_base}.{self.parms.output_file_type[0].lower()}"):
                 msg = f"{ff} already exist!. Change the filename_pattern or use overwrite=True"
                 logger.critical(msg)
                 raise FileExistsError(msg)

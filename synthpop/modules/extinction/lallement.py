@@ -18,10 +18,10 @@ import h5py
 import shutil
 import numpy as np
 try: 
-    from ._extinction import ExtinctionMap, EXTINCTION_DIR
+    from ._extinction import ExtinctionMap
     from ... import constants as const
 except ImportError:
-    from _extinction import ExtinctionMap, EXTINCTION_DIR
+    from _extinction import ExtinctionMap
     import constants as const
 import time
 import os

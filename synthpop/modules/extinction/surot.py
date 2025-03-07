@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from .. import const
 from scipy.spatial import KDTree
-from ._extinction import ExtinctionMap, EXTINCTION_DIR
+from ._extinction import ExtinctionMap
 import time
 import ebf
 from scipy.interpolate import RegularGridInterpolator
@@ -62,13 +62,13 @@ class Surot(ExtinctionMap):
         self.A_or_E_type = "A_Ks"
         self.project_3d = project_3d
         self.dist_2d = dist_2d
+        map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
 
         # Fetch extinction map data if needed
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
             if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]):
                 print("Missing Surot table. Download and formatting may take several minutes.")
                 print('Downloading map file from VizieR...')
-                map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
                 map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
                 with open(map_filename, "wb") as f:
                     r = requests.get(map_url)

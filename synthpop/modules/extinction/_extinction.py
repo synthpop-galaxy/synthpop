@@ -8,8 +8,6 @@ ExtinctionMap: Parent class for extinction maps
 
 CombineExtinction: Factory that combines an ExtinctionLaw subclass
                    and an ExtinctionMap subclass into one Extinction Class
-
-EXTINCTION_DIR: Path to the extinction directory
 """
 
 __all__ = ["ExtinctionLaw", "ExtinctionMap", "CombineExtinction", "EXTINCTION_DIR"]
@@ -23,13 +21,11 @@ import os
 import inspect
 from typing import Callable, Tuple, List, Dict
 from types import ModuleType
-
+from .. import const
 from abc import ABC, abstractmethod
 import numpy as np
 
-# Path to the extinction directory.
-EXTINCTION_DIR = os.path.dirname(__file__)
-
+EXTINCTION_DIR = const.EXTINCTIONS_DIR
 
 class ExtinctionLaw(ABC):
     """

@@ -2,7 +2,7 @@
 Extinction law that pulls from Surot et al. (2020) to modify the IR end of
 the extinction law of O'Donnell (1994) / Cardelli et al. (1989).
 
-Valid from: 0.25 to 3.5
+Valid from: 0.25 to 3.5 microns
 
 Reference DOIs: 10.1086/167900, 10.1086/173713, 10.1051/0004-6361/202038346
 
