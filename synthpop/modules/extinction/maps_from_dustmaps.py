@@ -16,22 +16,24 @@ __version__ = "1.0.0"
 
 import os
 import astropy.units as u
+import importlib
 
-import dustmaps.bayestar
-import dustmaps.bh
-import dustmaps.chen2014
-import dustmaps.csfd
-import dustmaps.gaia_tge
-import dustmaps.iphas
-import dustmaps.leike_ensslin_2019
-import dustmaps.leike2020
-import dustmaps.edenhofer2023
-import dustmaps.lenz2017
-import dustmaps.marshall
-import dustmaps.pg2010
-import dustmaps.planck
-import dustmaps.sfd
-import dustmaps.decaps
+import dustmaps
+#import dustmaps.bayestar
+#import dustmaps.bh
+#import dustmaps.chen2014
+#import dustmaps.csfd
+#import dustmaps.gaia_tge
+#import dustmaps.iphas
+#import dustmaps.leike_ensslin_2019
+#import dustmaps.leike2020
+#import dustmaps.edenhofer2023
+#import dustmaps.lenz2017
+#import dustmaps.marshall
+#import dustmaps.pg2010
+#import dustmaps.planck
+#import dustmaps.sfd
+#import dustmaps.decaps
 
 from astropy.coordinates import SkyCoord
 try:
@@ -43,96 +45,112 @@ MAPS_INFO = {
     "bayestar": {
         'dim': 3,
         'returns': 'E(B-V)',
-        "Query": dustmaps.bayestar.BayestarQuery,
+        "Query": "BayestarQuery",
         "lambda_eff": 0.493,
         "lambda_eff2": 0.551,
         "options": {"max_samples": 0},
-        "kwargs": {"mode":'best'}},
+        "kwargs": {"mode":'best'},
+        "need_fetch":True},
     "bh": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.bh.BHQuery,
+        "Query": "BHQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":False},
     "chen2014": {
         'dim': 3,
         'returns': 'A_r',
-        "Query": dustmaps.chen2014.Chen2014Query,
-        "lambda_eff": 0.622},
+        "Query": "Chen2014Query",
+        "lambda_eff": 0.622,
+        "need_fetch":True},
     "csfd": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.csfd.CSFDQuery,
+        "Query": "CSFDQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "decaps": {
         'dim': 3,
         'returns': 'E(B-V)',
-        "Query": dustmaps.decaps.DECaPSQuery,
+        "Query": "DECaPSQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "gaia_tge":{
         'dim': 2,
         'returns': 'A0',
-        "Query": dustmaps.gaia_tge.GaiaTGEQuery,
-        "lambda_eff": 0.5414},
+        "Query": "GaiaTGEQuery",
+        "lambda_eff": 0.5414,
+        "need_fetch":True},
     "iphas": {
         'dim': 3,
         'returns': 'A0',
-        "Query": dustmaps.iphas.IPHASQuery,
-        "lambda_eff": 0.5495},
+        "Query": "IPHASQuery",
+        "lambda_eff": 0.5495,
+        "need_fetch":True},
     "leike_ensslin_2019": {
         'dim': 3,
         'returns': 'e-foldings_GaiaG',
-        "Query": dustmaps.leike_ensslin_2019.LeikeEnsslin2019Query,
-        "lambda_eff": 0.673},
+        "Query": "LeikeEnsslin2019Query",
+        "lambda_eff": 0.673,
+        "need_fetch":True},
     "leike_2020": {
         'dim': 3,
         'returns': 'e-foldings_GaiaG',
-        "Query": dustmaps.leike2020.Leike2020Query,
-        "lambda_eff": 0.673},
+        "Query": "Leike2020Query",
+        "lambda_eff": 0.673,
+        "need_fetch":True},
     "edenhofer2023": {
         'dim': 3,
         'returns': 'E(B-V)',
-        "Query": dustmaps.edenhofer2023.Edenhofer2023Query,
+        "Query": "Edenhofer2023Query",
         "lambda_eff": 0.493,
         "lambda_eff2": 0.551,
-        "options": {"integrated":True}},
+        "options": {"integrated":True},
+        "need_fetch":True},
     "lenz2017": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.lenz2017.Lenz2017Query,
+        "Query": "Lenz2017Query",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "marshall": {
         'dim': 3,
         'returns': 'A_Ks',
-        "Query": dustmaps.marshall.MarshallQuery,
-        "lambda_eff": 2.152},
+        "Query": "MarshallQuery",
+        "lambda_eff": 2.152,
+        "need_fetch":True},
     "pg2010": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.pg2010.PG2010Query,
+        "Query": "PG2010Query",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "planck_gnlc": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.planck.PlanckGNILCQuery,
+        "Query": "PlanckGNILCQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "planck": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.planck.PlanckQuery,
+        "Query": "PlanckQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "sfd": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.sfd.SFDQuery,
+        "Query": "SFDQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551}
+        "lambda_eff2": 0.551,
+        "need_fetch":True}
     }
 
 # empty dictionary to store dustmaps query
@@ -153,20 +171,21 @@ class MapsFromDustmaps(ExtinctionMap):
         if dustmap_name.startswith("leike"):
             raise NotImplementedError('leike2020 & leike_ensslin_2019 are not implemented yet')
         map_props = MAPS_INFO[dustmap_name]
+        
+        map_module = importlib.import_module('dustmaps.'+dustmap_name)
 
-        if not os.path.isdir(os.path.join(dustmaps.std_paths.data_dir(), dustmap_name)):
+        if map_props['need_fetch'] and (not os.path.isdir(os.path.join(dustmaps.std_paths.data_dir(), dustmap_name))):
             url = 'https://dustmaps.readthedocs.io/en/latest/installation.html'
-            module = map_props["Query"].__module__
             
             try:
                 print("Downloading",self.extinction_map_name)
-                getattr(dustmaps, dustmap_name).fetch()
+                map_module.fetch()
             except:
                 raise FileNotFoundError(
-                    f"Data for '{dustmap_name} dustmap are not fetched\n"
+                    f"Data for '{dustmap_name}' dustmap are not fetched\n"
                     f"when a dustmaps data directory is specified, data can be fetched using:\n\n"
-                    f">>> import {module}\n"
-                    f">>> {module}.fetch()\n\n"
+                    f">>> import dustmaps.{dustmap_name}\n"
+                    f">>> dustmaps.{dustmap_name}.fetch()\n\n"
                     f"please see '{url}' for further details")
 
         self.is_3D = map_props['dim'] == 3
@@ -175,7 +194,7 @@ class MapsFromDustmaps(ExtinctionMap):
 
         # select the query object for the given dustmap
         if dustmap_name not in _query_dict:
-            _query_dict[dustmap_name] = map_props['Query'](**map_props.get('options', {}))
+            _query_dict[dustmap_name] = getattr(map_module, map_props['Query'])(**map_props.get('options', {}))
 
         self.kwargs = map_props.get('kwargs', {})
         self.query = _query_dict[dustmap_name]
