@@ -448,6 +448,7 @@ class SynthPop:
         # available formats:
         output_formatter = {
             'csv': [df.to_csv, 'csv', {'index': None, 'header': True, 'float_format': "%0.7e"}],
+            'ssv': [df.to_csv, 'csv', {'index': None, 'header': True, 'float_format': "%0.7e", 'sep':' '}],
             'json': [df.to_json, 'json', {}],
             'html': [df.to_html, 'html', {'float_format': "%0.7e"}],
             'xml': [df.to_xml, 'xml', {}],
