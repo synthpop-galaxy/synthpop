@@ -31,6 +31,7 @@ import dustmaps.marshall
 import dustmaps.pg2010
 import dustmaps.planck
 import dustmaps.sfd
+import dustmaps.decaps
 
 from astropy.coordinates import SkyCoord
 try:
@@ -62,6 +63,12 @@ MAPS_INFO = {
         'dim': 2,
         'returns': 'E(B-V)',
         "Query": dustmaps.csfd.CSFDQuery,
+        "lambda_eff": 0.493,
+        "lambda_eff2": 0.551},
+    "decaps": {
+        'dim': 3,
+        'returns': 'E(B-V)',
+        "Query": dustmaps.decaps.DECaPSQuery,
         "lambda_eff": 0.493,
         "lambda_eff2": 0.551},
     "gaia_tge":{
