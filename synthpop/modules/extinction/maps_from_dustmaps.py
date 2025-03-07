@@ -74,7 +74,7 @@ MAPS_INFO = {
     "decaps": {
         'dim': 3,
         'returns': 'E(B-V)',
-        "Query": "DECaPSQuery",
+        "Query": "DECaPSQueryLite",
         "lambda_eff": 0.493,
         "lambda_eff2": 0.551,
         "need_fetch":True},
