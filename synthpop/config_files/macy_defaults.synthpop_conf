@@ -66,8 +66,6 @@
         "#comment2":"Step size, in kpc",
         "distance_step_size":0.10,
 
-        "#comment3":"Solid angle of cone/pyramid [deg^2]",
-        "solid_angle":1e-04,
         "window_type":{"window_type":"cone" , "#kwargs for windowtype": null},
         "#window_type_Not_implemented_yet": ["pyramid", "side_ratio_as_l/b"],
 
