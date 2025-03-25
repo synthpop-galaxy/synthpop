@@ -84,6 +84,9 @@ class Besancon2003(Kinematics):
 
         # Convert to Galactocentric coordinates
         r, phi_rad, z = self.coord_trans.xyz_to_rphiz(x, y, z)
+        
+        # Calculate rotation velocity based on inner solid body rotation and outer velocity gradient
+        rotation_velocity = np.minimum(self.vel_grad * r, self.sun.v_lsr)
 
         # Apply velocity dispersion gradient
         sigma_u_r = self.sigma_u * np.exp((r - self.sun.r) * self.disp_grad / 2)
@@ -113,15 +116,16 @@ class Besancon2003(Kinematics):
                  + (1 - self.sigma_v ** 2 / sigma_u_r ** 2)
                  + (1 - self.sigma_w ** 2 / sigma_u_r ** 2)
                  )
-            V_ad = np.maximum(V_ad, 0)
+            V_ad = np.minimum(np.maximum(V_ad, 0), rotation_velocity)
+            V_ad = np.nan_to_num(V_ad, nan=np.nanmin(V_ad))
 
         # If selected, don't apply an asymmetric drift
         else:
             V_ad = 0.0
-
+            
         # Calculate rotation velocity based on inner solid body rotation and outer velocity gradient
         # Account for asymmetric drift if indicated
-        rotation_velocity = np.minimum(self.vel_grad * r, self.sun.v_lsr) - V_ad
+        rotation_velocity -= V_ad
 
         # Get velocities in the Galactic plane in the star's frame
         u1 = du

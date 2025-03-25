@@ -35,7 +35,7 @@ class NoExtinction(ExtinctionMap):
         returns the basic parameters of the extinction map
         used for Communication between ExtinctionLaw and ExtinctionMap
     """
-
+    
     def __init__(self, project_3d=True, dist_2d=8.15, **kwargs):
         super().__init__(**kwargs)
         # name of the extinction map used
@@ -44,21 +44,21 @@ class NoExtinction(ExtinctionMap):
         self.A_or_E_type = "A_None"
 
     def extinction_in_map(self, l_deg, b_deg, dist):
-    """
-    Estimates the extinction for a list of star positions.
+        """
+        Estimates the extinction for a list of star positions.
 
-    Parameters
-    ----------
-    l_deg: ndarray [degrees]
-        galactic longitude
-    b_deg: ndarray [degrees]
-        galactic latitude
-    dist: ndarray [kpc]
-        radial distance from the Sun
-    
-    Returns
-    -------
-    extinction_value: ndarray [mag]
-        extinction at each star position defined as self.A_or_E_type
-    """
+        Parameters
+        ----------
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
+        """
         return dist*0.0
