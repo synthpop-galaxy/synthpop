@@ -6,7 +6,7 @@ import numpy as np
 from ._population_density import PopulationDensity
 
 
-class DarkDensityBesancon(PopulationDensity):
+class Besancon2003Dark(PopulationDensity):
     def __init__(self, e=1, pc=1.079e8, Rc=2.697, **kwargs):
         """
         Dark halo density distributions from the Besancon model (Robin et al. 2003).

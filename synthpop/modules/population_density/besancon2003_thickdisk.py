@@ -100,7 +100,8 @@ class Besancon2003Thickdisk(PopulationDensity):
         abs_z_lt_xl = np.abs(z) <= self.xl  # 1 if True, 0 if False
 
         rho = self.rho0 / d0 * np.exp(-(r - self.sun.r) / self.hr)
-        rho *= (1 - z ** 2 / (self.xl * (2 * self.hz/k_flare + self.xl))
+        if self.xl>0:
+            rho *= (1 - z ** 2 / (self.xl * (2 * self.hz/k_flare + self.xl))
                                ) ** abs_z_lt_xl  # only if abs(z) <= xl
 
         rho *= (np.exp((self.xl - np.abs(z)) / self.hz / k_flare)
