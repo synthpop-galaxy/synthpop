@@ -1,9 +1,12 @@
 """
 An interpolator for the isochrone grid
-Within each isochrone, it uses a cubic interpolation, between adjacent grid-points.
+
+Within each isochrone, it uses a cubic interpolation between adjacent grid-points.
+
 It aligns the phases between adjacent ages
-and performs a linear interpolation in metallicity and age
-see Klüter (et al. in prep)
+and performs a linear interpolation in metallicity and age.
+
+See Klüter & Huston et al (SynthPop Paper I, in prep).
 """
 
 __all__ = ["CharonInterpolator", ]
