@@ -1,5 +1,5 @@
 """
-Filler class to use to not apply extinction
+Filler class to use for no extinciton
 """
 
 __all__ = ["NoExtinction", ]
@@ -18,29 +18,18 @@ class NoExtinction(ExtinctionMap):
         
     Attributes
     ----------
-    extinction_map_name : str
-        name of the Extinction Map
-    ref_wavelength : float
-        reference wavelength for the extinction
-    A_or_E_type : str
-        Output type from the extinction map.
-        If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E": A_or_E is handled as a color excess.
 
     Methods
     -------
     extinction_in_map():
-        function that returns extinction at input positions
-    get_map_properties():
-        returns the basic parameters of the extinction map
-        used for Communication between ExtinctionLaw and ExtinctionMap
+        function that returns 0 extinctions for all positions
     """
     
-    def __init__(self, project_3d=True, dist_2d=8.15, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # name of the extinction map used
         self.extinction_map_name = "NoExtinction"
-        self.ref_wavelength = 2.152152
+        self.ref_wavelength = 1.0
         self.A_or_E_type = "A_None"
 
     def extinction_in_map(self, l_deg, b_deg, dist):

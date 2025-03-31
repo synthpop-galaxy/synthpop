@@ -1,6 +1,10 @@
 """
-Extinction map used in the GAIA Universe Model, DR3 version.
-Combines Lallement et al (2019) & Marshall (2006)
+Extinction map used in the GAIA Universe Model, DR3 version, which
+combines Lallement et al (2019) & Marshall (2006)
+
+Extinction is returned as A0, total extinction at reference wavelength 5500 Angstroms
+
+GUMS documentation: https://gea.esac.esa.int/archive/documentation/GDR3/Data_processing/chap_cu2sim/sec_cu2UM/ssec_cu2extmodel.html
 """
 
 __all__ = ["Gums", ]
@@ -33,34 +37,28 @@ _query_dict = {}
 
 class Gums(Lallement,ExtinctionMap):
     """
-    Extinction map from Gaia Universe Model Snapshot version DR3
+    Extinction map from Gaia Universe Model Snapshot
 
     Attributes
     ----------
-    extinction_map_name : str
-        name of the Extinction Map
-    ref_wavelength : float
-        reference wavelength for the extinction
-    A_or_E_type : str
-        output type from the extinction map.
-        If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E", A_or_E is handled as a color excess.
+    dr=0.001 : float
+        step size for extinction integration in kpc
+    per_sightline=True : boolean
+        calculate extinction integral once per sightline if True (faster)
+        calculate extinciton integral individually per star if False (slower)
 
     Methods
     -------
-    update_extinction_in_map():
-        placeholder for function that updates the total extinction or color excess
-        in self.extinction_map_name
-    get_map_properties():
-        returns the basic parameters of the extinction map
-        used for Communication between ExtinctionLaw and ExtinctionMap
+    gums_ext_func(l_deg, b_deg, dist):
+        get extinction value in combo Lallement/Marshall combo map for list of star locations
+    extinction_in_map(l_deg, b_deg, dist):
+        equivalent to gums_ext_func
     """
 
-    def __init__(self, dr=0.001, return_functions=True, **kwargs):
+    def __init__(self, dr=0.001, **kwargs):
         # Start from Lallement law
         super().__init__(dr=dr, **kwargs)
         self.extinction_map_name = "GUMS"
-        self.return_functions=return_functions
         # Set up Marshall map
         if not os.path.isdir(os.path.join(dustmaps.std_paths.data_dir(), "marshall")):
             url = 'https://dustmaps.readthedocs.io/en/latest/installation.html'
@@ -73,9 +71,23 @@ class Gums(Lallement,ExtinctionMap):
         self.marshall_query = _query_dict['marshall']()
         
     def gums_ext_func(self,l_deg,b_deg,dist):
-        '''
-        Get extinction value for multiple stars given their positions.
-        '''
+        """
+        Estimates the extinction for a list of star positions.
+
+        Parameters
+        ----------
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position
+        """
         # Draw a sightline outward for each star
         dist_max = np.max(dist)
         dist_pts = np.arange(0,dist_max,self.dr)[np.newaxis,:]
@@ -118,6 +130,6 @@ class Gums(Lallement,ExtinctionMap):
         Returns
         -------
         extinction_value: ndarray [mag]
-            extinction at each star position defined as self.A_or_E_type
+            extinction at each star position
         """
         return self.gums_ext_func(l_deg, b_deg, dist)

@@ -20,6 +20,10 @@ except ImportError:
     from _extinction import ExtinctionLaw
     
 class WangChen2019(ExtinctionLaw):
+    """
+    Extinction law from Wang & Chen (2019)
+    """
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.extinction_law_name = 'WangChen2019'
@@ -29,17 +33,12 @@ class WangChen2019(ExtinctionLaw):
 
     def Alambda_Aref(self, eff_wavelength: float) -> float:
         """
-        Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
+        Given an effective wavelength lambda_eff, calculate the extinction ratio A_lambda/A_ref
 
         Parameters
         ----------
         eff_wavelength : float
-            Effective Wavelength of the filter for which the extinction should be determined.
-            in micrometer
-
-        Returns
-        -------
-        Al_Aref : total extinction relative to the reference band extinction
+            wavelength to compute extinction ratio at [microns]
         """
 
         x = 1. / eff_wavelength
