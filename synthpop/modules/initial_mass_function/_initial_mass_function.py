@@ -1,6 +1,7 @@
 """
 This file contains the base class for the initial mass function.
 """
+
 __all__ = ["InitialMassFunction"]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]

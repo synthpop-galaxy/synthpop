@@ -1,4 +1,14 @@
-# -*- coding: utf-8 -*-
+"""
+Initial mass function from Chabrier (2003):
+    
+    For m< m_switch:
+    
+        xi = A/m/ln(10) * exp(- (lg(m) - lg(m_center))**2 / (2*sigma**2))
+        
+    For m>=m_switch
+    
+        xi = A * m**(-alpha)
+"""
 
 __all__ = ['Chabrier', ]
 
@@ -13,12 +23,7 @@ except ImportError:
 
 class Chabrier(InitialMassFunction):
     """
-    The initial mass function (IMF) following Chabrier 2003
-    For m< m_switch:
-        xi = A/m/ln(10) * exp(- (lg(m) - lg(m_center))**2 / (2*sigma**2))
-    For m>=m_switch
-        xi = A * m**(-alpha)
-
+    The initial mass function (IMF) from Chabrier 2003
     """
 
     def __init__(

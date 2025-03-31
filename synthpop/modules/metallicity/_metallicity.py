@@ -18,7 +18,6 @@ class Metallicity(ABC):
     Metallicity class for a Population class. he appropriate subclass is
     assigned based on the metallicity_func_kwargs through the "get_subclass" factory.
 
-
     Attributes
     ----------
     metallicity_func_name : str
@@ -39,6 +38,7 @@ class Metallicity(ABC):
         returns the average metallicity for the distribution in [Fe/H]
         (specified in the subclasses)
     """
+    
     def __init__(self,
             sun: ModuleType = None,
             coord_trans: ModuleType = None,

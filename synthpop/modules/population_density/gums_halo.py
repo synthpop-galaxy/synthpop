@@ -1,7 +1,8 @@
 """
-Subclass for a spheroidal  density distribution
-Within others this is used for the Halo in the Besancon Gaia Universe Model
+Spheroidal density distribution, used for the Halo in the Gaia Universe Model Snapshot
+and other models.
 """
+
 __all__ = ["GumsHalo", ]
 __author__ = "J. Klüter"
 __date__ = "2023-04-03"
@@ -20,7 +21,7 @@ class GumsHalo(PopulationDensity):
         Spheroidal density profile
         e.g. To describe the Halo density in the Besancon Gaia Universe Model
 
-        Parameters
+        Attributes
         ----------
         p0:
             density at the position of the sun

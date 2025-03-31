@@ -152,9 +152,9 @@ class MapsFromDustmaps(ExtinctionMap):
     dustmap_name : string
         name of the map from dustmaps to use.
         options are "bayestar", "bh", "chen2014", "csfd", "decaps",
-            "gaia_tge", "iphas", "leike_ensslin_2019", "leike_2020",
-            "edenhofer2023", "lenz2017", "marshall", "pg2010",
-            "planck_gnlc", "planck", "sfd"
+        "gaia_tge", "iphas", "leike_ensslin_2019", "leike_2020",
+        "edenhofer2023", "lenz2017", "marshall", "pg2010",
+        "planck_gnlc", "planck", "sfd"
     dist_2d=0.0 : float
         if a 2-d map is applied, this sets the distance [kpc] where
         the extinction is applied as a single infinitely thin screen

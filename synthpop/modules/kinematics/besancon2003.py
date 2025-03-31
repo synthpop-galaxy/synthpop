@@ -1,3 +1,12 @@
+"""
+Kinematic module from the Besancon Model, as described by Robin et al. (2003), with
+the rotation curve as tabulated in the Galaxia code data files (Sharma et al., 2011).
+
+The module can be adapted for all of the populations, based
+on assigning the appropriate keyword arguments for velocity dispersions, velocity dispersion
+gradients, and asymmetric drift handling.
+"""
+
 __all__ = ['Besancon2003']
 __author__ = "M.J. Huston"
 __date__ = "2025-03-27"
@@ -15,15 +24,9 @@ from scipy.interpolate import interp1d
 class Besancon2003(Kinematics):
     """
     Kinematic module for the Robin et al. (2003) Besancon Model.
-    We adopt the rotation curve as tabulated in the Galaxia code
-    data files (Sharma et al., 2011).
-    The module can be adapted for all of the populations, based
-    on assigning the appropriate keyword arguments.
 
     Attributes
     ----------
-    kinematics_func_name : str
-        name of the Kinematics Class
     sigma_u : float
         velocity dispersion in x direction
     sigma_v : float
@@ -32,6 +35,10 @@ class Besancon2003(Kinematics):
         velocity dispersion in z direction
     disp_grad : float
         velocity dispersion gradient (dln(sigma_u^2)/dR)
+    do_V_ad : boolean
+        if True, calculate assymmetric drift via the equation in Robin+2003
+    const_V_ad : float
+        if provided, this will be used as a constant asymmetric drift value
 
     Methods
     -------

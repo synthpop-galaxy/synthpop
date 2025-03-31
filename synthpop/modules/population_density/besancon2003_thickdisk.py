@@ -1,5 +1,7 @@
-""" Density Subclass to describe the thick disk density
-from the  Besancon model robin et al. (2003)"""
+"""
+Thick disk density from the Besancon model (Robin et al., 2003)
+"""
+
 __all__ = ["Besancon2003Thickdisk", ]
 __author__ = "M.J. Huston"
 __date__ = "2022-07-12"
@@ -10,47 +12,26 @@ import numpy as np
 from .. import const
 from ._population_density import PopulationDensity
 
-
 class Besancon2003Thickdisk(PopulationDensity):
     """
-    This is the Parent Class for population densities functions
-
+    Besancon Model (Robin et al., 2003) thick disk
+    
     Attributes
     ----------
-    population_density_name : str
-        name of the population density
-    density_unit : str
-        specifier if density profile returns "number"-, "mass"- or "init_mass"-density
-    (more attributes are specified in the subclasses)
-
-    Methods
-    -------
-    __init__() :
-        Initialize the PopulationDensity class
-    density(r: ndarray, theta, ndarray, z: ndarray) : ndarray
-        estimate the density at (r,theta,z)
-        (specified in the subclasses)
+    rho0 : float [Msun/kpc**3]
+        density at the location of the sun
+    hr : float [kpc]
+        scale height in radii
+    hz  : float [kpc]
+            scale height in height
+    xl : float
+        transit point
+    flare_flag: boolean
+        flag if flare is included or not
     """
 
     def __init__(self, rho0, hr, hz, xl, flare_flag=False, **kwargs):
-        """
-        initializing
-
-        Parameters
-        ----------
-        rho0 : float [Msun/kpc**3]
-            density at the location of the sun
-        hr ; float [kpc]
-            scale height in radii
-        hz  : float [kpc]
-                scale height in height
-        xl : float
-            transit point
-        flare_flag: bool
-            flag if flare is included or not
-        """
         super().__init__(**kwargs)
-
         self.population_density_name = "ThickDisk"
         self.density_unit = 'mass'
         self.rho0 = rho0
@@ -61,7 +42,6 @@ class Besancon2003Thickdisk(PopulationDensity):
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
-
         Estimates the density at the given position
 
         Parameters
@@ -77,7 +57,6 @@ class Besancon2003Thickdisk(PopulationDensity):
         rho : ndarray [M_sun/kpc^3 or #/kpc^3]
             density at the given location, either in number density evolved
             mass density or initial mass density should be specified in density_unit.
-
         """
         if self.flare_flag:
             k_flare = self.get_kappa_flare(r)

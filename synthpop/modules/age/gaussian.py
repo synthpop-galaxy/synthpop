@@ -1,4 +1,9 @@
-""" A Gaussian age distribution class"""
+"""
+A Gaussian age distribution
+
+Stars are assigned ages from a Gaussian distribution with
+a mean and standard deviation.
+"""
 
 __all__ = ['Gaussian']
 __author__ = "J. Klüter"
@@ -9,11 +14,9 @@ __version__ = "1.0.0"
 import numpy as np
 from ._age import Age
 
-
 class Gaussian(Age):
     """
-    Gaussian subclass of Age base class. This subclass is for populations that
-    have age characterized by a single gaussian age distribution.
+    Gaussian age distrubution generator
     """
 
     def __init__(
