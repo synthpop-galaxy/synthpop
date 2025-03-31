@@ -14,9 +14,10 @@ from .. import default_sun
 
 class PostProcessing:
     """
-        Base class for post-processing, for catalog modifications after the
-        regular SynthPop generation process has completed.
+    Base class for post-processing, for catalog modifications after the
+    regular SynthPop generation process has completed.
     """
+    
     def __init__(self,
             model: ModuleType = None,
             logger: ModuleType = None,

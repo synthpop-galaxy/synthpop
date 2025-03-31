@@ -12,7 +12,6 @@ import os
 import pandas
 from ._post_processing import PostProcessing
 
-
 class CombinedCsv(PostProcessing):
     """
     Post-processing subclass that saves the result from all locations in a combined csv file.

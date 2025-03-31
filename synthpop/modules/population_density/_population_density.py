@@ -15,7 +15,6 @@ import numpy as np
 
 from .. import const, default_sun
 
-
 class PopulationDensity(ABC):
     """
     This is the Parent Class for population densities functions
