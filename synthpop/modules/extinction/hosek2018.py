@@ -15,17 +15,20 @@ __date__ = "2022-07-10"
 __license__ = "GPLv3"
 __version__ = "1.0.0"
 
-from ._extinction import ExtinctionLaw
+try:
+    from ._extinction import ExtinctionLaw
+except ImportError:
+    from _extinction import ExtinctionLaw
 from scipy import interpolate
 import numpy as np
 
 
 class Hosek2018(ExtinctionLaw):
     """
-    Extinction law from Hosek et al 2018 :
+    Extinction law from Hosek et al. (2018)
     """
 
-    def __init__(self, **kwargs, ):
+    def __init__(self, **kwargs):
         self.extinction_law_name = 'Hosek2018'
         self.law_ref_wavelength = 2.14
         self.min_wavelength = 0.8

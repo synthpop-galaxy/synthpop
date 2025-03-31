@@ -1,5 +1,13 @@
 """
-Extinction maps from Surot et al 2020
+Extinction map from Surot et al 2020. This is a 2-d map which may be used
+as a screen at some distance, or pushed into 3-d following the scheme used
+in Galaxia (see galaxia_3d module / Sharma et al. 2011)
+
+Extinction is provided as total extinction A_Ks at 2.15 microns
+
+Publication DOI: 10.1051/0004-6361/202038346
+
+Data file FTP: https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz
 """
 
 __all__ = ["Surot", ]
@@ -12,7 +20,7 @@ import numpy as np
 import pandas as pd
 from .. import const
 from scipy.spatial import KDTree
-from ._extinction import ExtinctionMap #, EXTINCTION_DIR
+from ._extinction import ExtinctionMap
 import time
 import ebf
 from scipy.interpolate import RegularGridInterpolator
@@ -25,51 +33,23 @@ current_map_data = None
 class Surot(ExtinctionMap):
     """
     Extinction map from Surot et al. 2020
-    Map must first be converted from E(J-Ks) to A_Ks values
-    Note: 
-        This is a quick implementation of a 2D extinction map which repurposes the methods desgined for a 3D map used in marshall.py. While the current version will primarily be used for extinction map comparison purposes, a more careful design will likely be beneficial in the future.  
-
+    On first use, the map is downloaded and converted from E(J-Ks) to A_Ks values
+    
     Attributes
     ----------
-    extinction_map_name : str
-        name of the Extinction Map
-    ref_wavelength : float
-        reference wavelength for the extinction
-    A_or_E_type : str
-        Output type from the extinction map.
-        If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E": A_or_E is handled as a color excess.
-    project_3d : booolean
-        True = project the map into 3-D with the Galaxia scheme, with the 
-            extinction scaled to the 2-D map value at dist_2d
-        False = model extinction as a flat screen at dist_2d
-    dist_2d : float
-        distance where the 2-D map value is the true value
+    project_3d=True : boolean
+        whether to project the map into 3-d or keep as 2-d
+    dist_2d=8.15 : float
+        for 3-d: distance where the map value is the true extinction value;
+        for 2-d: distance where extinction is applied as a screen
 
     Methods
     -------
-    update_line_of_sight(l_deg, b_deg) :
-        specified the new galactic coordinates
-        calls find_sightline() and init_sightline()
-    update_extinction_in_map() :
-
-    init_sightline(self) :
-
-    find_sightline(self) :
-
-    update_extinction_in_map():
-        placeholder for function that updates the total extinction or color excess
-        in self.extinction_map_name
-    set_R_V(self,R_V):
-        set interstellar reddening parameter
-
-    get_map_properties():
-        returns the basic parameters of the extinction map
-        used for Communication between ExtinctionLaw and ExtinctionMap
-
+    extinction_in_map(l_deg, b_deg, dist):
+        equivalent to lallement_ext_func
     """
 
-    def __init__(self, project_3d=True, dist_2d=8.15, return_functions=True, **kwargs):
+    def __init__(self, project_3d=True, dist_2d=8.15, **kwargs):
         super().__init__(**kwargs)
         # name of the extinction map used
         self.extinction_map_name = "Surot"
@@ -78,19 +58,13 @@ class Surot(ExtinctionMap):
         self.A_or_E_type = "A_Ks"
         self.project_3d = project_3d
         self.dist_2d = dist_2d
-        self.return_functions = return_functions
-        
-        # placeholder for and location...
-        self.l_deg = None
-        self.b_deg = None
-        self.extinction_in_map = None
+        map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
 
         # Fetch extinction map data if needed
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
             if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]):
                 print("Missing Surot table. Download and formatting may take several minutes.")
                 print('Downloading map file from VizieR...')
-                map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz'
                 map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
                 with open(map_filename, "wb") as f:
                     r = requests.get(map_url)
@@ -152,7 +126,24 @@ class Surot(ExtinctionMap):
             self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid),
                 map_data_3d)
 
-    def ext_func(self, l_deg, b_deg, dist):
+    def extinction_in_map(self, l_deg, b_deg, dist):
+        """
+        Estimates the extinction for a list of star positions.
+
+        Parameters
+        ----------
+        l_deg: ndarray [degrees]
+            galactic longitude
+        b_deg: ndarray [degrees]
+            galactic latitude
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
+        Returns
+        -------
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
+        """
         use_l = l_deg - (l_deg>180)*360
         _, min_dist_arg = self.coord_tree.query(np.transpose([use_l,b_deg]))
         ext_value = self.A_Ks_list[min_dist_arg]
@@ -167,20 +158,3 @@ class Surot(ExtinctionMap):
             scale_factor = (dist>self.dist_2d)
 
         return ext_value * scale_factor
-
-    def update_extinction_in_map(self, radius, force=False, **kwargs):
-        """
-        Estimates the extinction for the current sight-line and radial distance
-        store the result into self.extinction_in_map.
-
-        Parameters
-        ----------
-        radius: float [kpc]
-            radial distance of the current slice
-        """
-
-        if self.return_functions:
-            self.extinction_in_map = self.ext_func
-        else:
-            self.extinction_in_map = self.ext_func(self.l_deg, self.b_deg, radius)
-

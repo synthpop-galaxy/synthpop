@@ -1,3 +1,6 @@
+# Test script for Charon interpolator
+# Authors: Jonas Klueter & Macy Huston
+
 import sys
 import os
 sys.path.append(f'{os.path.abspath(os.path.dirname(__file__))}/..')
@@ -131,35 +134,42 @@ def figimass(ax,mod, imass,G1, G2, iso1, iso2):
     ax.plot(iso1.initial_mass, iso1.Gaia_G_EDR3, 'k--', label="Adjacent grid points",zorder=5)
     ax.plot(iso2.initial_mass, iso2.Gaia_G_EDR3, 'k--',zorder=5)
 
-    ax.set_xlabel("initial_mass")
+    ax.set_xlabel(r"m$_{\rm init}$ (M$_\odot$)")
     #ax.set_ylabel("G")
     ax.invert_yaxis()
     ax.legend(loc=4)
     ax.set_xlim(0.952, 1.025)
     
 def figimass_zoom(ax,mod, imass,G, iso1, iso2):
-    ax.plot(imass, G, "b", zorder=4, label="CharonInterpolator")
-    ax.plot(aa.initial_mass, aa.Gaia_G_EDR3, 'g',lw=8, alpha=0.2, label = "MSIT Web Interpolator")
+    tip = mod.tips2_func(aa["[Fe/H]_init"], aa["log10_isochrone_age_yr"], grid=False)[0]
+    offset = -tip
+    ax.plot(imass+offset, G, "b", zorder=4, label="CharonInterpolator")
+    ax.plot(aa.initial_mass+offset, aa.Gaia_G_EDR3, 'g',lw=8, alpha=0.2, label = "MSIT Web Interpolator")
 
     modmass1 = mod.get_modified_mass(iso1.initial_mass,
             iso1["[Fe/H]_init"], iso1["log10_isochrone_age_yr"],
             aa["[Fe/H]_init"].iloc[0]*np.ones(len(iso1.initial_mass)), aa["log10_isochrone_age_yr"].iloc[0]*np.ones(len(iso1.initial_mass)),)
-    ax.plot(modmass1, iso1.Gaia_G_EDR3, 'k:', label="CharonInterpolator\n shifted grid points")
+    ax.plot(modmass1+offset, iso1.Gaia_G_EDR3, 'k:', label="CharonInterpolator\n shifted grid points")
 
-    tip = mod.tips2_func(aa["[Fe/H]_init"], aa["log10_isochrone_age_yr"], grid=False)[0]
     modmass2 = mod.get_modified_mass(iso2.initial_mass,
             iso2["[Fe/H]_init"], iso2["log10_isochrone_age_yr"],
             aa["[Fe/H]_init"].iloc[0]*np.ones(len(iso2.initial_mass)), aa["log10_isochrone_age_yr"].iloc[0]*np.ones(len(iso2.initial_mass)),)
     #tip_iso = aa.initial_mass.loc[aa.EEP == 1409].iloc[0]
 
-    ax.plot(modmass2, iso2.Gaia_G_EDR3, 'k:')
-    ax.axvline(tip,color="k", ls="--", label = "Est. end of AGB")
+    ax.plot(modmass2+offset, iso2.Gaia_G_EDR3, 'k:')
+    ax.axvline(tip+offset,color="k", ls="--", label = "Est. end of AGB")
     #ax.axvline(tip_iso,color="r", label = "end of the AGB from isochrones ")
     ax.invert_yaxis()
-    ax.set_xlabel("initial_mass")
+    ax.set_xlabel(r"m$_{\rm init}$-m$_{\rm ABG}$ (10$^{-6}$ M$_\odot$)")
     #ax.set_ylabel("G")
     ax.legend(loc=4)
-    ax.set_xlim(0.9938135, 0.9938163)
+    ax.set_xlim(0.9938135+offset, 0.9938163+offset)
+    #ax.set_xscale('log')
+    #ax.figure.canvas.draw()
+    #offset = ax.xaxis.get_major_formatter().get_offset()
+    #print(offset)
+    ax.xaxis.offsetText.set_visible(False)
+    #ax.xaxis.set_label_text("initial_mass" + " " + offset)
 
 fig, axes = plt.subplots(1,3, figsize=(12,6), sharey = True)
 print(axes)
@@ -169,5 +179,5 @@ figimass(axes[1],mod, imass, output["Gaia_G_EDR3"], output2["Gaia_G_EDR3"], iso1
 figimass_zoom(axes[2], mod, imass, output["Gaia_G_EDR3"], iso1, iso2)
 fig.subplots_adjust(wspace=0,bottom=0.2, left=0.1)
 
-plt.savefig('charon_fig_test.png')
+plt.savefig('validation_figures/charon_fig_test.pdf')
 

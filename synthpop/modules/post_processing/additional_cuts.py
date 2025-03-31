@@ -42,25 +42,21 @@ class AdditionalCuts(PostProcessing):
         """
         Make the cuts and return the modified catalog.
         """
-        dataframe = dataframe.reset_index()
         if not self.standard_cuts==None:
             for cut in self.standard_cuts:
                 if cut[1]=='min':
-                    idxs = np.where(dataframe[cut[0]]<cut[2])[0]
+                    dataframe = dataframe[dataframe[cut[0]]>cut[2]]
                 elif cut[1]=='max':
-                    idxs = np.where(dataframe[cut[0]]>cut[2])[0]
+                    dataframe = dataframe[dataframe[cut[0]]<cut[2]]
                 else:
                     raise ValueError('Invalid cut type: '+cut[1]+'. Valid types are min and max')
-                if len(idxs)>0:
-                    dataframe = dataframe.drop(idxs)
         if not self.difference_cuts==None:
             for cut in self.difference_cuts:
                 if cut[2]=='min':
-                    idxs = np.where(dataframe[cut[0]]-dataframe[cut[1]]<cut[3])[0]
+                    dataframe = dataframe[(dataframe[cut[0]]-dataframe[cut[1]])>cut[3]]
                 elif cut[2]=='max':
-                    idxs = np.where(dataframe[cut[0]]-dataframe[cut[1]]>cut[3])[0]
+                    dataframe = dataframe[(dataframe[cut[0]]-dataframe[cut[1]])<cut[3]]
                 else:
                     raise ValueError('Invalid cut type: '+cut[2]+'. Valid types are min and max')
-                if len(idxs)>0:
-                    dataframe = dataframe.drop(idxs)
+        dataframe.reset_index(drop=True, inplace=True)
         return dataframe
