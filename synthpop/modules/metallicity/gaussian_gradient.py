@@ -84,7 +84,7 @@ class GaussianGradient(Metallicity):
                 outside = (self.lower > val) | (val > self.upper)
                 if not any(outside):
                     return val
-                val[outside] = np.random.normal(self.mean, self.std, sum(outside)) + self.radial_gradient * (radius - self.sun.r)
+                val[outside] = np.random.normal(self.mean, self.std, sum(outside)) + self.radial_gradient * (radius[outside] - self.sun.r)
         return val
 
     def average_metallicity(self) -> float:
