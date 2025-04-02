@@ -29,7 +29,6 @@ COL_NAMES = [
         "In_Final_Phase", "Dist", "l", "b",
         "vr_bc", "mul", "mub",  "x", "y", "z",  "U", "V", "W", "VR_LSR", "ExtinctionInMap"]
 
-
 # ------- Physical Constants --------
 c = 3e8  # m/s
 G = 6.674e-11  # m^3 kg^-1 s^-2
@@ -46,4 +45,3 @@ A_NGP_DEG = 192.8583
 D_NGP_DEG = 27.1283
 # Galactic longitude of the North Celestial Pole.
 L_NCP_DEG = 122.93192
-

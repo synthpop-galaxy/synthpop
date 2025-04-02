@@ -5,13 +5,10 @@ Post-processing subclass that saves the result from all locations in a combined 
 __all__ = ["CombinedCsv", ]
 __author__ = "J. Klüter"
 __date__ = "2023-01-23"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import os
 import pandas
 from ._post_processing import PostProcessing
-
 
 class CombinedCsv(PostProcessing):
     """

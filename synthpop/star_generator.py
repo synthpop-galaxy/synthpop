@@ -8,8 +8,6 @@ __all__ = ["StarGenerator"]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2023-03-31"
-__license__ = "GPLv3"
-__version__ = "0.2.0"
 
 from typing import Set, Tuple, Dict, Union
 import numpy as np
@@ -53,6 +51,26 @@ else:  # continue import when if synthpop is imported
 
 
 class StarGenerator:
+    """
+    Star generator object which is used by a Population to generate its member stars.
+    
+    Attributes
+    ----------
+    imf_module
+    age_module
+    met_module
+    evolution_module
+    kinematics_at_end : bool
+        if true, wait until all stars are generated to calculate kinematics
+    chunk_size : int
+        number of stars to generate per chunk to limit memory use
+    ref_band : str
+        primary photometric filter for catalog
+    position
+    max_mass : float
+        maximum allowed stellar mass
+    """
+
     def __init__(self, imf_module, age_module, met_module, evolution_module,
             glbl_params, position, max_mass, logger):
 

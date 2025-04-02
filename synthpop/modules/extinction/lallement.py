@@ -2,7 +2,13 @@
 Extinction map from Lallement et al 2019, for dust within 3 kpc based on
 Gaia & 2MASS observations.
 
-Paper DOI: 10.1051/0004-6361/201834695
+Extinction is given as 'A0', or total extinction at reference wavelength 5500 Angstroms.
+
+The user may determine whether to integrate over the map individually for each star, or to
+integrate for the average sightline and interpolate for distances. The user can also adjust
+the dr used for extinction integration.
+
+Publication DOI: 10.1051/0004-6361/201834695
 
 Data file FTP: https://cdsarc.cds.unistra.fr/ftp/J/A+A/625/A135/
 """
@@ -10,8 +16,6 @@ Data file FTP: https://cdsarc.cds.unistra.fr/ftp/J/A+A/625/A135/
 __all__ = ["Lallement", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-11-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import gzip
 import h5py
@@ -19,10 +23,10 @@ import shutil
 import numpy as np
 try: 
     from ._extinction import ExtinctionMap
-    from ... import constants as const
+    from .. import const
 except ImportError:
     from _extinction import ExtinctionMap
-    import constants as const
+    import const
 import time
 import os
 import requests
@@ -36,45 +40,28 @@ class Lallement(ExtinctionMap):
 
     Attributes
     ----------
-    extinction_map_name : str
-        name of the Extinction Map
-    l_deg : float
-        galactic longitude in degree set by "update_sight-line"
-    b_deg : float
-        galactic latitude in degree set by "update_sight-line"
-
-    ref_wavelength : float
-        reference wavelength for the extinction
-
-    A_or_E : float or function
-        total extinction or color excess, from the extinction map.
-        if it is a function it will be called
-
-    A_or_E_type : str
-        Output type from the extinction map.
-        If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E": A_or_E is handled as a color excess.
+    dr=0.001 : float
+        step size for extinction integration in kpc
+    per_sightline=True : boolean
+        calculate extinction integral once per sightline if True (faster)
+        calculate extinciton integral individually per star if False (slower)
 
     Methods
     -------
-
-    update_extinction_in_map():
-        placeholder for function that updates the total extinction or color excess
-        in self.extinction_map_name
-
-    get_map_properties():
-        returns the basic parameters of the extinction map
-        used for Communication between ExtinctionLaw and ExtinctionMap
-
+    lallement_ext_func(l_deg, b_deg, dist):
+        get extinction value in map for list of star locations
+    extinction_in_map(l_deg, b_deg, dist):
+        equivalent to lallement_ext_func
     """
 
-    def __init__(self, dr=0.001, **kwargs):
+    def __init__(self, dr=0.001, per_sightline=True, **kwargs):
         super().__init__(**kwargs)
         # name of the extinction map used
         self.extinction_map_name = "Lallement"
         # A0 = value at 5500 angstroms
         self.ref_wavelength = 0.55
         self.A_or_E_type = 'A0'
+        self.per_sightline = per_sightline # Calculate the extinction integral once per sightline, otherwise, individually for each star
         self.dr = dr #: step size for extinction integration in kpc
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/map3D_GAIAdr2_feb2019.h5'):
             print("Missing Lallement extinction table. Download and unpacking may take several minutes but only needs done once.")
@@ -131,28 +118,36 @@ class Lallement(ExtinctionMap):
         extinction_value: ndarray [mag]
             extinction at each star position defined as self.A_or_E_type
         '''
-        # Set up points along lines to integrate through
-        n_pts, dr_rem = np.divmod(dist,self.dr)
         dist_max = np.max(dist)
-        dist_pts = np.arange(0,dist_max,self.dr)[np.newaxis,:]
-        # Convert to nearest neighbor map array indices
-        l_rad, b_rad = l_deg[:,np.newaxis]*np.pi/180, b_deg[:,np.newaxis]*np.pi/180
-        xm_pts = np.maximum(np.minimum(np.around(dist_pts*np.cos(b_rad)*np.cos(l_rad)/self.grid_dr).astype(int), self.grid_x_mid), -self.grid_x_mid) + self.grid_x_mid
-        ym_pts = np.maximum(np.minimum(np.around(dist_pts*np.cos(b_rad)*np.sin(l_rad)/self.grid_dr).astype(int), self.grid_y_mid), -self.grid_y_mid) + self.grid_y_mid
-        zm_pts = np.maximum(np.minimum(np.around(dist_pts*np.sin(b_rad)/self.grid_dr).astype(int), self.grid_z_mid), -self.grid_z_mid) + self.grid_z_mid
-        #
+        # Take mean sightline for all stars, or do each star individually
+        if self.per_sightline:
+            dist_pts = np.arange(0,dist_max,self.dr)
+            # Convert to nearest neighbor map array indices
+            l_rad, b_rad = np.mean(l_deg)*np.pi/180, np.mean(b_deg)*np.pi/180
+        else:
+            dist_pts = np.arange(0,dist_max,self.dr)[np.newaxis,:]
+            # Convert to nearest neighbor map array indices
+            l_rad, b_rad = l_deg[:,np.newaxis]*np.pi/180, b_deg[:,np.newaxis]*np.pi/180
         xm_dists = dist_pts*np.cos(b_rad)*np.cos(l_rad)
         ym_dists = dist_pts*np.cos(b_rad)*np.sin(l_rad)
         zm_dists = dist_pts*np.sin(b_rad)
+        xm_pts = np.maximum(np.minimum(np.around(xm_dists/self.grid_dr).astype(int), self.grid_x_mid), -self.grid_x_mid) + self.grid_x_mid
+        ym_pts = np.maximum(np.minimum(np.around(ym_dists/self.grid_dr).astype(int), self.grid_y_mid), -self.grid_y_mid) + self.grid_y_mid
+        zm_pts = np.maximum(np.minimum(np.around(zm_dists/self.grid_dr).astype(int), self.grid_z_mid), -self.grid_z_mid) + self.grid_z_mid
         # Find where each line exits the grid
         within_grid = (np.abs(xm_dists)<self.x_extent) & \
                         (np.abs(ym_dists)<self.y_extent) & \
                         (np.abs(zm_dists)<self.z_extent)
-        # Get differential extinction along sightlines
+        # Get differential extinction along sightline
         dm_dr_pts = self.map_data[xm_pts,ym_pts,zm_pts]
         # Sum up dA/dr * dr for each point in foreground
-        # to get total extinction for each star
-        return np.sum(dm_dr_pts*self.dr*1.0e3*(dist_pts<(dist[:,np.newaxis])) * within_grid, axis=1)
+        # to get total extinction for sightline or each star
+        if self.per_sightline:
+            m_pts = np.cumsum(dm_dr_pts*self.dr*1e03*within_grid)
+            result = np.interp(dist, dist_pts, m_pts)
+        else:
+            result = np.sum(dm_dr_pts*self.dr*1.0e3*(dist_pts<(dist[:,np.newaxis])) * within_grid, axis=1)
+        return result
 
     def extinction_in_map(self,l_deg,b_deg,dist):
         """

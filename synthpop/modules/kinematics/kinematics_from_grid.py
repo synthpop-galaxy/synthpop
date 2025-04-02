@@ -1,9 +1,10 @@
-""" This model provides a Kinematic class using a grid """
+"""
+Kinematic module that interpolates values from a grid
+"""
+
 __all__ = ['KinematicsFromGrid']
 __author__ = "M.J. Huston"
 __date__ = "2024-04-17"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 from typing import Tuple
 from types import ModuleType
@@ -16,6 +17,8 @@ from scipy.interpolate import LinearNDInterpolator
 
 class KinematicsFromGrid(Kinematics):
     """
+    Grid interpolation kinematic module
+    
     Attributes
     ----------
     kinematics_func_name : str
@@ -25,26 +28,12 @@ class KinematicsFromGrid(Kinematics):
         required columns are: r, z, v_phi, sigma_phi, signa_r, sigma_z
         units must be kpc for distance, and km/s for velocity
         file must be whitespace delimited and have comments marked with '#'
-
-    Methods
-    -------
-    __init__(self, Population) : None
-        initialize the Kinematics class
-    draw_random_velocity(self, x: ndarray, y: ndarray, z: ndarray, mass: ndarray = None,
-                all_x: ndarray = None, all_y: ndarray = None, all_z: ndarray = None,
-                all_mass: ndarray = None
-                ) : ndarray [km/s]
-        returns a random velocity of a star in km/s.
-        Note: for coordinate values outside the grid, zeros are returned
-
-
     """
 
     def __init__(
             self, moment_file=None, sun=None,
             **kwargs
             ):
-        """ Init """
         super().__init__(**kwargs) # get sun, coord_trans and density_class
         # Open the file and create interpolators for rotational velocity and velocity dispersions
         dat = pd.read_csv(const.MOMENTS_DIR + '/' + moment_file,
@@ -80,12 +69,12 @@ class KinematicsFromGrid(Kinematics):
 
         # Convert to Galactocentric coordinates
         r, phi_rad, z = self.coord_trans.xyz_to_rphiz(x, y, z)
-        z = np.abs(z)
+        absz = np.abs(z)
 
-        sigma_r = self.interpolate_sigma_r(list(zip(r,z)))
-        sigma_phi = self.interpolate_sigma_phi(list(zip(r,z)))
-        sigma_z = self.interpolate_sigma_z(list(zip(r,z)))
-        v_rot = self.interpolate_v_phi(list(zip(r,z)))
+        sigma_r = self.interpolate_sigma_r(list(zip(r,absz)))
+        sigma_phi = self.interpolate_sigma_phi(list(zip(r,absz)))
+        sigma_z = self.interpolate_sigma_z(list(zip(r,absz)))
+        v_rot = self.interpolate_v_phi(list(zip(r,absz)))
 
         # Draw random deviations from circular velocity
         dv_r = np.random.normal(0, sigma_r)

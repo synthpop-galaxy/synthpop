@@ -1,20 +1,20 @@
-""" This file includes a Double Gaussian Metallicity Distribution """
+"""
+Metallicity class for a double Gaussian distribution, where the two
+distributions have a relative weight, upper and lower limits,
+and each Gaussian is given a mean and standard deviation.
+"""
 
 __all__ = ['DoubleGaussian']
 __author__ = "S. Johnson"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import math
 import numpy as np
 from ._metallicity import Metallicity
 
-
 class DoubleGaussian(Metallicity):
     """
-    DoubleGaussian subclass of _MetallicityBase class. This subclass is for Populations that
-    have metallicity characterized by two weighted Gaussian distributions. 
+    Double Gaussian metallicity class
 
     Attributes
     ----------

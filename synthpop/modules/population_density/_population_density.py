@@ -4,9 +4,7 @@ This file contains the base class for the population density distributions.
 __all__ = ["PopulationDensity", ]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
-__license__ = "GPLv3"
 __date__ = "2022-07-12"
-__version__ = '1.0.0'
 
 from abc import ABC, abstractmethod
 from types import ModuleType
@@ -14,7 +12,6 @@ from typing import Tuple
 import numpy as np
 
 from .. import const, default_sun
-
 
 class PopulationDensity(ABC):
     """

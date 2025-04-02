@@ -4,8 +4,6 @@ Post-processing to put catalog in the Gulls input format.
 
 __all__ = ["GullsPostProcessing", ]
 __author__ = "Farzaneh Zohrabi"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 from ._post_processing import PostProcessing
 import time

@@ -4,9 +4,7 @@ This file contains the base class for the Metallicity distributions.
 __all__ = ['Metallicity']
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
-__license__ = "GPLv3"
 __date__ = "2022-06-29"
-__version__ = '1.0.0'
 
 import numpy as np
 from abc import ABC, abstractmethod
@@ -17,7 +15,6 @@ class Metallicity(ABC):
     """
     Metallicity class for a Population class. he appropriate subclass is
     assigned based on the metallicity_func_kwargs through the "get_subclass" factory.
-
 
     Attributes
     ----------
@@ -39,6 +36,7 @@ class Metallicity(ABC):
         returns the average metallicity for the distribution in [Fe/H]
         (specified in the subclasses)
     """
+    
     def __init__(self,
             sun: ModuleType = None,
             coord_trans: ModuleType = None,

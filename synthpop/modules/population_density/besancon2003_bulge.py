@@ -1,36 +1,32 @@
 """
 Density Subclass to describe the bulge density
-from the Besancon model robin et al. 2003
+from the Besancon model (Robin et al., 2003)
 """
 __all__ = ["Besancon2003Bulge", ]
 __author__ = "M.J. Huston"
 __date__ = "2022-07-12"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from .. import const
 from ._population_density import PopulationDensity
 
-
 class Besancon2003Bulge(PopulationDensity):
+    """
+    Besancon model (Robin et al. 2003) bulge density
+
+    Attributes
+    ----------
+    x0, y0, z0 : float [kpc]
+        semi major axis of the bulge
+    Rc  : float [kpc]
+        critical Radius
+    n0 : float [stars/kpc^3]
+        central number density
+    bar_angle : float [°]
+        angle of the bar,
+    """
+        
     def __init__(self, x0=1.59, y0=0.424, z0=0.424, Rc=2.54, n0=1.37e10, bar_angle=11.1, **kwargs):
-
-        """
-        initializing
-
-        Parameters
-        ----------
-        x0, y0, z0 : float [kpc]
-            semi major axis of the bulge
-        Rc  : float [kpc]
-            critical Radius
-        n0 : float [stars/kpc^3]
-            central number density
-        bar_angle : float [°]
-            angle of the bar,
-
-        """
         super().__init__()
         self.population_density_name = "Besancon2003Bulge"
         self.density_unit = 'number'
@@ -41,10 +37,8 @@ class Besancon2003Bulge(PopulationDensity):
         self.n0 = n0
         self.bar_ang = bar_angle * np.pi / 180
 
-
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
-
         Estimates the density at the given position
 
         Parameters

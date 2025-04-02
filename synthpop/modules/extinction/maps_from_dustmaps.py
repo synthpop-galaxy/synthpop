@@ -1,39 +1,24 @@
-""" Extinction maps collected from the dustmap module
+"""
+Extinction maps collected from the dustmap module (Green, 2018)
 
-Using dustmaps allows to evaluate the dustmap for each star. 
-which allows accurate results for larger cones.
+Extinction form (i.e. reference wavelength / color excess) depends on
+map used.
+
+Publication DOI: 10.21105/joss.00695
 
 Before using this module you need to fatch the data once.
 See https://dustmaps.readthedocs.io/en/latest/installation.html
-
 """
 
 __all__ = ["MapsFromDustmaps",]
 __author__ = ["J. Klüter", "M.J. Huston"]
 __date__ = "2022-11-05"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import os
 import astropy.units as u
 import importlib
 
 import dustmaps
-#import dustmaps.bayestar
-#import dustmaps.bh
-#import dustmaps.chen2014
-#import dustmaps.csfd
-#import dustmaps.gaia_tge
-#import dustmaps.iphas
-#import dustmaps.leike_ensslin_2019
-#import dustmaps.leike2020
-#import dustmaps.edenhofer2023
-#import dustmaps.lenz2017
-#import dustmaps.marshall
-#import dustmaps.pg2010
-#import dustmaps.planck
-#import dustmaps.sfd
-#import dustmaps.decaps
 
 from astropy.coordinates import SkyCoord
 try:
@@ -157,6 +142,27 @@ MAPS_INFO = {
 _query_dict = {}
 
 class MapsFromDustmaps(ExtinctionMap):
+    """
+    Extinction maps from dustmaps
+
+    Attributes
+    ----------
+    dustmap_name : string
+        name of the map from dustmaps to use.
+        options are "bayestar", "bh", "chen2014", "csfd", "decaps",
+        "gaia_tge", "iphas", "leike_ensslin_2019", "leike_2020",
+        "edenhofer2023", "lenz2017", "marshall", "pg2010",
+        "planck_gnlc", "planck", "sfd"
+    dist_2d=0.0 : float
+        if a 2-d map is applied, this sets the distance [kpc] where
+        the extinction is applied as a single infinitely thin screen
+
+    Methods
+    -------
+    extinction_in_map(l_deg, b_deg, dist):
+        estimates extinction for a list of star positions
+    """
+
     def __init__(self, dustmap_name=None, dist_2d = 0.0, **kwargs):
         super().__init__(**kwargs)
         #pre loaded query functions to share between populations.

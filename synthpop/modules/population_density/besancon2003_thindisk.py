@@ -1,12 +1,11 @@
 """
-Subclass for Einasto density profiles
-As well as others, this is used for the Thin Disk in the Besancon Model by Robin et al. 2003.
+Einasto density profiles, used e.g. for the thin disk in the
+Besancon Model (Robin et al., 2003).
 """
+
 __all__ = ["Besancon2003Thindisk", ]
 __author__ = "J. Klüter"
 __date__ = "2022-07-12"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from .. import const
@@ -14,33 +13,35 @@ from ._population_density import PopulationDensity
 
 
 class Besancon2003Thindisk(PopulationDensity):
+    """
+    Einasto profile
+
+    Attributes
+    ----------
+    e : float
+        disc axis ratio
+    p0 : float [Msun/kpc**3]
+        density at the position of sun
+    hrp : float [kpc]
+        scale radius of the positive Gaussian
+    hrm : float [kpc]
+        hrm is the scale radius of the disk hole
+    offset : float
+        modification of the exponent
+    power :  float
+        modification of the exponent
+        for the Besancon thin disk:
+        offset = 0; power = 2 for age<=0.15 Gyr
+        offset = 0.5; power = 1 for age> 0.15 Gyr
+    disk_cutoff : float [kpc]
+        outer edge of the disc
+    flare_flag : bool
+        include flare
+    """
+
     def __init__(
             self, e, p0, hrp, hrm, offset=0, power=1, disk_cutoff=14, flare_flag=True, **kwargs
             ):
-        """
-
-        Parameters
-        ----------
-        e : float
-            disc axis ratio
-        p0 : float [Msun/kpc**3]
-            density at the position of sun
-        hrp : float [kpc]
-            scale radius of the positive Gaussian
-        hrm : float [kpc]
-            hrm is the scale radius of the disk hole
-        offset : float
-            modification of the exponent
-        power :  float
-            modification of the exponent
-            for the Besancon thin disk:
-            offset = 0; power = 2 for age<=0.15 Gyr
-            offset = 0.5; power = 1 for age> 0.15 Gyr
-        disk_cutoff : float [kpc]
-            outer edge of the disc
-        flare_flag : bool
-            include flare
-        """
         super().__init__(**kwargs)
         self.population_density_name = "Besancon2003Thindisk"
         self.density_unit = 'mass'

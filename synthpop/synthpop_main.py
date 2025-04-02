@@ -14,7 +14,7 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-01-09"
 __license__ = "GPLv3"
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 # Standard Imports
 import os

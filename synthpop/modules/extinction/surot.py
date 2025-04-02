@@ -1,12 +1,18 @@
 """
-Extinction maps from Surot et al 2020
+Extinction map from Surot et al 2020. This is a 2-d map which may be used
+as a screen at some distance, or pushed into 3-d following the scheme used
+in Galaxia (see galaxia_3d module / Sharma et al. 2011)
+
+Extinction is provided as total extinction A_Ks at 2.15 microns
+
+Publication DOI: 10.1051/0004-6361/202038346
+
+Data file FTP: https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz
 """
 
 __all__ = ["Surot", ]
 __author__ = "M.J. Huston"
 __date__ = "2023-06-26"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import pandas as pd
@@ -29,28 +35,16 @@ class Surot(ExtinctionMap):
     
     Attributes
     ----------
-    extinction_map_name : str
-        name of the Extinction Map
-    ref_wavelength : float
-        reference wavelength for the extinction
-    A_or_E_type : str
-        Output type from the extinction map.
-        If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E": A_or_E is handled as a color excess.
-    project_3d : booolean
-        True = project the map into 3-D with the Galaxia scheme, with the 
-            extinction scaled to the 2-D map value at dist_2d
-        False = model extinction as a flat screen at dist_2d
-    dist_2d : float
-        distance where the 2-D map value is the true value
+    project_3d=True : boolean
+        whether to project the map into 3-d or keep as 2-d
+    dist_2d=8.15 : float
+        for 3-d: distance where the map value is the true extinction value;
+        for 2-d: distance where extinction is applied as a screen
 
     Methods
     -------
-    extinction_in_map():
-        function that returns extinction at input positions
-    get_map_properties():
-        returns the basic parameters of the extinction map
-        used for Communication between ExtinctionLaw and ExtinctionMap
+    extinction_in_map(l_deg, b_deg, dist):
+        equivalent to lallement_ext_func
     """
 
     def __init__(self, project_3d=True, dist_2d=8.15, **kwargs):

@@ -1,11 +1,12 @@
-""" This file includes a Gaussian Metallicity Distribution """
+"""
+Metallicity class for a Gaussian distribution with a gradient,
+given a mean, standard deviation, gradient, and
+upper and lower limits.
+"""
 
 __all__ = ['GaussianGradient']
 __author__ = "J. Klüter"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
-
 
 import numpy as np
 from ._metallicity import Metallicity
@@ -18,17 +19,16 @@ class GaussianGradient(Metallicity):
 
     Attributes
     ----------
-    metallicity_func_name : str
-        A class attribute for the name of the _MetallicityBase subclass that this is.
     mean : float [[Fe/H]]
-        the mean metallicity in [Fe/H] for the Gaussian distribution
+        the mean metallicity in [Fe/H] for the Gaussian distribution at the Solar position
     std : float [[Fe/H]]
         the standard deviation of metallicity in [Fe/H] for the Gaussian distribution
-    lower_bound : float [[FE/H]] 
+    lower_bound : float [[Fe/H]]
         lower limit for truncation of the distribution
-    upper_bound : float [[FE/H]] 
+    upper_bound : float [[Fe/H]]
         upper limit for truncation of the distribution
-
+    radial_gradient : float [[Fe/H]/kpc]
+        metallicity gradient with Galactocentric radius
 
     Methods
     -------
@@ -67,25 +67,22 @@ class GaussianGradient(Metallicity):
         val : ndarray, float [Gyr]
             single metallicities or ndarray of N metallicities in [Fe/H]
         """
+        radius = np.sqrt(x**2+y**2)
+
         if N is None:
             # generate a single value
             while True:
-                val = np.random.normal(self.mean, self.std)
+                val = np.random.normal(self.mean, self.std) + self.radial_gradient * (radius - self.sun.r)
                 if self.lower < val < self.upper:
                     return val
-
         else:
             # generate multiple values
-            val = np.random.normal(self.mean, self.std, N)
+            val = np.random.normal(self.mean, self.std, N) + self.radial_gradient * (radius - self.sun.r)
             while True:
                 outside = (self.lower > val) | (val > self.upper)
                 if not any(outside):
                     return val
-                val[outside] = np.random.normal(self.mean, self.std, sum(outside))
-        radius = np.sqrt(x**2+y**2)
-        # add radial_gradient
-        val += self.radial_gradient * (radius - self.sun.r)
-
+                val[outside] = np.random.normal(self.mean, self.std, sum(outside)) + self.radial_gradient * (radius[outside] - self.sun.r)
         return val
 
     def average_metallicity(self) -> float:

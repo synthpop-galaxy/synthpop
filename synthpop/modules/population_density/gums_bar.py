@@ -1,13 +1,33 @@
-""" Density Subclass to describe the bulge density from gaia universe model"""
+"""
+Bar density model from the Gaia Universe Model Snapshot
+"""
+
 __all__ = ["GumsBar", ]
 __date__ = "2023-04-03"
+__author__ = "J. Klüter"
 
 import numpy as np
 import scipy.special
 from ._population_density import PopulationDensity
 
-
 class GumsBar(PopulationDensity):
+    """
+    Bar density model from the Gaia Universe Model Snapshot
+    
+    Attributes
+    ----------
+    n0 : float
+    x0 : float
+    y0 : float
+    z0 : float
+    sigma_cut_of : float
+    c_para : float
+    c_perp : float
+    dz_bone : float
+    x_bone : float
+    r_max : float
+    """
+
     def __init__(self, n0, x0, y0, z0, alpha, beta, gamma, c_perp, c_para,
             dz_bone=0, x_bone=0, r_max=np.inf, sigma_cut_of=1e-10, **kwargs):
         super().__init__(**kwargs)

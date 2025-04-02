@@ -2,11 +2,10 @@
 Postprocessing module to convert magnitude systems for any
 filters provided by MIST.
 """
+
 __all__ = ["ConvertMistMags", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-02-23"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import pandas
 import numpy as np
@@ -16,14 +15,16 @@ class ConvertMistMags(PostProcessing):
     """
     Postprocessing module to convert magnitude systems for any
     filters provided by MIST. Allowed systems are Vega, AB, and ST.
+    
+    Attributes
+    ----------
+    conversions : dict
+        dictionary defining which filters to convert to which systems;
+        format: {'NEW_SYSTEM':['FILTER1', 'FILTER2']}
     """
 
     def __init__(self, model, conversions, logger, **kwargs):
         super().__init__(model,logger, **kwargs)
-        
-        #: magnitude conversions:
-        #:    Dictionary defining which filters to convert to which systems
-        #:    format: {'NEW_SYSTEM':['FILTER1', 'FILTER2']}
         self.conversions = conversions
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
@@ -261,23 +262,24 @@ class ConvertMistMags(PostProcessing):
             
         for system_new in self.conversions.keys():
             for filt in self.conversions[system_new]:
-                idx = np.where(mist_filters==filt)[0][0]
-                system_old = mist_systems[idx]
-                if system_old==system_new:
-                    print(filt,'already in system',system_new)
-                elif system_old=='Vega' and system_new=='AB':
-                    dataframe[filt] = dataframe[filt] + mist_mag_vega_ab[idx]
-                elif system_old=='Vega' and system_new=='ST':
-                    dataframe[filt] = dataframe[filt] + mist_mag_vega_st[idx]
-                elif system_old=='AB' and system_new=='Vega':
-                    dataframe[filt] = dataframe[filt] - mist_mag_vega_ab[idx]
-                elif system_old=='ST' and system_new=='Vega':
-                    dataframe[filt] = dataframe[filt] - mist_mag_vega_st[idx]
-                elif system_old=='AB' and system_new=='ST':
-                    dataframe[filt] = dataframe[filt] - mist_mag_vega_ab[idx] + mist_mag_vega_st[idx]
-                elif system_old=='ST' and system_new=='AB':
-                    dataframe[filt] = dataframe[filt] - mist_mag_vega_st[idx] + mist_mag_vega_ab[idx]   
-                else:
-                    raise ValueError('Invalid magnitude system conversion: '+system_old+
-                        ' -> '+system_new)
+                if filt in dataframe.keys():
+                    idx = np.where(mist_filters==filt)[0][0]
+                    system_old = mist_systems[idx]
+                    if system_old==system_new:
+                        print(filt,'already in system',system_new)
+                    elif system_old=='Vega' and system_new=='AB':
+                        dataframe[filt] = dataframe[filt] + mist_mag_vega_ab[idx]
+                    elif system_old=='Vega' and system_new=='ST':
+                        dataframe[filt] = dataframe[filt] + mist_mag_vega_st[idx]
+                    elif system_old=='AB' and system_new=='Vega':
+                        dataframe[filt] = dataframe[filt] - mist_mag_vega_ab[idx]
+                    elif system_old=='ST' and system_new=='Vega':
+                        dataframe[filt] = dataframe[filt] - mist_mag_vega_st[idx]
+                    elif system_old=='AB' and system_new=='ST':
+                        dataframe[filt] = dataframe[filt] - mist_mag_vega_ab[idx] + mist_mag_vega_st[idx]
+                    elif system_old=='ST' and system_new=='AB':
+                        dataframe[filt] = dataframe[filt] - mist_mag_vega_st[idx] + mist_mag_vega_ab[idx]
+                    else:
+                        raise ValueError('Invalid magnitude system conversion: '+system_old+
+                            ' -> '+system_new)
         return dataframe

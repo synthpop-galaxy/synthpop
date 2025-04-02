@@ -1,18 +1,18 @@
-""" A single value age distribution """
+"""
+A single age distribution
 
+Stars are all assigned the set age
+"""
 __all__ = ["SingleValue", ]
 __author__ = "S. Johnson"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from ._age import Age
 
 class SingleValue(Age):
     """
-    SingleAge subclass of Age base class. This subclass is for Populations that
-    have age characterized by a single value. 
+    Single age generator
     """
 
     def __init__(self, age_value: float, **kwargs):

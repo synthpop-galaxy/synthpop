@@ -1,11 +1,13 @@
 """
 Post-processing to account for dim compact objects, based on PopSyCLE (Rose et al 2022).
+
+The module will take all objects that have evolved past the MIST grid, and assign them a final
+mass, removing their photometry. Optionally, one can just remove all of these objects instead.
 """
+
 __all__ = ["ProcessDarkCompactObjects", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-05-23"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import pandas
 import numpy as np
@@ -14,13 +16,18 @@ from ._post_processing import PostProcessing
 class ProcessDarkCompactObjects(PostProcessing):
     """
     Post-processing to account for dim compact objects, based on PopSyCLE (Rose et al 2022).
-    The module will take all objects that have evolved past the MIST grid, and assign them a final
-    mass, removing their photometry. Optionally, one can just remove all of these objects instead.
+
+    Attributes
+    ----------
+    remove=False : boolean
+        if true, remove dark compact objects from the catalog
+    ifmr_name='SukhboldN20' : string
+        selected initial-final mass relation;
+        options are 'SukhboldN20', 'Raithel18', 'Spera15'
     """
 
     def __init__(self, model, logger, remove=False, ifmr_name='SukhboldN20', **kwargs):
         super().__init__(model, logger, **kwargs)
-        #: true to remove all dark compact objects; false to keep
         self.remove = remove
         #: initial-final mass relation name to determine compact object masses.
         #: options are Raithel18, SukhboldN20, Spera15

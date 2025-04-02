@@ -1,43 +1,39 @@
 """
-Density Subclass to describe the bulge density
-Allows for all triaxial model formulations from
-Dwek 1995
+Bulge density models for all triaxial formulations
+from Dwek (1995).
 """
+
 __all__ = ["TriaxialBulge", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-02-15"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import scipy.special
 from .. import const
 from ._population_density import PopulationDensity
 
-
 class TriaxialBulge(PopulationDensity):
+    """
+    Bulge density models for all triaxial formulations from Dwek (1995).
+    
+    Attributes
+    ----------
+    triaxial_type : str
+        functional form as defined in Dwek (1995);
+        available options are 'G1', 'G2', 'G3', 'E1', 'E2', 'E3', 'P1', 'P2', 'P3'
+    density_unit: str
+        options: 'mass' or 'number'
+    x0, y0, z0 : float [kpc]
+        semi major axes of the bulge
+    rho0 : float [m_sun/kpc^3 or stars/kpc^3]
+        central density, unit determined by density_unit
+    Rmax : float [kpc]
+        cutoff radius for bulge
+    bar_angle : float [degrees]
+        angle of the bar
+    """
+
     def __init__(self, triaxial_type: str, density_unit: str, x0: float, y0: float, z0: float, rho0: float, Rmax=np.inf, bar_angle=29.4, **kwargs):
-
-        """
-        initializing
-
-        Parameters
-        ----------
-        triaxial_type : str
-            functional form as defined in Dwek 1995
-            available options are G1, G2, G3, E1, E2, E3, P1, P2, P3
-        density_unit: str
-            options: 'mass' or 'number'
-        x0, y0, z0 : float [kpc]
-                semi major axis of the bulge
-            rho0 : float [m_sun/kpc^3 or stars/kpc^3]
-                central density, unit determined by density_unit
-        Rmax : float [kpc]
-            cutoff radius for bulge 
-            bar_angle : float [°]
-                angle of the bar,
-
-        """
         super().__init__()
         self.population_density_name = "Bulge_Density"
         self.density_unit = density_unit

@@ -1,12 +1,16 @@
 """ 
 Extinction from Galaxia, based on Schlegel et al 1998 2-D map, with 3-D dust disk model
+
+Extinction is given as E(B-V).
+
+Publication DOI: 10.1088/0004-637X/730/1/3 (galaxia), 10.1086/305772 (2-d map)
+
+Data available at: http://bhs.astro.berkeley.edu/GalaxiaData.tar.gz
 """
 
 __all__ = ["Galaxia3D", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-04-18"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
@@ -22,29 +26,13 @@ class Galaxia3D(ExtinctionMap):
     """
     Extinction map used in Galaxia
 
-    Attributes
-    ----------
-    extinction_map_name : str
-        name of the Extinction Map
-
-    ref_wavelength[2] : float
-        reference wavelength(s) for the extinction or color excess
-
-    A_or_E_type : str
-        Output type from the extinction map.
-        If it starts with "A", A_or_E is handled  as a total extinction.
-        If it starts with "E", A_or_E is handled as a color excess.
-
     Methods
     -------
     extinction_in_map():
         gets extinction value from map for star positions
-    get_map_properties():
-        returns the basic parameters of the extinction map
-        used for Communication between ExtinctionLaw and ExtinctionMap
     """
 
-    def __init__(self, which_2d='Shlegel',**kwargs):
+    def __init__(self, **kwargs):
         # name of the extinction map used
         self.extinction_map_name = "Galaxia3D"
         self.ref_wavelength = 0.4361
@@ -63,10 +51,7 @@ class Galaxia3D(ExtinctionMap):
             map_data_3d, bounds_error=False, fill_value=None, method='nearest')
 
         # Set up 3d grid
-        if which_2d=='Shlegel':
-            mapfile_2d = ebf.read(f'{const.EXTINCTIONS_DIR}/Galaxia_Schlegel_4096.ebf')
-        elif which_2d=='Solar':
-            mapfile_2d = mapfile_3d
+        mapfile_2d = ebf.read(f'{const.EXTINCTIONS_DIR}/Galaxia_Schlegel_4096.ebf')
         map_grid_2d = mapfile_2d['exmap2d.xmms']
         map_data_2d = mapfile_2d['exmap2d.data']
         # set up interpolator

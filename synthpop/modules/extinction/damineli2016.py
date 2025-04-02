@@ -10,8 +10,6 @@ Source DOI: 10.1093/mnras/stw2122
 __all__ = ["Damineli2016", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-04-18"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 try:
@@ -21,7 +19,7 @@ except ImportError:
 
 class Damineli2016(ExtinctionLaw):
     """
-    Good for 0.4-4.8 microns.
+    Extinction law from Damineli et al. (2016)
     """
 
     def __init__(self, **kwargs):
@@ -32,13 +30,12 @@ class Damineli2016(ExtinctionLaw):
 
     def Alambda_Aref(self, eff_wavelength: float) -> float:
         """
-        Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
+        Given an effective wavelength lambda_eff, calculate the extinction ratio A_lambda/A_ref
 
         Parameters
         ----------
         eff_wavelength : float
-            Effective Wavelength of the filter for which the extinction should be determined.
-            in micrometer
+            wavelength to compute extinction ratio at [microns]
         """
 
         x = np.log10(2.159/eff_wavelength)

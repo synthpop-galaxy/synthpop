@@ -1,39 +1,34 @@
 """
-Subclass for a spheroidal  density distribution
-Within others this is used for the Halo in the Besancon Model Robin et al. 2003.
+Subclass for a spheroidal density distribution, used e.g.
+for the Halo in the Besancon Model (Robin et al., 2003).
 """
 __all__ = ["Besancon2003Halo", ]
 __author__ = "J. Klüter"
 __date__ = "2022-07-12"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
-
 
 import numpy as np
 from .. import const
 from ._population_density import PopulationDensity
 
-
 class Besancon2003Halo(PopulationDensity):
+    """
+    Spheroidal density profile:
+    the density is constant within a radius of ac, and then drops using a power law
+
+    Attributes
+    ----------
+    p0:
+        density at the position of the sun
+    e : float
+        Flattening ratio between x (or y) and z axis
+    ac: float
+        Radius until the spheroid has a constant density
+    power: float
+        Slope of the decay. Should be less than 0
+    """
+
     def __init__(self, p0=9.32e3, e=0.76, ac=0.5, power=-2.44, **kwargs):
-        """
-        Spheroidal density profile
-        e.g. To describe the Halo density in the Besancon model (robin et al. 2003)
-        the density is constant within a radius of ac, and then drops using a power law
-
-        Parameters
-        ----------
-        p0:
-            density at the position of the sun
-        e : float
-            Flattening ratio between x (or y) and z axis
-        ac: float
-            Radius until the spheroid has a constant density
-        power: float
-            Slope of the decay. Should be less than 0
-        """
         super().__init__(**kwargs)
-
         self.population_density_name = "Spheroid"
         self.density_unit = 'mass'
         self.p0 = p0
@@ -43,7 +38,6 @@ class Besancon2003Halo(PopulationDensity):
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
-
         Estimates the density at the given position
 
         Parameters

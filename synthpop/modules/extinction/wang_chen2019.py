@@ -11,8 +11,6 @@ Source: 2019ApJ...877..116W - Astrophys. J., 877, 116-116 (2019/June-1)
 __all__ = ['WangChen2019']
 __author__ = "J. Klüter, M.J. Huston"
 __date__ = "2022-11-05"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 try:
     from ._extinction import ExtinctionLaw
@@ -20,6 +18,10 @@ except ImportError:
     from _extinction import ExtinctionLaw
     
 class WangChen2019(ExtinctionLaw):
+    """
+    Extinction law from Wang & Chen (2019)
+    """
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.extinction_law_name = 'WangChen2019'
@@ -29,17 +31,12 @@ class WangChen2019(ExtinctionLaw):
 
     def Alambda_Aref(self, eff_wavelength: float) -> float:
         """
-        Given an effective wavelength lambda_eff, calculate the relative extinction A_lambda/A_V
+        Given an effective wavelength lambda_eff, calculate the extinction ratio A_lambda/A_ref
 
         Parameters
         ----------
         eff_wavelength : float
-            Effective Wavelength of the filter for which the extinction should be determined.
-            in micrometer
-
-        Returns
-        -------
-        Al_Aref : total extinction relative to the reference band extinction
+            wavelength to compute extinction ratio at [microns]
         """
 
         x = 1. / eff_wavelength

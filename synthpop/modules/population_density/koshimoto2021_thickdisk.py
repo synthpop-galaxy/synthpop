@@ -1,25 +1,34 @@
-""" Thick disk density profile from
-Koshimoto et al. 2021 """
+"""
+Thick disk density profile from Koshimoto et al. (2021)
+"""
+
 __all__ = ["Koshimoto2021Thickdisk", ]
 __author__ = "M.J. Huston"
 __date__ = "2022-02-02"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from .. import const
 from ._population_density import PopulationDensity
 
-
-# TODO is there a better name?
 class Koshimoto2021Thickdisk(PopulationDensity):
+    """
+    Thick disk density profile from Koshimoto et al. (2021)
+    
+    Attributes
+    ----------
+    R0 : float [kpc]
+        disk scale length
+    z0 : float [kpc]
+        disk scale height
+    rho0 : float [M_sum/kpc^3]
+        mass density at the solar position
+    Rbreak : float [kpc]
+        distance within which surface density is flat
+    """
+
     def __init__(
             self, rho0=(1.7e-3 + 4.4e-4) * 10 ** 9, z0=0.903, R0=2.200, Rbreak=5.300, **kwargs
             ):
-        """
-        set up the thick disc density profile
-        default values corresponds to the ThickDisk density profile in Koshimoto et al. 2021
-        """
         super().__init__(**kwargs)
         self.density_unit = 'mass'
         self.rho0 = rho0

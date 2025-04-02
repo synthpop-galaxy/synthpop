@@ -1,5 +1,6 @@
 *._*
-synthpop/demo/*/*
+synthpop/demo/*/*.png
+synthpop/demo/*/*.pdf
 synthpop/data/extinction
 synthpop/data/isochrones
 outputfiles
