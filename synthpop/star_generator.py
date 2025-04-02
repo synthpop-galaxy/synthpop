@@ -8,8 +8,6 @@ __all__ = ["StarGenerator"]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2023-03-31"
-__license__ = "GPLv3"
-__version__ = "0.2.0"
 
 from typing import Set, Tuple, Dict, Union
 import numpy as np

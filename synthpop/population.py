@@ -15,8 +15,6 @@ __all__ = ["Population"]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "0.1.0"
 
 # Standard Imports
 import time

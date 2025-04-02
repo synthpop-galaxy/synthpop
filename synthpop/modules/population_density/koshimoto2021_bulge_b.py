@@ -5,8 +5,6 @@ Bulge density profile from from unpublished work related to Koshimoto et al 2021
 __all__ = ["Koshimoto2021BulgeB", ]
 __author__ = "M.J. Huston"
 __date__ = "2022-02-02"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import scipy.special

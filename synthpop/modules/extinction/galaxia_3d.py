@@ -11,8 +11,6 @@ Data available at: http://bhs.astro.berkeley.edu/GalaxiaData.tar.gz
 __all__ = ["Galaxia3D", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-04-18"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator

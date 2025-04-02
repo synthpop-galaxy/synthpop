@@ -5,8 +5,6 @@ Metallicity module for a single value
 __all__ = ["SingleValue", ]
 __author__ = "S. Johnson"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from ._metallicity import Metallicity

@@ -7,8 +7,6 @@ upper and lower limits.
 __all__ = ['GaussianGradient']
 __author__ = "J. Klüter"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from ._metallicity import Metallicity
@@ -84,7 +82,7 @@ class GaussianGradient(Metallicity):
                 outside = (self.lower > val) | (val > self.upper)
                 if not any(outside):
                     return val
-                val[outside] = np.random.normal(self.mean, self.std, sum(outside)) + self.radial_gradient * (radius - self.sun.r)
+                val[outside] = np.random.normal(self.mean, self.std, sum(outside)) + self.radial_gradient * (radius[outside] - self.sun.r)
         return val
 
     def average_metallicity(self) -> float:

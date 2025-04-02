@@ -5,8 +5,6 @@ Filler class to use for no extinciton
 __all__ = ["NoExtinction", ]
 __author__ = "M.J. Huston"
 __date__ = "2025-02-31"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import pandas as pd

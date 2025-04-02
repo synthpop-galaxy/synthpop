@@ -8,8 +8,6 @@ mass, removing their photometry. Optionally, one can just remove all of these ob
 __all__ = ["ProcessDarkCompactObjects", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-05-23"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import pandas
 import numpy as np

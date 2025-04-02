@@ -5,8 +5,6 @@ Post-processing module to make additional cuts to the catalog.
 __all__ = ["AdditionalCuts", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-05-14"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import pandas
 import numpy as np

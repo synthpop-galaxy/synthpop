@@ -10,8 +10,6 @@ gradients, and asymmetric drift handling.
 __all__ = ['Besancon2003']
 __author__ = "M.J. Huston"
 __date__ = "2025-03-27"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import warnings
 import numpy as np

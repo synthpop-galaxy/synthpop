@@ -8,8 +8,6 @@ then uses that value. It can apply velocity dispersions in three dimensions.
 __all__ = ['VelocityGradient']
 __author__ = "M.J. Huston"
 __date__ = "2023-03-22"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 from typing import Tuple
 from types import ModuleType

@@ -16,8 +16,6 @@ Data file FTP: https://cdsarc.cds.unistra.fr/ftp/J/A+A/625/A135/
 __all__ = ["Lallement", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-11-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import gzip
 import h5py

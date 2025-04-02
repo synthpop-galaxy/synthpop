@@ -6,8 +6,6 @@ and other models.
 __all__ = ["GumsHalo", ]
 __author__ = "J. Klüter"
 __date__ = "2023-04-03"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 
 import numpy as np

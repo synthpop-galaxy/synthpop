@@ -9,8 +9,6 @@ __all__ = ["SynthpopLogger", "logger", "log_basic_statistics"]
 __author__ = "J. Klüter"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2023-02-10"
-__license__ = "GPLv3"
-__version__ = "1.1"
 
 import logging
 import shutil

@@ -7,8 +7,6 @@ and each Gaussian is given a mean and standard deviation.
 __all__ = ['DoubleGaussian']
 __author__ = "S. Johnson"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import math
 import numpy as np

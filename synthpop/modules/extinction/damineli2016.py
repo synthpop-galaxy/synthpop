@@ -10,8 +10,6 @@ Source DOI: 10.1093/mnras/stw2122
 __all__ = ["Damineli2016", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-04-18"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 try:

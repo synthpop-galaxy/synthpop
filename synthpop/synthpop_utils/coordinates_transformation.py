@@ -4,9 +4,7 @@ Functions for coordinates transformations following Bovy 2011.
 __all__ = ["get_trans_matrix", "getA", "lb_to_ad", "ad_to_lb", "dlb_to_xyz",
            "xyz_to_rphiz", "dlb_to_rphiz", "uvw_to_vrmulb", "uvw_to_vrmuad", "CoordTrans"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
-__license__ = "GPLv3"
 __date__ = "2022-07-08"
-__version__ = '1.0.0'
 
 from typing import Tuple, Any
 import numpy as np
