@@ -17,6 +17,7 @@ import argparse
 import numpy as np
 import pydantic
 
+if pydantic.__version__.startswith("2"):
     from pydantic import BaseModel, model_validator
 else:
     from .pydantic_1_compatibility import BaseModel, model_validator
