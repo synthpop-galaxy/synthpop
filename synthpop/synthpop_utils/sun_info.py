@@ -7,8 +7,6 @@ __all__ = ["SunInfo", "default_sun"]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-05-05"
-__license__ = "GPLv3"
-__version__ = "0.1.0"
 
 from functools import cached_property
 import numpy as np

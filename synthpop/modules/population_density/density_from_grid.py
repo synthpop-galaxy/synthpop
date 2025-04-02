@@ -5,8 +5,6 @@ Density function that interpolates over a grid
 __all__ = ["density_from_grid"]
 __author__ = "M.J. Huston"
 __date__ = "2024-04-17"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import pandas as pd

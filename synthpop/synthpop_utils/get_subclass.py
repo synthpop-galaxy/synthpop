@@ -4,7 +4,6 @@ This file included ths SubClass selection and importing process
 __all__ = ["get_subclass"]
 __author__ = "Jonas Klüter"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
-__version__ = "1.1"
 __date__ = "2023-03-01"
 
 import sys

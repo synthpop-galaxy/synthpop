@@ -5,8 +5,6 @@ Kinematic module that interpolates values from a grid
 __all__ = ['KinematicsFromGrid']
 __author__ = "M.J. Huston"
 __date__ = "2024-04-17"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 from typing import Tuple
 from types import ModuleType

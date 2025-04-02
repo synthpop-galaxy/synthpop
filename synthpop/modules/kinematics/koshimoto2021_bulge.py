@@ -5,8 +5,6 @@ Kinematic module for the based on the Koshimoto et al (2021) bulge kinematic mod
 __all__ = ['Koshimoto2021Bulge']
 __author__ = "M.J. Huston"
 __date__ = "2023-05-03"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from .. import const

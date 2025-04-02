@@ -5,8 +5,6 @@ Bar density model from the Gaia Universe Model Snapshot
 __all__ = ["GumsBar", ]
 __date__ = "2023-04-03"
 __author__ = "J. Klüter"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import scipy.special

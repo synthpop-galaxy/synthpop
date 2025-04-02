@@ -10,8 +10,6 @@ Source DOI: 10.1088/0004-637X/696/2/1407
 __all__ = ["Nishiyama2009"]
 __author__ = "J. Klüter, M.J. Huston"
 __date__ = "2022-11-05"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import matplotlib.pyplot as plt

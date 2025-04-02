@@ -7,8 +7,6 @@ __all__ = ["Parameters", "parser", "PopParams", "ModuleKwargs"]
 __author__ = ["J. Klüter", "M.J. Huston"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2023-03-02"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import os
 import json
@@ -19,7 +17,6 @@ import argparse
 import numpy as np
 import pydantic
 
-if pydantic.__version__.startswith("2"):
     from pydantic import BaseModel, model_validator
 else:
     from .pydantic_1_compatibility import BaseModel, model_validator

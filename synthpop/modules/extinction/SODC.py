@@ -12,8 +12,6 @@ Derived by Marz Newman
 __all__ = ['SODC']
 __author__ = "M. Newman, M.J. Huston, J. Klüter"
 __date__ = "2024-05-01"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 try:
     from ._extinction import ExtinctionLaw

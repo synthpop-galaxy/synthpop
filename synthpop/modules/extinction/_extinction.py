@@ -13,9 +13,7 @@ CombineExtinction: Factory that combines an ExtinctionLaw subclass
 __all__ = ["ExtinctionLaw", "ExtinctionMap", "CombineExtinction", "EXTINCTION_DIR"]
 __author__ = "J. Klüter, M.J. Huston, S. Johnson"
 __credits__ = ["J. Klüter", "M.J. Huston", "S. Johnson", "A. Aronica", "M. Penny"]
-__license__ = "GPLv3"
 __date__ = "2022-07-09"
-__version__ = "1.0.0"
 
 import os
 import inspect

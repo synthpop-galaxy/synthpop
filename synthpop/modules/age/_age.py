@@ -4,7 +4,6 @@ The base class for age distribution modules.
 
 __all__ = ["Age", ]
 __date__ = "2022-06-27"
-__version__ = '1.0.0'
 
 from abc import ABC, abstractmethod
 from types import ModuleType

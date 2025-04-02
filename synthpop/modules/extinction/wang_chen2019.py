@@ -11,8 +11,6 @@ Source: 2019ApJ...877..116W - Astrophys. J., 877, 116-116 (2019/June-1)
 __all__ = ['WangChen2019']
 __author__ = "J. Klüter, M.J. Huston"
 __date__ = "2022-11-05"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 try:
     from ._extinction import ExtinctionLaw

@@ -14,9 +14,7 @@ __all__ = [
     "ISOCHRONES_DIR", "EVOLUTION_DIR", "MUST_HAVE_COLUMNS"]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
-__license__ = "GPLv3"
 __date__ = "2022-06-29"
-__version__ = '1.0.0'
 
 import os
 from abc import ABC, abstractmethod

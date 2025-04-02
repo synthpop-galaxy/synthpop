@@ -15,8 +15,6 @@ Source DOI: 10.1088/0004-637X/699/2/1209
 __all__ = ["Fitzpatrick2009", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-06-01"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 try:
     from ._extinction import ExtinctionLaw

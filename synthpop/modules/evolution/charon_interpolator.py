@@ -12,8 +12,6 @@ See Klüter & Huston et al (SynthPop Paper I, in prep).
 __all__ = ["CharonInterpolator", ]
 __author__ = "J. Klüter"
 __date__ = "2023-03-01"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 from typing import Set
 import numpy as np

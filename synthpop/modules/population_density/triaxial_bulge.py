@@ -6,8 +6,6 @@ from Dwek (1995).
 __all__ = ["TriaxialBulge", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-02-15"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import scipy.special

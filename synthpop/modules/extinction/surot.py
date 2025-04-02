@@ -13,8 +13,6 @@ Data file FTP: https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/ejkmap.dat.gz
 __all__ = ["Surot", ]
 __author__ = "M.J. Huston"
 __date__ = "2023-06-26"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 import pandas as pd

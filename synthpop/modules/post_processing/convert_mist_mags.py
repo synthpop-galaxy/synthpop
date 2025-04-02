@@ -6,8 +6,6 @@ filters provided by MIST.
 __all__ = ["ConvertMistMags", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-02-23"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import pandas
 import numpy as np

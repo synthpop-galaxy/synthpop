@@ -10,8 +10,6 @@ GUMS documentation: https://gea.esac.esa.int/archive/documentation/GDR3/Data_pro
 __all__ = ["Gums", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-11-07"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import gzip
 import h5py

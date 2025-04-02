@@ -12,8 +12,6 @@ The mist_columns.json file provides a guide to which isochrone files include whi
 __all__ = ["MIST",]
 __author__ = "M.J. Huston"
 __date__ = "2023-03-01"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import glob
 import importlib

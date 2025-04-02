@@ -10,8 +10,6 @@ Source DOI: 10.1086/173713
 __all__ = ["ODonnell1994", ]
 __author__ = "M.J. Huston"
 __date__ = "2022-07-10"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 try:
     from ._extinction import ExtinctionLaw
