@@ -60,6 +60,8 @@ class Surot(ExtinctionMap):
 
         # Fetch extinction map data if needed
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
+            if not os.path.isdir(f'{const.EXTINCTIONS_DIR}'):
+                os.mkdir(f'{const.EXTINCTIONS_DIR}')
             if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]):
                 print("Missing Surot table. Download and formatting may take several minutes.")
                 print('Downloading map file from VizieR...')
