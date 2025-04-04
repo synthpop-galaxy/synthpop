@@ -71,7 +71,7 @@ class Surot(ExtinctionMap):
                     f.write(r.content)
                     print('Map retrieved.')
             else:
-                map_filename = f'{const.EXTINCTIONS_DIR}/surot_ejkmap.dat'
+                map_filename = f'{const.EXTINCTIONS_DIR}/surot_ejkmap.dat.gz'
             print('Reading table...')
             E_JKs_map_df = pd.read_fwf(map_filename,compression='gzip', header=None)
             print('Reformatting values...')
