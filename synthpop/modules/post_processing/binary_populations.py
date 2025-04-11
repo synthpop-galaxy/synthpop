@@ -128,7 +128,8 @@ class Binary(PostProcessing):
 				num_isnan = num_isnan+1
 				#print("NaN")
 			else:
-				bin_index = np.searchsorted(T_bins, temp)
+				######bin_index = np.searchsorted(T_bins, temp)
+				bin_index = min(np.searchsorted(T_bins, temp), len(probability_bins) - 1)
 				#print(bin_index)
 			#print(bin_index, len(spTyp_bins))
 			#probability = spTyp_bins[bin_index] if bin_index < len(spTyp_bins) else 0
@@ -324,7 +325,10 @@ class Binary(PostProcessing):
 			if row['Is_Binary'] == 1:
 				#print("Is_Binary=1")
 				# Insert a row with zeros below binary stars
-				new_row = pd.DataFrame([[0] * dataframe.shape[1]], columns=dataframe.columns)
+				#new_row = pd.DataFrame([[0] * dataframe.shape[1]], columns=dataframe.columns)
+				#new_row = pd.DataFrame([{col: 0 if dataframe[col].dtype != 'O' else '' for col in dataframe.columns}])
+				##new_row = pd.DataFrame([{col: 0 if pd.api.types.is_numeric_dtype(dataframe[col]) else '' for col in dataframe.columns}])
+				new_row = pd.DataFrame([{col: np.nan for col in dataframe.columns}])
 				new_row["Is_Binary"] = 2
 				#print(new_row)
 				new_rows.append(new_row)
@@ -338,15 +342,17 @@ class Binary(PostProcessing):
 
 				# Make a second dataframe with primary and secondary IDs
 				#prim_sec_data.append({'primary_ID': primary_id, 'secondary_ID': secondary_id})
-			added_companions_df = pd.concat(new_rows, ignore_index=True)
+			###added_companions_df = pd.concat(new_rows, ignore_index=True)
 			#print(added_companions_df)
 			#print(index)
+		added_companions_df = pd.concat(new_rows, ignore_index=True)
 		#print("complete")
 		####prim_sec_df = pd.DataFrame(prim_sec_data)
 		#prim_sec_df.to_csv('/home/marznewman/spdev-3/synthpop-dev/synthpop/outputfiles/binary_populations/prim_sec.csv', index=False)
 		#print(prim_sec_df)
 		####prim_sec_df.to_csv(self.model.parms.output_location+'/prim_sec.csv', index=False)
 		#print("complete")
+		print(added_companions_df.values)
 
 
 		# Add a new column with a six-digit identification number
@@ -402,6 +408,7 @@ class Binary(PostProcessing):
 		#print(default_config.keys() if isinstance(default_config, dict) else dir(default_config))
 		#max_mass = default_config.get('max_mass', None)
 		max_mass = self.model.parms.mass_lims['max_mass']
+		props = {}
 
 		######## Try to use the assign_subclass method ########
 		for pop_id, population in enumerate(populations):
@@ -415,6 +422,10 @@ class Binary(PostProcessing):
 			#print(position)
 			#print(position[:, 3:6])
 			#####extinction_in_map, extinction_dict = populations[pop_id].extinction.get_extinctions(position[:, 4], position[:, 5], position[:, 3])	# turns out I was actually already getting extinction_in_map from a line below
+			####### Try to use the get_evolved_props method ########
+			bands = list(evolution.bands)
+			# requested properties
+			props[pop_id] = set(const.REQ_ISO_PROPS + glbl_params.opt_iso_props + bands)
 			
 		
 		#print(extinction_in_map)
@@ -426,9 +437,9 @@ class Binary(PostProcessing):
 		#	)
 
 		####### Try to use the get_evolved_props method ########
-		bands = list(evolution.bands)
+		#######bands = list(evolution.bands)
 		# requested properties
-		props = set(const.REQ_ISO_PROPS + glbl_params.opt_iso_props + bands)
+		########props = set(const.REQ_ISO_PROPS + glbl_params.opt_iso_props + bands)
 
 		# Define a dataframe with just primaries
 #		primaries = added_companions_df[added_companions_df['Is_Binary']==1].reset_index(drop=False)
@@ -442,6 +453,46 @@ class Binary(PostProcessing):
 		prim_masses = primaries['iMass']
 		#print(prim_masses)
 		#print(min(prim_masses), max(prim_masses))
+		
+		'''
+		# Evolve the secondary stars using StarGenerator
+		secondary_indices = added_companions_df[added_companions_df['Is_Binary'] == 2].index
+
+		for i, sec_idx in enumerate(secondary_indices):
+			# Get pop_id for the corresponding primary
+			pop_id = primaries.loc[i, 'pop_id'] if 'pop_id' in primaries.columns else 0
+
+			# Get generator for this population
+			generator = populations[pop_id].generator
+
+			# Prepare mass, age, metallicity for this secondary star
+			prim_mass = primaries.loc[i, 'iMass']
+			companion = Binary()
+			mass_ratio = companion.draw_companion_m_ratio()
+			sec_mass = np.array(mass_ratio * prim_mass)	# Array of companion initial masses
+			sec_age = primaries.loc[i, 'age']
+			sec_feh = primaries.loc[i, 'Fe/H_initial']
+
+			# Evolve secondary
+			sec_star = generator.get_evolved_props(
+				np.array([sec_mass]), np.array([sec_age]), np.array([sec_feh]), props[pop_id]
+			)
+			print(sec_star)
+
+			# Assign results to the secondary row
+			for col in sec_star.columns:
+				if col in added_companions_df.columns:
+					added_companions_df.at[sec_idx, col] = sec_star[col].iloc[0]
+				else:
+					# Create new column if it doesn't exist
+					added_companions_df[col] = np.nan
+					added_companions_df.at[sec_idx, col] = sec_star[col].iloc[0]
+
+			# Fill in age and Fe/H just in case they’re missing
+			added_companions_df.at[sec_idx, 'age'] = sec_age
+			added_companions_df.at[sec_idx, 'Fe/H_initial'] = sec_feh
+			added_companions_df.at[sec_idx, 'iMass'] = sec_mass
+		'''
 
 		# Create an instance of the Binary subclass for each companion
 		companions = [Binary() for i in range(len(primaries))]
@@ -476,11 +527,11 @@ class Binary(PostProcessing):
 		# Run get_evolved_props
 		#ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = generator.get_evolved_props(masses, metallicities, ages, props)
 		for pop_id, population in enumerate(populations):
-			ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = populations[pop_id].generator.get_evolved_props(masses, metallicities, ages, props)
+			ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = populations[pop_id].generator.get_evolved_props(masses, metallicities, ages, props[pop_id])
 
 		# Run extract_properties
 		for pop_id, population in enumerate(populations):
-			m_evolved, props, user_props = populations[pop_id].extract_properties(masses, s_props, const.REQ_ISO_PROPS, glbl_params.opt_iso_props, inside_grid, not_evolved)
+			m_evolved, props[pop_id], user_props = populations[pop_id].extract_properties(masses, s_props, const.REQ_ISO_PROPS, glbl_params.opt_iso_props, inside_grid, not_evolved)
 
 		###### Define variables needed for running extract magnitudes ######
 		total_stars = len(companions)
@@ -559,6 +610,10 @@ class Binary(PostProcessing):
 
 		############ Add new properties to companion stars in dataframe ############
 		# Define a list of initial parameters
+		##for i, arr in enumerate([masses, ages, metallicities]):
+		##	print(f"Array {i} shape: {np.shape(arr)}")
+			#print(arr)
+
 		initial_parameters = np.column_stack([masses, ages, metallicities])
 
 		# collect all the column names
@@ -587,8 +642,21 @@ class Binary(PostProcessing):
 		#companion_properties_df = populations[pop_id].convert_to_dataframe(populations[pop_id].popid, initial_parameters, m_evolved, final_phase_flag, position[:, 3:6], proper_motions, position[:, 0:3], velocities, vr_lsr, extinction_in_map, props, user_props, mags, headers)
 		# I think I had the position arguments backwards before
 		companion_properties_df = []
+		#print(populations)
 		for pop_id, population in enumerate(populations):
-			df = populations[pop_id].convert_to_dataframe(populations[pop_id].popid, initial_parameters, m_evolved, final_phase_flag, position[:, 0:3], proper_motions, position[:, 3:6], velocities, vr_lsr, extinction_in_map, props, user_props, mags, headers)
+			#print("--------------------------")
+			#print(np.shape(population.popid))
+			#print(np.shape(initial_parameters))
+			#print(np.shape(m_evolved))
+			#print(np.shape(final_phase_flag))
+			#print(np.shape(position[:, 0:3]))
+			#print(np.shape(proper_motions))
+			#print(np.shape(position[:, 3:6]))
+			#print(np.shape(velocities))
+			#print(np.shape(vr_lsr))
+			#print(np.shape(extinction_in_map))
+			#print(np.shape(props[pop_id]))
+			df = populations[pop_id].convert_to_dataframe(populations[pop_id].popid, initial_parameters, m_evolved, final_phase_flag, position[:, 0:3], proper_motions, position[:, 3:6], velocities, vr_lsr, extinction_in_map, props[pop_id], user_props, mags, headers)
 			companion_properties_df.append(df)
 		
 		# Convert to pandas dataframe
@@ -695,5 +763,31 @@ class Binary(PostProcessing):
 		#print(added_companions_df["A_Ks"])
 		#print(companion_indices)
 
+		# Identify secondary (inserted) rows
+		#secondary_rows = added_companions_df['Is_Binary'] == 2
+		
+		# I have an empty column issue when I need to have these columns for future plotting
+		#for col in added_companions_df.columns:
+		#	if added_companions_df[col].dtype.kind in 'iufc' added_companions_df.loc[secondary_rows, col] = added_companions_df.loc[secondary_rows, col].fillna(0)
+		#	elif added_companions_df[col].dtype == object: added_companions_df.loc[secondary_rows, col] = added_companions_df.loc[secondary_rows, col].fillna('')
+		
+		'''
+		# Clean up any NaNs in secondary rows
+		secondary_rows = added_companions_df['Is_Binary'] == 2
+		for col in added_companions_df.columns:
+			if pd.api.types.is_numeric_dtype(added_companions_df[col]):
+				added_companions_df.loc[secondary_rows, col] = added_companions_df.loc[secondary_rows, col].fillna(0)
+			else:
+				added_companions_df.loc[secondary_rows, col] = added_companions_df.loc[secondary_rows, col].fillna('')
+		'''
+		#print(added_companions_df["Is_Binary"])
+		#print(added_companions_df)
+		
+		#print(added_companions_df.iloc[0])
+		print(added_companions_df.columns)
+		
+		# Convert pd dataframe to csv, keeping NaNs
+		added_companions_df.to_csv(self.model.parms.output_location+'/binary_test.csv', columns = added_companions_df.columns, na_rep = 'NaN', index = False)
+		
 		return added_companions_df
 
