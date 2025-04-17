@@ -217,7 +217,7 @@ class Besancon2003(Kinematics):
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", message="divide by zero encountered in multiply")
                 warnings.filterwarnings("ignore", message="invalid value encountered in multiply")
-                rho_component = np.nan_to_num(r / rho * drho_dr, nan=0.0, posinf=0.0, meginf=0.0)
+                rho_component = np.nan_to_num(r / rho * drho_dr, nan=0.0, posinf=0.0, neginf=0.0)
             V_ad = -sigma_u_r ** 2 / (2 * self.sun.v_lsr) * \
                 (rho_component
                  + 2 * r / sigma_u_r * dsigma_u_dr
