@@ -30,3 +30,4 @@ Contents
    output
    models
    modules
+   changelog
