@@ -7,7 +7,7 @@ It generates a star catalog following the specified model and configuration.
 
 Acknowledge Synthpop 
 --------------------
-If you think SynthPop was useful for you work, please cite `Klüter & Huston et al., 2025 <https://ui.adsabs.harvard.edu/abs/2024arXiv241118821K/abstract>`_. 
+If you think SynthPop was useful for you work, please cite `Klüter & Huston et al. (2025) <https://ui.adsabs.harvard.edu/abs/2024arXiv241118821K/abstract>`_. 
 Please also include citations for key components of the generation process. 
 These includes, but is not limited, to the used model, isochrone system and extinction map.
 
