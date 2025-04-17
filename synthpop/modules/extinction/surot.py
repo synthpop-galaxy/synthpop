@@ -179,8 +179,8 @@ class Surot(ExtinctionMap):
         # Calculate the scaling from the 3-d interpolator
         if self.project_3d:
             use_l = l_deg + (l_deg<0)*360
-            scale_value = self.grid_interpolator_3d(np.transpose([use_l,b_deg, dist]))[0]
-            scale_norm = self.grid_interpolator_3d(np.transpose([use_l,b_deg, self.dist_2d*np.ones(len(use_l))]))[0]
+            scale_value = self.grid_interpolator_3d(np.transpose([use_l,b_deg, dist]))
+            scale_norm = self.grid_interpolator_3d(np.transpose([use_l,b_deg, self.dist_2d*np.ones(len(use_l))]))
             scale_factor = scale_value/scale_norm
         else:
             scale_factor = (dist>self.dist_2d)
