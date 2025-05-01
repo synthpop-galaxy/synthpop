@@ -4,6 +4,13 @@ Changelog
 Version 1
 ---------
 
+v1.0.2
+^^^^^^
+Date: April 24, 2025
+
+* Bug fix: Besancon 2003 kinematic module typo in nan handling (catalog output not affected)
+* Configuration added: Finalized huston2025_defaults.synthpop_conf model configuration, to be presented by Huston et al. (in prep.)
+
 v1.0.1
 ^^^^^^
 Date: April 16, 2025
