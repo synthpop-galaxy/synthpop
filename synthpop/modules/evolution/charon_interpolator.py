@@ -19,6 +19,7 @@ import pandas as pd
 from scipy.interpolate import interp1d, RectBivariateSpline
 import matplotlib.pyplot as plt
 from ._evolution import EvolutionInterpolator
+pd.options.mode.copy_on_write = True
 
 class CharonInterpolator(EvolutionInterpolator):
     """
@@ -90,7 +91,7 @@ class CharonInterpolator(EvolutionInterpolator):
 
         # fill with alternative estimates for tip2 location
         where = np.isnan(tips.tip2) & (np.logical_not(np.isnan(tips.tip2_alt1)))
-        tips.tip2[where] = tips.tip2_alt1[where]
+        tips.loc[where, 'tip2'] = tips.tip2_alt1[where]
 
         tips['width'] = tips.tip2 - tips.tip1
         tt = tips.groupby('[Fe/H]_init')
@@ -98,11 +99,11 @@ class CharonInterpolator(EvolutionInterpolator):
         widths = tips.width[idx]
         where = np.isnan(tips.tip2) & (tips.tip1 < 1.1)
         #
-        tips.width[where] = widths[idx[tips[where].index.get_level_values(0)]]
-        tips.tip2[where] = tips.tip1[where] + tips.width[where]
+        tips.loc[where, 'width'] = widths[idx[tips[where].index.get_level_values(0)]].to_numpy()
+        tips.loc[where, 'tip2'] = tips.tip1[where] + tips.width[where]
 
         where = np.isnan(tips.tip2) & (np.logical_not(np.isnan(tips.tip2_alt2)))
-        tips.tip2[where] = tips.tip2_alt2[where]
+        tips.loc[where, 'tip2'] = tips.tip2_alt2[where]
 
         # convert table to a 2d regular grid
         mets = tips.index.levels[0]
