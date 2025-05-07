@@ -16,7 +16,7 @@ columns = ["EEP","UBVRIplus", "log10_isochrone_age_yr", "initial_mass", "[Fe/H]_
 
 mist = MIST(columns)
 
-aa = mist.read_csv("pop5.cmd")
+aa = mist.read_csv("mist_web_interpolator/pop5.cmd")
 #aa = mist.read_csv("MIST_iso_63fea4a6b8c42.iso.cmd")
 
 #isochrones = pd.concat(mist.isochrones.values)

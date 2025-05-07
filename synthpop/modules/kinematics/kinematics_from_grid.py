@@ -37,7 +37,7 @@ class KinematicsFromGrid(Kinematics):
         super().__init__(**kwargs) # get sun, coord_trans and density_class
         # Open the file and create interpolators for rotational velocity and velocity dispersions
         dat = pd.read_csv(const.MOMENTS_DIR + '/' + moment_file,
-            delim_whitespace=True, comment='#')
+            sep='\s+', comment='#')
         self.interpolate_v_phi = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
             dat['v_phi'], fill_value=0.0, rescale=False)
         self.interpolate_sigma_phi = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
