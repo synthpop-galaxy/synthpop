@@ -81,6 +81,7 @@ class StarGenerator:
             self.evolution_module = evolution_module
         else:
             self.evolution_module = (evolution_module,)
+        self.include_kinematics = glbl_params.include_kinematics
         self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
         self.ref_band = glbl_params.maglim[0]
