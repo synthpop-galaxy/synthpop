@@ -1,5 +1,6 @@
 """
 An interpolator for the isochrone grid
+
 Uses a 2nd order Lagrange polynomial over mass (linear at grid edges)
 and linear over age and metallicity
 """

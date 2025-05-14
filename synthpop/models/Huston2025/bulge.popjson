@@ -1,0 +1,51 @@
+{
+    "name" : "bulge",
+
+    "imf_func_kwargs" : {
+        "name" : "kroupa"
+    },
+    
+    "age_func_kwargs" : {
+        "name" : "single_value",
+        "#comment" : "units in gigayears",
+        "age_value" : 10.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "#comment":"From Gonzalez, O.A.; et al. 2015",
+        "name" : "double_gaussian",
+        "weight" : 0.323,
+        "mean1" : -0.31,
+        "std1" : 0.31,
+        "mean2" : 0.26,
+        "std2" : 0.20
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "Koshimoto2021Bulge",
+        "v0_stream" : 50.292048949082,
+        "y0_stream" : 341.648699391874,
+        "C_par_r" : 1.02368618322272,
+        "C_perp_r" : 4.77951649927811,
+        "C_par_z" : 1.03692771363475,
+        "C_perp_z" : 4.38840062081552,
+        "h0_r" : [0.860976289672363,8.44373519664828,0.923663895777159],
+        "h0_z" : [0.599661429898468,3.49164867887895,2.49084715817117],
+        "sigma_i0" : [59.862204994578, 74.3069119713283, 70.358527922527],
+        "sigma_i1" : [159.378160538468, 78.1318838272984, 80.8867483955919],
+        "omega_p" : 50.357033142405
+    }, 
+
+    "population_density_kwargs" : {
+        "name" : "triaxial_bulge",
+	"triaxial_type" : "E3",
+	"density_unit" : "mass",
+	"x0" : 0.67,
+	"y0" : 0.29,
+	"z0" : 0.27,
+	"rho0" : 1.32585e10,
+	"bar_angle" : 29.4
+    }
+}
+
+

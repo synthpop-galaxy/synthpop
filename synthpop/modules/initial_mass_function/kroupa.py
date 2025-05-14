@@ -1,4 +1,12 @@
-# -*- coding: utf-8 -*-
+"""
+Initial mass function from Kroupa (2001):
+    
+    For 0.01 < M ≤ 0.08:    ξ(M) ∝ M^(-0.3)
+    
+    For 0.08 < M ≤ 0.50:    ξ(M) ∝ M^(-1.3)
+    
+    For 0.50 < M:           ξ(M) ∝ M^(-2.3)
+"""
 
 __all__ = ["Kroupa", ]
 __date__ = "2022-06-28"
@@ -6,15 +14,9 @@ __date__ = "2022-06-28"
 import numpy as np
 from ._initial_mass_function import InitialMassFunction
 
-
 class Kroupa(InitialMassFunction):
     """
-    Initial mass function from Kroupa 2001
-    This is
-        For 0.01 < M ≤ 0.08:    ξ(M) ∝ M^(-0.3)
-        For 0.08 < M ≤ 0.50:    ξ(M) ∝ M^(-1.3)
-        For 0.50 < M:           ξ(M) ∝ M^(-2.3)
-
+    IMF from Kroupa (2001)
     """
 
     def __init__(self, min_mass=None, max_mass=None, **kwargs):

@@ -1,9 +1,10 @@
-""" This model provides a Kinematic class using the Koshimoto+21 disk kinematic model """
+"""
+Kinematic module for the based on the Koshimoto et al (2021) disk kinematic model
+"""
+
 __all__ = ['Koshimoto2021Disk']
 __author__ = "M.J. Huston"
 __date__ = "2023-05-03"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 from typing import Tuple
 from types import ModuleType
@@ -14,26 +15,7 @@ from scipy.special import gamma, gammasgn, gammaln
 
 class Koshimoto2021Disk(Kinematics):
     """
-    The Kinematics base class for a Population class. The appropriate subclass is
-    assigned based on the kinematics_func_kwargs through the "get_subclass" factory.
-
-    Attributes
-    ----------
-    kinematics_func_name : str
-        name of the Kinematics Class
-
-
-    Methods
-    -------
-    __init__(self, Population) : None
-        initialize the Kinematics class
-    draw_random_velocity(self, x: ndarray, y: ndarray, z: ndarray, mass: ndarray = None,
-                all_x: ndarray = None, all_y: ndarray = None, all_z: ndarray = None,
-                all_mass: ndarray = None
-                ) : ndarray [km/s]
-        returns a random velocity of a star in km/s.
-
-
+    Kinematic module for the disk based on Koshimoto et al. (2021)
     """
 
     def __init__(
@@ -44,7 +26,6 @@ class Koshimoto2021Disk(Kinematics):
             pop_age,
             **kwargs
             ):
-        """ Init """
         super().__init__(**kwargs)
         self.kinematics_func_name = 'Koshimoto2021Disk'
         self.sigma_r_sun = sigma_r_sun
@@ -54,28 +35,10 @@ class Koshimoto2021Disk(Kinematics):
         self.R_sigma_r = R_sigma_r
         self.R_sigma_z = R_sigma_z
         self.pop_age = pop_age
-
-    def draw_random_velocity(
-            self, x: np.ndarray or float, y: np.ndarray or float,
-            z: np.ndarray or float, **kwargs
-            ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Generate a random velocities u,v,w  by using a velocity dispersion
-
-        Parameters
-        ----------
-        x, y, z : nparray, float [kpc]
-            galactocentric coordinates
-
-        Returns
-        -------
-        u, v, w : ndarray [km/s]
-            velocity in galactocentric x,y,and z direction.
-        """
         
         # Rotation curve from Bland-Hawthorn & Gerhard (2016)
         # [[galactocentric distance (kpc)],[rotational velocity (km/s)]]
-        rcdat = np.array([[0.0000000e+00, 9.4590000e-02, 1.6216000e-01, 3.5580000e-01,
+        self.rot_curve = np.array([[0.0000000e+00, 9.4590000e-02, 1.6216000e-01, 3.5580000e-01,
         3.8468000e-01, 4.1356000e-01, 4.4244000e-01, 4.7854000e-01,
         5.1464000e-01, 5.5074000e-01, 5.9407000e-01, 6.3739000e-01,
         6.8071000e-01, 7.2403000e-01, 7.7457000e-01, 8.3233000e-01,
@@ -104,6 +67,24 @@ class Koshimoto2021Disk(Kinematics):
         2.3266982e+02, 2.3166169e+02, 2.3149119e+02, 2.1587470e+02,
         2.1248535e+02, 2.1019041e+02]])
 
+    def draw_random_velocity(
+            self, x: np.ndarray or float, y: np.ndarray or float,
+            z: np.ndarray or float, **kwargs
+            ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Generate a random velocities u,v,w  by using a velocity dispersion
+
+        Parameters
+        ----------
+        x, y, z : nparray, float [kpc]
+            galactocentric coordinates
+
+        Returns
+        -------
+        u, v, w : ndarray [km/s]
+            velocity in galactocentric x,y,and z direction.
+        """
+
         # Convert to Galactocentric coordinates
         r, phi_rad, z = self.coord_trans.xyz_to_rphiz(x, y, z)
         # Set parameters from Koshimoto+21
@@ -118,9 +99,9 @@ class Koshimoto2021Disk(Kinematics):
                   * np.exp(-(r-self.sun.r)/self.R_sigma_z)
         
         # Set up R_g array
-        R_g_arr = rcdat[0]
+        R_g_arr = self.rot_curve[0]
         R_g_arr[0] = 1.0e-3
-        v_c_arr = rcdat[1]
+        v_c_arr = self.rot_curve[1]
         v_c_arr[0] = R_g_arr[0]/R_g_arr[1]*v_c_arr[1]
         # Get a array: r-direction velocity dispersion to circular velocity ratio at R_g positions
         a_arr = (self.sigma_r_sun * ((self.pop_age+T_min)/(T_max+T_min))**self.beta_r
@@ -154,7 +135,7 @@ class Koshimoto2021Disk(Kinematics):
         
         # Calculate velocities in r, phi, z frame
         v_r = np.random.normal(0, sigma_r)
-        v_phi = np.interp(R_g, rcdat[0],rcdat[1]) * R_g/r / (1 + 0.0374*np.abs(z)**1.34)
+        v_phi = np.interp(R_g, self.rot_curve[0],self.rot_curve[1]) * R_g/r / (1 + 0.0374*np.abs(z)**1.34)
         v_z = np.random.normal(0, sigma_z)
 
         # Rotate into galactic frame

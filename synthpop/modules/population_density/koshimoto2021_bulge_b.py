@@ -1,23 +1,34 @@
-""" Bulge density distribution for the Bessell function model from unpublished work related to Koshimoto et al 2021 """
-__date__ = "2021-10-18"
+"""
+Bulge density profile from from unpublished work related to Koshimoto et al 2021
+"""
+
 __all__ = ["Koshimoto2021BulgeB", ]
+__author__ = "M.J. Huston"
+__date__ = "2022-02-02"
 
 import numpy as np
 import scipy.special
 from ._population_density import PopulationDensity
 
-
 class Koshimoto2021BulgeB(PopulationDensity):
+    """
+    Bessell function bulge density distributions from Koshimoto for
+    (private communication, unpublished work related to Koshimoto+21)
+    
+    Attributes
+    ----------
+    x0 : float
+    y0 : float
+    z0 : float
+    C_par : float
+    C_perp : float
+    bar_ang : float
+    """
+        
     def __init__(
             self, x0=0.849918751795326, y0=0.339420928043361, z0=0.286256780667543, n0=7.53034e9,
             C_perp=1.28032639342739, C_par=3.24013809549932, bar_angle=27, **kwargs
             ):
-        """
-        Bulge density distributions from Koshimoto
-        (private communication, unpublished work related to Koshimoto+21)
-
-
-        """
         super().__init__(**kwargs)
         self.x0 = x0
         self.y0 = y0

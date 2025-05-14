@@ -8,28 +8,22 @@ ExtinctionMap: Parent class for extinction maps
 
 CombineExtinction: Factory that combines an ExtinctionLaw subclass
                    and an ExtinctionMap subclass into one Extinction Class
-
-EXTINCTION_DIR: Path to the extinction directory
 """
 
 __all__ = ["ExtinctionLaw", "ExtinctionMap", "CombineExtinction", "EXTINCTION_DIR"]
 __author__ = "J. Klüter, M.J. Huston, S. Johnson"
 __credits__ = ["J. Klüter", "M.J. Huston", "S. Johnson", "A. Aronica", "M. Penny"]
-__license__ = "GPLv3"
 __date__ = "2022-07-09"
-__version__ = "1.0.0"
 
 import os
 import inspect
 from typing import Callable, Tuple, List, Dict
 from types import ModuleType
-
+from .. import const
 from abc import ABC, abstractmethod
 import numpy as np
 
-# Path to the extinction directory.
-EXTINCTION_DIR = os.path.dirname(__file__)
-
+EXTINCTION_DIR = const.EXTINCTIONS_DIR
 
 class ExtinctionLaw(ABC):
     """
@@ -220,31 +214,8 @@ class ExtinctionMap(ABC):
         self.ref_wavelength2 = None
         self.A_or_E_type = 'for example A_V or E(B-V)'
 
-        # placeholder for the coordinates of the sight-line
-        # set by update_line_of_sight
-        self.l_deg = None
-        self.b_deg = None
-
-        # current extinction, set by update_extinction_in_map
-        # can also be a function
-        self.extinction_in_map = None
-
-    def update_line_of_sight(self, l_deg: float, b_deg: float):
-        """
-        Set a new sight-line
-        Parameters
-        ----------
-        l_deg : float [degree]
-            galactic longitude should work with both ranges  [0-360) and (-180, 180]
-        b_deg : float [degree]
-            galactic latitude
-
-        """
-        self.l_deg = l_deg
-        self.b_deg = b_deg
-
     @abstractmethod
-    def update_extinction_in_map(self, radius: float):
+    def extinction_in_map(self, radius: float):
         """
         Estimates the extinction for the current sight-line and radial distance
         store the result into self.extinction_in_map.
@@ -354,10 +325,8 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw) \
                 extinction for each band
             """
 
-            if callable(self.extinction_in_map):
-                ext_in_map = self.extinction_in_map(l_deg, b_deg, distance_kpc)
-            else:
-                ext_in_map = self.extinction_in_map
+            ext_in_map = self.extinction_in_map(l_deg, b_deg, distance_kpc)
+            
             if self.multi_laws:  # multiple extinction laws.
                 extinction_dict = {
                     band: self.ext_law_dict[self.ext_law_index[band]].extinction_at_lambda(

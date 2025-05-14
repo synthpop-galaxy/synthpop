@@ -1,0 +1,42 @@
+{
+    "name" : "thin_disk_7",
+
+    "imf_func_kwargs" : {
+        "name" : "kroupa"
+    },
+    
+    "age_func_kwargs" : {
+        "name" : "uniform",
+        "#comment" : "units in gigayears",
+        "low_bound" : 7.0,
+        "high_bound" : 10.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "gaussian",
+        "mean" : -0.37,
+        "std" : 0.20
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "Koshimoto2021Disk",
+        "sigma_r_sun" : 42.0,
+        "sigma_z_sun" : 24.4,
+        "beta_r" : 0.32,
+        "beta_z" : 0.77,
+        "R_sigma_r" : 14.3,
+        "R_sigma_z" : 5.9,
+        "pop_age" : 8.5
+    }, 
+
+    "population_density_kwargs" : {
+        "name" : "Koshimoto2021Thindisk",
+        "#comment" : "rho0 in Msun/kpc**3 (10**9)",
+        "rho0" : 1.5e7,
+        "R0" : 2.6,
+        "z0" : 0.445,
+        "z45" : 0.267,
+        "Rbreak" : 5.3
+    }
+}
+

@@ -1,22 +1,24 @@
+"""
+Kinematic module for the based on the Koshimoto et al (2021) bulge kinematic model
+"""
+
 __all__ = ['Koshimoto2021Bulge']
+__author__ = "M.J. Huston"
+__date__ = "2023-05-03"
 
 import numpy as np
 from .. import const
 from ._kinematics import Kinematics
 
-
 class Koshimoto2021Bulge(Kinematics):
     """
+    Kinematic module for the bulge based on Koshimoto et al. (2021)
     """
 
     def __init__(
             self, v0_stream, y0_stream, C_par_r, C_perp_r, C_par_z, C_perp_z, h0_r, h0_z, sigma_i0,
             sigma_i1, omega_p, bar_angle=27, **kwargs
-
             ):
-        """
-        Init
-        """
         super().__init__(**kwargs) # initialises self.coord_transform & self.density_class
         self.v0_stream = v0_stream  # km/s
         self.y0_stream = y0_stream  # pc
@@ -39,7 +41,6 @@ class Koshimoto2021Bulge(Kinematics):
         else:
             x0, y0, z0 = self.h0_z
             C_par, C_perp = self.C_par_z, self.C_perp_z
-        # print((xp/x0)**C_perp, (yp/y0)**C_perp, (C_par/C_perp), (zp/z0)**C_par, (1/C_par))
         r_s = (((xp / x0) ** C_perp + (yp / y0) ** C_perp) ** (C_par / C_perp) + (
                     zp / z0) ** C_par) ** (1 / C_par)
         f_E = np.exp(-r_s)
@@ -73,7 +74,6 @@ class Koshimoto2021Bulge(Kinematics):
         xp = x * np.cos(alpha) + y * np.sin(alpha)
         yp = -x * np.sin(alpha) + y * np.cos(alpha)
         zp = z
-        # print(xp,yp,zp)
         # Stream velocityy
         v_x_stream = self.v0_stream * (1 - np.exp(-(R / self.y0_stream))) * (-1) ** (
                     1 - (yp > 0).astype(int))

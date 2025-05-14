@@ -1,18 +1,19 @@
-""" A uniform age distribution """
+"""
+A uniform age distribution
+
+Stars are assigned uniformly drawn random ages between the bounds
+"""
 
 __all__ = ["Uniform", ]
 __author__ = "S. Johnson"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from ._age import Age
 
 class Uniform(Age):
     """
-    Uniform subclass of Age base class. This subclass is for Populations that
-    have ages characterized by a uniform distribution between two bounds. 
+    Uniform age distribution generator
     """
 
     def __init__(self, low_bound: float, high_bound: float, **kwargs):

@@ -1,13 +1,17 @@
 """
 This module provides the loading and handling of MIST isochrones.
-It automatically downloads the isochrone form the Online MIST service.
-Where each magnitude can be found is defined in the mist_columns.json file.
+It automatically downloads the isochrone form the online MIST service.
+
+MIST documentation: https://waps.cfa.harvard.edu/MIST/
+
+MIST papers: Dotter (2016), Choi et al. (2016);
+DOIs: 10.3847/0067-0049/222/1/8, 10.3847/0004-637X/823/2/102
+
+The mist_columns.json file provides a guide to which isochrone files include which columns/filters.
 """
 __all__ = ["MIST",]
 __author__ = "M.J. Huston"
 __date__ = "2023-03-01"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import glob
 import importlib

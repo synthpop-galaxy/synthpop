@@ -1,16 +1,17 @@
 """
 An interpolator for the isochrone grid
-Within each isochrone, it uses a cubic interpolation, between adjacent grid-points.
+
+Within each isochrone, it uses a cubic interpolation between adjacent grid-points.
+
 It aligns the phases between adjacent ages
-and performs a linear interpolation in metallicity and age
-see Klüter (et al. in prep)
+and performs a linear interpolation in metallicity and age.
+
+See Klüter & Huston et al (SynthPop Paper I, in prep).
 """
 
 __all__ = ["CharonInterpolator", ]
 __author__ = "J. Klüter"
 __date__ = "2023-03-01"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 from typing import Set
 import numpy as np
@@ -18,7 +19,6 @@ import pandas as pd
 from scipy.interpolate import interp1d, RectBivariateSpline
 import matplotlib.pyplot as plt
 from ._evolution import EvolutionInterpolator
-
 
 class CharonInterpolator(EvolutionInterpolator):
     """
@@ -90,7 +90,7 @@ class CharonInterpolator(EvolutionInterpolator):
 
         # fill with alternative estimates for tip2 location
         where = np.isnan(tips.tip2) & (np.logical_not(np.isnan(tips.tip2_alt1)))
-        tips.tip2[where] = tips.tip2_alt1[where]
+        tips.loc[where, 'tip2'] = tips.tip2_alt1[where]
 
         tips['width'] = tips.tip2 - tips.tip1
         tt = tips.groupby('[Fe/H]_init')
@@ -98,11 +98,11 @@ class CharonInterpolator(EvolutionInterpolator):
         widths = tips.width[idx]
         where = np.isnan(tips.tip2) & (tips.tip1 < 1.1)
         #
-        tips.width[where] = widths[idx[tips[where].index.get_level_values(0)]]
-        tips.tip2[where] = tips.tip1[where] + tips.width[where]
+        tips.loc[where, 'width'] = widths[idx[tips[where].index.get_level_values(0)]].to_numpy()
+        tips.loc[where, 'tip2'] = tips.tip1[where] + tips.width[where]
 
         where = np.isnan(tips.tip2) & (np.logical_not(np.isnan(tips.tip2_alt2)))
-        tips.tip2[where] = tips.tip2_alt2[where]
+        tips.loc[where, 'tip2'] = tips.tip2_alt2[where]
 
         # convert table to a 2d regular grid
         mets = tips.index.levels[0]
@@ -369,11 +369,8 @@ class CharonInterpolator(EvolutionInterpolator):
         log_age_grid: ndarray
             numpy array of iso_ages as defined in the isochrones,
 
-
         props : Set
             list of properties which should be derived from the interpolation
-
-
 
         Returns
         -------
@@ -621,8 +618,6 @@ class CharonInterpolator(EvolutionInterpolator):
                     | (max_mass_2 < mass2)
                     | (max_mass_3 < mass3)
                     | (max_mass_4 < mass4))
-
-
 
         output = {item: result[..., i] for i, item in enumerate(props_no_charon)}
         output.update({item: result_charon[..., i] for i, item in enumerate(props_with_charon)})

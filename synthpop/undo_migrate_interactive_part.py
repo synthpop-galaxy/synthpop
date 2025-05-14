@@ -10,8 +10,6 @@ __all__ = ["undo_migrate"]
 __author__ = ["M.J. Huston", "J. Klüter"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2024-10-23"
-__license__ = "GPLv3"
-__version__ = "0.2.0"
 
 import sys
 import os

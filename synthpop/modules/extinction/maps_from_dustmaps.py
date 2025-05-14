@@ -1,140 +1,173 @@
-""" Extinction maps collected from the dustmap module
+"""
+Extinction maps collected from the dustmap module (Green, 2018)
 
-Using dustmaps allows to evaluate the dustmap for each star. 
-which allows accurate results for larger cones.
+Extinction form (i.e. reference wavelength / color excess) depends on
+map used.
+
+Publication DOI: 10.21105/joss.00695
 
 Before using this module you need to fatch the data once.
 See https://dustmaps.readthedocs.io/en/latest/installation.html
-
 """
 
 __all__ = ["MapsFromDustmaps",]
 __author__ = ["J. Klüter", "M.J. Huston"]
 __date__ = "2022-11-05"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import os
 import astropy.units as u
+import importlib
 
-import dustmaps.bayestar
-import dustmaps.bh
-import dustmaps.chen2014
-import dustmaps.csfd
-import dustmaps.gaia_tge
-import dustmaps.iphas
-import dustmaps.leike_ensslin_2019
-import dustmaps.leike2020
-import dustmaps.edenhofer2023
-import dustmaps.lenz2017
-import dustmaps.marshall
-import dustmaps.pg2010
-import dustmaps.planck
-import dustmaps.sfd
+import dustmaps
 
 from astropy.coordinates import SkyCoord
-from ._extinction import ExtinctionMap
-
+try:
+    from ._extinction import ExtinctionMap
+except ImportError:
+    from _extinction import ExtinctionMap
+    
 MAPS_INFO = {
     "bayestar": {
         'dim': 3,
         'returns': 'E(B-V)',
-        "Query": dustmaps.bayestar.BayestarQuery,
+        "Query": "BayestarQuery",
         "lambda_eff": 0.493,
         "lambda_eff2": 0.551,
         "options": {"max_samples": 0},
-        "kwargs": {"mode":'best'}},
+        "kwargs": {"mode":'best'},
+        "need_fetch":True},
     "bh": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.bh.BHQuery,
+        "Query": "BHQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":False},
     "chen2014": {
         'dim': 3,
         'returns': 'A_r',
-        "Query": dustmaps.chen2014.Chen2014Query,
-        "lambda_eff": 0.622},
+        "Query": "Chen2014Query",
+        "lambda_eff": 0.622,
+        "need_fetch":True},
     "csfd": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.csfd.CSFDQuery,
+        "Query": "CSFDQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
+    "decaps": {
+        'dim': 3,
+        'returns': 'E(B-V)',
+        "Query": "DECaPSQueryLite",
+        "lambda_eff": 0.493,
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "gaia_tge":{
         'dim': 2,
         'returns': 'A0',
-        "Query": dustmaps.gaia_tge.GaiaTGEQuery,
-        "lambda_eff": 0.5414},
+        "Query": "GaiaTGEQuery",
+        "lambda_eff": 0.5414,
+        "need_fetch":True},
     "iphas": {
         'dim': 3,
         'returns': 'A0',
-        "Query": dustmaps.iphas.IPHASQuery,
-        "lambda_eff": 0.5495},
+        "Query": "IPHASQuery",
+        "lambda_eff": 0.5495,
+        "need_fetch":True},
     "leike_ensslin_2019": {
         'dim': 3,
         'returns': 'e-foldings_GaiaG',
-        "Query": dustmaps.leike_ensslin_2019.LeikeEnsslin2019Query,
-        "lambda_eff": 0.673},
+        "Query": "LeikeEnsslin2019Query",
+        "lambda_eff": 0.673,
+        "need_fetch":True},
     "leike_2020": {
         'dim': 3,
         'returns': 'e-foldings_GaiaG',
-        "Query": dustmaps.leike2020.Leike2020Query,
-        "lambda_eff": 0.673},
+        "Query": "Leike2020Query",
+        "lambda_eff": 0.673,
+        "need_fetch":True},
     "edenhofer2023": {
         'dim': 3,
         'returns': 'E(B-V)',
-        "Query": dustmaps.edenhofer2023.Edenhofer2023Query,
+        "Query": "Edenhofer2023Query",
         "lambda_eff": 0.493,
         "lambda_eff2": 0.551,
-        "options": {"integrated":True}},
+        "options": {"integrated":True},
+        "need_fetch":True},
     "lenz2017": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.lenz2017.Lenz2017Query,
+        "Query": "Lenz2017Query",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "marshall": {
         'dim': 3,
         'returns': 'A_Ks',
-        "Query": dustmaps.marshall.MarshallQuery,
-        "lambda_eff": 2.152},
+        "Query": "MarshallQuery",
+        "lambda_eff": 2.152,
+        "need_fetch":True},
     "pg2010": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.pg2010.PG2010Query,
+        "Query": "PG2010Query",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "planck_gnlc": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.planck.PlanckGNILCQuery,
+        "Query": "PlanckGNILCQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "planck": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.planck.PlanckQuery,
+        "Query": "PlanckQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551},
+        "lambda_eff2": 0.551,
+        "need_fetch":True},
     "sfd": {
         'dim': 2,
         'returns': 'E(B-V)',
-        "Query": dustmaps.sfd.SFDQuery,
+        "Query": "SFDQuery",
         "lambda_eff": 0.493,
-        "lambda_eff2": 0.551}
+        "lambda_eff2": 0.551,
+        "need_fetch":True}
     }
 
 # empty dictionary to store dustmaps query
 _query_dict = {}
 
 class MapsFromDustmaps(ExtinctionMap):
-    def __init__(self, dustmap_name=None, return_functions=True, dist_2d = 0.0, **kwargs):
+    """
+    Extinction maps from dustmaps
+
+    Attributes
+    ----------
+    dustmap_name : string
+        name of the map from dustmaps to use.
+        options are "bayestar", "bh", "chen2014", "csfd", "decaps",
+        "gaia_tge", "iphas", "leike_ensslin_2019", "leike_2020",
+        "edenhofer2023", "lenz2017", "marshall", "pg2010",
+        "planck_gnlc", "planck", "sfd"
+    dist_2d=0.0 : float
+        if a 2-d map is applied, this sets the distance [kpc] where
+        the extinction is applied as a single infinitely thin screen
+
+    Methods
+    -------
+    extinction_in_map(l_deg, b_deg, dist):
+        estimates extinction for a list of star positions
+    """
+
+    def __init__(self, dustmap_name=None, dist_2d = 0.0, **kwargs):
         super().__init__(**kwargs)
         #pre loaded query functions to share between populations.
         global _query_dict
         self.extinction_map_name = f"dustmaps.{dustmap_name}"
-        self.return_functions = return_functions
 
         if dustmap_name is None:
             raise ValueError("dustmap_name needs to be defined")
@@ -144,20 +177,21 @@ class MapsFromDustmaps(ExtinctionMap):
         if dustmap_name.startswith("leike"):
             raise NotImplementedError('leike2020 & leike_ensslin_2019 are not implemented yet')
         map_props = MAPS_INFO[dustmap_name]
+        
+        map_module = importlib.import_module('dustmaps.'+dustmap_name)
 
-        if not os.path.isdir(os.path.join(dustmaps.std_paths.data_dir(), dustmap_name)):
+        if map_props['need_fetch'] and (not os.path.isdir(os.path.join(dustmaps.std_paths.data_dir(), dustmap_name))):
             url = 'https://dustmaps.readthedocs.io/en/latest/installation.html'
-            module = map_props["Query"].__module__
             
             try:
                 print("Downloading",self.extinction_map_name)
-                getattr(dustmaps, dustmap_name).fetch()
+                map_module.fetch()
             except:
                 raise FileNotFoundError(
-                    f"Data for '{dustmap_name} dustmap are not fetched\n"
+                    f"Data for '{dustmap_name}' dustmap are not fetched\n"
                     f"when a dustmaps data directory is specified, data can be fetched using:\n\n"
-                    f">>> import {module}\n"
-                    f">>> {module}.fetch()\n\n"
+                    f">>> import dustmaps.{dustmap_name}\n"
+                    f">>> dustmaps.{dustmap_name}.fetch()\n\n"
                     f"please see '{url}' for further details")
 
         self.is_3D = map_props['dim'] == 3
@@ -166,7 +200,7 @@ class MapsFromDustmaps(ExtinctionMap):
 
         # select the query object for the given dustmap
         if dustmap_name not in _query_dict:
-            _query_dict[dustmap_name] = map_props['Query'](**map_props.get('options', {}))
+            _query_dict[dustmap_name] = getattr(map_module, map_props['Query'])(**map_props.get('options', {}))
 
         self.kwargs = map_props.get('kwargs', {})
         self.query = _query_dict[dustmap_name]
@@ -175,31 +209,26 @@ class MapsFromDustmaps(ExtinctionMap):
         if self.A_or_E_type.startswith("E"):
             self.ref_wavelength2 = map_props['lambda_eff2']
 
-        # placeholder for location, filter properties, etc.
-        self.l_deg = None
-        self.b_deg = None
-
         self.bands = []  # list of filters
         self.eff_wavelengths = {}  # effective wavelength for each band
 
-    def get_map(self, l_deg, b_deg, dist):
+    def extinction_in_map(self, l_deg, b_deg, dist):
         """
-        read extinction from map
-
+        Estimates the extinction for a list of star positions.
 
         Parameters
         ----------
-        l_deg: float or nd_array [degree]
+        l_deg: ndarray [degrees]
             galactic longitude
-        b_deg: float or nd_array [degree]
+        b_deg: ndarray [degrees]
             galactic latitude
-        dist: float or nd_array [kpc]
-            distance
-
+        dist: ndarray [kpc]
+            radial distance from the Sun
+        
         Returns
         -------
-        A_or_E: float or nd_array
-            Extinction ore color excess
+        extinction_value: ndarray [mag]
+            extinction at each star position defined as self.A_or_E_type
         """
         if self.is_3D:
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, distance=dist * u.kpc, frame='galactic')
@@ -208,19 +237,3 @@ class MapsFromDustmaps(ExtinctionMap):
             coords = SkyCoord(l_deg * u.deg, b_deg * u.deg, frame='galactic')
             dist_factor = (dist>self.dist_2d)
         return self.query(coords, **self.kwargs)*dist_factor
-
-    def update_extinction_in_map(self, radius):
-        """
-        Estimates the extinction for the current sight-line and radial distance
-        store the result into self.extinction_in_map.
-
-        Parameters
-        ----------
-        radius: float [kpc]
-            radial distance of the current slice
-        """
-
-        if self.return_functions:
-            self.extinction_in_map = self.get_map
-        else:
-            self.extinction_in_map = self.get_map(self.l_deg, self.b_deg, radius)

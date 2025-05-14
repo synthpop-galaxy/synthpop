@@ -1,12 +1,27 @@
-""" Density Subclass to describe the bulge density ***TODO where from?***"""
+"""
+Thick Disk density model from the Gaia Unvierse Model Snapshot
+"""
+
 __all__ = ["GumsThickdisk", ]
 __date__ = "2023-04-03"
+__author__ = "J. Klüter"
 
 import numpy as np
 import scipy.special
 from ._population_density import PopulationDensity
 
 class GumsThickdisk(PopulationDensity):
+    """
+    Thick Disk density model from the Gaia Unvierse Model Snapshot
+
+    Attributes
+    ----------
+    rho0 : float
+    hz : float
+    hr : float
+    flare_flag : boolean
+    """
+
     def __init__(self, rho0, hr, hz, flare_flag=True, **kwargs):
         super().__init__(**kwargs)
         self.name = "GumsThickdisk"

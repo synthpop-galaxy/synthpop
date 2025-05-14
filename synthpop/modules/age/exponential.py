@@ -1,19 +1,20 @@
-""" An exponential age distribution """
+"""
+An exponential age distribution
+
+Stars are assigned ages from an exponential distribution
+with a power law index and upper and lower limits.
+"""
 
 __all__ = ['Exponential']
 __author__ = "J. Klüter"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from ._age import Age
 
-
 class Exponential(Age):
     """
-    Exponential subclass of Age base class. This subclass is for populations that
-    have age characterized by an exponential age distribution.
+    Exponential age distribution generator
     """
 
     def __init__(

@@ -1,0 +1,32 @@
+{
+    "name" : "halo",
+
+    "imf_func_kwargs" : {
+        "name" : "kroupa"
+    },
+    
+    "age_func_kwargs" : {
+        "name" : "single_value",
+        "#comment" : "units in gigayears",
+        "age_value" : 14.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "gaussian",
+        "mean" : -1.78,
+        "std" : 0.50
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "velocity_gradient",
+        "sigma_u" : 131.0,
+        "sigma_v" : 106.0,
+        "sigma_w" : 85.0,
+        "const_V_ad": 226
+    }, 
+
+    "population_density_kwargs" : {
+        "name" : "Besancon2003Halo"
+    }
+}
+

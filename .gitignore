@@ -1,3 +1,10 @@
+*._*
+synthpop/demo/*/*.png
+synthpop/demo/*/*.pdf
+synthpop/data/extinction
+synthpop/data/isochrones
+outputfiles
+
 *.DS_Store
 
 # Byte-compiled / optimized / DLL files

@@ -1,27 +1,24 @@
-""" This file includes a Gaussian Metallicity Distribution """
+"""
+Metallicity class for a Gaussian distribution,
+given a mean, standard deviation, and
+upper and lower limits.
+"""
 
 __all__ = ['Gaussian']
 __author__ = "S. Johnson"
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
-
 
 import numpy as np
 import math
 from .. import const
 from ._metallicity import Metallicity
 
-
 class Gaussian(Metallicity):
     """
-    Gaussian subclass of Metallicity base class. This subclass is for populations that
-    have metallicity characterized by a single gaussian metallicity distribution.
+    Gaussian metallicity distribution
 
     Attributes
     ----------
-    metallicity_func_name : str
-        A class attribute for the name of the _MetallicityBase subclass that this is.
     mean : float [[Fe/H]]
         the mean metallicity in [Fe/H] for the Gaussian distribution
     std : float [[Fe/H]]
@@ -30,7 +27,6 @@ class Gaussian(Metallicity):
         lower limit for truncation of the distribution
     upper_bound : float [[FE/H]] 
         upper limit for truncation of the distribution
-
 
     Methods
     -------

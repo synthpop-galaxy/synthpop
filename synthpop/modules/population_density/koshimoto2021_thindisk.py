@@ -1,24 +1,34 @@
-""" Thin disk density profile from 
-Koshimoto et al 2021 """
+"""
+Thin disk density profile from Koshimoto et al (2021)
+"""
+
 __all__ = ["Koshimoto2021Thindisk", ]
 __author__ = "M.J. Huston"
 __date__ = "2022-02-02"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 import numpy as np
 from .. import const
 from ._population_density import PopulationDensity
 
-
 class Koshimoto2021Thindisk(PopulationDensity):
+    """
+    Thin disk density profile from Koshimoto et al. (2021)
+    
+    Attributes
+    ----------
+    R0 : float [kpc]
+        disk scale length
+    z0 : float [kpc]
+        disk scale height at the solar position for linear scale height model
+    z45 : float [kpc]
+        disk scale height at 4.5 kpc for linear scale height model
+    rho0 : float [M_sum/kpc^3]
+        mass density at the solar position
+    Rbreak : float [kpc]
+        distance within which surface density is flat
+    """
+
     def __init__(self, R0, z0, z45, rho0, Rbreak=5.3, **kwargs):
-        """
-        r, theta, and z are Galactocentric cylindrical coordinates. [r], [z] = kpc, kpc: [phi_rad] = radians
-
-        Based on Koshimoto et al. 2021
-
-        """
         super().__init__(**kwargs)
         self.density_unit = 'mass'
         self.R0 = R0
@@ -29,7 +39,6 @@ class Koshimoto2021Thindisk(PopulationDensity):
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
-
         Estimates the density at the given position
 
         Parameters

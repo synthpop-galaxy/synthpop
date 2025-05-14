@@ -1,9 +1,13 @@
-""" This model provides a Kinematic class using a Velocity Gradient """
+"""
+Velocity gradient kinematics module
+
+This module applies solid body rotation until it reaches the LSR rotation velocity,
+then uses that value. It can apply velocity dispersions in three dimensions.
+"""
+
 __all__ = ['VelocityGradient']
 __author__ = "M.J. Huston"
 __date__ = "2023-03-22"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
 
 from typing import Tuple
 from types import ModuleType
@@ -14,8 +18,7 @@ from .. import default_sun
 
 class VelocityGradient(Kinematics):
     """
-    The Kinematics base class for a Population class. The appropriate subclass is
-    assigned based on the kinematics_func_kwargs through the "get_subclass" factory.
+    Velocity gradient kinematics module
 
     Attributes
     ----------
@@ -32,15 +35,11 @@ class VelocityGradient(Kinematics):
 
     Methods
     -------
-    __init__(self, Population) : None
-        initialize the Kinematics class
     draw_random_velocity(self, x: ndarray, y: ndarray, z: ndarray, mass: ndarray = None,
                 all_x: ndarray = None, all_y: ndarray = None, all_z: ndarray = None,
                 all_mass: ndarray = None
                 ) : ndarray [km/s]
         returns a random velocity of a star in km/s.
-
-
     """
 
     def __init__(
@@ -50,7 +49,6 @@ class VelocityGradient(Kinematics):
             vel_grad: float = 60.0,
             **kwargs
             ):
-        """ Init """
         super().__init__(**kwargs) # get sun, coord_trans and density_class
         self.kinematics_func_name = 'VelocityGradient'
         self.sun = sun if sun is not None else default_sun

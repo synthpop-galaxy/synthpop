@@ -29,10 +29,11 @@ COL_NAMES = [
         "In_Final_Phase", "Dist", "l", "b",
         "vr_bc", "mul", "mub",  "x", "y", "z",  "U", "V", "W", "VR_LSR", "ExtinctionInMap"]
 
-
 # ------- Physical Constants --------
 c = 3e8  # m/s
 G = 6.674e-11  # m^3 kg^-1 s^-2
+Msun_kg = 1.989e30 # solar mass in kg
+m_per_pc = 3.086e16 # meters per parsec
 Mbol_sun = 4.74  # Bolometric magnitude of the sun
 DEG2RAD = np.pi / 180
 # converts proper motion times distance in mas/yr and kpc to tangential velocity in km/s
@@ -44,4 +45,3 @@ A_NGP_DEG = 192.8583
 D_NGP_DEG = 27.1283
 # Galactic longitude of the North Celestial Pole.
 L_NCP_DEG = 122.93192
-

@@ -14,7 +14,7 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-01-09"
 __license__ = "GPLv3"
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 # Standard Imports
 import os
@@ -249,7 +249,7 @@ class SynthPop:
             self.filename_base = self.get_filename(l_deg, b_deg, solid_angle)
 
         if not self.parms.overwrite:
-            if os.path.isfile(ff := f"{self.filename_base}.{self.parms.output_file_type.lower()}"):
+            if os.path.isfile(ff := f"{self.filename_base}.{self.parms.output_file_type[0].lower()}"):
                 msg = f"{ff} already exist!. Change the filename_pattern or use overwrite=True"
                 logger.critical(msg)
                 raise FileExistsError(msg)
@@ -448,6 +448,7 @@ class SynthPop:
         # available formats:
         output_formatter = {
             'csv': [df.to_csv, 'csv', {'index': None, 'header': True, 'float_format': "%0.7e"}],
+            'ssv': [df.to_csv, 'csv', {'index': None, 'header': True, 'float_format': "%0.7e", 'sep':' '}],
             'json': [df.to_json, 'json', {}],
             'html': [df.to_html, 'html', {'float_format': "%0.7e"}],
             'xml': [df.to_xml, 'xml', {}],

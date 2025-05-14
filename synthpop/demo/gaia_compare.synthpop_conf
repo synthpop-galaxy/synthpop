@@ -8,7 +8,7 @@
     "model_name": "GUMS_dr3",
     "max_distance":25,
     "extinction_map_kwargs": {
-        "name":"Gums"
+        "name":"GUMS"
         },
     "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
     "chosen_bands": ["Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3"],
@@ -17,6 +17,7 @@
     "#post_processing_kwargs": {"name": "ProcessDarkCompactObjects"},
     "output_location": "/u/mhuston/code/synthpop/outputfiles/demo/comp",
     "output_file_type":"csv",
-    "overwrite":true
+    "overwrite":true,
+    "chunk_size":250000
 }
 

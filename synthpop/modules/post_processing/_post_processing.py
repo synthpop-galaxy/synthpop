@@ -4,9 +4,7 @@ Base class for post-processing.
 __all__ = ["PostProcessing", ]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
-__license__ = "GPLv3"
 __date__ = "2022-11-16"
-__version__ = '1.0.0'
 
 import pandas
 from types import ModuleType
@@ -14,9 +12,10 @@ from .. import default_sun
 
 class PostProcessing:
     """
-        Base class for post-processing, for catalog modifications after the
-        regular SynthPop generation process has completed.
+    Base class for post-processing, for catalog modifications after the
+    regular SynthPop generation process has completed.
     """
+    
     def __init__(self,
             model: ModuleType = None,
             logger: ModuleType = None,

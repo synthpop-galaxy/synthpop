@@ -15,8 +15,6 @@ __all__ = ["Population"]
 __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2022-07-06"
-__license__ = "GPLv3"
-__version__ = "0.1.0"
 
 # Standard Imports
 import time
@@ -25,6 +23,7 @@ import pdb
 # Non-Standard Imports
 import numpy as np
 import pandas
+from tqdm.auto import tqdm
 
 # Local Imports
 # used to allow running as main and importing to another script
@@ -443,7 +442,6 @@ class Population:
 
         # flag to mark that coordinates have been set
         self.position.update_location(l_deg, b_deg, self.solid_angle_sr)
-        self.extinction.update_line_of_sight(l_deg, b_deg)
 
         logger.debug(
             f"{self.name} : position is set to "
@@ -814,13 +812,16 @@ class Population:
             all_m_evolved = []
             all_r_inner = []
         opt3_mass_loss_done=False
+        use_pbar = np.sum(total_stars)>self.glbl_params.chunk_size
+        if use_pbar:
+            pbar = tqdm(total=sum(missing_stars))
         while any(missing_stars > 0):
             neg_missing_stars = np.minimum(missing_stars,0)
             missing_stars = np.maximum(missing_stars,0)
             if (sum(missing_stars)>self.glbl_params.chunk_size) and not (self.generator.generator_name=='SpiseaGenerator'):
                 final_expected_loop=False
                 idx_cs = np.searchsorted(np.cumsum(missing_stars), self.glbl_params.chunk_size)
-                rem_chunk = np.cumsum(missing_stars)[idx_cs] - self.glbl_params.chunk_size
+                rem_chunk = self.glbl_params.chunk_size - (np.cumsum(missing_stars)[idx_cs-1])*(idx_cs>0)
                 missing_stars_chunk = missing_stars * (np.cumsum(missing_stars)<self.glbl_params.chunk_size)
                 missing_stars_chunk[idx_cs] = rem_chunk
             else:
@@ -843,7 +844,7 @@ class Population:
                 m_initial, s_props, const.REQ_ISO_PROPS,
                 self.glbl_params.opt_iso_props, inside_grid, not_evolved)
 
-            # Keep track of all stars generated for option 3
+            # Keep track of all stars generated for option 3, until mass loss estimation is complete
             if self.lost_mass_option==3 and not opt3_mass_loss_done:
                 all_m_initial += list(m_initial)
                 all_m_evolved += list(m_evolved)
@@ -869,6 +870,8 @@ class Population:
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             df_list.append(df)
             loop_counts += 1
+            if use_pbar:
+                pbar.update(np.sum(missing_stars_chunk))
 
         # combine the results from the different loops
         if len(df_list) == 0:
@@ -1082,20 +1085,16 @@ class Population:
             ref_mag[inside_grid] += dist_module[inside_grid]
             mags[inside_grid] += dist_module[inside_grid, np.newaxis]
 
-        for ri in np.unique(radii_inner):
-            current_slice = radii_inner == ri
+        extinction_in_map, extinction_dict = self.extinction.get_extinctions(
+            galactic_coordinates[:, 1],
+            galactic_coordinates[:, 2],
+            galactic_coordinates[:, 0])
 
-            self.extinction.update_extinction_in_map(radius=ri)
-            extinction_in_map[current_slice], extinction_dict = self.extinction.get_extinctions(
-                galactic_coordinates[current_slice, 1],
-                galactic_coordinates[current_slice, 2],
-                galactic_coordinates[current_slice, 0])
-
-            if self.glbl_params.obsmag:
-                ext_mag = extinction_dict.get(self.glbl_params.maglim[0], 0)
-                ref_mag[current_slice] += ext_mag
-                for i, band in enumerate(self.bands):
-                    mags[current_slice, i] += extinction_dict.get(band, 0)
+        if self.glbl_params.obsmag:
+            ext_mag = extinction_dict.get(self.glbl_params.maglim[0], 0)
+            ref_mag[:] += ext_mag
+            for i, band in enumerate(self.bands):
+                mags[:, i] += extinction_dict.get(band, 0)
 
         mag_le_limit = ref_mag < self.glbl_params.maglim[1]
 
