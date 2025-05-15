@@ -59,7 +59,8 @@ class GullsPostProcessing(PostProcessing):
         dataframe["Teff"] = 10 ** dataframe["logTeff"]
         dataframe["[alpha/Fe]"] = 0
         dataframe["Radius"] = 10 ** dataframe["log_radius"]
-        dataframe["Vr"]=dataframe['vr_bc']
+        dataframe["CL"] = dataframe["phase"]
+        dataframe["Vr"] = dataframe['vr_bc']
         
         # compute an approximate magnitude for Roman F213 from 2MASS Ks
         k213 = dataframe["2MASS_Ks"] + 1.834505
@@ -80,9 +81,12 @@ class GullsPostProcessing(PostProcessing):
         # Replace NaNs with 99 for magnitude columns, and a non-physical
         # very small value for other parameters.
         for filt in filtlist:
-            dataframe[filt].fillna(value=99, inplace=True)
-        dataframe['K213'].fillna(value=99, inplace=True)
-        dataframe.fillna(value=2e-50, inplace=True)
+            # dataframe.fillna({filt : 99}, inplace=True)
+            dataframe.loc[:, filt] = dataframe.loc[:,filt].fillna(99)
+        #dataframe.fillna({"K213" : 99}, inplace=True)
+        dataframe.loc[:, "K213"] = dataframe.loc[:,"K213"].fillna(99)
+        #dataframe.fillna(value=2e-50, inplace=True)
+        dataframe = dataframe.fillna(value=2e-50)
 
 
         # Impose magnitude lower limits based on Roman expectations
