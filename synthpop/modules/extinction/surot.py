@@ -152,7 +152,7 @@ class Surot(ExtinctionMap):
             b_grid_3d = np.append(np.arange(*map_grid_3d[1]),map_grid_3d[1][1])
             self.r_grid = 10**np.append(np.arange(*map_grid_3d[2]),map_grid_3d[2][1])
             self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid),
-                map_data_3d)
+                map_data_3d, bounds_error=False, fill_value=0)
 
     def extinction_in_map(self, l_deg, b_deg, dist):
         """
@@ -179,7 +179,7 @@ class Surot(ExtinctionMap):
         # Calculate the scaling from the 3-d interpolator
         if self.project_3d:
             use_l = l_deg + (l_deg<0)*360
-            scale_value = self.grid_interpolator_3d(np.transpose([use_l,b_deg, dist]))
+            scale_value = self.grid_interpolator_3d(np.transpose([use_l,b_deg, np.minimum(dist, self.r_grid[-1])]))
             scale_norm = self.grid_interpolator_3d(np.transpose([use_l,b_deg, self.dist_2d*np.ones(len(use_l))]))
             scale_factor = scale_value/scale_norm
         else:
