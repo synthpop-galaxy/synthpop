@@ -15,7 +15,7 @@ import warnings
 import json
 import tqdm
 import sys
-import spisea
+from spisea import synthetic, reddening, atmospheres, evolution
 from .. import const
 
 import numpy as np
@@ -65,25 +65,32 @@ class SpiseaIso(EvolutionIsochrones, CharonInterpolator):
         #with open(f"{EVOLUTION_DIR}/spisea_filters.json") as f:
         #    self.spisea_filters = json.load(f)
 
-        self.iso_files = self.get_cols(columns)
+        self.non_mag_cols, self.mag_cols = self.get_cols(columns)
         self.evolution_model_name = evolution_model_name
 
         if (evolution_model_name=='MISTv1.2') or (evolution_model_name=='MISTv1.0'):
-            self.evolution_model = spisea.evolution.MISTv1(version=float(evolution_model_name[-3:]))
+            self.evolution_model = evolution.MISTv1(version=float(evolution_model_name[-3:]))
             self.feh_grid = np.array([-4.0,-3.5,-3.0,-2.5,-2.0,-1.75,-1.5,-1.25,
                                       -1.0,-0.75,-0.5,-0.25,0,0.25,0.5])
             self.log_age_list = np.linspace(5.0,10.3,107)
-            assert len(feh_grid)==len(self.evolution_model.z_list)
+            self.log_age_list[0] = 5.01
+            print(np.log10(np.array(self.evolution_model.z_list) / self.evolution_model.z_solar))
+            assert len(self.feh_grid)==len(self.evolution_model.z_list)
         else:
             raise ValueError("Invalid SPISEA evolution_model. Only MISTv1.0 and MISTv1.2 are available at this time.")
-        self.atm_func = spisea.atmospheres.get_merged_atmosphere
-        self.red_law = spisea.reddening.RedLawHosek18b()
+        self.atm_func = atmospheres.get_merged_atmosphere
+        self.red_law = reddening.RedLawHosek18b() # Doesn't matter - we do 0 extinction here and apply it later
 
-        self.isochrones = self.get_combined_isochrones()
+        # load the isochrones
+        if use_global:
+            global spisea_isochrones
+            if spisea_isochrones is not None:
+                self.isochrones = spisea_isochrones
+            else:
+                self.isochrones = self.load_isochrones()
+        else:
+            self.isochrones = self.load_isochrones()
         self.isochrones_grouped = self.isochrones.groupby(["[Fe/H]_init", "log10_isochrone_age_yr"])
-
-        # Get ages
-        self.iso_ages = 10 ** self.age_grid
 
         # Get mass range for each metallicity and age
         self.mass_range = self.get_mass_ranges(self.isochrones_grouped)
@@ -92,25 +99,47 @@ class SpiseaIso(EvolutionIsochrones, CharonInterpolator):
         super().__init__(**kwargs)
 
     def get_cols(self, columns):
-        iso_files = {'basic':[]}
+        #iso_files = {'basic':[]}
+
+        # for column in columns:
+        #     if column in self.allowed_non_mag_cols:
+        #         iso_files['basic'].append(column)
+        #     else:
+        #         try:
+        #             column_split = column.split(',')
+        #             if len(column_split)==2:
+        #                 filt = column_split[1]
+        #             elif len(column_split)==3:
+        #                 filt = column_split[1]+'_'+column_split[2]
+        #             msys = column_split[0]
+        #             if ~(msys in iso_files):
+        #                 iso_files[msys] = []
+        #             iso_files[msys].append(filt)
+        #         except:
+        #             raise ValueError('Invalid column '+column+' for SPISEA isochrones.')
+
+        non_mag_cols = []
+        mag_cols = []
 
         for column in columns:
-            if column in self.allowed_non_mag_cols:
-                iso_files['basic'].append(column)
-            else:
-                try:
-                    column_split = column.split(',')
-                    if len(column_split)==2:
-                        filt = column_split[1]
-                    elif len(column_split)==3:
-                        filt = column_split[1]+'_'+column_split[2]
-                    msys = column_split[0]
-                    if ~(msys in iso_files):
-                        iso_files[msys] = []
-                    iso_files[msys].append(filt)
-                except:
-                    raise ValueError('Invalid column '+column+' for SPISEA isochrones.')
-        return iso_files
+             if column in self.allowed_non_mag_cols:
+                 non_mag_cols.append(column)
+             else:
+                mag_cols.append(column)
+        #         try:
+        #             column_split = column.split(',')
+        #             if len(column_split)==2:
+        #                 filt = column_split[1]
+        #             elif len(column_split)==3:
+        #                 filt = column_split[1]+'_'+column_split[2]
+        #             msys = column_split[0]
+        #             if ~(msys in iso_files):
+        #                 iso_files[msys] = []
+        #             iso_files[msys].append(filt)
+        #         except:
+        #             raise ValueError('Invalid column '+column+' for SPISEA isochrones.')
+
+        return non_mag_cols, mag_cols
 
     @staticmethod
     def get_mass_ranges(isochrones_grouped):
@@ -133,19 +162,23 @@ class SpiseaIso(EvolutionIsochrones, CharonInterpolator):
         mass_range = pandas.concat([min_values,max_values], axis=1)
         return mass_range
 
-    def generate_isochrones(self, feh, m_h, new_filters):
+    def generate_isochrones(self, feh, m_h):
         """
         generate new isochrone from spisea, convert into our format, and save
         """
 
-        feh_str = ('m' if nn<0.0 else 'p') + f'{np.abs(feh):1.2f}'
+        #feh_str = ('m' if feh<0.0 else 'p') + f'{np.abs(feh):1.2f}'
         isos_tmp = []
-        for j,log_age in enumerate(self.log_age_list):
-            iso_tmp = spisea.synthetic.IsochronePhot(log_age, 0.0, 10.0, metallicity=m_h,
+        calc_filters = []
+        for col in self.mag_cols:
+            calc_filters.append(col.replace('-',','))
+        for log_age in self.log_age_list:
+            print(m_h)
+            iso_tmp = synthetic.IsochronePhot(log_age, 0.0, 10.0, metallicity=m_h,
                             evo_model=self.evolution_model,
                             atm_func=self.atm_func,
                             red_law=self.red_law,
-                            filters=new_filters,
+                            filters=calc_filters,
                             iso_dir=self.FOLDER+'/tmp/',
                             recomp=True).points
             iso_tmp['log10_isochrone_age_yr']=log_age
@@ -159,9 +192,11 @@ class SpiseaIso(EvolutionIsochrones, CharonInterpolator):
         iso['log_R'] = np.log10(isos_cat_tmp['R']/const.Rsun_m)
         iso['log_Teff'] = np.log10(isos_cat_tmp['Teff'])
         iso['log_g'] = isos_cat_tmp['logg']
+        for col in self.mag_cols:
+            iso[col] = isos_cat_tmp[col.replace('-',',')]
         return iso
 
-    def load_isochrones(self, filters):
+    def load_isochrones(self):
         """
         load the isochrones for each of the given magnitude systems and all metallicities
 
@@ -177,22 +212,23 @@ class SpiseaIso(EvolutionIsochrones, CharonInterpolator):
         """
 
         isochrones = {}
-        new_cols_needed = []
+        #new_cols_needed = []
         
         for i,feh in enumerate(self.feh_grid):
-            feh_str = ('m' if nn<0.0 else 'p') + f'{np.abs(feh):1.2f}'
-            for iso_file in iso_files:
-                os.mkdirs(self.FOLDER+'/'+iso_file, exist_ok=True)
-                fname = self.FOLDER+'/'+iso_file+f'/'+self.evolution_model_name+'_iso_{feh_str}.h5'
-                if os.isfile(fname):
-                    iso_tmp = pandas.read_hdf(fname, key='iso')
-                    for col in iso_files[iso_file]:
-                        if ~(col in isochrones[feh]):
-                            new_cols_needed.append(col)
-                else: 
-                    m_h = np.log10(self.evolution_model.z_list[i] / self.evolution_model.z_solar)
-                    iso_tmp = self.generate_isochrones(feh, m_h, new_filters)
-                    iso_tmp.to_hdf(fname, key='iso')
+            #feh_str = ('m' if nn<0.0 else 'p') + f'{np.abs(feh):1.2f}'
+            #for iso_file in iso_files:
+                # os.mkdirs(self.FOLDER+'/'+iso_file, exist_ok=True)
+                # fname = self.FOLDER+'/'+iso_file+f'/'+self.evolution_model_name+'_iso_{feh_str}.h5'
+                # if os.isfile(fname):
+                #     iso_tmp = pandas.read_hdf(fname, key='iso')
+                #     for col in iso_files[iso_file]:
+                #         if ~(col in isochrones[feh]):
+                #             new_cols_needed.append(col)
+                # else: 
+            m_h = np.log10(self.evolution_model.z_list[i] / self.evolution_model.z_solar)
+            isochrones[feh] = self.generate_isochrones(feh, m_h)
+                #     iso_tmp.to_hdf(fname, key='iso')
+
 
         return pandas.concat(isochrones.values())
 
