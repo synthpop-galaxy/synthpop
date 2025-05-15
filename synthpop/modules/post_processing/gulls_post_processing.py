@@ -82,11 +82,8 @@ class GullsPostProcessing(PostProcessing):
         # Replace NaNs with 99 for magnitude columns, and a non-physical
         # very small value for other parameters.
         for filt in filtlist:
-            # dataframe.fillna({filt : 99}, inplace=True)
             dataframe.loc[:, filt] = dataframe.loc[:,filt].fillna(99)
-        #dataframe.fillna({"K213" : 99}, inplace=True)
         dataframe.loc[:, "K213"] = dataframe.loc[:,"K213"].fillna(99)
-        #dataframe.fillna(value=2e-50, inplace=True)
         dataframe = dataframe.fillna(value=2e-50)
 
 
