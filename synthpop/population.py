@@ -818,7 +818,7 @@ class Population:
         while any(missing_stars > 0):
             neg_missing_stars = np.minimum(missing_stars,0)
             missing_stars = np.maximum(missing_stars,0)
-            if sum(missing_stars)>self.glbl_params.chunk_size:
+            if (sum(missing_stars)>self.glbl_params.chunk_size) and not (self.generator.generator_name=='SpiseaGenerator'):
                 final_expected_loop=False
                 idx_cs = np.searchsorted(np.cumsum(missing_stars), self.glbl_params.chunk_size)
                 rem_chunk = self.glbl_params.chunk_size - (np.cumsum(missing_stars)[idx_cs-1])*(idx_cs>0)
