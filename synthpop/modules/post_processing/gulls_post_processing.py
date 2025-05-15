@@ -4,6 +4,7 @@ Post-processing to put catalog in the Gulls input format.
 
 __all__ = ["GullsPostProcessing", ]
 __author__ = "Farzaneh Zohrabi, Ali Crisp"
+__date__ = "2025-05-15"
 
 from ._post_processing import PostProcessing
 import time
