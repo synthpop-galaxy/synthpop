@@ -4,6 +4,17 @@ Changelog
 Version 1
 ---------
 
+v1.0.3
+^^^^^^
+Date: May 16, 2025
+
+* Cleaned up GULLS post-processing module to prep SynthPop catalogs for GULLS microlensing simulator (@acrisp3)
+* New post-processing module: Blending, which computes blended mag within selected blend radius for selected filters (@hustonm)
+* Fixed bug in Surot extinction module, where 3-d extinction map could not handle distances <10pc and >30kpc. Now applies 0 extinction at distance<10pc and applies extinction value at 30kpc for distance>30kpc. (@hustonm)
+* Updated tutorial for new configuration (@hustonm)
+* Added ebfpy to requirements, which is used by some extinction map modules (@hustonm)
+
+
 v1.0.2
 ^^^^^^
 Date: April 24, 2025
