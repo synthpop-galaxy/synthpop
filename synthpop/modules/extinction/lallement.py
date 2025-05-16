@@ -64,6 +64,8 @@ class Lallement(ExtinctionMap):
         self.per_sightline = per_sightline # Calculate the extinction integral once per sightline, otherwise, individually for each star
         self.dr = dr #: step size for extinction integration in kpc
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/map3D_GAIAdr2_feb2019.h5'):
+            if not os.path.isdir(f'{const.EXTINCTIONS_DIR}'):
+                os.mkdir(f'{const.EXTINCTIONS_DIR}')
             print("Missing Lallement extinction table. Download and unpacking may take several minutes but only needs done once.")
             map_url = 'https://cdsarc.cds.unistra.fr/ftp/J/A+A/625/A135/map3D_GAIAdr2_feb2019.h5.gz'
             map_filename = f'{const.EXTINCTIONS_DIR}/'+map_url.split("/")[-1]

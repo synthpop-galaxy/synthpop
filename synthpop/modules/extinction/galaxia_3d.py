@@ -8,7 +8,7 @@ Publication DOI: 10.1088/0004-637X/730/1/3 (galaxia), 10.1086/305772 (2-d map)
 Data available at: http://bhs.astro.berkeley.edu/GalaxiaData.tar.gz
 """
 
-__all__ = ["Galaxia3D", ]
+__all__ = ["Galaxia_3D", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-04-18"
 
@@ -21,8 +21,11 @@ except ImportError:
     from _extinction import ExtinctionMap
 import time
 import ebf
+import tarfile
+import os
+import requests
 
-class Galaxia3D(ExtinctionMap):
+class Galaxia_3D(ExtinctionMap):
     """
     Extinction map used in Galaxia
 
@@ -37,7 +40,28 @@ class Galaxia3D(ExtinctionMap):
         self.extinction_map_name = "Galaxia3D"
         self.ref_wavelength = 0.4361
         self.ref_wavelength2 = 0.5448
-        self.A_or_E_type = 'E(B-V)' 
+        self.A_or_E_type = 'E(B-V)'
+        
+        if (not os.path.isfile(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')) or (not os.path.isfile(f'{const.EXTINCTIONS_DIR}/Galaxia_Schlegel_4096.ebf')):
+            print("Missing Galaxia map data - download and arrangement will take a few minutes.")
+            if not os.path.isdir(f'{const.EXTINCTIONS_DIR}'):
+                os.mkdir(f'{const.EXTINCTIONS_DIR}')
+            if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/GalaxiaData.tar.gz'):
+                with open(f'{const.EXTINCTIONS_DIR}/GalaxiaData.tar.gz', "wb") as f:
+                    r = requests.get("http://bhs.astro.berkeley.edu/GalaxiaData.tar.gz")
+                    f.write(r.content)
+                    print('Data retrieved.')
+            with tarfile.open(f'{const.EXTINCTIONS_DIR}/GalaxiaData.tar.gz', "r") as f:
+                f.extract('GalaxiaData/Extinction/ExMap3d_1024.ebf', f'{const.EXTINCTIONS_DIR}/')
+                f.extract('GalaxiaData/Extinction/Schlegel_4096.ebf', f'{const.EXTINCTIONS_DIR}/')
+                os.rename(f'{const.EXTINCTIONS_DIR}/GalaxiaData/Extinction/ExMap3d_1024.ebf',
+                            f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')
+                os.rename(f'{const.EXTINCTIONS_DIR}/GalaxiaData/Extinction/Schlegel_4096.ebf',
+                            f'{const.EXTINCTIONS_DIR}/Galaxia_Schlegel_4096.ebf')
+            os.remove(f'{const.EXTINCTIONS_DIR}/GalaxiaData.tar.gz')
+            os.rmdir(f'{const.EXTINCTIONS_DIR}/GalaxiaData/Extinction')
+            os.rmdir(f'{const.EXTINCTIONS_DIR}/GalaxiaData')
+            print('Extinction file setup complete.')
 
         # Set up 3D grid
         mapfile_3d = ebf.read(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')

@@ -24,6 +24,7 @@ import ebf
 from scipy.interpolate import RegularGridInterpolator
 import requests
 import os
+import tarfile
 
 current_map_name = None
 current_map_data = None
@@ -60,16 +61,22 @@ class Surot(ExtinctionMap):
 
         # Fetch extinction map data if needed
         if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_A_Ks_table.h5'):
+            if not os.path.isdir(f'{const.EXTINCTIONS_DIR}'):
+                os.mkdir(f'{const.EXTINCTIONS_DIR}')
             if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]):
                 print("Missing Surot table. Download and formatting may take several minutes.")
                 print('Downloading map file from VizieR...')
                 map_filename = f'{const.EXTINCTIONS_DIR}/surot_'+map_url.split("/")[-1]
-                with open(map_filename, "wb") as f:
-                    r = requests.get(map_url)
-                    f.write(r.content)
-                    print('Map retrieved.')
+                try:
+                    with open(map_filename, "wb") as f:
+                        r = requests.get(map_url)
+                        f.write(r.content)
+                        print('Map retrieved.')
+                except:
+                    print(f'There was an error fetching the map. This happens occasionally due to the extremely large file. Consider manually downloading https://cdsarc.cds.unistra.fr/ftp/J/A+A/644/A140/surot_ejkmap.dat.gz and placing it in {const.EXTINCTIONS_DIR}.')
+                    raise
             else:
-                map_filename = f'{const.EXTINCTIONS_DIR}/surot_ejkmap.dat'
+                map_filename = f'{const.EXTINCTIONS_DIR}/surot_ejkmap.dat.gz'
             print('Reading table...')
             E_JKs_map_df = pd.read_fwf(map_filename,compression='gzip', header=None)
             print('Reformatting values...')
@@ -85,6 +92,29 @@ class Surot(ExtinctionMap):
             surot_2d_df = pd.DataFrame(surot_2d, columns=['l','b','A_Ks'])
             surot_2d_df.to_hdf(f'{const.EXTINCTIONS_DIR}/'+map_output, key='data', index=False, mode='w')
             print('File 2D version saved as '+map_output)
+            
+        # Fetch 3-d projection data if needed
+        if project_3d:
+            if (not os.path.isfile(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')) or (not os.path.isfile(f'{const.EXTINCTIONS_DIR}/Galaxia_Schlegel_4096.ebf')):
+                print("Missing Galaxia map data - download and arrangement will take a few minutes (significantly faster than the Surot+20 data download).")
+                if not os.path.isdir(f'{const.EXTINCTIONS_DIR}'):
+                    os.mkdir(f'{const.EXTINCTIONS_DIR}')
+                if not os.path.isfile(f'{const.EXTINCTIONS_DIR}/GalaxiaData.tar.gz'):
+                    with open(f'{const.EXTINCTIONS_DIR}/GalaxiaData.tar.gz', "wb") as f:
+                        r = requests.get("http://bhs.astro.berkeley.edu/GalaxiaData.tar.gz")
+                        f.write(r.content)
+                        print('Data retrieved.')
+                with tarfile.open(f'{const.EXTINCTIONS_DIR}/GalaxiaData.tar.gz', "r") as f:
+                    f.extract('GalaxiaData/Extinction/ExMap3d_1024.ebf', f'{const.EXTINCTIONS_DIR}/')
+                    f.extract('GalaxiaData/Extinction/Schlegel_4096.ebf', f'{const.EXTINCTIONS_DIR}/')
+                    os.rename(f'{const.EXTINCTIONS_DIR}/GalaxiaData/Extinction/ExMap3d_1024.ebf',
+                                f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')
+                    os.rename(f'{const.EXTINCTIONS_DIR}/GalaxiaData/Extinction/Schlegel_4096.ebf',
+                                f'{const.EXTINCTIONS_DIR}/Galaxia_Schlegel_4096.ebf')
+                os.remove(f'{const.EXTINCTIONS_DIR}/GalaxiaData.tar.gz')
+                os.rmdir(f'{const.EXTINCTIONS_DIR}/GalaxiaData/Extinction')
+                os.rmdir(f'{const.EXTINCTIONS_DIR}/GalaxiaData')
+                print('Extinction file setup complete.')
 
         # Grab saved data from last population, if same map used.
         global current_map_name, current_map_data
@@ -122,7 +152,7 @@ class Surot(ExtinctionMap):
             b_grid_3d = np.append(np.arange(*map_grid_3d[1]),map_grid_3d[1][1])
             self.r_grid = 10**np.append(np.arange(*map_grid_3d[2]),map_grid_3d[2][1])
             self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid),
-                map_data_3d)
+                map_data_3d, bounds_error=False, fill_value=0)
 
     def extinction_in_map(self, l_deg, b_deg, dist):
         """
@@ -149,8 +179,8 @@ class Surot(ExtinctionMap):
         # Calculate the scaling from the 3-d interpolator
         if self.project_3d:
             use_l = l_deg + (l_deg<0)*360
-            scale_value = self.grid_interpolator_3d(np.transpose([use_l,b_deg, dist]))[0]
-            scale_norm = self.grid_interpolator_3d(np.transpose([use_l,b_deg, self.dist_2d*np.ones(len(use_l))]))[0]
+            scale_value = self.grid_interpolator_3d(np.transpose([use_l,b_deg, np.minimum(dist, self.r_grid[-1])]))
+            scale_norm = self.grid_interpolator_3d(np.transpose([use_l,b_deg, self.dist_2d*np.ones(len(use_l))]))
             scale_factor = scale_value/scale_norm
         else:
             scale_factor = (dist>self.dist_2d)
