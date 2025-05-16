@@ -13,7 +13,7 @@ Date: May 16, 2025
 * Fixed bug in Surot extinction module, where 3-d extinction map could not handle distances <10pc and >30kpc. Now applies 0 extinction at distance<10pc and applies extinction value at 30kpc for distance>30kpc. (@hustonm)
 * Updated tutorial for new configuration (@hustonm)
 * Added ebfpy to requirements, which is used by some extinction map modules (@hustonm)
-
+* Addressed futurewarnings for Pandas 3.0 (@hustonm)
 
 v1.0.2
 ^^^^^^
