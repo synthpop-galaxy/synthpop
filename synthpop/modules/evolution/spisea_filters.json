@@ -1,7 +1,7 @@
 {
     "2mass":["J","H","Ks"],
     "ctio_osiris":["H","K"],
-    "decam":["u","g","r","i","z","Y"],
+    "decam":["u","g","r","i","z","y"],
     "gaia":{"dr2_rev":["G","Gbp","Grp"]},
     "hawki":["J","H","Ks"],
     "wfc3":{"uvis1":["f200lp", "f218w", "f225w", "f275w", "f280n", "f300x",
@@ -47,12 +47,12 @@
             "F405N", "F410M", "F430M", "F444W", "F460M", "F466N", "F470N", 
             "F480M"],
     "nirc1":["H", "K"],
-    "nirc2":["J","H","K","Kp","Ks","Kcont","Lp","Ms","Brgamma","Fell"],
+    "nirc2":["J","H","K","Kp","Ks","Kcont","Lp","Ms","Brgamma","FeII"],
     "naco":["J","H","Ks"],
     "ps1":["g","r","i","z","y"],
-    "roman":{"wfi":["F062","F087","F106","F129","F158","W146","F184","F213"]},
+    "roman":{"wfi":["F062","F087","F106","F129","F158","F146","F184","F213"]},
     "ukirt":["J","H","K"],
     "rubin":["u","g","r","i","z","y"],
-    "vista":["Z","Y","J","H","K"],
+    "vista":["Z","Y","J","H","Ks"],
     "ztf":["g","r","i"]
 }
