@@ -100,12 +100,23 @@ class PopsyclePostProcessing(PostProcessing):
         star_dict['N_companions'] = np.zeros(dataframe.shape[0], dtype=int)
         star_dict['rem_id'] = dataframe["Dim_Compact_Object_Flag"].map({0.0: 0, 1.0: 101, 2.0: 102, 3.0: 103})
         
+#         print("px range:", star_dict["px"].min(), star_dict["px"].max())
+#         print("vx range:", star_dict["vx"].min(), star_dict["vx"].max())
+#         print("mass range:", star_dict["mass"].min(), star_dict["mass"].max())
+
         
         # Using only 1 bin
         l_min, l_max = dataframe["l"].min(), dataframe["l"].max()
         b_min, b_max = dataframe["b"].min(), dataframe["b"].max()
-        long_bin_edges = np.array([l_min, l_max])
-        lat_bin_edges = np.array([b_min, b_max])
+        
+        delta_l = 0.1 if l_min == l_max else 0
+        delta_b = 0.1 if b_min == b_max else 0
+
+        long_bin_edges = np.array([l_min, l_max + delta_l])
+        lat_bin_edges = np.array([b_min, b_max + delta_b])
+
+#         long_bin_edges = np.array([l_min, l_max])
+#         lat_bin_edges = np.array([b_min, b_max])
         bin_edges_number = 2
         
         
@@ -125,105 +136,87 @@ class PopsyclePostProcessing(PostProcessing):
 #         return ebf_df
     
         # Using h5 file creation code from PopSyCLE
-        def lb_binning_hdf5(lat_bin_edges, long_bin_edges, df: pd.DataFrame, output_root: str, companion_obj_arr = None):
+        def lb_binning_hdf5(lat_bin_edges, long_bin_edges, obj_arr: pd.DataFrame, output_root: str, companion_obj_arr=None):
+            """
+            Bins microlensing data from a DataFrame into lat-long HDF5 datasets 
+            compatible with PopSyCLE. Supports optional companion catalogs.
+            """
+
+            import os
+            import h5py
+            import numpy as np
+
             file_path = output_root + '.h5'
 
-            # Open (or create) HDF5 file
-            with h5py.File(file_path, 'w') as hf:
+            # Convert the main DataFrame to a structured array with dtype
+            compound_dtype = np.dtype([(col, obj_arr[col].dtype) for col in obj_arr.columns])
+            obj_arr = obj_arr.to_records(index=False)
 
-                for ll in range(len(long_bin_edges) - 1):
-                    for bb in range(len(lat_bin_edges) - 1):
-                        # Filter the DataFrame for this lat-long bin
-                        in_bin = df[
-                            (df['glat'] >= lat_bin_edges[bb]) & (df['glat'] < lat_bin_edges[bb + 1]) &
-                            (df['glon'] >= long_bin_edges[ll]) & (df['glon'] < long_bin_edges[ll + 1])
-                        ]
+            if companion_obj_arr is not None:
+                compound_dtype = np.dtype(companion_obj_arr)
 
-                        if in_bin.empty:
-                            continue
+            # Create or open the HDF5 file
+            if not os.path.exists(file_path):
+                hf = h5py.File(file_path, 'w')
+                hf.create_dataset("lat_bin_edges", data=lat_bin_edges)
+                hf.create_dataset("long_bin_edges", data=long_bin_edges)
+                hf.close()
 
-                        # Convert to structured array
-                        bin_data = in_bin.to_records(index=False)
+            for ll in range(len(long_bin_edges) - 1):
+                for bb in range(len(lat_bin_edges) - 1):
+                    with h5py.File(file_path, 'r+') as hf:
+                        dset_name = f"l{ll}b{bb}"
 
-                        # Dataset name
-                        dset_name = f'l{ll}b{bb}'
+                        # Select stars in this bin
+                        if companion_obj_arr is None:
+                            in_bin = obj_arr[
+                                (obj_arr['glat'] >= lat_bin_edges[bb]) & (obj_arr['glat'] < lat_bin_edges[bb + 1]) &
+                                (obj_arr['glon'] >= long_bin_edges[ll]) & (obj_arr['glon'] < long_bin_edges[ll + 1])
+                            ]
 
-                        # Write to HDF5 dataset
-                        hf.create_dataset(
-                            dset_name,
-                            data=bin_data,
-                            maxshape=(None,),   # allows for resizing
-                            chunks=True,        # enables chunking
-                            compression='gzip'  # optional: compresses data
-                        )
+                            if len(in_bin) == 0:
+                                continue
 
-    
-#             if companion_obj_arr is None:
-#                 # Create compound datatype from obj_arr
-#                 compound_dtype = _generate_compound_dtype(obj_arr)
-#             else:
-#                 compound_dtype = np.dtype(companion_obj_arr)
+                            save_data = np.array(in_bin, dtype=compound_dtype)
 
-            ##########
-            # Loop through the latitude and longitude bins.
-            ##########
-            
-#             for ll in range(len(long_bin_edges) - 1):
-#                 for bb in range(len(lat_bin_edges) - 1):
-#                     # Open our HDF5 file for reading and appending.
-#                     # Create as necessary.
-#                     hf = h5py.File(output_root + '.h5', 'r+')
+                        else:
+                            # Companion binning: find companions matching system_idx of primary stars
+                            id_lb = np.where(
+                                (obj_arr['glat'] >= lat_bin_edges[bb]) & (obj_arr['glat'] < lat_bin_edges[bb + 1]) &
+                                (obj_arr['glon'] >= long_bin_edges[ll]) & (obj_arr['glon'] < long_bin_edges[ll + 1])
+                            )[0]
 
-#                     # HDF5 dataset name
-#                     dset_name = 'l' + str(ll) + 'b' + str(bb)
+                            if len(id_lb) == 0:
+                                continue
 
-#                     # Create data set if needed. Start with 0 stars in the dataset.
-#                     if dset_name not in hf:
-#                         dataset = hf.create_dataset(dset_name, shape=(0,),
-#                                                     chunks=(1e4,),
-#                                                     maxshape=(None,),
-#                                                     dtype=compound_dtype)
-#                     else:
-#                         dataset = hf[dset_name]
+                            primary_ids = obj_arr['obj_id'][id_lb]
+                            companion_id_lb = [np.where(companion_obj_arr['system_idx'] == pid)[0] for pid in primary_ids]
+                            companion_id_lb = np.concatenate(companion_id_lb)
 
-#                     ##########
-#                     # Binning the stars and/or compact objects or companions
-#                     ##########
-#                     if obj_arr is not None:
-#                         id_lb = np.where((obj_arr['glat'] >= lat_bin_edges[bb]) &
-#                                          (obj_arr['glat'] < lat_bin_edges[bb + 1]) &
-#                                          (obj_arr['glon'] >= long_bin_edges[ll]) &
-#                                          (obj_arr['glon'] < long_bin_edges[ll + 1]))[0]
+                            if len(companion_id_lb) == 0:
+                                continue
 
-#                         if len(id_lb) == 0:
-#                             continue
+                            save_data = np.array(companion_obj_arr[companion_id_lb], dtype=compound_dtype)
 
-#                         # Loop over the obj_arr and add all columns
-#                         # (matching id_lb) into save_data
-#                         save_data = np.empty(len(id_lb), dtype=compound_dtype)
+                        # Create or resize the dataset
+                        if dset_name not in hf:
+                            dset = hf.create_dataset(
+                                dset_name,
+                                data=save_data,
+                                maxshape=(None,),
+                                chunks=(min(10000, len(save_data)),),
+                                dtype=compound_dtype,
+                                compression="gzip"
+                            )
+                        else:
+                            dset = hf[dset_name]
+                            old_size = dset.shape[0]
+                            new_size = old_size + len(save_data)
+                            dset.resize((new_size,))
+                            dset[old_size:new_size] = save_data
 
-#                         if companion_obj_arr is None:
-#                             for colname in obj_arr:
-#                                 save_data[colname] = obj_arr[colname][id_lb]
-#                         # If making a companion hd5f file, finds corresponding companions and save them
-#                         else:
-#                             companion_id_lb = [np.where(companion_obj_arr['system_idx'] == ii)[0] for ii in obj_arr['obj_id'][id_lb]]
-#                             companion_id_lb = list(np.concatenate(companion_id_lb).ravel()) # Simplifies datastructure
-#                             if len(companion_id_lb) == 0:
-#                                 continue
-#                             save_data = np.array(companion_obj_arr[companion_id_lb])
-
-#                         # Resize the dataset and add data.
-#                         old_size = dataset.shape[0]
-#                         if companion_obj_arr is None:
-#                             new_size = old_size + len(id_lb)                
-#                         else:
-#                             new_size = old_size + len(companion_id_lb)                     
-#                         dataset.resize((new_size, ))
-#                         dataset[old_size:new_size] = save_data
-
-#                     hf.close()
-                    
-#             return output_root.h5
+            return file_path
         
         lb_binning_hdf5(lat_bin_edges, long_bin_edges, star_dict, "synthpop_test_h5_file")
+    
+        return dataframe
