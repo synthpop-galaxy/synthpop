@@ -152,24 +152,26 @@ class SpiseaIso(EvolutionIsochrones, CharonInterpolator):
         mass_range = pandas.concat([min_values,max_values], axis=1)
         return mass_range
 
-    def generate_isochrones(self, magsys, feh):
+    def generate_isochrones(self, magsyses, feh):
         """
         generate new isochrone from spisea, convert into our format, and save
         """
-        print(f'  Generating isochrone for {magsys} filters, feh={feh}')
+        print(f'  Generating isochrone for requested filter systems in feh={feh}')
         i=np.where(self.feh_grid==feh)[0][0]
         m_h = np.log10(self.evolution_model.z_list[i] / self.evolution_model.z_solar)
         isos_tmp = []
 
         # Go ahead and generate isochrone for full filter system now, 
         #  so we don't have to recompute them again in the future.
-        msys_split = magsys.split('-')
-        if len(msys_split)==1:
-            filts = self.spisea_filters[msys_split[0]]
-            calc_filters = [msys_split[0]+','+filt for filt in filts]
-        else:
-            filts = self.spisea_filters[msys_split[0]][msys_split[1]]
-            calc_filters = [msys_split[0]+','+msys_split[1]+','+filt for filt in filts]
+        calc_filters = []
+        for magsys in magsyses:
+            msys_split = magsys.split('-')
+            if len(msys_split)==1:
+                filts = self.spisea_filters[msys_split[0]]
+                calc_filters += [msys_split[0]+','+filt for filt in filts]
+            else:
+                filts = self.spisea_filters[msys_split[0]][msys_split[1]]
+                calc_filters += [msys_split[0]+','+msys_split[1]+','+filt for filt in filts]
 
         for log_age in self.log_age_list:
             iso_tmp = synthetic.IsochronePhot(log_age, 0.0, 10.0, metallicity=m_h,
@@ -214,34 +216,80 @@ class SpiseaIso(EvolutionIsochrones, CharonInterpolator):
             dictionary of separate PandasDataFrames for each metallicity.
         """
 
+        # isochrones = {}
+        # # Load columns
+        # for i, magsys_name in enumerate(self.magsys):
+        #     use_columns = list(self.magsys_bands[magsys_name])
+        #     # Get basic properties from first filter set isochrone
+        #     if i==0:
+        #         use_columns += self.non_mag_cols
+        #     if not os.path.isdir(f'{self.FOLDER}/{magsys_name}'):
+        #         print(f"Missing SPISEA {self.evolution_model_name} isochrones for {self.magsys_name}.")
+        #         print(f"Generating these may take a few hours the first time, then they will be saved for quick loading in the future.")
+        #         os.makedirs(f'{self.FOLDER}/{magsys_name}')
+
+        #     # Load in columns for each metallicity
+        #     for file_met in self.feh_grid:
+        #         met_string = ('m' if file_met<0.0 else 'p') + f'{np.abs(file_met):1.2f}'
+        #         filename = self.get_filename(magsys_name, met_string)
+
+        #         if os.path.isfile(f'{filename}.h5'):
+        #             df = pandas.read_hdf(f'{filename}.h5', key='data')
+        #         else:
+        #             df = self.generate_isochrones(magsys_name, file_met)
+        #             df.to_hdf(f'{filename}.h5', key='data')
+
+        #         if i == 0:
+        #             isochrones[file_met] = df[use_columns].copy()
+        #         else:
+        #             isochrones[file_met][use_columns] = df[use_columns]
+        #pdb.set_trace()
+
+        need_to_generate = {}
         isochrones = {}
-        # Load columns
-        for i, magsys_name in enumerate(self.magsys):
-            use_columns = list(self.magsys_bands[magsys_name])
-            # Get basic properties from first filter set isochrone
-            if i==0:
-                use_columns += self.non_mag_cols
-            if not os.path.isdir(f'{self.FOLDER}/{magsys_name}'):
-                print(f"Missing SPISEA {self.evolution_model_name} isochrones for {self.magsys_name}.")
-                print(f"Generating these may take an ~hour the first time, then they will be saved for quick loading in the future.")
-                os.makedirs(f'{self.FOLDER}/{magsys_name}')
 
-            # Load in columns for each metallicity
-            for file_met in self.feh_grid:
-                met_string = ('m' if file_met<0.0 else 'p') + f'{np.abs(file_met):1.2f}'
+        # Check which isochrones need generated
+        for file_met in self.feh_grid:
+            met_string = ('m' if file_met<0.0 else 'p') + f'{np.abs(file_met):1.2f}'
+            for magsys_name in self.magsys:
+            # Check whether we have a file saved for this filter set
                 filename = self.get_filename(magsys_name, met_string)
+                if not os.path.isfile(f'{filename}.h5'):
+                    if file_met not in need_to_generate.keys():
+                        need_to_generate[file_met] = [magsys_name]
+                    else:
+                        need_to_generate[file_met].append(magsys_name)
+            # Generate needed isochrones for given metallicity
+            if file_met in need_to_generate.keys():
+                df = self.generate_isochrones(need_to_generate[file_met], file_met)
+                for magsys_name in need_to_generate[file_met]:
+                    os.makedirs(f'{self.FOLDER}/{magsys_name}', exist_ok=True)
+                    filename = self.get_filename(magsys_name, met_string)
+                    msys_split = magsys_name.split('-')
+                    if len(msys_split)==1:
+                        filts = self.spisea_filters[msys_split[0]]
+                        use_filters = [msys_split[0]+'-'+filt for filt in filts]
+                    else:
+                        filts = self.spisea_filters[msys_split[0]][msys_split[1]]
+                        use_filters = [msys_split[0]+'-'+msys_split[1]+'-'+filt for filt in filts]
+                    use_columns = list(self.non_mag_cols) + list(use_filters)
+                    df[use_columns].to_hdf(f'{filename}.h5', key='data')
 
-                if os.path.isfile(f'{filename}.h5'):
-                    df = pandas.read_hdf(f'{filename}.h5', key='data')
-                else:
-                    df = self.generate_isochrones(magsys_name, file_met)
-                    df.to_hdf(f'{filename}.h5', key='data')
+        # Load or generate columns
+        for file_met in self.feh_grid:
+            met_string = ('m' if file_met<0.0 else 'p') + f'{np.abs(file_met):1.2f}'
+
+            for i, magsys_name in enumerate(self.magsys):
+                use_columns = list(self.magsys_bands[magsys_name])
+                # Get basic properties from first filter set isochrone
+                if i==0:
+                    use_columns += self.non_mag_cols
+                df = pandas.read_hdf(filename, key='data')
 
                 if i == 0:
                     isochrones[file_met] = df[use_columns].copy()
                 else:
                     isochrones[file_met][use_columns] = df[use_columns]
-        #pdb.set_trace()
 
         return pandas.concat(isochrones.values())
 
