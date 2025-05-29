@@ -62,7 +62,7 @@
     },
 
     "ISOCHRONE_INTERPOLATION":{
-        "evolution_class": {"name":"Spisea"}
+        "evolution_class": {"name":"SpiseaCluster"}
         },
 
     "PHOTOMETRIC_OUTPUTS":{
