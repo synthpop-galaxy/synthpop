@@ -1,7 +1,7 @@
 {   "SEED":{"random_seed":null},
 
     "MANDATORY":{
-        "name_for_output":"Huston2025",
+        "name_for_output":"Huston2025_spisea",
         "model_name":"Huston2025"
     },
 
@@ -58,28 +58,26 @@
         "scale_factor": 1,
         "skip_lowmass_stars": false,
         "chunk_size": 250000,
-        "star_generator": "StarGenerator"
+        "star_generator": "SpiseaGenerator"
     },
 
     "ISOCHRONE_INTERPOLATION":{
-        "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"}
+        "evolution_class": {"name":"Spisea"}
         },
 
     "PHOTOMETRIC_OUTPUTS":{
-        "maglim":["W146", 23.975533, "remove"],
-        "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "VISTA_J", "VISTA_H", "VISTA_Ks"],
+        "maglim":["2mass-Ks", 21, "remove"],
+        "chosen_bands": ["2mass-J","2mass-H","2mass-Ks"],
         "eff_wavelengths": {
-            "json_file":"AAA_effective_wavelengths.json"
+            "json_file":"AAA_effective_wavelengths_spisea.json"
             },
         "obsmag":true,
 
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"],
-        "col_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius","phase"]
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase"],
+        "col_names":["logL", "logTeff", "logg" ,"log_radius","phase"]
     },
     
-    "OUTPUT":{
-        "post_processing_kwargs": [{"name":"ProcessDarkCompactObjects", "remove":false}, {"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}}],
-    
+    "OUTPUT":{    
         "output_location":"outputfiles/default",
         "output_filename_pattern": "{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}",
         "output_file_type": "csv",

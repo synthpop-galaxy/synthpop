@@ -202,10 +202,17 @@ class Population:
         self.extinction.set_bands(self.bands, self.glbl_params.eff_wavelengths)
 
         self.av_mass_corr = None
-        self.generator = StarGenerator(
-            self.imf, self.age, self.metallicity, self.evolution,
-            self.glbl_params, self.position, self.max_mass, logger
-            )
+        if self.glbl_params.star_generator=="SpiseaGenerator":
+            from spisea_generator import SpiseaGenerator
+            self.generator = SpiseaGenerator(
+                self.imf, self.age, self.metallicity, self.evolution,
+                self.glbl_params, self.position, self.max_mass, logger
+                )
+        else:
+            self.generator = StarGenerator(
+                self.imf, self.age, self.metallicity, self.evolution,
+                self.glbl_params, self.position, self.max_mass, logger
+                )
 
     def assign_subclasses(self):
         """initialization of all the subclass

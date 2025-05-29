@@ -66,7 +66,7 @@ class SpiseaGenerator(StarGenerator):
         # SPISEA specific setings
         self.spisea_dir = spisea_dir
         os.mkdirs(self.spisea_dir, exist_ok=True)
-        if (evolution_model_name=='MISTv1.2') or (evolution_model_name=='MISTv1.0'):
+        if (evolution_module.evo_model_name=='MISTv1.2') or (evolution_module.evo_model_name=='MISTv1.0'):
             self.evolution_model = evolution.MISTv1(version=float(evolution_model_name[-3:]))
             self.feh_list = np.array([-4.0,-3.5,-3.0,-2.5,-2.0,-1.75,-1.5,-1.25,
                                       -1.0,-0.75,-0.5,-0.25,0,0.25,0.5])
@@ -95,18 +95,27 @@ class SpiseaGenerator(StarGenerator):
         self.mh_list = np.log10(self.spisea_evo_model.z_list / self.spisea_evo_model.z_solar)
 
     @staticmethod
-    def spisea_prop_from_synthpop(synth_prop, spisea_df):
-        if synth_prop=='phase':
-            synth_value = spisea_df['phase']
-        elif synth_prop=='log_L':
-            spisea_prop = 'L'
-        elif synth_prop=='log_Teff':
-        elif synth_prop=='log_g':
-        elif synth_prop=='[Fe/H]':
-        elif synth_prop=='log_R':
-        else:
-            raise ValueError("Invalid property "+str(synth_prop)+" for SPISEA generator.")
-        return synth_value
+    def spisea_props_to_synthpop(synth_props, spisea_df):
+        conv_props = {}
+        for prop in synth_props:
+            if prop=='phase':
+                conv_props[prop] = spisea_df['phase'].to_numpy()
+            elif prop=='log_L':
+                conv_props[prop] = np.log10(spisea_df['L'].to_numpy()/const.Lsun_w)
+            elif prop=='log_Teff':
+                conv_props[prop] = np.log10(spisea_df['Teff'].to_numpy())
+            elif prop=='log_g':
+                conv_props[prop] = spisea_df['logg'].to_numpy()
+            elif prop'log_R':
+                conv_props[prop] = np.log10(spisea_df['R'].to_numpy()/const.Rsun_m)
+            else:
+                try:
+                    spisea_col = 'm_'+spisea.synthetic.get_filter_col_name(prop.replace('-',','))
+                    conv_props[prop] = spisea_df[spisea_col].to_numpy()
+                except:
+                    raise ValueError("Invalid column for SPISEA generator: "+str(prop))
+
+        return conv_props
 
     def generate_stars(self, radii, missing_stars, mass_limit,
         do_kinematics, props, avg_mass_per_star=None):
@@ -178,13 +187,18 @@ class SpiseaGenerator(StarGenerator):
         age = np.zeros(n_stars)
         met = np.zeros(n_stars)
         ref_mag = np.zeros(n_stars)
-        s_props = np.zeros((len(props),n_stars))
+        s_props = {p: np.zeros(n_stars) for p in props}
+        final_phase_flag = np.zeros(n_stars, bool)
+        inside_grid = np.ones(n_stars, bool)
+        not_evolved = np.zeros(n_stars, bool)
 
+        stars_done = 0
         for bin2d in bins2d:
             # Use a minimum mass per cluster so we don't get an error
             clusters = []
             cluster_stars_needed = bin2d[2]
-            generate_mass = np.max(cluster_stars_needed*avg_mass_per_star*1.1, 10.0)
+            generate_mass = np.min(np.max(cluster_stars_needed*avg_mass_per_star*1.1, 10.0), 
+                                    self.chunk_size*avg_mass_per_star)
             # Loop until we have enough stars
             while cluster_stars_needed > 0:
                 isochrone = spisea.synthetic.IsochronePhot(logAge=bin2d[0], AKs=0,
@@ -197,10 +211,21 @@ class SpiseaGenerator(StarGenerator):
                 assert (not hasattr(clusters[-1], 'companions')), "Error: Companions not yet implemented."
                 cluster_stars_needed -= len(cluster)
             cluster_comb = pd.concat(clusters, ignore_index=True)
+            # Drop any excess stars
             if cluster_stars_needed<0:
                 drop_idx = np.random.choice(cluster_comb.index.to_numpy(), size=-cluster_stars_needed)
                 cluster_comb.drop(index=drop_idx, inplace=True)
+            # Get data from SPISEA cluster into SynthPop's formats
+            m_initial[stars_done:stars_done+bin2d[2]] = cluster_comb['mass'].to_numpy()
+            age[stars_done:stars_done+bin2d[2]] = 10**bin2d[0] / 1e9
+            met[stars_done:stars_done+bin2d[2]] = self.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
+            conv_props = self.spisea_props_to_synthpop(props)
+            for prop in props:
+                s_props[prop][stars_done:stars_done+bin2d[2]] = conv_props[prop]
+            not_evolved[stars_done:stars_done+bin2d[2]] = np.isnan(cluster_comb.L.to_numpy())
+            # Bin complete
+            stars_done += bin2d[2]
 
-
+        ref_mag = s_props[self.ref_band]
         return m_initial, age, met, ref_mag, s_props, final_phase_flag, inside_grid, not_evolved
 

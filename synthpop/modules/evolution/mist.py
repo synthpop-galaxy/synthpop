@@ -150,7 +150,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         # Get mass range for each metallicity and age
         self.mass_range = self.get_mass_ranges(self.isochrones_grouped)
 
-        # call super after loading the isochrones so the interpolator has axcess to the data
+        # call super after loading the isochrones so the interpolator has access to the data
         super().__init__(**kwargs)
 
 

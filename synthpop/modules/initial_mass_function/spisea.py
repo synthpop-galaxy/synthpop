@@ -14,6 +14,8 @@ from typing import Callable
 class SpiseaImf(InitialMassFunction):
     """
     Import an IMF module from SPISEA
+    spisea_imf_name options are: IMF_broken_powerlaw, IMFSalpeter1955, Miller_Scalo_1979, Kennicutt_1983, 
+        Kroupa_2001, Weidner_Kroupa_2004, 
     """
 
     def __init__(
