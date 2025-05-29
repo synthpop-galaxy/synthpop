@@ -81,8 +81,15 @@ class SpiseaGenerator(StarGenerator):
         self.spisea_ifmr = None
         if evolution_module.ifmr_name is not None:
             self.spisea_ifmr = getattr(spisea.ifmr, evolution_module.ifmr_name)()
-        self.spisea_imf = imf_module.spisea_imf
-        self.multiplicity = imf_module.add_companions
+        if imf_module.imf_name=='Kroupa':
+            self.spisea_imf = spisea.imf.imf.Kroupa_2001(multiplicity=evolution_module.multiplicity)
+        elif imf_module.imf_name=='Piecewise Powerlaw'
+            self.spisea_imf = spisea.imf.imf.IMF_broken_powerlaw([imf_module.min_mass, *imf_module.splitpoints, imf_module.max_mass],
+                                                    -np.array(imf_module.alphas), multiplicity=evolution_module.multiplicity)
+        else:
+            raise ValueError("Invalid IMF for SPISEA Generator; must use Kroupa or PiecewisePowerlaw.")
+        #self.spisea_imf = imf_module.spisea_imf
+        #self.multiplicity = imf_module.add_companions
         self.spisea_imf = getattr(spisea.imf.imf, imf_module.spisea_imf_name)()
         self.spisea_filters = glbl_params.chosen_bands
         
