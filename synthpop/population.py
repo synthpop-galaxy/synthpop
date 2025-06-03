@@ -203,7 +203,13 @@ class Population:
 
         self.av_mass_corr = None
         if self.glbl_params.star_generator=="SpiseaGenerator":
-            from spisea_generator import SpiseaGenerator
+            if self.lost_mass_option != 3:
+                logger.warning("Setting lost_mass_option to 3 for SpiseaGenerator.")
+                self.lost_mass_option = 3
+            try:
+                from spisea_generator import SpiseaGenerator
+            except:
+                from .spisea_generator import SpiseaGenerator
             self.generator = SpiseaGenerator(
                 self.imf, self.age, self.metallicity, self.evolution,
                 self.glbl_params, self.position, self.max_mass, logger
@@ -619,7 +625,6 @@ class Population:
         return av_mass_corr
 
     def get_mass_loss_for_option(self, lost_mass_option):
-
         if lost_mass_option == 1:
             # estimate the av_mass_corr in the estimate field
             # and use it for different positions
