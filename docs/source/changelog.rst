@@ -4,6 +4,14 @@ Changelog
 Version 1
 ---------
 
+v1.0.4
+^^^^^^
+Date: June 4, 2025
+
+* Fix edge-case bugs in lost_mass_option=3 star generation process (@hustonm)
+* Only collect needed effective wavelengths from json file to de-clutter configurations/logs (@hustonm)
+* Change fill value to 99 for missing Mbol values in GULLS post-processing (@acrisp3)
+
 v1.0.3
 ^^^^^^
 Date: May 16, 2025
