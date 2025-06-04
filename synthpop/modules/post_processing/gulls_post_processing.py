@@ -84,6 +84,7 @@ class GullsPostProcessing(PostProcessing):
         for filt in filtlist:
             dataframe.loc[:, filt] = dataframe.loc[:,filt].fillna(99)
         dataframe.loc[:, "K213"] = dataframe.loc[:,"K213"].fillna(99)
+        dataframe.loc[:, "Mbol"] = dataframe.loc[:,"Mbol"].fillna(99)
         dataframe = dataframe.fillna(value=2e-50)
 
 
