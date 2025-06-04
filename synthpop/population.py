@@ -206,6 +206,9 @@ class Population:
             if self.lost_mass_option != 3:
                 logger.warning("Setting lost_mass_option to 3 for SpiseaGenerator.")
                 self.lost_mass_option = 3
+            if self.skip_lowmass_stars:
+                logger.warning("Setting skip_lowmass_stars to False for SpiseaGenerator.")
+                self.skip_lowmass_stars = False
             try:
                 from spisea_generator import SpiseaGenerator
             except:
@@ -745,7 +748,7 @@ class Population:
         n_star_expected, mass_per_slice = self.get_n_star_expected(
             radii, average_imass_per_star, av_mass_corr)
 
-        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number'):
+        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (np.sum(n_star_expected)>0):
             if np.sum(n_star_expected) < self.N_av_mass:
                 n_star_expected *= self.N_av_mass / np.sum(n_star_expected)
 
@@ -824,7 +827,7 @@ class Population:
             all_m_evolved = []
             all_r_inner = []
         opt3_mass_loss_done=False
-        use_pbar = np.sum(total_stars)>self.glbl_params.chunk_size
+        use_pbar = (np.sum(total_stars)>self.glbl_params.chunk_size) * (self.generator.generator_name!='SpiseaGenerator')
         if use_pbar:
             pbar = tqdm(total=sum(missing_stars))
         neg_missing_stars = np.minimum(missing_stars,0)

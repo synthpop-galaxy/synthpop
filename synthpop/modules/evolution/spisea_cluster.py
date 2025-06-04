@@ -17,7 +17,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
     will generate and evolve stars as binned SPISEA clusters.
     """
     def __init__(self, columns, evo_model_name="MISTv1.2", atm_func_name="get_merged_atmosphere", 
-                    wd_atm_func_name="get_wd_atmosphere", ifmr_name=None, 
+                    wd_atm_func_name="get_wd_atmosphere", ifmr_name="IFMR_N20_Sukhbold", 
                     multiplicity_name=None, min_mass=0, max_mass=1000, **kwargs):
         self.evo_model_name = evo_model_name
         self.atm_func_name = atm_func_name

@@ -17,6 +17,7 @@ from spisea import evolution as spisea_evolution
 from spisea import atmospheres as spisea_atmospheres
 from spisea.imf import imf as spisea_imfs
 from spisea import synthetic as spisea_synthetic
+from spisea import ifmr as spisea_ifmr
 import os
 import pdb
 import pandas as pd
@@ -86,7 +87,7 @@ class SpiseaGenerator(StarGenerator):
         self.spisea_wd_atm_func = getattr(spisea_atmospheres, evolution_module.wd_atm_func_name)
         self.spisea_ifmr = None
         if evolution_module.ifmr_name is not None:
-            self.spisea_ifmr = getattr(spisea.ifmr, evolution_module.ifmr_name)()
+            self.spisea_ifmr = getattr(spisea_ifmr, evolution_module.ifmr_name)()
         self.spisea_multiplicity = None
         if evolution_module.multiplicity_name is not None:
             self.spisea_multiplicity = getattr(spisea.multiplicity, evolution_module.multiplicity_name)()
@@ -128,7 +129,9 @@ class SpiseaGenerator(StarGenerator):
             elif prop=='log_g':
                 conv_props[prop] = spisea_df['logg'].to_numpy()
             elif prop=='log_R':
-                conv_props[prop] = np.log10(np.sqrt(spisea_df['L'].to_numpy()/(4*np.pi*const.sigma_sb*spisea_df['Teff'].to_numpy()**4))) #np.log10(spisea_df['R'].to_numpy()/const.Rsun_m)
+                conv_props[prop] = np.log10((np.sqrt(spisea_df['L'].to_numpy()/
+                                            (4*np.pi*const.sigma_sb*spisea_df['Teff'].to_numpy()**4)))/
+                                            const.Rsun_m) #np.log10(spisea_df['R'].to_numpy()/const.Rsun_m)
             else:
                 try:
                     spisea_col = 'm_'+spisea_synthetic.get_filter_col_name(prop.replace('-',','))
@@ -251,7 +254,8 @@ class SpiseaGenerator(StarGenerator):
             conv_props = self.spisea_props_to_synthpop(props, cluster_comb)
             for prop in props:
                 s_props[prop][stars_done:stars_done+n_bin] = conv_props[prop]
-            not_evolved[stars_done:stars_done+n_bin] = np.isnan(cluster_comb.L.to_numpy())
+            final_phase_flag[stars_done:stars_done+n_bin] = (np.isnan(cluster_comb.L.to_numpy()) & (cluster_comb.phase.to_numpy()>100.0))
+
             # Bin complete
             stars_done += n_bin
 
