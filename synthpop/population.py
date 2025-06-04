@@ -733,7 +733,7 @@ class Population:
         n_star_expected, mass_per_slice = self.get_n_star_expected(
             radii, average_imass_per_star, av_mass_corr)
 
-        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number'):
+        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (sum(n_star_expected)>0):
             if np.sum(n_star_expected) < self.N_av_mass:
                 n_star_expected *= self.N_av_mass / np.sum(n_star_expected)
 
