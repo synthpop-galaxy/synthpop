@@ -19,8 +19,8 @@ copyright = 'tbd'
 author = 'M Huston'
 master_doc = 'index'
 
-release = '0.1'
-version = '0.1.0'
+release = '1.0.4'
+version = '1.0.4'
 
 # -- General configuration
 
