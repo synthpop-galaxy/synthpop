@@ -73,7 +73,7 @@ class StarGenerator:
 
     def __init__(self, imf_module, age_module, met_module, evolution_module,
             glbl_params, position, max_mass, logger):
-
+        self.generator_name = 'StarGenerator'
         self.imf_module = imf_module
         self.age_module = age_module
         self.met_module = met_module
