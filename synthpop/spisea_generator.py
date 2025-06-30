@@ -132,6 +132,8 @@ class SpiseaGenerator(StarGenerator):
                 conv_props[prop] = np.log10((np.sqrt(spisea_df['L'].to_numpy()/
                                             (4*np.pi*const.sigma_sb*spisea_df['Teff'].to_numpy()**4)))/
                                             const.Rsun_m) #np.log10(spisea_df['R'].to_numpy()/const.Rsun_m)
+            elif prop=='isWR':
+                conv_props[prop] = spisea_df['isWR'].to_numpy()
             else:
                 try:
                     spisea_col = 'm_'+spisea_synthetic.get_filter_col_name(prop.replace('-',','))

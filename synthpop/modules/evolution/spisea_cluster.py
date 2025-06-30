@@ -4,9 +4,7 @@ Evolution module to store information for the SpiseaGenerator. Not valid for a s
 
 __all__ = ["Spisea", ]
 __author__ = "M.J. Huston"
-__date__ = "2024-11-20"
-__license__ = "GPLv3"
-__version__ = "1.0.0"
+__date__ = "2025-05-28"
 
 from ._evolution import EvolutionIsochrones, EvolutionInterpolator
 import numpy as np
