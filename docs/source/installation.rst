@@ -19,3 +19,10 @@ You can instead specify the directory directly by running::
     python -m synthpop.migrate_interactive_part path_to_directory
 
 Afterwards, SynthPop is ready to be used. 
+
+This process can be undone by running:: 
+
+    python -m synthpop.undo_migrate_interactive_part <path_to_directory>
+
+with the path to directory being optional.
+
