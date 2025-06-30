@@ -9,11 +9,11 @@ __date__ = "2025-06-30"
 import pandas
 import numpy as np
 from ._post_processing import PostProcessing
+from synthpop.synthpop_utils.coordinates_transformation import lb_to_ad, uvw_to_vrmuad
 
 class EquatorialCoordinates(PostProcessing):
     """
-    Postprocessing module to convert magnitude systems for any
-    filters provided by MIST. Allowed systems are Vega, AB, and ST.
+    Postprocessing module to convert from galactic to equatorial coordinates
     
     Attributes
     ----------
@@ -29,37 +29,25 @@ class EquatorialCoordinates(PostProcessing):
         """
         Perform the magnitude conversions and returns the modified DataFrame.
         """
-        # Create new columns where needed
-        l_idx = np.where(dataframe.columns=='l')[0][0]
-        dataframe.insert(l_idx, 'ra', np.nan)
-        dataframe.insert(l_idx+1, 'dec', np.nan)
-        try:
-            mul_idx = np.where(dataframe.columns=='mul')[0][0]
-            dataframe.insert(mul_idx, 'mura', np.nan)
-            dataframe.insert(mul_idx+1, 'mudec', np.nan)
-            no_kinematics=False
-        except:
-            no_kinematics = True
 
-        # Loop over populations to convert coordinate systems and fill in dataframe column
-        for popid in range(len(self.model.populations)):
-            stars_in_pop = np.where(dataframe['pop']==float(popid))[0]
-            l_pop, b_pop = dataframe['l'][stars_in_pop].to_numpy(), dataframe['b'][stars_in_pop].to_numpy()
-            dist_pop = dataframe['Dist'][stars_in_pop].to_numpy()
-            ra_pop, dec_pop = self.model.populations[popid].coord_trans.lb_to_ad(l_pop,b_pop)
-            dataframe.loc[stars_in_pop, 'ra'] = ra_pop
-            dataframe.loc[stars_in_pop, 'dec'] = dec_pop
-            if not no_kinematics:
-                u_pop, v_pop, w_pop = dataframe['U'][stars_in_pop].to_numpy(), dataframe['V'][stars_in_pop].to_numpy(), \
-                                        dataframe['W'][stars_in_pop].to_numpy()
-                vr_pop, mura_pop, mudec_pop = self.model.populations[popid].coord_trans.uvw_to_vrmuad(l_pop,b_pop,dist_pop, u_pop,v_pop,w_pop)
-                dataframe.loc[stars_in_pop, 'mura'] = mura_pop
-                dataframe.loc[stars_in_pop, 'mudec'] = mudec_pop
+        # Get ra, dec from l, b & add to dataframe
+        l_arr, b_arr = dataframe['l'].to_numpy(), dataframe['b'].to_numpy()
+        ra_arr, dec_arr = lb_to_ad(l_arr,b_arr)
+        l_idx = np.where(dataframe.columns=='l')[0][0]
+        dataframe.insert(l_idx, 'ra', ra_arr)
+        dataframe.insert(l_idx+1, 'dec', dec_arr)
+
+        # Get mura, mudec from coords and kinemaitcs & add to dataframe
+        dist_arr = dataframe['Dist'].to_numpy()
+        u_arr, v_arr, w_arr = dataframe['U'].to_numpy(), dataframe['V'].to_numpy(), dataframe['W'].to_numpy()
+        vr_arr, mura_arr, mudec_arr = uvw_to_vrmuad(l_arr,b_arr,dist_arr, u_arr,v_arr,w_arr)
+        mul_idx = np.where(dataframe.columns=='mul')[0][0]
+        dataframe.insert(mul_idx, 'mura', mura_arr)
+        dataframe.insert(mul_idx+1, 'mudec', mudec_arr)
 
         # Remove galactic coordinates if selected
         if not self.keep_galactic:
             dataframe.drop(columns=['l','b'],inplace=True)
-            if not no_kinematics:
-                dataframe.drop(columns=['mul','mub'],inplace=True)
+            dataframe.drop(columns=['mul','mub'],inplace=True)
         
         return dataframe
