@@ -21,7 +21,7 @@ class GullsPostProcessing(PostProcessing):
                 ege model.const, model.params, model.populations[0]
             cat_type:
                 settings for the catalog type
-                must be on of :
+                must be one of : lens, source, extra-bright, bright, mid1, mid2, faint
 
             kwargs: dict
                 keyword arguments from the config file
@@ -31,9 +31,6 @@ class GullsPostProcessing(PostProcessing):
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """
-        This is a placeholder for the postprocessing
-        replace it whit what ever you think is useful
-        It must accept the pandas data frame and must return a pandas data frame
 
         Parameters
         ----------
