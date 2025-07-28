@@ -202,10 +202,26 @@ class Population:
         self.extinction.set_bands(self.bands, self.glbl_params.eff_wavelengths)
 
         self.av_mass_corr = None
-        self.generator = StarGenerator(
-            self.imf, self.age, self.metallicity, self.evolution,
-            self.glbl_params, self.position, self.max_mass, logger
-            )
+        if self.glbl_params.star_generator=="SpiseaGenerator":
+            if self.lost_mass_option != 3:
+                logger.warning("Setting lost_mass_option to 3 for SpiseaGenerator.")
+                self.lost_mass_option = 3
+            if self.skip_lowmass_stars:
+                logger.warning("Setting skip_lowmass_stars to False for SpiseaGenerator.")
+                self.skip_lowmass_stars = False
+            try:
+                from spisea_generator import SpiseaGenerator
+            except:
+                from .spisea_generator import SpiseaGenerator
+            self.generator = SpiseaGenerator(
+                self.imf, self.age, self.metallicity, self.evolution,
+                self.glbl_params, self.position, self.max_mass, logger
+                )
+        else:
+            self.generator = StarGenerator(
+                self.imf, self.age, self.metallicity, self.evolution,
+                self.glbl_params, self.position, self.max_mass, logger
+                )
 
     def assign_subclasses(self):
         """initialization of all the subclass
@@ -612,7 +628,6 @@ class Population:
         return av_mass_corr
 
     def get_mass_loss_for_option(self, lost_mass_option):
-
         if lost_mass_option == 1:
             # estimate the av_mass_corr in the estimate field
             # and use it for different positions
@@ -733,7 +748,7 @@ class Population:
         n_star_expected, mass_per_slice = self.get_n_star_expected(
             radii, average_imass_per_star, av_mass_corr)
 
-        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (sum(n_star_expected)>0):
+        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (np.sum(n_star_expected)>0):
             if np.sum(n_star_expected) < self.N_av_mass:
                 n_star_expected *= self.N_av_mass / np.sum(n_star_expected)
 
@@ -812,7 +827,7 @@ class Population:
             all_m_evolved = []
             all_r_inner = []
         opt3_mass_loss_done=False
-        use_pbar = np.sum(total_stars)>self.glbl_params.chunk_size
+        use_pbar = (np.sum(total_stars)>self.glbl_params.chunk_size) * (self.generator.generator_name!='SpiseaGenerator')
         if use_pbar:
             pbar = tqdm(total=sum(missing_stars))
         neg_missing_stars = np.minimum(missing_stars,0)

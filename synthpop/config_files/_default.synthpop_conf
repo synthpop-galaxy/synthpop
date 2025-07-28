@@ -89,7 +89,10 @@
         "#comment9": "Reduce the generation of low-mass stars which are to faint",
         "skip_lowmass_stars": false,
         "#comment10": "Evolve the number of stars in chunks of size",
-        "chunk_size": 250000
+        "chunk_size": 250000,
+
+        "#comment11": "Select star generator (options are standard StarGenerator or SpiseaGenerator).",
+        "star_generator": "StarGenerator"
     },
 
     "EXTINCTION_MAP":
