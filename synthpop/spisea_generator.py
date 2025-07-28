@@ -91,7 +91,9 @@ class SpiseaGenerator(StarGenerator):
         self.spisea_multiplicity = None
         if evolution_module.multiplicity_name is not None:
             self.spisea_multiplicity = getattr(spisea.multiplicity, evolution_module.multiplicity_name)()
+            raise NotImplementedError("Stellar multiplicity via SPISEA is not yet implemented.")
         if imf_module.imf_name=='Kroupa':
+            print("KROUPA IMF")
             self.spisea_imf = spisea_imfs.Kroupa_2001(multiplicity=self.spisea_multiplicity)
         elif imf_module.imf_name=='Piecewise Powerlaw':
             self.spisea_imf = spisea_imfs.IMF_broken_powerlaw([imf_module.min_mass, *imf_module.splitpoints, imf_module.max_mass],
@@ -239,10 +241,13 @@ class SpiseaGenerator(StarGenerator):
                                     wd_atm_func=self.spisea_wd_atm_func, iso_dir=self.spisea_dir,
                                     min_mass=min_mass, max_mass=max_mass,
                                     filters=self.spisea_filters)
-                cluster=spisea_synthetic.ResolvedCluster(isochrone, self.spisea_imf, generate_mass, ifmr=self.spisea_ifmr)
-                clusters.append(cluster.star_systems.to_pandas())
+                cluster=spisea_synthetic.ResolvedCluster(isochrone, self.spisea_imf, generate_mass, ifmr=self.spisea_ifmr,
+                                                            keep_low_mass_stars=True)
+                star_systems = cluster.star_systems.to_pandas()
+                star_systems = star_systems[(star_systems['mass']>min_mass) & (star_systems['mass']<max_mass)]
+                clusters.append(star_systems)
                 assert (not hasattr(clusters[-1], 'companions')), "Error: Companions not yet implemented."
-                cluster_stars_needed -= len(cluster.star_systems)
+                cluster_stars_needed -= len(star_systems)
             cluster_comb = pd.concat(clusters, ignore_index=True)
             # Drop any excess stars
             if cluster_stars_needed<0:
