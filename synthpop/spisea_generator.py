@@ -57,8 +57,9 @@ else:  # continue import when if synthpop is imported
 
 class SpiseaGenerator(StarGenerator):
     def __init__(self, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, logger, spisea_dir=const.ISOCHRONES_DIR+'/spisea/'):
+            glbl_params, position, max_mass, logger):
         # General synthpop things
+        spisea_dir=const.ISOCHRONES_DIR+'/spisea/'
         self.generator_name = 'SpiseaGenerator'
         self.age_module = age_module
         self.met_module = met_module
@@ -71,16 +72,22 @@ class SpiseaGenerator(StarGenerator):
         self.synthpop_imf_module = imf_module
 
         # SPISEA specific setings
-        self.spisea_dir = spisea_dir
-        os.makedirs(self.spisea_dir, exist_ok=True)
         if (evolution_module.evo_model_name=='MISTv1.2') or (evolution_module.evo_model_name=='MISTv1.0'):
             self.spisea_evo_model = spisea_evolution.MISTv1(version=float(evolution_module.evo_model_name[-3:]))
             self.feh_list = np.array([-4.0,-3.5,-3.0,-2.5,-2.0,-1.75,-1.5,-1.25,
                                       -1.0,-0.75,-0.5,-0.25,0,0.25,0.5])
             self.log_age_list = np.linspace(5.0,10.3,107)
             self.log_age_list[0] = 5.01
+        elif evolution_module.evo_model_name=='MergedBaraffePisaEkstromParsec':
+            self.spisea_evo_model = spisea_evolution.MergedBaraffePisaEkstromParsec()
+            self.feh_list = np.array([0.0])
+            self.log_age_list = np.linspace(6.0,10.1,83)
+            self.log_age_list[-1] = 10.9
+            Warning(f"Evolution module {evolution_module.evo_model_name} only includes solar metallicy. All stars will be assigned solar metallicity.")
         else:
-            raise ValueError("Invalid SPISEA evolution_model. Only MISTv1.0 and MISTv1.2 are available at this time.")
+            raise ValueError("Invalid SPISEA evolution_model. Only MISTv1.0, MISTv1.2, and MergedBaraffePisaEkstromParsec are available at this time.")
+        self.spisea_dir = spisea_dir+evolution_module.evo_model_name+'/'
+        os.makedirs(self.spisea_dir, exist_ok=True)
 
         #self.spisea_evo_model = getattr(spisea_evolution, evolution_module.evo_model_name)()
         self.spisea_atm_func = getattr(spisea_atmospheres, evolution_module.atm_func_name)
@@ -93,7 +100,6 @@ class SpiseaGenerator(StarGenerator):
             self.spisea_multiplicity = getattr(spisea.multiplicity, evolution_module.multiplicity_name)()
             raise NotImplementedError("Stellar multiplicity via SPISEA is not yet implemented.")
         if imf_module.imf_name=='Kroupa':
-            print("KROUPA IMF")
             self.spisea_imf = spisea_imfs.Kroupa_2001(multiplicity=self.spisea_multiplicity)
         elif imf_module.imf_name=='Piecewise Powerlaw':
             self.spisea_imf = spisea_imfs.IMF_broken_powerlaw([imf_module.min_mass, *imf_module.splitpoints, imf_module.max_mass],
