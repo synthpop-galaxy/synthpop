@@ -453,7 +453,6 @@ class SynthPop:
             'html': [df.to_html, 'html', {'float_format': "%0.7e"}],
             'xml': [df.to_xml, 'xml', {}],
             'excel': [df.to_excel, 'xlsx', {'merge_cells': False, 'engine': None}],
-            'h5': [df.to_hdf, 'h5', {"key": "data"}],
             'hdf5': [df.to_hdf, 'h5', {"key": "data"}],
             'feather': [df.to_feather, 'ftr', {}],
             'parquet': [df.to_parquet, 'parquet', {}],

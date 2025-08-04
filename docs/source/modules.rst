@@ -58,4 +58,4 @@ Well-tested modules may be added to the SynthPop repository. Alternatively, user
 
 Additional Module Information
 -----------------------------
-See the synthpop.modules API autodocumentation for more details on individual modules.
+See :ref:`Module documentation<synthpop._modules>`

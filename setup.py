@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='synthpop',
-    version='1.0.4',
+    version='0.2.0',
     description='SynthPop is a modular framework to generate synthetic population models',
     author='J. Klüter, S. Johnson, M.J. Huston, A. Aronica, M. Penny',
     license='GPLv3',
