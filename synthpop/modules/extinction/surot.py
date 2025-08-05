@@ -25,6 +25,7 @@ from scipy.interpolate import RegularGridInterpolator
 import requests
 import os
 import tarfile
+import h5py
 
 current_map_name = None
 current_map_data = None
@@ -48,7 +49,7 @@ class Surot(ExtinctionMap):
         equivalent to lallement_ext_func
     """
 
-    def __init__(self, project_3d=True, dist_2d=8.15, **kwargs):
+    def __init__(self, project_3d=True, dist_2d=8.15, use_h5=False, **kwargs):
         super().__init__(**kwargs)
         # name of the extinction map used
         self.extinction_map_name = "Surot"
@@ -94,7 +95,10 @@ class Surot(ExtinctionMap):
             print('File 2D version saved as '+map_output)
             
         # Fetch 3-d projection data if needed
-        if project_3d:
+        if project_3d and use_h5:
+            if (not os.path.isfile(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.h5')) or (not os.path.isfile(f'{const.EXTINCTIONS_DIR}/Galaxia_Schlegel_4096.h5')):
+                OSError('Missing Galaxia map data in h5 format. Try using ebf or getting the data files.')
+        elif project_3d:
             if (not os.path.isfile(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')) or (not os.path.isfile(f'{const.EXTINCTIONS_DIR}/Galaxia_Schlegel_4096.ebf')):
                 print("Missing Galaxia map data - download and arrangement will take a few minutes (significantly faster than the Surot+20 data download).")
                 if not os.path.isdir(f'{const.EXTINCTIONS_DIR}'):
@@ -143,16 +147,21 @@ class Surot(ExtinctionMap):
             current_map_data = [self.coord_tree, self.A_Ks_list]
         
         if self.project_3d:
-        # Set up 3D grid
-            mapfile_3d = ebf.read(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')
-            map_grid_3d = mapfile_3d['exmap3d.xmms']
-            map_data_3d = mapfile_3d['exmap3d.data']
-            # Set up 3D interpolation
+            # Set up 3D grid interpolation for distance scaling
+            if use_h5:
+                mapfile_3d = h5py.File(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.h5', 'r')
+                map_grid_3d = np.array(mapfile_3d['xmms'])
+                map_data_3d = np.array(mapfile_3d['data'])
+                mapfile_3d.close()
+            else:
+                mapfile_3d = ebf.read(f'{const.EXTINCTIONS_DIR}/Galaxia_ExMap3d_1024.ebf')
+                map_grid_3d = mapfile_3d['exmap3d.xmms']
+                map_data_3d = mapfile_3d['exmap3d.data']
             l_grid_3d = np.append(np.arange(*map_grid_3d[0]),map_grid_3d[0][1])
             b_grid_3d = np.append(np.arange(*map_grid_3d[1]),map_grid_3d[1][1])
             self.r_grid = 10**np.append(np.arange(*map_grid_3d[2]),map_grid_3d[2][1])
-            self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid),
-                map_data_3d, bounds_error=False, fill_value=0)
+            self.grid_interpolator_3d = RegularGridInterpolator((l_grid_3d,b_grid_3d,self.r_grid), 
+                map_data_3d, bounds_error=False, fill_value=None, method='linear')
 
     def extinction_in_map(self, l_deg, b_deg, dist):
         """
