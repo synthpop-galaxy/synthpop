@@ -26,6 +26,7 @@ from .. import const
 
 ISOCHRONES_DIR = const.ISOCHRONES_DIR
 EVOLUTION_DIR = os.path.dirname(__file__)
+FILTERS_DIR = const.FILTERS_DIR
 
 # columns needed by the interpolator
 MUST_HAVE_COLUMNS = ["log10_isochrone_age_yr", "initial_mass", "[Fe/H]_init", "phase"]

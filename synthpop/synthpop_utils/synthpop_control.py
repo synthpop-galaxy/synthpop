@@ -122,18 +122,12 @@ class Parameters:
         if not self.random_seed:
             self.random_seed = np.random.randint(0, 2 ** 31 - 1)
 
-        if len(self.chosen_bands) < len(self.eff_wavelengths):
-            tmp_eff_wavelengths = {}
-            for band in self.chosen_bands:
-                tmp_eff_wavelengths[band] = self.eff_wavelengths[band]
-            self.eff_wavelengths = tmp_eff_wavelengths
-
         # log settings to file
         self.log_settings()
 
         # check if Settings are ok
         if not self.validate_input():
-            msg = "Settings Validation failed!." \
+            msg = "Settings Validation failed!" \
                   " Please ensure that all mandatory parameters are set."
             logger.critical(msg)
             raise ValueError(msg)

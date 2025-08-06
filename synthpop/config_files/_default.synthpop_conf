@@ -135,11 +135,6 @@
             "use '[magsys,...]' to take all magnitudes from a given system",
             "or '{magsys1:[filter1, filter2,...], magsys2:'all',...}' to avoid confusion"],
         "chosen_bands": ["Bessell_B", "Bessell_V", "Bessell_I", "Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3", "2MASS_J", "2MASS_H", "2MASS_Ks", "Z087", "W146"],
-        "#comment3":["Either specify the effective wavelength in microns for each filter", 
-            "or a string to specify a separate json file where this can be found"],
-        "eff_wavelengths": {
-            "json_file":"AAA_effective_wavelengths.json"
-            },
         "#comment4":"Set obsmag to true for observed magnitude, false for absolute magnitudes",
         "obsmag":true,
 

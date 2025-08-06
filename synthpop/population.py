@@ -181,11 +181,13 @@ class Population:
             self.kinematics, self.evolution, self.extinction
             ) = self.assign_subclasses()
 
-        # get magnitudes from evolution class
+        # get magnitudes and filter wavelengths from evolution class
         if isinstance(self.evolution, list):
             self.bands = list(self.evolution[0].bands)
+            self.glbl_params.eff_wavelengths = {x:self.evolution[0].all_filter_eff_wavs[x] for x in self.bands}
         else:
             self.bands = list(self.evolution.bands)
+            self.glbl_params.eff_wavelengths = {x:self.evolution.all_filter_eff_wavs[x] for x in self.bands}
 
         # check if main magnitued is in self.bands
         if self.glbl_params.maglim[0] not in self.bands:
@@ -193,10 +195,6 @@ class Population:
                   f' the magnitude limit is not in {self.bands}'
             logger.critical(msg)
             raise ValueError(msg)
-
-        # check if all bands are in eff_wavelengths:
-        if len(not_found := set(self.bands) - self.glbl_params.eff_wavelengths.keys()) != 0:
-            raise KeyError(f"Effect Wavelengths for {not_found} are not specified")
 
         # set wavelength bands and effective wavelength
         self.extinction.set_bands(self.bands, self.glbl_params.eff_wavelengths)

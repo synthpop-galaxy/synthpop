@@ -67,9 +67,6 @@
     "PHOTOMETRIC_OUTPUTS":{
         "maglim":["W146", 23.975533, "remove"],
         "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "2MASS_J", "2MASS_H", "2MASS_Ks"],
-        "eff_wavelengths": {
-            "json_file":"AAA_effective_wavelengths.json"
-            },
         "obsmag":true,
 
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"],

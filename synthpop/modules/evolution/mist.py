@@ -27,7 +27,7 @@ import numpy as np
 import pandas
 import requests
 
-from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
+from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR, FILTERS_DIR
 # import a "standard" interpolator
 from .charon_interpolator import CharonInterpolator
 #from .lagrange_interpolator import LagrangeInterpolator
@@ -105,6 +105,8 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         use_global : Bool
             store or use isochrones as global variable
         """
+        with open(f"{FILTERS_DIR}/effective_wavelengths_mist.json") as f:
+            self.all_filter_eff_wavs = json.load(f)
 
         self.magsys, self.none_mag_cols, self.bands = self.get_mag_systems(columns)
 

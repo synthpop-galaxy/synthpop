@@ -13,6 +13,7 @@ DEFAULT_CONFIG_FILE = f"{DEFAULT_CONFIG_DIR}/_default.synthpop_conf"  # default 
 ISOCHRONES_DIR = f"{SYNTHPOP_DIR}/data/isochrones"  # location where isochrones are stored
 EXTINCTIONS_DIR = f"{SYNTHPOP_DIR}/data/extinction"  # location where isochrones are stored
 MOMENTS_DIR = f"{SYNTHPOP_DIR}/data/moments"  # location where moment grids are stored
+FILTERS_DIR = f"{SYNTHPOP_DIR}/data/filters"  # location where moment grids are stored
 
 # ------- Data Columns --------
 # parameter which needs to be estimated from the isochrones
