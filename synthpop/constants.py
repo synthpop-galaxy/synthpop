@@ -33,7 +33,10 @@ COL_NAMES = [
 # ------- Physical Constants --------
 c = 3e8  # m/s
 G = 6.674e-11  # m^3 kg^-1 s^-2
+sigma_sb = 5.670374419e-8 # W m^-2 K^-4
 Msun_kg = 1.989e30 # solar mass in kg
+Lsun_w = 3.846e26 # solar luminosity in W
+Rsun_m = 695700000 # solar radius in m
 m_per_pc = 3.086e16 # meters per parsec
 Mbol_sun = 4.74  # Bolometric magnitude of the sun
 DEG2RAD = np.pi / 180

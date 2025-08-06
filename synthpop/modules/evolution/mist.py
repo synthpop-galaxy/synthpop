@@ -52,7 +52,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
 
     met_to_file_iso :
 
-    none_mag_cols :
+    non_mag_cols :
 
     file_met :
 
@@ -108,7 +108,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         with open(f"{FILTERS_DIR}/effective_wavelengths_mist.json") as f:
             self.all_filter_eff_wavs = json.load(f)
 
-        self.magsys, self.none_mag_cols, self.bands = self.get_mag_systems(columns)
+        self.magsys, self.non_mag_cols, self.bands = self.get_mag_systems(columns)
 
         # Check for isochrone directory and create if needed
         os.makedirs(self.FOLDER, exist_ok=True)
@@ -136,7 +136,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         if use_global:
             global mist_isochrones
             if mist_isochrones is not None:
-                if np.array_equal(np.sort(np.unique(self.bands+self.none_mag_cols)).astype(str), np.sort(np.unique(mist_isochrones.keys())).astype(str)):
+                if np.array_equal(np.sort(np.unique(self.bands+self.non_mag_cols)).astype(str), np.sort(np.unique(mist_isochrones.keys())).astype(str)):
                     self.isochrones = mist_isochrones
                 else:
                     mist_isochrones = self.isochrones = self.load_isochrones(self.magsys)
@@ -167,20 +167,20 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         -------
         collected_magsys : dict
             Contains the columns for each needed filter system
-        none_mag_cols : list
+        non_mag_cols : list
             a list of all non-magnitude columns
         all_bands : list
             a list of all magnitude columns
         """
         global mist_columns
         if len(mist_columns) == 0:
-            with open(f"{EVOLUTION_DIR}/mist_columns.json") as f:
+            with open(f"{FILTERS_DIR}/mist_columns.json") as f:
                 mist_columns.update(json.load(f))
 
         # placeholder for output
         collected_magsys = {}
         all_bands = []
-        none_mag_cols = []
+        non_mag_cols = []
 
         for col in columns:
             if isinstance(col, list):
@@ -227,7 +227,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 raise ValueError(f"Can not assign {col} to a magnitude system")
 
             if magsys in ['cmd', 'basic', 'full']:
-                none_mag_cols.extend(bands)
+                non_mag_cols.extend(bands)
             else:
                 all_bands.extend(bands)
 
@@ -253,7 +253,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 i += 1
             collected_magsys[first_key[i]].update(val)
 
-        return collected_magsys, none_mag_cols, all_bands
+        return collected_magsys, non_mag_cols, all_bands
 
     @staticmethod
     def get_mass_ranges(isochrones_grouped):
