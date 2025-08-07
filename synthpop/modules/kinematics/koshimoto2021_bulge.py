@@ -65,17 +65,14 @@ class Koshimoto2021Bulge(Kinematics):
         """
         # Calculate galacocentric radii
         R = np.sqrt(x ** 2 + y ** 2)
-        # Calculate the angle --- i think that is unnecessary
-        # theta = np.arctan2(y,x)  #arctan(y/x)
-        # sigma_i = vel_disp(x,y,z)
         # Rotate to be in plane of galactic bar -> xp axis aligned with major axis of bar
         alpha=self.bar_ang
-
-        xp = x * np.cos(alpha) + y * np.sin(alpha)
-        yp = -x * np.sin(alpha) + y * np.cos(alpha)
+        xp = x * np.cos(alpha) - y * np.sin(alpha)
+        yp = x * np.sin(alpha) + y * np.cos(alpha)
         zp = z
+
         # Stream velocityy
-        v_x_stream = self.v0_stream * (1 - np.exp(-(R / self.y0_stream))) * (-1) ** (
+        v_x_stream = self.v0_stream * (1 - np.exp(-(yp / self.y0_stream)**2)) * (-1) ** (
                     1 - (yp > 0).astype(int))
         # Solid body velocity
         v_y_sb = self.omega_p * R * (-1) ** (1 - (xp < 0).astype(int))
@@ -97,8 +94,55 @@ class Koshimoto2021Bulge(Kinematics):
 
         # Convert back into Galactic frame
         rot = -alpha
-        vx = -vxp * np.cos(rot) + vyp * np.sin(rot)
+        vx = vxp * np.cos(rot) - vyp * np.sin(rot)
         vy = vxp * np.sin(rot) + vyp * np.cos(rot)
         vz = vzp
 
         return vx, vy, vz
+
+
+    def get_mean_velocity(self, x, y, z, **kwargs):
+        """
+        Generate a random u,v,w velocity vector given galactic x,y,z coordinates
+
+        Parameters
+        ----------
+        x : float [kpc]
+        y : float [kpc]
+        z : float [kpc]
+
+        Returns
+        -------
+        u : float [km/s]
+        v : float [km/s]
+        w : float [km/s]
+        """
+        # Calculate galacocentric radii
+        R = np.sqrt(x ** 2 + y ** 2)
+
+        # Rotate to be in plane of galactic bar -> xp axis aligned with major axis of bar
+        alpha=self.bar_ang
+        xp = x * np.cos(alpha) - y * np.sin(alpha)
+        yp = x * np.sin(alpha) + y * np.cos(alpha)
+        zp = z
+
+        # Stream velocityy
+        v_x_stream = self.v0_stream * (1 - np.exp(-(yp / self.y0_stream)**2)) * (-1) ** (
+                    1 - (yp > 0).astype(int))
+        # Solid body velocity
+        v_y_sb = self.omega_p * R * (-1) ** (1 - (xp < 0).astype(int))
+
+        # Calculate velocities in bar frame
+        vxp = v_x_stream
+        vyp = v_y_sb
+        vzp = np.repeat(0, len(z))
+
+        # Convert back into Galactic frame
+        rot = -alpha
+        vx = vxp * np.cos(rot) - vyp * np.sin(rot)
+        vy = vxp * np.sin(rot) + vyp * np.cos(rot)
+        vz = vzp
+
+        return vx, vy, vz
+
+
