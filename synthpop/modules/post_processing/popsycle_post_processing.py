@@ -1,7 +1,6 @@
 """
-NOTE: IN PROGRESS MODULE - NOT READY FOR USE
 Post-processing to convert the output into the PopSyCLE input format,
-as a replacement for a Galaxia catalog.
+ready to be plugged in at the calc_events stage.
 Note: obsmag must be set to FALSE in config file to use this module
 """
 
@@ -30,10 +29,7 @@ class PopsyclePostProcessing(PostProcessing):
     def __init__(self, model, logger, bin_edges_number=None, output_root=None, **kwargs):
         super().__init__(model, logger, **kwargs)
         self.bin_edges_number = bin_edges_number
-        if output_root is not None:
-            self.output_root = output_root
-        else:
-            self.output_root = self.parms.output_filename_pattern
+        self.output_root = output_root
 
     def do_post_processing(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """
@@ -41,6 +37,9 @@ class PopsyclePostProcessing(PostProcessing):
         for Galaxia, saving the file to the set file name + '.ebf' and returning
         the DataFrame with modified columns.
         """
+        if self.output_root is None:
+            self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg, self.model.solid_angle)}_psc"
+        
         # Translate extinction to Ebv extinction
         extinction = self.model.populations[0].extinction
         ext_in_map = dataframe.iloc[:, 19]
@@ -94,15 +93,13 @@ class PopsyclePostProcessing(PostProcessing):
         star_dict['rem_id'] = dataframe["Dim_Compact_Object_Flag"].map({0.0: 0, 1.0: 101, 2.0: 102, 3.0: 103})
         star_dict['obj_id'] = np.arange(0, len(star_dict))
 
-        bin_edges_number, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude,
-                                                                     longitude,
-                                                                     surveyArea,
-                                                                     self.bin_edges_number)
-
-        h5file = h5py.File(self.output_root + '.h5', 'w')
+        _, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude, longitude, surveyArea, self.bin_edges_number)
+        
+        h5file = h5py.File(f"{self.output_root}.h5", 'w')
         h5file['lat_bin_edges'] = lat_bin_edges
         h5file['long_bin_edges'] = long_bin_edges
         
         _bin_lb_hdf5(lat_bin_edges, long_bin_edges, star_dict, self.output_root)
+        print(f"PopSyCLE formatted output saved in {self.output_root}.h5")
     
         return dataframe
