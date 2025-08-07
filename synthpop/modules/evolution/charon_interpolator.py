@@ -353,7 +353,7 @@ class CharonInterpolator(EvolutionInterpolator):
         """
         Interpolates the isochrones and returns the value at the given
         mass metallicity and age.
-        Determines the closets 2 upper and lower neighbours grid and
+        Determines the closest 2 upper and lower neighbors grid and
         performs a cubic interpolation using the lagrange polynomials.
         At the edge of isochrone grid it only performs a linear
         interpolation and outside it uses the closest grid point.

@@ -34,7 +34,7 @@ from .. import const
 # global variable to store the isochrones
 pc_isochrones = None
 
-class ParsecColibri(EvolutionIsochrones, CharonInterpolator):
+class PARSEC_COLIBRI(EvolutionIsochrones, CharonInterpolator):
     """
     Parsec-Colibri Isochrone class
 
@@ -84,11 +84,11 @@ class ParsecColibri(EvolutionIsochrones, CharonInterpolator):
     FOLDER = f"{ISOCHRONES_DIR}/PARSEC_COLIBRI"
 
     pc_non_mag_cols = ['Zini', '[Fe/H]_init', 'log10_isochrone_age_yr', 'initial_mass', 'int_IMF', 'star_mass', 'log_L', 'log_Teff', 
-                    'log_g', 'log_R', 'phase', 'McoreTP', 
+                    'log_g', 'log_R', 'phase', 'label', 'McoreTP', 
                     'C_O', 'period0', 'period1', 'period2', 'period3', 'period4', 'pmode', 'Mloss', 'tau1m', 
                     'X', 'Y', 'Xc', 'Xn', 'Xo', 'Cexcess', 'Z', 'mbol']
     pc_req_cols_to_mist = {'MH':'[Fe/H]_init', 'logAge':'log10_isochrone_age_yr', 'Mini':'initial_mass', 
-                            'Mass':'star_mass', 'label':'phase', 'mbolmag':'mbol', 'logL':'log_L',
+                            'Mass':'star_mass', 'mbolmag':'mbol', 'logL':'log_L',
                             'logTe':'log_Teff', 'logg':'log_g'}
     pc_phase_to_mist = {0:-1, 1:0, 2:2, 3:2, 4:3, 5:3, 6:3, 7:4, 8:5, 9:6}
 
@@ -319,8 +319,9 @@ class ParsecColibri(EvolutionIsochrones, CharonInterpolator):
                 if file_met==-2.2:
                     df['[Fe/H]_init'] = -2.2
                 df.sort_values(by=['[Fe/H]_init','log10_isochrone_age_yr', 'initial_mass'], inplace=True)
+                df['phase'] = np.zeros(len(df), dtype=int)
                 for n_phase in self.pc_phase_to_mist:
-                    df.loc[df['phase']==n_phase, 'phase'] = self.pc_phase_to_mist[n_phase]
+                    df.loc[df['label']==n_phase, 'phase'] = self.pc_phase_to_mist[n_phase]
                 df['log_R'] = np.log10(np.sqrt(10**df['log_L'].to_numpy()*const.Lsun_w / \
                                 (4*np.pi*const.sigma_sb*(10**df['log_Teff'].to_numpy())**4))/const.Rsun_m)
 
