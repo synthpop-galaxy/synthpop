@@ -60,14 +60,14 @@ class Binary(PostProcessing):
 		super().__init__(**kwargs)
 
 	@staticmethod
-	def temp_is_binary(temperatures):
+	def check_is_binary(prim_masses):
 		"""
 		Probabilistic determination of binary star status based on temperature bins and probabilities.
 
 		Parameters
 		----------
 		temperatures
-			array of float values for star temperatures.
+			array of float values for star massas.
 
 		Returns
 		-------
@@ -75,33 +75,61 @@ class Binary(PostProcessing):
 			array of boolean values indicating whether each star is a binary star.
 		"""
 		# Mamajek 2013 Table 5 temperature bins
-		T_bins = np.array([2570, 3850, 4830, 5770, 6350, 7220, 31400, 44900])
-		percentage_bins = [20, 35, 37.5, 40, 50, 60, 70, 75]
-		probability_bins = percentage_bins / np.sum(percentage_bins)
-
-		is_binary = []
-
+		#T_bins = np.array([2570, 3850, 4830, 5770, 6350, 7220, 31400, 44900])
+		#percentage_bins = [20, 35, 37.5, 40, 50, 60, 70, 75]
+		#probability_bins = percentage_bins / np.sum(percentage_bins)
+		
 		# Initialize a count for identified binary stars
-		binary_count = 0
-
+		#binary_count = 0
+		
+		#print(prim_masses)
+		
+		is_binary = []
 		num_isnan = 0
+		
+		#for temp in temperatures:
+		#	if math.isnan(temp):
+		#		bin_index = 0
+		#		num_isnan = num_isnan+1
+		#	else:
+		#		bin_index = min(np.searchsorted(T_bins, temp), len(probability_bins) - 1)
+		#	probability = probability_bins[bin_index]
+		#	rand_num=np.random.rand()
+		#	binary_status = rand_num < probability
+		#	is_binary.append(binary_status)
 
-		for temp in temperatures:
-			if math.isnan(temp):
-				bin_index = 0
-				num_isnan = num_isnan+1
+		# Function from Duchene 2013
+		def multiplicity_fraction(prim_mass):
+			# Keep fraction at 20% for <0.1 M_Sun
+			if mass < 0.1:
+				return 0.2
+			# Everything else
 			else:
-				bin_index = min(np.searchsorted(T_bins, temp), len(probability_bins) - 1)
-			probability = probability_bins[bin_index]
-			rand_num=np.random.rand()
-			binary_status = rand_num < probability
+				return 38.36*(prim_mass)**(0.27) / 100	# Divide by 100 to go from percent to probability
+		
+		binary_frac = []
+		num_fraction_gt_1 = 0
+		print("\n+++++++++++++++++++")
+		for mass in prim_masses:
+			rand_num = np.random.rand()
+			fraction = multiplicity_fraction(mass)
+			binary_status = rand_num < fraction
+			if fraction >= 1:
+				#print("Multiplicity fraction is greater than 1")
+				num_fraction_gt_1 += 1
+				print(fraction)
+				print(binary_status)
 			is_binary.append(binary_status)
+			binary_frac.append(fraction)
+		
+		print(f"Number of multiplicity fractions > 1: {num_fraction_gt_1}")
 
 		binary_count = sum(is_binary)
 
 		print(f"Number of identified binary stars: {binary_count}")
+		print(f"Length of binary_frac list: {len(binary_frac)}")
 
-		return is_binary
+		return (is_binary, binary_frac)
 
 	def draw_companion_m_ratio(self):
 		"""
@@ -113,21 +141,24 @@ class Binary(PostProcessing):
 			float value for the mass ratio (M2/M1) of the binary system
 		"""
 		# Normalization factor (maximum value of N on Figure 16 of Raghavan 2010)
-		normalization_factor = 13
+		#normalization_factor = 13
 
 		# Separate systems into 3 different sections based on Raghavan 2010, Figure 16
-		probability_bins = [0.0909, 0.7909, 0.1182]
+		#probability_bins = [0.0909, 0.7909, 0.1182]
+		#probability_bins = [0.103743, 0.778075, 0.118182]
+		probability_bins = [0.103743, 0.778075+0.103743, 1.]	# Add previous bins to get *cumulative* values
 
 		# Plug in random number and pull a mass ratio from the toy probability function inspired by Figure 16 of D. Raghavan 2010
 		def pull_from_distribution(random_number):
 			# Probability function for the first, linear section
 			if random_number < probability_bins[0]:
 				P = np.random.rand()  # Uniform random number for inversion method
-				mass_ratio = np.sqrt((2 * P) / 27.5)
+				#mass_ratio = np.sqrt((2 * P) / 27.5)
+				mass_ratio = np.sqrt((2 * P) / 50)
 			elif random_number < probability_bins[1]:
 				mass_ratio = np.random.uniform(0.2, 0.95)
 			else:
-				mass_ratio = np.random.uniform(0.95, 1)
+				mass_ratio = np.random.uniform(0.95, 1.)
 			return mass_ratio
 
 		random_number = np.random.rand()
@@ -177,6 +208,10 @@ class Binary(PostProcessing):
 		print(self.model.populations[0].__dir__())
 		
 		num_samples = len(dataframe)
+		
+		# Initialize ID column
+		# Add a column for multiplicity fraction
+		dataframe['ID'] = np.nan
 
 		# Make a new column for identifying binaries [0=single, 1=primary, 2=secondary]
 		dataframe['Is_Binary'] = 0
@@ -185,7 +220,11 @@ class Binary(PostProcessing):
 		dataframe['primary_ID'] = np.nan
 
 		# Identify primary stars and flag them in the new 'Is_Binary' column
-		binary_flags = Binary.temp_is_binary(10**dataframe['logTeff'])	# 10** because Teff is log
+		#binary_flags = Binary.check_is_binary(10**dataframe['logTeff'])	# 10** because Teff is log
+		(binary_flags, binary_frac) = Binary.check_is_binary(dataframe['iMass'])
+		
+		# Add a column for multiplicity fraction
+		dataframe['binary_frac'] = binary_frac
 
 		for i, is_binary in enumerate(binary_flags):
 			if is_binary:
@@ -249,8 +288,8 @@ class Binary(PostProcessing):
 		# Loop over populations 
 		#for index in range(len(self.model.populations)):
 		for i in used_pop_ids:
-			print("\n\n===================================")
-			print(i)
+			#print("\n\n===================================")
+			#print(i)
 			i = int(i)
 			popid = self.model.populations[i].popid
 			#print(popid)
@@ -331,8 +370,8 @@ class Binary(PostProcessing):
 			#secondary_df.loc[population_df.index, col] = mag[col]
 			#secondary_df.loc[population_df.index, 'Mass'] = m_evolved
 			#print(secondary_df.columns)
-			print(mag.columns)
-			print(s_props.columns)
+			#print(mag.columns)
+			#print(s_props.columns)
 			secondary_df.loc[population_df.index, 'logL'] = s_props["log_L"]
 			secondary_df.loc[population_df.index, 'logg'] = s_props["log_g"]
 			secondary_df.loc[population_df.index, 'logTeff'] = s_props["log_Teff"]
@@ -353,24 +392,24 @@ class Binary(PostProcessing):
 			print(periods_df)
 			'''
 			periods = [companion.draw_period() for companion in companions]
-			print("BBBBBBBBBBBBBBBBBBBBBBB")
+			#print("BBBBBBBBBBBBBBBBBBBBBBB")
 			periods_list.extend(periods)
-			print(periods_list)
+			#print(periods_list)
 			
 		
 		# Check the labels of the primary and secondary dataframes
-		print("\ndataframe")
-		print(dataframe.columns)
-		print()
-		print("secondary_df")
-		print(secondary_df.columns)
+		#print("\ndataframe")
+		#print(dataframe.columns)
+		#print()
+		#print("secondary_df")
+		#print(secondary_df.columns)
 		#print()
 		#print(dataframe.index)
 		#print()
 		#print(secondary_df.index)
 		
 		diff = secondary_df.compare(dataframe, align_axis=0)
-		print(diff)
+		#print(diff)
 		
 		# Put the data into the secondary dataframe
 		#dataframe[dataframe['Is_Binary'] == 1]["iMass"] = masses
@@ -386,7 +425,7 @@ class Binary(PostProcessing):
 				combined_list.append(secondary_df.iloc[i])
 		combined_df = pd.DataFrame(combined_list).reset_index(drop=True)
 		
-		print("\n\n================================")
+		#print("\n\n================================")
 		#print(combined_df)
 		#print(combined_df.index)
 		#print(df_runs, binary_runs)	
@@ -473,6 +512,8 @@ class Binary(PostProcessing):
 			combined_df.loc[prim_indices[i]+1, 'combined_logL'] = combined_lum
 			combined_df.loc[prim_indices[i]+1, 'total_mass'] = combined_mass
 		'''
+		
+		
 		###### MAYBE I CAN USE THIS LAST LOOP ONLY INSTEAD OF WRITING 2. THAT WAY, I ONLY HAVE TO WORRY ABOUT ONE INDEX TO ITERATE OVER
 		#mass_ratio_df = 
 		#print(len(mass_ratio_df))
@@ -481,7 +522,7 @@ class Binary(PostProcessing):
 		#for i, companion_index in enumerate(original_indices):
 		#for i in dataframe[binary_flags].index:
 		#for companion_index, row in combined_df:
-		print(prim_indices)
+		#print(prim_indices)
 		for index in prim_indices:
 			#print(i, companion_index)
 			#print(index)
@@ -510,14 +551,14 @@ class Binary(PostProcessing):
 			'''
 		
 		mass_ratio_df = mass_ratio_df.reset_index()
-		print(mass_ratio_df)
-		print(periods_list)
-		print("########################")
+		#print(mass_ratio_df)
+		#print(periods_list)
+		#print("########################")
 		
 		for reset_index, row in mass_ratio_df.iterrows():
 			original_index = prim_indices[reset_index]
 			ratio = row[0]
-			print(reset_index, original_index, ratio)
+			#print(reset_index, original_index, ratio)
 			combined_df.loc[original_index, 'q'] = ratio
 			combined_df.loc[original_index, 'combined_logP'] = periods_list[reset_index]
 			combined_df.loc[original_index+1, 'q'] = ratio
