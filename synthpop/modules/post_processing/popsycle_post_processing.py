@@ -90,7 +90,8 @@ class PopsyclePostProcessing(PostProcessing):
         
         star_dict['isMultiple'] = np.zeros(dataframe.shape[0], dtype=int)
         star_dict['N_companions'] = np.zeros(dataframe.shape[0], dtype=int)
-        star_dict['rem_id'] = dataframe["Dim_Compact_Object_Flag"].map({0.0: 0, 1.0: 101, 2.0: 102, 3.0: 103})
+        phases = np.nan_to_num(dataframe['phase'].to_numpy())
+        star_dict['rem_id'] = (phases*(phases>100)).astype(int)
         star_dict['obj_id'] = np.arange(0, len(star_dict))
 
         _, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude, longitude, surveyArea, self.bin_edges_number)

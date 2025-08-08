@@ -254,7 +254,7 @@ class ProcessDarkCompactObjects(PostProcessing):
         """
 
         # Pick out which stars need processed
-        in_final_phase = np.array(dataframe['In_Final_Phase'])
+        in_final_phase = np.array(dataframe['In_Final_Phase']).astype(bool)
         proc_stars = dataframe[dataframe['In_Final_Phase']==1]
         # If we want to remove compact objects, do so and return
         if self.remove:
@@ -283,7 +283,7 @@ class ProcessDarkCompactObjects(PostProcessing):
         m_final = (in_final_phase * m_compact +
                    (1 - in_final_phase) * m_final_pre)
         dataframe['Mass'] = m_final
-        dataframe['Dim_Compact_Object_Flag'] = m_type*in_final_phase
+        dataframe.loc[in_final_phase, 'phase'] = 100+m_type[in_final_phase]
 
         # Set dim object magnitudes to nan
         for magcol in self.model.parms.chosen_bands:
