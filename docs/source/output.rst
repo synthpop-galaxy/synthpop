@@ -40,7 +40,7 @@ Default basic outputs
      - radial velocity in barycentric frame
    * - mul, mub
      - mas/yr
-     - proper motion in Galactic coordinates
+     - proper motion in Galactic coordinates, where mul is scaled by cosb
    * - x, y, z
      - kpc
      - position in Galactic cartesian coordinates (see Figure)
