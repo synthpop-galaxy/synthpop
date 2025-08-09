@@ -6,7 +6,7 @@ Within each isochrone, it uses a cubic interpolation between adjacent grid-point
 It aligns the phases between adjacent ages
 and performs a linear interpolation in metallicity and age.
 
-See Klüter & Huston et al (SynthPop Paper I, in prep).
+See Klüter & Huston et al (2025).
 """
 
 __all__ = ["CharonInterpolator", ]
@@ -523,7 +523,7 @@ class CharonInterpolator(EvolutionInterpolator):
         props : Set
             list of stellar properties that should be returnd
         inter_age: str ["linear" or "log"]
-            performe the age interpolation in age or in log10(age).
+            perform the age interpolation in age or in log10(age).
 
         Returns
         -------

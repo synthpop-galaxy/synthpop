@@ -312,7 +312,8 @@ class PARSEC_COLIBRI(EvolutionIsochrones, CharonInterpolator):
                 else:
                     # convert ascii to Hierarchical Data Format
                     df = self.convert_dat_to_h5(filename)
-                # Adjust column names as needed
+                # Adjust column names and data as needed
+                #df = df[df.logL>-9.9].reset_index(drop=True)
                 adjust_columns = self.pc_req_cols_to_mist.copy()
                 adjust_columns.update({b+'mag':magsys_name+'_'+b for b in chosen_columns})
                 df.rename(columns=adjust_columns, inplace=True)
@@ -378,7 +379,7 @@ class PARSEC_COLIBRI(EvolutionIsochrones, CharonInterpolator):
 
         # Open CMD 3.8 web form
         driver = webdriver.Chrome() # Or Firefox, Edge, etc.
-        driver.get("https://stev.oapd.inaf.it/cgi-bin/cmd")
+        driver.get("https://stev.oapd.inaf.it/cgi-bin/cmd_3.8")
         driver.implicitly_wait(0.2)
         os.makedirs(f"{self.FOLDER}/{magsys}",exist_ok=True)
 
@@ -441,7 +442,7 @@ class PARSEC_COLIBRI(EvolutionIsochrones, CharonInterpolator):
             logage_min_box.send_keys("5.0")
             logage_max_box = driver.find_element(By.NAME, "isoc_lageupp")
             logage_max_box.clear()
-            logage_max_box.send_keys("10.13")
+            logage_max_box.send_keys("10.31")
             logage_d_box = driver.find_element(By.NAME, "isoc_dlage")
             logage_d_box.clear()
             logage_d_box.send_keys("0.05")
