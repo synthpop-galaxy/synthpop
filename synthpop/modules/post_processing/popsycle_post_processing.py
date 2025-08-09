@@ -26,10 +26,9 @@ filter_matching_mist = {"2MASS_J": 'ubv_J',
 
 class PopsyclePostProcessing(PostProcessing):
 
-    def __init__(self, model, logger, bin_edges_number=None, output_root=None, **kwargs):
+    def __init__(self, model, logger, bin_edges_number=None, **kwargs):
         super().__init__(model, logger, **kwargs)
         self.bin_edges_number = bin_edges_number
-        self.output_root = output_root
 
     def do_post_processing(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """
@@ -37,8 +36,7 @@ class PopsyclePostProcessing(PostProcessing):
         for Galaxia, saving the file to the set file name + '.ebf' and returning
         the DataFrame with modified columns.
         """
-        if self.output_root is None:
-            self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg, self.model.solid_angle)}_psc"
+        self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg, self.model.solid_angle)}_psc"
         
         # Translate extinction to Ebv extinction
         extinction = self.model.populations[0].extinction
