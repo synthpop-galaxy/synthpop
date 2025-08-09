@@ -3,6 +3,9 @@ Post-processing to account for dim compact objects, based on PopSyCLE (Rose et a
 
 The module will take all objects that have evolved past the MIST grid, and assign them a final
 mass, removing their photometry. Optionally, one can just remove all of these objects instead.
+
+It also adds random kick velocities to neutron stars and black holes, according to a Maxwellian
+distribution with a user-modifiable mean.
 """
 
 __all__ = ["ProcessDarkCompactObjects", ]
@@ -12,6 +15,8 @@ __date__ = "2024-05-23"
 import pandas
 import numpy as np
 from ._post_processing import PostProcessing
+from scipy.stats import maxwell
+from synthpop.synthpop_utils.coordinates_transformation import uvw_to_vrmulb
 
 class ProcessDarkCompactObjects(PostProcessing):
     """
@@ -24,14 +29,21 @@ class ProcessDarkCompactObjects(PostProcessing):
     ifmr_name='SukhboldN20' : string
         selected initial-final mass relation;
         options are 'SukhboldN20', 'Raithel18', 'Spera15'
+    kick_mean_bh=100.0 : float
+        mean of the maxwellian kick distribution for black holes (km/s)
+    kick_mean_ns=350.0 : float
+        mean of the maxwellian kick distribution for neutron stars (km/s)
     """
 
-    def __init__(self, model, logger, remove=False, ifmr_name='SukhboldN20', **kwargs):
+    def __init__(self, model, logger, remove=False, ifmr_name='SukhboldN20',
+                    kick_mean_bh=100.0, kick_mean_ns=350.0, **kwargs):
         super().__init__(model, logger, **kwargs)
         self.remove = remove
         #: initial-final mass relation name to determine compact object masses.
         #: options are Raithel18, SukhboldN20, Spera15
         self.ifmr_name= ifmr_name
+        self.kick_mean_ns = kick_mean_ns
+        self.kick_mean_bh = kick_mean_bh
 
     def mass_bh(self, m_zams, feh, f_ej=0.9):
         """
@@ -255,14 +267,14 @@ class ProcessDarkCompactObjects(PostProcessing):
 
         # Pick out which stars need processed
         in_final_phase = np.array(dataframe['In_Final_Phase']).astype(bool)
-        proc_stars = dataframe[dataframe['In_Final_Phase']==1]
+        proc_stars = dataframe[dataframe['In_Final_Phase']==1].index
         # If we want to remove compact objects, do so and return
         if self.remove:
-            return dataframe.drop(proc_stars.index)
+            return dataframe.drop(proc_stars)
         # Otherwise, we need to handle the compact objects properly. 
-        m_init = np.array(dataframe['iMass'])
-        feh_init = np.array(dataframe['Fe/H_initial'])
-        m_final_pre = np.array(dataframe['Mass'])
+        m_init = np.array(dataframe['iMass'][proc_stars])
+        feh_init = np.array(dataframe['Fe/H_initial'][proc_stars])
+        m_final_pre = np.array(dataframe['Mass'][proc_stars])
         
         # For IFMRs with probabilistic object types
         if self.ifmr_name in ['Raithel18', 'SukhboldN20']:
@@ -280,13 +292,43 @@ class ProcessDarkCompactObjects(PostProcessing):
             m_type = self.compact_type_from_final(m_compact)
         
         # Results into data frame
-        m_final = (in_final_phase * m_compact +
-                   (1 - in_final_phase) * m_final_pre)
-        dataframe['Mass'] = m_final
-        dataframe.loc[in_final_phase, 'phase'] = 100+m_type[in_final_phase]
+        dataframe['Mass'][proc_stars] = m_compact
+        dataframe.loc[proc_stars, 'phase'] = 100+m_type
+
+        # Apply birth kicks
+        kick_idxs = proc_stars[m_type>=2]
+        kick_mtypes = m_type[m_type>=2]
+        # Generate random velocities
+        kick_vel = maxwell.rvs(size=len(kick_idxs), scale=1, loc=0) * \
+                            self.kick_mean_ns**(m_type==2).astype(int) * \
+                            self.kick_mean_bh**(m_type==3).astype(int)
+        # Generate random directions
+        rand_phi = np.random.uniform(0,np.pi*2)
+        rand_theta = np.arccos(np.random.uniform(-1,1))
+        # Update cartesian velocities
+        u_new = dataframe['U'][kick_idxs] + kick_vel * np.sin(rand_theta) * np.cos(rand_phi)
+        v_new = dataframe['V'][kick_idxs] + kick_vel * np.sin(rand_theta) * np.sin(rand_phi)
+        w_new = dataframe['W'][kick_idxs] + kick_vel * np.cos(rand_theta)
+        dataframe['U'][kick_idxs] = u_new
+        dataframe['V'][kick_idxs] = v_new
+        dataframe['W'][kick_idxs] = w_new
+        # Convert to and update proper motion/radial velocities
+        if 'mul' in dataframe:
+            vr_new, mul_new, mub_new = uvw_to_vrmulb(dataframe['l'][kick_idxs], dataframe['b'][kick_idxs], 
+                                                 dataframe['Dist'][kick_idxs], u_new, v_new, w_new)
+            dataframe['vr_bc'][kick_idxs] = vr_new
+            dataframe['mul'][kick_idxs] = mul_new
+            dataframe['mub'][kick_idxs] = mub_new
+        if 'mura' in dataframe:
+            vr_new, mura_new, mudec_new = uvw_to_vrmulb(dataframe['l'][kick_idxs], dataframe['b'][kick_idxs], 
+                                                 dataframe['Dist'][kick_idxs], u_new, v_new, w_new)
+            dataframe['vr_bc'][kick_idxs] = vr_new
+            dataframe['mura'][kick_idxs] = mura_new
+            dataframe['mudec'][kick_idxs] = mudec_new
+        dataframe.drop(columns='VR_LSR', inplace=True)
 
         # Set dim object magnitudes to nan
         for magcol in self.model.parms.chosen_bands:
-            dataframe.loc[proc_stars.index, magcol] = np.nan
+            dataframe.loc[proc_stars, magcol] = np.nan
             
         return dataframe
