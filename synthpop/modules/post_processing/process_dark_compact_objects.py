@@ -37,7 +37,7 @@ class ProcessDarkCompactObjects(PostProcessing):
     """
 
     def __init__(self, model, logger, remove=False, ifmr_name='SukhboldN20',
-                    kick_mean_bh=100.0, kick_mean_ns=350.0, **kwargs):
+                    kick_mean_bh=0, kick_mean_ns=0, **kwargs):
         super().__init__(model, logger, **kwargs)
         self.remove = remove
         #: initial-final mass relation name to determine compact object masses.
@@ -327,37 +327,38 @@ class ProcessDarkCompactObjects(PostProcessing):
         dataframe.loc[proc_stars, 'Mass'] = m_compact
         dataframe.loc[proc_stars, 'phase'] = 100+m_type
 
-        # Apply birth kicks
-        kick_idxs = proc_stars[m_type>=2]
-        kick_mtypes = m_type[m_type>=2]
-        # Generate random velocities
-        kick_vel = maxwell.rvs(size=len(kick_idxs), scale=1, loc=0) * \
-                            self.kick_mean_ns**(kick_mtypes==2).astype(int) * \
-                            self.kick_mean_bh**(kick_mtypes==3).astype(int)
-        # Generate random directions
-        rand_dir = uniform_direction.rvs(dim=3, size=len(kick_idxs))
-        # Update cartesian velocities
-        u_new = dataframe['U'][kick_idxs].to_numpy() + kick_vel * rand_dir[:,0]
-        v_new = dataframe['V'][kick_idxs].to_numpy()  + kick_vel * rand_dir[:,1]
-        w_new = dataframe['W'][kick_idxs].to_numpy()  + kick_vel * rand_dir[:,2]
-        dataframe.loc[kick_idxs, 'U'] = u_new
-        dataframe.loc[kick_idxs, 'V'] = v_new
-        dataframe.loc[kick_idxs, 'W'] = w_new
-        # Convert to and update proper motion/radial velocities
-        kick_ls = dataframe['l'][kick_idxs].to_numpy()
-        kick_bs = dataframe['b'][kick_idxs].to_numpy()
-        kick_dists = dataframe['Dist'][kick_idxs].to_numpy()
-        if 'mul' in dataframe:
-            vr_new, mul_new, mub_new = uvw_to_vrmulb(kick_ls, kick_bs, kick_dists, u_new, v_new, w_new)
-            dataframe.loc[kick_idxs, 'vr_bc'] = vr_new
-            dataframe.loc[kick_idxs, 'mul'] = mul_new
-            dataframe.loc[kick_idxs, 'mub'] = mub_new
-        if 'mura' in dataframe:
-            vr_new, mura_new, mudec_new = uvw_to_vrmulb(kick_ls, kick_bs, kick_dists, u_new, v_new, w_new)
-            dataframe.loc[kick_idxs, 'vr_bc'] = vr_new
-            dataframe.loc[kick_idxs, 'mura'] = mura_new
-            dataframe.loc[kick_idxs, 'mudec'] = mudec_new
-        dataframe.drop(columns='VR_LSR', inplace=True)
+        if (self.kick_mean_bh != 0) or (self.kick_mean_ns != 0):
+            # Apply birth kicks
+            kick_idxs = proc_stars[m_type>=2]
+            kick_mtypes = m_type[m_type>=2]
+            # Generate random velocities
+            kick_vel = maxwell.rvs(size=len(kick_idxs), scale=1, loc=0) * \
+                                self.kick_mean_ns**(kick_mtypes==2).astype(int) * \
+                                self.kick_mean_bh**(kick_mtypes==3).astype(int)
+            # Generate random directions
+            rand_dir = uniform_direction.rvs(dim=3, size=len(kick_idxs))
+            # Update cartesian velocities
+            u_new = dataframe['U'][kick_idxs].to_numpy() + kick_vel * rand_dir[:,0]
+            v_new = dataframe['V'][kick_idxs].to_numpy()  + kick_vel * rand_dir[:,1]
+            w_new = dataframe['W'][kick_idxs].to_numpy()  + kick_vel * rand_dir[:,2]
+            dataframe.loc[kick_idxs, 'U'] = u_new
+            dataframe.loc[kick_idxs, 'V'] = v_new
+            dataframe.loc[kick_idxs, 'W'] = w_new
+            # Convert to and update proper motion/radial velocities
+            kick_ls = dataframe['l'][kick_idxs].to_numpy()
+            kick_bs = dataframe['b'][kick_idxs].to_numpy()
+            kick_dists = dataframe['Dist'][kick_idxs].to_numpy()
+            if 'mul' in dataframe:
+                vr_new, mul_new, mub_new = uvw_to_vrmulb(kick_ls, kick_bs, kick_dists, u_new, v_new, w_new)
+                dataframe.loc[kick_idxs, 'vr_bc'] = vr_new
+                dataframe.loc[kick_idxs, 'mul'] = mul_new
+                dataframe.loc[kick_idxs, 'mub'] = mub_new
+            if 'mura' in dataframe:
+                vr_new, mura_new, mudec_new = uvw_to_vrmulb(kick_ls, kick_bs, kick_dists, u_new, v_new, w_new)
+                dataframe.loc[kick_idxs, 'vr_bc'] = vr_new
+                dataframe.loc[kick_idxs, 'mura'] = mura_new
+                dataframe.loc[kick_idxs, 'mudec'] = mudec_new
+            dataframe.drop(columns='VR_LSR', inplace=True)
 
         # Set dim object magnitudes to nan
         for magcol in self.model.populations[0].bands:
