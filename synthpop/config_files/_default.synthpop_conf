@@ -143,11 +143,8 @@
         "#comment4":"Set obsmag to true for observed magnitude, false for absolute magnitudes",
         "obsmag":true,
 
-        "#comment5": ["Optional properties from the isochrones; these can overlap with the default properties.",
-            "opt_iso_props are the original column names in the Isochrones",
-            "col_names are the column names in the output table "],
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"],
-        "col_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius", "phase"]
+        "#comment5":"Optional properties from the isochrones; these can overlap with the default properties.",
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"]
     },
 
     "OUTPUT": {
