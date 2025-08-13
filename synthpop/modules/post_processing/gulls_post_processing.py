@@ -52,11 +52,11 @@ class GullsPostProcessing(PostProcessing):
         dataframe["DEC2000.0"] = dec
 
         # convert columns
-        dataframe["[Fe/H]"] = dataframe["Fe/H_evolved"]
-        dataframe["Mbol"] = -2.5 * dataframe["logL"] + 4.75
-        dataframe["Teff"] = 10 ** dataframe["logTeff"]
+        dataframe["logg"] = dataframe["log_g"]
+        dataframe["Mbol"] = -2.5 * dataframe["log_L"] + 4.75
+        dataframe["Teff"] = 10 ** dataframe["log_Teff"]
         dataframe["[alpha/Fe]"] = 0
-        dataframe["Radius"] = 10 ** dataframe["log_radius"]
+        dataframe["Radius"] = 10 ** dataframe["log_R"]
         dataframe["CL"] = dataframe["phase"]
         dataframe["Vr"] = dataframe['vr_bc']
         

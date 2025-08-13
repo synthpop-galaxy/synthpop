@@ -322,10 +322,6 @@ class ProcessDarkCompactObjects(PostProcessing):
             # Cycle through evolved stars, calculating mass & type
             m_compact = self.mass_spera15(m_init,feh_init)
             m_type = self.compact_type_from_final(m_compact)
-        
-        # Results into data frame
-        dataframe.loc[proc_stars, 'Mass'] = m_compact
-        dataframe.loc[proc_stars, 'phase'] = 100+m_type
 
         if (self.kick_mean_bh != 0) or (self.kick_mean_ns != 0):
             # Apply birth kicks
@@ -363,5 +359,11 @@ class ProcessDarkCompactObjects(PostProcessing):
         # Set dim object magnitudes to nan
         for magcol in self.model.populations[0].bands:
             dataframe.loc[proc_stars, magcol] = np.nan
+        for col in self.model.parms.opt_iso_props:
+            dataframe.loc[proc_stars, col] = np.nan
+
+        # Results into data frame
+        dataframe.loc[proc_stars, 'Mass'] = m_compact
+        dataframe.loc[proc_stars, 'phase'] = 100+m_type
             
         return dataframe
