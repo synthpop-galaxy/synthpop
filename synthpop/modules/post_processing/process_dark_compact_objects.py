@@ -4,8 +4,8 @@ Post-processing to account for dim compact objects, based on PopSyCLE (Rose et a
 The module will take all objects that have evolved past the MIST grid, and assign them a final
 mass, removing their photometry. Optionally, one can just remove all of these objects instead.
 
-It also adds random kick velocities to neutron stars and black holes, according to a Maxwellian
-distribution with a user-modifiable mean.
+It can also optionally add random kick velocities to neutron stars and black holes, according to 
+a Maxwellian distribution with a user-input mean.
 """
 
 __all__ = ["ProcessDarkCompactObjects", ]
@@ -30,9 +30,9 @@ class ProcessDarkCompactObjects(PostProcessing):
     ifmr_name='SukhboldN20' : string
         selected initial-final mass relation;
         options are 'SukhboldN20', 'Raithel18', 'Spera15'
-    kick_mean_bh=100.0 : float
+    kick_mean_bh=0 : float
         mean of the maxwellian kick distribution for black holes (km/s)
-    kick_mean_ns=350.0 : float
+    kick_mean_ns=0 : float
         mean of the maxwellian kick distribution for neutron stars (km/s)
     """
 
