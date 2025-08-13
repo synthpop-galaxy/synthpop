@@ -286,7 +286,7 @@ class ProcessDarkCompactObjects(PostProcessing):
         dataframe['Dim_Compact_Object_Flag'] = m_type*in_final_phase
 
         # Set dim object magnitudes to nan
-        for magcol in self.model.parms.chosen_bands:
+        for magcol in self.model.populations[0].bands:
             dataframe.loc[proc_stars.index, magcol] = np.nan
             
         return dataframe

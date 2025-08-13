@@ -27,14 +27,14 @@ import requests
 
 from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR, FILTERS_DIR
 # import a "standard" interpolator
-from .charon_interpolator import CharonInterpolator
-#from .lagrange_interpolator import LagrangeInterpolator
+#from .charon_interpolator import CharonInterpolator
+from .lagrange_interpolator import LagrangeInterpolator
 from .. import const
 
 # global variable to store the isochrones
 pc_isochrones = None
 
-class PARSEC_COLIBRI(EvolutionIsochrones, CharonInterpolator):
+class PARSEC_COLIBRI(EvolutionIsochrones, LagrangeInterpolator):
     """
     Parsec-Colibri Isochrone class
 
@@ -313,7 +313,7 @@ class PARSEC_COLIBRI(EvolutionIsochrones, CharonInterpolator):
                     # convert ascii to Hierarchical Data Format
                     df = self.convert_dat_to_h5(filename)
                 # Adjust column names and data as needed
-                #df = df[df.logL>-9.9].reset_index(drop=True)
+                df = df[df.logL>-9.9].reset_index(drop=True)
                 adjust_columns = self.pc_req_cols_to_mist.copy()
                 adjust_columns.update({b+'mag':magsys_name+'_'+b for b in chosen_columns})
                 df.rename(columns=adjust_columns, inplace=True)
