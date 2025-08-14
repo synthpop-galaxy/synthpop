@@ -269,7 +269,13 @@ class Binary(PostProcessing):
 		max_mass = self.model.parms.mass_lims['max_mass']
 		
 		# Collect all the dataframe column names - all of these are the same for every population, so I just used popid = 0
-		headers = const.COL_NAMES + self.model.populations[0].glbl_params.col_names + self.model.populations[0].bands
+		#headers = const.COL_NAMES + self.model.populations[0].glbl_params.col_names + self.model.populations[0].bands
+		headers = const.COL_NAMES + self.model.populations[0].glbl_params.opt_iso_props + self.model.populations[0].bands
+		#print(f"glbl_params: {glbl_params.col_names}")
+		#print(f"I don't even know anymore: {const.REQ_ISO_PROPS}")
+		#print(f"Whatever this is: {self.model.populations[0].glbl_params.opt_iso_props}")
+		print(f"Headers: {headers}")
+		#print(f"")
 		extinction_index = headers.index("ExtinctionInMap")
 		
 		# Replace "ExtinctionInMap" with the output of the extinction map - all of these are the same for every population, so I just used popid = 0
@@ -379,16 +385,16 @@ class Binary(PostProcessing):
 			#print(secondary_df.columns)
 			#print(mag.columns)
 			#print(s_props.columns)
-			secondary_df.loc[population_df.index, 'logL'] = s_props["log_L"]
-			secondary_df.loc[population_df.index, 'logg'] = s_props["log_g"]
-			secondary_df.loc[population_df.index, 'logTeff'] = s_props["log_Teff"]
+			secondary_df.loc[population_df.index, 'log_L'] = s_props["log_L"]
+			secondary_df.loc[population_df.index, 'log_g'] = s_props["log_g"]
+			secondary_df.loc[population_df.index, 'log_Teff'] = s_props["log_Teff"]
 			#print("===============================================")
 			#print(list(s_props.columns))
 			#print("Secondary index:", secondary_df.index)
 			#print("Dataframe index:", dataframe.index)
 			#print("Secondary columns:", list(secondary_df.columns))
 			#print("Dataframe columns:", list(dataframe.columns))
-			secondary_df.loc[population_df.index, 'log_radius'] = s_props["log_R"]
+			secondary_df.loc[population_df.index, 'log_R'] = s_props["log_R"]
 			#print(s_props)
 			
 			#print("\n\n\n\n\n\nSecondary columns:", list(secondary_df.columns))
@@ -422,7 +428,7 @@ class Binary(PostProcessing):
 		#print(dataframe.columns)
 		#print()
 		#print("secondary_df")
-		#print(secondary_df.columns)
+		print(f"Secondary dataframe columns: {secondary_df.columns}")
 		#print()
 		#print(dataframe.index)
 		#print()
@@ -548,8 +554,8 @@ class Binary(PostProcessing):
 			#print(index)
 			
 			# Combine luminosities
-			logL1 = combined_df.loc[index, 'logL']
-			logL2 = combined_df.loc[index+1, 'logL']
+			logL1 = combined_df.loc[index, 'log_L']
+			logL2 = combined_df.loc[index+1, 'log_L']
 			combined_lum = np.log10(10**logL1 + 10**logL2)
 			
 			# Combine mass
