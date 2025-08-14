@@ -20,7 +20,7 @@
         "b_set": [1.6],
         "b_set_type": null,
         "#comment3":"Solid angle of cone/pyramid in units defined by solid_angle_unit [sr, or deg^2]",
-        "solid_angle": 0.0001,
+        "solid_angle": 0.00001,
         "solid_angle_unit": "deg^2"
     },
 
@@ -155,11 +155,20 @@
         "#comment2": "should be either a dictionary as follows or null",
 
         "# advanced_post_processing": {
-            "name": "ProcessDarkCompactObjects",
+            "name": "BinaryGenerator",
             "filename": "~/spfork/synthpop/modules/post_processing/binary_populations.py",
             "further_keywords": "additional keyword arguments"
             },
-        "post_processing_kwargs": {"name": "Binary", "filename": "binary_populations.py"},
+        "post_processing_kwargs": [
+            {
+            "name": "Binary",
+            "filename": "binary_populations.py"},
+            {
+            "name": "ProcessDarkCompactObjects",
+            "remove": true,
+            "filename": "process_dark_compact_objects.py"
+            }
+            ], 
 
         "#comment3": ["If output_location is '' or null it is replaced with the synthpop directory",
             "If output_location ends with '/' it uses output_location/name_for_output as directory"],

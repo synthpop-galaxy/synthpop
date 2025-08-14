@@ -7,9 +7,9 @@
         -1.6
     ],
     "b_set_type": "list",
-    "random_seed": 277108171,
+    "random_seed": 264629697,
     "model_name": "Huston2025",
-    "name_for_output": "sf_mid1_surot2d_H2023",
+    "name_for_output": "sf_mid2_surot2d_H2023",
     "solid_angle": 0.0001,
     "solid_angle_unit": "deg^2",
     "sun": {
@@ -383,7 +383,15 @@
         "log_radius",
         "CL"
     ],
+    "# advanced_post_processing": {
+            "filename": "~/spfork/synthpop/modules/post_processing/binary_populations.py",
+            "further_keywords": "additional keyword arguments"
+            },
     "post_processing_kwargs": [
+        {
+            "filename": "binary_populations.py"
+            
+        },
         {
             "name": "ConvertMistMags",
             "conversions": {
@@ -397,10 +405,7 @@
                     "F184"
                 ]
             }
-        },
-        {
-            "filename": "binary_populations.py"
-        }
+        }        
     ],
     "output_location": "outputfiles/binary_populations",
     "output_filename_pattern": "{model_name}_l{l_deg:.3f}_b{b_deg:.3f}_binaryMid1",
