@@ -16,7 +16,7 @@ import pandas
 import numpy as np
 from ._post_processing import PostProcessing
 from scipy.stats import maxwell, uniform_direction
-from synthpop.synthpop_utils.coordinates_transformation import uvw_to_vrmulb
+from synthpop.synthpop_utils.coordinates_transformation import uvw_to_vrmulb, CoordTrans
 import pdb
 
 class ProcessDarkCompactObjects(PostProcessing):
@@ -334,6 +334,8 @@ class ProcessDarkCompactObjects(PostProcessing):
             # Generate random directions
             rand_dir = uniform_direction.rvs(dim=3, size=len(kick_idxs))
             # Update cartesian velocities
+            l_deg = dataframe['l'][kick_idxs].to_numpy()
+            b_deg = dataframe['b'][kick_idxs].to_numpy()
             u_new = dataframe['U'][kick_idxs].to_numpy() + kick_vel * rand_dir[:,0]
             v_new = dataframe['V'][kick_idxs].to_numpy()  + kick_vel * rand_dir[:,1]
             w_new = dataframe['W'][kick_idxs].to_numpy()  + kick_vel * rand_dir[:,2]
@@ -354,7 +356,8 @@ class ProcessDarkCompactObjects(PostProcessing):
                 dataframe.loc[kick_idxs, 'vr_bc'] = vr_new
                 dataframe.loc[kick_idxs, 'mura'] = mura_new
                 dataframe.loc[kick_idxs, 'mudec'] = mudec_new
-            dataframe.drop(columns='VR_LSR', inplace=True)
+            coord_trans = CoordTrans(sun=self.model.parms.sun)
+            dataframe.loc[kick_idxs, 'VR_LSR'] = coord_trans.vr_bc_to_vr_lsr(l_deg,b_deg,vr_new)
 
         # Set dim object magnitudes to nan
         for magcol in self.model.populations[0].bands:
