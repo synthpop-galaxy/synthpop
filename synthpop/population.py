@@ -715,7 +715,7 @@ class Population:
 
         # collect all the column names
         # required_properties + optional_properties + magnitudes
-        headers = const.COL_NAMES + self.glbl_params.col_names + self.bands
+        headers = const.COL_NAMES + self.glbl_params.opt_iso_props + self.bands
         # replace "ExtinctionInMap" with the output of the extinction map
         if 'ExtinctionInMap' in headers:
             extinction_index = headers.index("ExtinctionInMap")

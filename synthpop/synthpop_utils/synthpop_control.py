@@ -132,11 +132,14 @@ class Parameters:
         self.log_settings()
 
         # check if Settings are ok
-        if not self.validate_input():
+        if not self.validate_manditory_input():
             msg = "Settings Validation failed!." \
                   " Please ensure that all mandatory parameters are set."
             logger.critical(msg)
             raise ValueError(msg)
+        if hasattr(self, "col_names"):
+            logger.critical("Warning: col_names input is no longer used in SynthPop v1.1+. Use RenameColumns "+ \
+                "post-processing module to change column names instead.")
 
         # transfer l, b into a a location generator.
         self.loc = self.location_generator()
@@ -179,7 +182,7 @@ class Parameters:
         if isinstance(self.output_file_type, str):
             self.output_file_type = [self.output_file_type, {}]
 
-    def validate_input(self):
+    def validate_manditory_input(self):
         """ checks if all Mandatory files are provided"""
         out = True
         for key in self._categories["MANDATORY"]:

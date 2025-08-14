@@ -72,8 +72,7 @@
             },
         "obsmag":true,
 
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"],
-        "col_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius","phase"]
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"]
     },
     
     "OUTPUT":{
