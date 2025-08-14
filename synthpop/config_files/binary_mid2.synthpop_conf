@@ -67,7 +67,7 @@
     ],
     "maglim": [
         "W146",
-        22.98,
+        99.00,
         "remove"
     ],
     "chosen_bands": [
@@ -390,6 +390,20 @@
     "post_processing_kwargs": [
         {
             "filename": "binary_populations.py"
+        },
+        {
+            "name": "ConvertMistMags",
+            "conversions": {
+                "AB": [
+                    "R062",
+                    "Z087",
+                    "Y106",
+                    "J129",
+                    "W146",
+                    "H158",
+                    "F184"
+                ]
+            }
         }
     ],
     "output_location": "outputfiles/binary_populations",
