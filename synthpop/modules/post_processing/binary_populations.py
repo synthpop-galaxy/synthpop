@@ -325,6 +325,9 @@ class Binary(PostProcessing):
 			#ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = self.model.populations[popid].generator.get_evolved_props(mass.to_numpy(), population_df['Fe/H_initial'].to_numpy(), population_df['age'].to_numpy(), props)
 			ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = self.model.populations[popid].generator.get_evolved_props(mass.to_numpy(), population_df['Fe/H_initial'].to_numpy(), population_df['age'].to_numpy(), props)
 			
+			#print("\n\n\n\n\n\nSecondary columns:", list(secondary_df.columns))
+			#print("\n\n\n\n\n\n\n")
+			
 			# Switch back to original indices
 			ref_mag = pd.Series(ref_mag, index=original_indices)
 			s_props = pd.DataFrame(s_props, index=original_indices)
@@ -332,6 +335,8 @@ class Binary(PostProcessing):
 			not_evolved = pd.Series(not_evolved, index=original_indices)
 			
 			#print(ref_mag)
+			#print("\n\n\n\n\n\nSecondary columns:", list(secondary_df.columns))
+			#print("\n\n\n\n\n\n\n")
 
 			# Run extract_properties
 			m_evolved, props, user_props = self.model.populations[popid].extract_properties(mass, s_props, const.REQ_ISO_PROPS, glbl_params.opt_iso_props, inside_grid, not_evolved)
@@ -360,6 +365,8 @@ class Binary(PostProcessing):
 			
 			#print("\nsecondary_df")
 			#print(secondary_df.columns)
+			#print("\n\n\n\n\n\nSecondary columns:", list(secondary_df.columns))
+			#print("\n\n\n\n\n\n\n")
 			
 			# Update secondary_df
 			secondary_df.loc[population_df.index, 'Is_Binary'] = 2
@@ -375,6 +382,17 @@ class Binary(PostProcessing):
 			secondary_df.loc[population_df.index, 'logL'] = s_props["log_L"]
 			secondary_df.loc[population_df.index, 'logg'] = s_props["log_g"]
 			secondary_df.loc[population_df.index, 'logTeff'] = s_props["log_Teff"]
+			#print("===============================================")
+			#print(list(s_props.columns))
+			#print("Secondary index:", secondary_df.index)
+			#print("Dataframe index:", dataframe.index)
+			#print("Secondary columns:", list(secondary_df.columns))
+			#print("Dataframe columns:", list(dataframe.columns))
+			secondary_df.loc[population_df.index, 'log_radius'] = s_props["log_R"]
+			#print(s_props)
+			
+			#print("\n\n\n\n\n\nSecondary columns:", list(secondary_df.columns))
+			#print("\n\n\n\n\n\n\n")
 			
 			#for col in s_props.columns:
 			#	secondary_df.loc[population_df.index, col] = s_props[col]
@@ -383,6 +401,8 @@ class Binary(PostProcessing):
 			#	secondary_df.loc[population_df.index, 'A_Ks'] = extinction_in_map
 				
 			#print(secondary_df)
+			#print("\n\n\n\n\n\nSecondary columns:", list(secondary_df.columns))
+			#print("\n\n\n\n\n\n\n")
 			
 			# Draw periods for binary stars
 			'''
