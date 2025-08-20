@@ -132,7 +132,7 @@ class Parameters:
         self.log_settings()
 
         # check if Settings are ok
-        if not self.validate_manditory_input():
+        if not self.validate_mandatory_input():
             msg = "Settings Validation failed!." \
                   " Please ensure that all mandatory parameters are set."
             logger.critical(msg)
@@ -182,7 +182,7 @@ class Parameters:
         if isinstance(self.output_file_type, str):
             self.output_file_type = [self.output_file_type, {}]
 
-    def validate_manditory_input(self):
+    def validate_mandatory_input(self):
         """ checks if all Mandatory files are provided"""
         out = True
         for key in self._categories["MANDATORY"]:
