@@ -21,7 +21,7 @@ class GullsPostProcessing(PostProcessing):
                 ege model.const, model.params, model.populations[0]
             cat_type:
                 settings for the catalog type
-                must be on of :
+                must be one of : lens, source, extra-bright, bright, mid1, mid2, faint
 
             kwargs: dict
                 keyword arguments from the config file
@@ -31,9 +31,6 @@ class GullsPostProcessing(PostProcessing):
 
     def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
         """
-        This is a placeholder for the postprocessing
-        replace it whit what ever you think is useful
-        It must accept the pandas data frame and must return a pandas data frame
 
         Parameters
         ----------
@@ -55,11 +52,11 @@ class GullsPostProcessing(PostProcessing):
         dataframe["DEC2000.0"] = dec
 
         # convert columns
-        dataframe["[Fe/H]"] = dataframe["Fe/H_evolved"]
-        dataframe["Mbol"] = -2.5 * dataframe["logL"] + 4.75
-        dataframe["Teff"] = 10 ** dataframe["logTeff"]
+        dataframe["logg"] = dataframe["log_g"]
+        dataframe["Mbol"] = -2.5 * dataframe["log_L"] + 4.75
+        dataframe["Teff"] = 10 ** dataframe["log_Teff"]
         dataframe["[alpha/Fe]"] = 0
-        dataframe["Radius"] = 10 ** dataframe["log_radius"]
+        dataframe["Radius"] = 10 ** dataframe["log_R"]
         dataframe["CL"] = dataframe["phase"]
         dataframe["Vr"] = dataframe['vr_bc']
         
@@ -84,6 +81,7 @@ class GullsPostProcessing(PostProcessing):
         for filt in filtlist:
             dataframe.loc[:, filt] = dataframe.loc[:,filt].fillna(99)
         dataframe.loc[:, "K213"] = dataframe.loc[:,"K213"].fillna(99)
+        dataframe.loc[:, "Mbol"] = dataframe.loc[:,"Mbol"].fillna(99)
         dataframe = dataframe.fillna(value=2e-50)
 
 

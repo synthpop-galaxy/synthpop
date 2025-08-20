@@ -9,4 +9,4 @@ dustmaps>=1.0.10
 astroquery~=0.4.6
 setuptools~=63.4.1
 pydantic~=1.10.7
-ebfpy>=0.0.20
+h5py~=3.9.0

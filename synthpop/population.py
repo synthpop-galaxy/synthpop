@@ -715,7 +715,7 @@ class Population:
 
         # collect all the column names
         # required_properties + optional_properties + magnitudes
-        headers = const.COL_NAMES + self.glbl_params.col_names + self.bands
+        headers = const.COL_NAMES + self.glbl_params.opt_iso_props + self.bands
         # replace "ExtinctionInMap" with the output of the extinction map
         if 'ExtinctionInMap' in headers:
             extinction_index = headers.index("ExtinctionInMap")
@@ -733,7 +733,7 @@ class Population:
         n_star_expected, mass_per_slice = self.get_n_star_expected(
             radii, average_imass_per_star, av_mass_corr)
 
-        if self.lost_mass_option == 3:
+        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (sum(n_star_expected)>0):
             if np.sum(n_star_expected) < self.N_av_mass:
                 n_star_expected *= self.N_av_mass / np.sum(n_star_expected)
 
@@ -815,23 +815,23 @@ class Population:
         use_pbar = np.sum(total_stars)>self.glbl_params.chunk_size
         if use_pbar:
             pbar = tqdm(total=sum(missing_stars))
+        neg_missing_stars = np.minimum(missing_stars,0)
+        gen_missing_stars = np.maximum(missing_stars,0)
         while any(missing_stars > 0):
-            neg_missing_stars = np.minimum(missing_stars,0)
-            missing_stars = np.maximum(missing_stars,0)
-            if (sum(missing_stars)>self.glbl_params.chunk_size) and not (self.generator.generator_name=='SpiseaGenerator'):
+            if (sum(gen_missing_stars)>self.glbl_params.chunk_size) and not (self.generator.generator_name=='SpiseaGenerator'):
                 final_expected_loop=False
-                idx_cs = np.searchsorted(np.cumsum(missing_stars), self.glbl_params.chunk_size)
-                rem_chunk = self.glbl_params.chunk_size - (np.cumsum(missing_stars)[idx_cs-1])*(idx_cs>0)
-                missing_stars_chunk = missing_stars * (np.cumsum(missing_stars)<self.glbl_params.chunk_size)
-                missing_stars_chunk[idx_cs] = rem_chunk
+                idx_cs = np.searchsorted(np.cumsum(gen_missing_stars), self.glbl_params.chunk_size)
+                rem_chunk = self.glbl_params.chunk_size - (np.cumsum(gen_missing_stars)[idx_cs-1])*(idx_cs>0)
+                gen_stars_chunk = gen_missing_stars * (np.cumsum(gen_missing_stars)<self.glbl_params.chunk_size)
+                gen_stars_chunk[idx_cs] = rem_chunk
             else:
                 final_expected_loop=True
-                missing_stars_chunk = np.copy(missing_stars)
+                gen_stars_chunk = np.copy(gen_missing_stars)
 
             position, r_inner, proper_motions, velocities, vr_lsr, \
             (m_initial, age, met, ref_mag, s_props, final_phase_flag, 
                 inside_grid, not_evolved) = self.generator.generate_stars(radii, 
-                missing_stars_chunk, mass_limit, self.do_kinematics, props_list)
+                gen_stars_chunk, mass_limit, self.do_kinematics, props_list)
 
             initial_parameters = np.column_stack([m_initial, age, met])
 
@@ -850,13 +850,15 @@ class Population:
                 all_m_evolved += list(m_evolved)
                 all_r_inner   += list(r_inner)
                 if final_expected_loop:
-                    missing_stars_evol = self.check_field(
+                    missing_stars = self.check_field(
                                 radii, average_imass_per_star, np.array(all_m_initial), np.array(all_m_evolved), np.array(all_r_inner),
                                 mass_per_slice, frac_lowmass)
-                    missing_stars += missing_stars_evol
                     opt3_mass_loss_done=True
+                else:
+                    missing_stars -= gen_stars_chunk
             # Subtract out this chunk from the "missing stars"
-            missing_stars -= missing_stars_chunk
+            else:
+                missing_stars -= gen_stars_chunk
 
             # Convert Table to pd.DataFrame
             df = self.convert_to_dataframe(
@@ -871,7 +873,10 @@ class Population:
             df_list.append(df)
             loop_counts += 1
             if use_pbar:
-                pbar.update(np.sum(missing_stars_chunk))
+                pbar.update(np.sum(gen_stars_chunk))
+
+            neg_missing_stars = np.minimum(missing_stars,0)
+            gen_missing_stars = np.maximum(missing_stars,0)
 
         # combine the results from the different loops
         if len(df_list) == 0:
@@ -985,12 +990,12 @@ class Population:
             number of missing stars in each slice
         """
         # estimate current initial mass
-        m_in = np.array([np.sum(m_initial[radii_star == r]) for r in radii[:-1]])
+        #m_in = np.array([np.sum(m_initial[radii_star == r]) for r in radii[:-1]])
         # estimate current evolved mass
-        m_evo = np.array([np.sum(m_evolved[radii_star == r]) for r in radii[:-1]])
+        #m_evo = np.array([np.sum(m_evolved[radii_star == r]) for r in radii[:-1]])
 
         if self.population_density.density_unit in ['number', 'init_mass']:
-            return np.zeros(len(mass_per_slice))
+            return np.zeros(len(mass_per_slice), dtype=int)
 
         # option 3.
         # if the sample is large enough otherwise determine the average mass before.
@@ -1007,6 +1012,7 @@ class Population:
         # reduce number of stars by the scale factor
         exist = np.array([np.sum(radii_star == r) for r in radii[:-1]])
         missing_stars = total_stars - exist
+        #pdb.set_trace()
         return missing_stars
 
     def do_kinematics(
@@ -1048,17 +1054,7 @@ class Population:
         vr, mu_l, mu_b = self.coord_trans.uvw_to_vrmulb(star_l_deg, star_b_deg, dist, u, v, w)
 
         # correct for motion of the sun
-        # following Beaulieu et al. (2000)
-        vr_lsr = (
-            vr
-            + self.sun.v_lsr * np.sin(star_l_deg * np.pi / 180)
-            * np.sin(star_b_deg * np.pi / 180)
-            + self.sun.v_pec * (
-                np.sin(star_b_deg * np.pi / 180) * np.sin(self.sun.b_apex_deg * np.pi / 180)
-                + np.cos(star_b_deg * np.pi / 180) * np.cos(self.sun.b_apex_deg * np.pi / 180)
-                * np.cos(star_l_deg * np.pi / 180 - self.sun.l_apex_deg * np.pi / 180)
-                )
-            )
+        vr_lsr = self.coord_trans.vr_bc_to_vr_lsr(star_l_deg, star_b_deg, vr)
 
         return u, v, w, vr, mu_l, mu_b, vr_lsr
 

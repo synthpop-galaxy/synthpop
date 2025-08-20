@@ -424,6 +424,37 @@ class CoordTrans:
 
         return vr, mu_a_maspyr, mu_d_maspyr
 
+    def vr_bc_to_vr_lsr(self, l_deg: np.ndarray, b_deg: np.ndarray, 
+        vr: np.ndarray) -> np.ndarray:
+        """
+            Conversion of radial velocity from barycentric frame to
+            local standard of rest frame following Beaulieu et al. (2000)
+
+            Parameters
+            ----------
+            l_deg : float, ndarray [degrees]
+                galactic longitude
+            b_deg :  float, ndarray [degrees]
+                galactic latitude
+            vr : float, ndarray [km/s]
+                 barycentric radial velocity
+
+            Returns
+            -------
+            vr_lsr : float, ndarray[km/s]
+                radial velocity relative to the LSR
+            """
+
+        return (vr
+            + self.sun.v_lsr * np.sin(l_deg * np.pi / 180)
+            * np.sin(b_deg * np.pi / 180)
+            + self.sun.v_pec * (
+                np.sin(b_deg * np.pi / 180) * np.sin(self.sun.b_apex_deg * np.pi / 180)
+                + np.cos(b_deg * np.pi / 180) * np.cos(self.sun.b_apex_deg * np.pi / 180)
+                * np.cos(l_deg * np.pi / 180 - self.sun.l_apex_deg * np.pi / 180)
+                )
+            )
+
 
 # create wrappers for the default instance.
 _coord_trans = CoordTrans()
