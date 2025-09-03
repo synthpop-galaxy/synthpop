@@ -36,6 +36,7 @@ except (ImportError, ValueError):
 #print('Running post processing')
 
 # Make a subclass of StarGenerator
+'''
 class BinaryGenerator(StarGenerator):
 	def __init__(self, imf_module, age_module, met_module, evolution_module, glbl_params, position, max_mass, logger):
 		super().__init__(imf_module, age_module, met_module, evolution_module, glbl_params, position, max_mass, logger)
@@ -43,7 +44,7 @@ class BinaryGenerator(StarGenerator):
 
 #	def generate_binary_star(self):
 #		print("BinaryGenerator class works")
-
+'''
 class Binary(PostProcessing):
 	def __init__(self, **kwargs):
 		"""
