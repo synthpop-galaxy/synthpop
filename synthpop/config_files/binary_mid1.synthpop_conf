@@ -376,12 +376,12 @@
         "phase"
     ],
     "col_names": [
-        "logL",
-        "logTeff",
-        "logg",
-        "Fe/H_evolved",
-        "log_radius",
-        "CL"
+        "log_L",
+        "log_Teff",
+        "log_g",
+        "[Fe/H]",
+        "log_R",
+        "phase"
     ],
     "# advanced_post_processing": {
             "filename": "~/spfork/synthpop/modules/post_processing/binary_populations.py",

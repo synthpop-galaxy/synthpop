@@ -376,18 +376,24 @@
         "phase"
     ],
     "col_names": [
-        "logL",
-        "logTeff",
-        "logg",
-        "Fe/H_evolved",
-        "log_radius",
-        "CL"
+        "log_L",
+        "log_Teff",
+        "log_g",
+        "[Fe/H]",
+        "log_R",
+        "phase"
     ],
     "# advanced_post_processing": {
             "filename": "~/spfork/synthpop/modules/post_processing/binary_populations.py",
             "further_keywords": "additional keyword arguments"
             },
     "post_processing_kwargs": [
+        {
+            "name": "AdditionalCuts",
+            "standard_cuts": [
+                ["W146", "max", 22.98]
+            ]
+        },
         {
             "filename": "binary_populations.py"
         },
