@@ -8,6 +8,7 @@ __author__ = "Marz Newman"
 
 import pandas as pd
 #pd.set_option('display.max_rows', None)	# Debugging
+#pd.set_option('display.max_columns', None)	# Debugging
 import numpy as np
 import math
 import glob
@@ -31,7 +32,7 @@ except (ImportError, ValueError):
 	from synthpop.constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR, DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 
 #pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
+#pd.set_option('display.max_rows', None)
 #print('Running post processing')
 
 # Make a subclass of StarGenerator
@@ -207,6 +208,10 @@ class Binary(PostProcessing):
 		# USEFUL PRINT STATEMENT prints all the accessible variables and functions for an object
 		print(self.model.populations[0].__dir__())
 		
+		# Are the primary magnitudes messed up by the additional cut post processing?
+		print(dataframe["W146"])
+		print(f"Primary minimum magnitude: {np.nanmax(dataframe['W146'])}")
+		
 		num_samples = len(dataframe)
 		
 		# Initialize ID column
@@ -267,14 +272,18 @@ class Binary(PostProcessing):
 		# Parameters for making an instance of Populations, taken from the config files and model directory
 		glbl_params = sp_utils.Parameters(specific_config, default_config, model_dir)
 		max_mass = self.model.parms.mass_lims['max_mass']
+		#print(f"global parameters: {glbl_params}")
+		print(f"Original maglim: {glbl_params.maglim}")
+		##glbl_params.maglim = [glbl_params.maglim[0], 99., glbl_params.maglim[2]]	# Remove maglim for secondaries
+		##print(f"Changed maglim: {glbl_params.maglim}")
 		
 		# Collect all the dataframe column names - all of these are the same for every population, so I just used popid = 0
 		#headers = const.COL_NAMES + self.model.populations[0].glbl_params.col_names + self.model.populations[0].bands
 		headers = const.COL_NAMES + self.model.populations[0].glbl_params.opt_iso_props + self.model.populations[0].bands
-		#print(f"glbl_params: {glbl_params.col_names}")
+		#print(f"glbl_params: {self.model.populations[0].glbl_params.col_names}")
 		#print(f"I don't even know anymore: {const.REQ_ISO_PROPS}")
 		#print(f"Whatever this is: {self.model.populations[0].glbl_params.opt_iso_props}")
-		print(f"Headers: {headers}")
+		#print(f"Headers: {headers}")
 		#print(f"")
 		extinction_index = headers.index("ExtinctionInMap")
 		
@@ -303,7 +312,10 @@ class Binary(PostProcessing):
 
 			# Requested properties
 			bands = list(evolution.bands)
+			#print("AAAAAAAAAAAAAAa")
+			#print(bands)
 			props = set(const.REQ_ISO_PROPS + glbl_params.opt_iso_props + bands)
+			#print(props)
 			
 			#print(dataframe)
 			
@@ -311,6 +323,7 @@ class Binary(PostProcessing):
 			population_mask = (dataframe['Is_Binary'] == 1) & (dataframe["pop"] == popid)
 			population_df = dataframe[population_mask]
 			original_indices = population_df.index
+			print(f"Original indices: {original_indices}")
 			
 			#print(population_df)
 		
@@ -342,7 +355,8 @@ class Binary(PostProcessing):
 			
 			#print(ref_mag)
 			#print("\n\n\n\n\n\nSecondary columns:", list(secondary_df.columns))
-			#print("\n\n\n\n\n\n\n")
+			print("\n\n\n\n\n\n\nAAAAAAAAAAAAAAAAAAAAAAAAAA")
+			print(f"Magnitude limit (config_file): {glbl_params.maglim[1]}")
 
 			# Run extract_properties
 			m_evolved, props, user_props = self.model.populations[popid].extract_properties(mass, s_props, const.REQ_ISO_PROPS, glbl_params.opt_iso_props, inside_grid, not_evolved)
@@ -360,10 +374,16 @@ class Binary(PostProcessing):
 
 			r_inner = radii[:-1]
 			#print(r_inner)
+			
+			# Set magnitude limit of secondaries arbitrarily high
+			#glbl_params.maglim[1] = 99
 		
 			# Run extract_magnitudes
 			mag, extinction_in_map = self.model.populations[popid].extract_magnitudes(r_inner, position[:, 3:6], ref_mag, s_props)
 			mag = pd.DataFrame(mag, index=original_indices, columns=bands)
+			#print(mag)
+			#print(f"Magnitude limit (altered): {glbl_params.maglim[1]}")
+			print(f"Secondary magnitude minimum: {np.nanmax(mag['W146'])}")
 			extinction_in_map = pd.DataFrame(extinction_in_map, index=original_indices)
 			#print(mag)
 
@@ -388,7 +408,8 @@ class Binary(PostProcessing):
 			secondary_df.loc[population_df.index, 'log_L'] = s_props["log_L"]
 			secondary_df.loc[population_df.index, 'log_g'] = s_props["log_g"]
 			secondary_df.loc[population_df.index, 'log_Teff'] = s_props["log_Teff"]
-			#print("===============================================")
+			#secondary_df.loc[population_df.index, 'W146'] = s_props["W146"]
+			print("===============================================")
 			#print(list(s_props.columns))
 			#print("Secondary index:", secondary_df.index)
 			#print("Dataframe index:", dataframe.index)
@@ -406,7 +427,7 @@ class Binary(PostProcessing):
 				secondary_df.loc[population_df.index, col] = mag[col]
 			#	secondary_df.loc[population_df.index, 'A_Ks'] = extinction_in_map
 				
-			#print(secondary_df)
+			print(secondary_df)
 			#print("\n\n\n\n\n\nSecondary columns:", list(secondary_df.columns))
 			#print("\n\n\n\n\n\n\n")
 			
@@ -552,6 +573,7 @@ class Binary(PostProcessing):
 		for index in prim_indices:
 			#print(i, companion_index)
 			#print(index)
+			#print(f"Primary, secondary W146 mag: {combined_df.loc[index, 'W146']}, {combined_df.loc[index+1, 'W146']}")
 			
 			# Combine luminosities
 			logL1 = combined_df.loc[index, 'log_L']
@@ -590,6 +612,6 @@ class Binary(PostProcessing):
 			combined_df.loc[original_index+1, 'q'] = ratio
 			combined_df.loc[original_index+1, 'combined_logP'] = periods_list[reset_index]
 		
-		#for index in 
+		#print(combined_df.loc[combined_df["Is_Binary"] == 2, "W146"])
 					
 		return combined_df
