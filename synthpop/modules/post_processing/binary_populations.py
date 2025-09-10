@@ -13,7 +13,7 @@ import numpy as np
 import math
 import glob
 import os
-np.random.seed(1234)
+#np.random.seed(1234)
 from ._post_processing import PostProcessing
 import sys
 #sys.path.append('/home/marznewman/.local/lib/python3.8/site-packages/')
@@ -177,7 +177,7 @@ class Binary(PostProcessing):
 		Returns
 		-------
 		logP
-			float value of the logarithn of period
+			float value of the logarithm of period
 		"""
 		# Draw a log(Period) from the Raghavan Figure 13 Gaussian
 		mu = 5.03	# Value from Raghavan Figure 13
@@ -456,7 +456,7 @@ class Binary(PostProcessing):
 		#print()
 		#print(secondary_df.index)
 		
-		diff = secondary_df.compare(dataframe, align_axis=0)
+		#####diff = secondary_df.compare(dataframe, align_axis=0)
 		#print(diff)
 		
 		# Put the data into the secondary dataframe
