@@ -1,0 +1,22 @@
+{
+    "l_set": [1],
+    "l_set_type":"list",
+    "b_set":[1],
+    "b_set_type":"list",
+    "solid_angle":0.0001,
+    "solid_angle_unit":"deg^2",
+
+    "model_name":"besancon_Robin2003",
+
+    "extinction_map_kwargs": {"name":"maps_from_dustmaps", "dustmap_name":"marshall"},
+    "extinction_law_kwargs": [{"name":"SODC", "R_V":2.5}],
+    "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
+
+    "maglim":["2MASS_Ks",21, "remove"],
+    "obsmag": true,
+
+    "name_for_output":"default_synthpop",
+    "overwrite": true,
+    "output_file_type":"csv"
+}
+
