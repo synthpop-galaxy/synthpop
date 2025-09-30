@@ -40,7 +40,8 @@ class PopsyclePostProcessing(PostProcessing):
         
         # Translate extinction to Ebv extinction
         extinction = self.model.populations[0].extinction
-        ext_in_map = dataframe.iloc[:, 19]
+        extinction_type = self.model.populations[0].extinction.A_or_E_type
+        ext_in_map = dataframe[extinction_type].to_numpy()
         Av = extinction.extinction_at_lambda(0.544579, ext_in_map)
         Ab = extinction.extinction_at_lambda(0.438074, ext_in_map)
         dataframe["E(B-V)"] = Ab - Av
@@ -56,6 +57,8 @@ class PopsyclePostProcessing(PostProcessing):
         if self.model.solid_angle_unit=='sr':
             surveyArea *= (180/np.pi)**2
             
+        os.makedirs('/'.join(self.output_root.split('/')[:-1]),
+                    exist_ok=True)
         with open(self.output_root + '_synthpop_params.txt', 'w') as params_file:
             params_file.write(f"seed {self.model.parms.random_seed}\n")
 
