@@ -57,8 +57,7 @@ class PopsyclePostProcessing(PostProcessing):
         if self.model.solid_angle_unit=='sr':
             surveyArea *= (180/np.pi)**2
             
-        os.makedirs('/'.join(self.output_root.split('/')[:-1]),
-                    exist_ok=True)
+        os.makedirs('/'.join(self.output_root.split('/')[:-1]), exist_ok=True)
         with open(self.output_root + '_synthpop_params.txt', 'w') as params_file:
             params_file.write(f"seed {self.model.parms.random_seed}\n")
 
@@ -77,13 +76,13 @@ class PopsyclePostProcessing(PostProcessing):
         star_dict['exbv'] = dataframe["E(B-V)"]
         star_dict['glat'] = dataframe["b"]
         star_dict['glon'] = dataframe["l"]
-        wrap_idx = np.where(star_dict['glon'] > 180)[0]
-        star_dict['glon'][wrap_idx] -= 360
+        wrap_idx = star_dict[star_dict['glon'] > 180].index
+        star_dict.loc[wrap_idx, 'glon'] -= 360
         
-        star_dict['mbol'] = -2.5 * dataframe["logL"] + 4.75
-        star_dict['grav'] = dataframe["logg"]
-        star_dict['teff'] = dataframe["logTeff"]
-        star_dict['feh'] = dataframe["Fe/H_evolved"]
+        star_dict['mbol'] = -2.5 * dataframe["log_L"] + 4.75
+        star_dict['grav'] = dataframe["log_g"]
+        star_dict['teff'] = dataframe["log_Teff"]
+        star_dict['feh'] = dataframe["[Fe/H]"]
         star_dict['rad'] = dataframe["Dist"]
         for filter in self.model.parms.chosen_bands:
             if filter in filter_matching_mist:

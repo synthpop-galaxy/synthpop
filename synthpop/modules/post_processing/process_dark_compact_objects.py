@@ -4,8 +4,8 @@ Post-processing to account for dim compact objects, based on PopSyCLE (Rose et a
 The module will take all objects that have evolved past the MIST grid, and assign them a final
 mass, removing their photometry. Optionally, one can just remove all of these objects instead.
 
-It also adds random kick velocities to neutron stars and black holes, according to a Maxwellian
-distribution with a user-modifiable mean.
+It can also optionally add random kick velocities to neutron stars and black holes, according to 
+a Maxwellian distribution with a user-input mean.
 """
 
 __all__ = ["ProcessDarkCompactObjects", ]
@@ -16,7 +16,7 @@ import pandas
 import numpy as np
 from ._post_processing import PostProcessing
 from scipy.stats import maxwell, uniform_direction
-from synthpop.synthpop_utils.coordinates_transformation import uvw_to_vrmulb
+from synthpop.synthpop_utils.coordinates_transformation import CoordTrans
 import pdb
 
 class ProcessDarkCompactObjects(PostProcessing):
@@ -30,9 +30,9 @@ class ProcessDarkCompactObjects(PostProcessing):
     ifmr_name='SukhboldN20' : string
         selected initial-final mass relation;
         options are 'SukhboldN20', 'Raithel18', 'Spera15'
-    kick_mean_bh=100.0 : float
+    kick_mean_bh=0 : float
         mean of the maxwellian kick distribution for black holes (km/s)
-    kick_mean_ns=350.0 : float
+    kick_mean_ns=0 : float
         mean of the maxwellian kick distribution for neutron stars (km/s)
     """
 
@@ -322,10 +322,6 @@ class ProcessDarkCompactObjects(PostProcessing):
             # Cycle through evolved stars, calculating mass & type
             m_compact = self.mass_spera15(m_init,feh_init)
             m_type = self.compact_type_from_final(m_compact)
-        
-        # Results into data frame
-        dataframe.loc[proc_stars, 'Mass'] = m_compact
-        dataframe.loc[proc_stars, 'phase'] = 100+m_type
 
         if (self.kick_mean_bh != 0) or (self.kick_mean_ns != 0):
             # Apply birth kicks
@@ -338,9 +334,12 @@ class ProcessDarkCompactObjects(PostProcessing):
             # Generate random directions
             rand_dir = uniform_direction.rvs(dim=3, size=len(kick_idxs))
             # Update cartesian velocities
+            l_deg = dataframe['l'][kick_idxs].to_numpy()
+            b_deg = dataframe['b'][kick_idxs].to_numpy()
             u_new = dataframe['U'][kick_idxs].to_numpy() + kick_vel * rand_dir[:,0]
             v_new = dataframe['V'][kick_idxs].to_numpy()  + kick_vel * rand_dir[:,1]
             w_new = dataframe['W'][kick_idxs].to_numpy()  + kick_vel * rand_dir[:,2]
+            coord_trans = CoordTrans(sun=self.model.parms.sun)
             dataframe.loc[kick_idxs, 'U'] = u_new
             dataframe.loc[kick_idxs, 'V'] = v_new
             dataframe.loc[kick_idxs, 'W'] = w_new
@@ -349,19 +348,25 @@ class ProcessDarkCompactObjects(PostProcessing):
             kick_bs = dataframe['b'][kick_idxs].to_numpy()
             kick_dists = dataframe['Dist'][kick_idxs].to_numpy()
             if 'mul' in dataframe:
-                vr_new, mul_new, mub_new = uvw_to_vrmulb(kick_ls, kick_bs, kick_dists, u_new, v_new, w_new)
+                vr_new, mul_new, mub_new = coord_trans.uvw_to_vrmulb(kick_ls, kick_bs, kick_dists, u_new, v_new, w_new)
                 dataframe.loc[kick_idxs, 'vr_bc'] = vr_new
                 dataframe.loc[kick_idxs, 'mul'] = mul_new
                 dataframe.loc[kick_idxs, 'mub'] = mub_new
             if 'mura' in dataframe:
-                vr_new, mura_new, mudec_new = uvw_to_vrmulb(kick_ls, kick_bs, kick_dists, u_new, v_new, w_new)
+                vr_new, mura_new, mudec_new = coord_trans.uvw_to_vrmulb(kick_ls, kick_bs, kick_dists, u_new, v_new, w_new)
                 dataframe.loc[kick_idxs, 'vr_bc'] = vr_new
                 dataframe.loc[kick_idxs, 'mura'] = mura_new
                 dataframe.loc[kick_idxs, 'mudec'] = mudec_new
-            dataframe.drop(columns='VR_LSR', inplace=True)
+            dataframe.loc[kick_idxs, 'VR_LSR'] = coord_trans.vr_bc_to_vr_lsr(l_deg,b_deg,vr_new)
 
         # Set dim object magnitudes to nan
         for magcol in self.model.populations[0].bands:
             dataframe.loc[proc_stars, magcol] = np.nan
+        for col in self.model.parms.opt_iso_props:
+            dataframe.loc[proc_stars, col] = np.nan
+
+        # Results into data frame
+        dataframe.loc[proc_stars, 'Mass'] = m_compact
+        dataframe.loc[proc_stars, 'phase'] = 100+m_type
             
         return dataframe
