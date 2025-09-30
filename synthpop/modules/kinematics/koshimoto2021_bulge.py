@@ -101,7 +101,7 @@ class Koshimoto2021Bulge(Kinematics):
         return vx, vy, vz
 
 
-    def get_mean_velocity(self, x, y, z, **kwargs):
+    def mean_galactic_uvw(self, x, y, z, **kwargs):
         """
         Generate a random u,v,w velocity vector given galactic x,y,z coordinates
 
@@ -137,12 +137,12 @@ class Koshimoto2021Bulge(Kinematics):
         vyp = v_y_sb
         vzp = np.repeat(0, len(z))
 
-        # Convert back into Galactic frame
-        rot = -alpha
-        vx = vxp * np.cos(rot) - vyp * np.sin(rot)
-        vy = vxp * np.sin(rot) + vyp * np.cos(rot)
-        vz = vzp
+        # DONT Convert back into Galactic frame
+        # rot = -alpha
+        # vx = vxp * np.cos(rot) - vyp * np.sin(rot)
+        # vy = vxp * np.sin(rot) + vyp * np.cos(rot)
+        # vz = vzp
 
-        return vx, vy, vz
+        return vxp, vyp, vzp
 
 
