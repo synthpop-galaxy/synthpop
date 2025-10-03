@@ -193,10 +193,10 @@ class Binary(PostProcessing):
 		used_pop_ids = dataframe[dataframe['Is_Binary'] == 1]['pop'].unique()
 		
 		# Load config file parameters
-		default_config = DEFAULT_CONFIG_FILE
-		model_dir = DEFAULT_MODEL_DIR+"/"+self.model.parms.model_name
+		#default_config = DEFAULT_CONFIG_FILE
+		#model_dir = DEFAULT_MODEL_DIR+"/"+self.model.parms.model_name
 		
-		args = sp_utils.parser()
+		#args = sp_utils.parser()
 		#specific_config = os.path.join(DEFAULT_CONFIG_DIR, args.specific_config)
 
 		# Parameters for making an instance of Populations, taken from the config files and model directory
