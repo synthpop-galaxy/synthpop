@@ -26,7 +26,7 @@ try:
 except (ImportError, ValueError):
 	from synthpop.constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR, DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 
-class Binary(PostProcessing):
+class BinaryCompanions(PostProcessing):
 	def __init__(self, **kwargs):
 		"""
 		Parameters:
