@@ -172,7 +172,7 @@ class BinaryCompanions(PostProcessing):
 		dataframe['primary_ID'] = np.nan
 
 		# Identify primary stars and flag them in the new 'Is_Binary' column
-		(binary_flags, binary_frac) = Binary.check_is_binary(dataframe['iMass'])
+		(binary_flags, binary_frac) = self.check_is_binary(dataframe['iMass'])
 		
 		# Add a column for multiplicity fraction
 		dataframe['binary_frac'] = binary_frac
@@ -234,7 +234,7 @@ class BinaryCompanions(PostProcessing):
 			original_indices = population_df.index
 					
 			# Create an instance of the Binary subclass for companions
-			companions = [Binary() for j in range(len(population_df))]
+			companions = [BinaryCompanions() for j in range(len(population_df))]
 			
 			# Draw an initial mass	
 			mass_ratios = pd.Series([companion.draw_companion_m_ratio() for companion in companions], index = original_indices)
