@@ -197,10 +197,11 @@ class Binary(PostProcessing):
 		model_dir = DEFAULT_MODEL_DIR+"/"+self.model.parms.model_name
 		
 		args = sp_utils.parser()
-		specific_config = os.path.join(DEFAULT_CONFIG_DIR, args.specific_config)
+		#specific_config = os.path.join(DEFAULT_CONFIG_DIR, args.specific_config)
 
 		# Parameters for making an instance of Populations, taken from the config files and model directory
-		glbl_params = sp_utils.Parameters(specific_config, default_config, model_dir)
+		#glbl_params = sp_utils.Parameters(specific_config, default_config, model_dir)
+		glbl_params = self.model.populations[0].glbl_params
 		max_mass = self.model.parms.mass_lims['max_mass']
 		
 		# Collect all the dataframe column names - all of these are the same for every population, so I just used popid = 0
