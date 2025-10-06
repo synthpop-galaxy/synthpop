@@ -75,7 +75,7 @@ class Koshimoto2021Bulge(Kinematics):
         v_x_stream = self.v0_stream * (1 - np.exp(-(yp / self.y0_stream)**2)) * (-1) ** (
                     1 - (yp > 0).astype(int))
         # Solid body velocity
-        v_y_sb = self.omega_p * R * (-1) ** (1 - (xp < 0).astype(int))
+        v_sb = self.omega_p * R
 
         # velocity dispersions
         sigma_x = self.vel_disp(abs(xp), abs(yp), abs(zp), 0)
@@ -88,8 +88,8 @@ class Koshimoto2021Bulge(Kinematics):
         dvz = np.random.normal(0, sigma_z)
 
         # Calculate velocities in bar frame
-        vxp = v_x_stream + dvx
-        vyp = v_y_sb + dvy
+        vxp = v_sb*(yp/R) + v_x_stream + dvx
+        vyp = v_sb*(-xp/R) + dvy
         vzp = dvz
 
         # Convert back into Galactic frame
@@ -101,7 +101,7 @@ class Koshimoto2021Bulge(Kinematics):
         return vx, vy, vz
 
 
-    def get_mean_velocity(self, x, y, z, **kwargs):
+    def mean_galactic_uvw(self, x, y, z, **kwargs):
         """
         Generate a random u,v,w velocity vector given galactic x,y,z coordinates
 
@@ -130,14 +130,14 @@ class Koshimoto2021Bulge(Kinematics):
         v_x_stream = self.v0_stream * (1 - np.exp(-(yp / self.y0_stream)**2)) * (-1) ** (
                     1 - (yp > 0).astype(int))
         # Solid body velocity
-        v_y_sb = self.omega_p * R * (-1) ** (1 - (xp < 0).astype(int))
+        v_sb = self.omega_p * R
 
         # Calculate velocities in bar frame
-        vxp = v_x_stream
-        vyp = v_y_sb
+        vxp = v_sb*(yp/R) + v_x_stream
+        vyp = v_sb*(-xp/R)
         vzp = np.repeat(0, len(z))
 
-        # Convert back into Galactic frame
+        #Convert back into Galactic frame
         rot = -alpha
         vx = vxp * np.cos(rot) - vyp * np.sin(rot)
         vy = vxp * np.sin(rot) + vyp * np.cos(rot)
