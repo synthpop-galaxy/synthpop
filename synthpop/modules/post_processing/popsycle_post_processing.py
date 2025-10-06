@@ -40,7 +40,8 @@ class PopsyclePostProcessing(PostProcessing):
         
         # Translate extinction to Ebv extinction
         extinction = self.model.populations[0].extinction
-        ext_in_map = dataframe.iloc[:, 19]
+        extinction_type = self.model.populations[0].extinction.A_or_E_type
+        ext_in_map = dataframe[extinction_type].to_numpy()
         Av = extinction.extinction_at_lambda(0.544579, ext_in_map)
         Ab = extinction.extinction_at_lambda(0.438074, ext_in_map)
         dataframe["E(B-V)"] = Ab - Av
