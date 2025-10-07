@@ -12,6 +12,7 @@ import glob
 import os
 from ._post_processing import PostProcessing
 import sys
+import pdb
 import synthpop.constants as const
 from synthpop.star_generator import StarGenerator
 from synthpop.synthpop_utils.synthpop_logging import logger
@@ -234,10 +235,10 @@ class BinaryCompanions(PostProcessing):
 			original_indices = population_df.index
 					
 			# Create an instance of the Binary subclass for companions
-			companions = [BinaryCompanions() for j in range(len(population_df))]
+			#companions = [BinaryCompanions() for j in range(len(population_df))]
 			
 			# Draw an initial mass	
-			mass_ratios = pd.Series([companion.draw_companion_m_ratio() for companion in companions], index = original_indices)
+			mass_ratios = pd.Series([self.draw_companion_m_ratio() for j in range(len(population_df))], index = original_indices)
 			mass_ratio_df = pd.concat([mass_ratio_df, mass_ratios])#, ignore_index=True)
 			prim_masses = population_df["iMass"]
 			mass = pd.Series(mass_ratios.to_numpy() * prim_masses.to_numpy(), index=prim_masses.index)	# Array of companion initial masses
@@ -285,9 +286,9 @@ class BinaryCompanions(PostProcessing):
 
 			for col in mag.columns:
 				secondary_df.loc[population_df.index, col] = mag[col]
-							
+			
 			# Draw periods for binary stars
-			periods = [companion.draw_period() for companion in companions]
+			periods = [self.draw_period() for j in range(len(population_df))]
 			periods_list.extend(periods)
 		
 		############# Add new df information to final catalog dataframe #############
@@ -299,7 +300,7 @@ class BinaryCompanions(PostProcessing):
 			if binary_flags[i]:
 				combined_list.append(secondary_df.iloc[i])
 		combined_df = pd.DataFrame(combined_list).reset_index(drop=True)
-			
+		#pdb.set_trace()
 		# Add a new column with a six-digit identification number
 		combined_df['ID'] = np.array([f"{i:09d}" for i in range(1, len(combined_df) + 1)])
 
