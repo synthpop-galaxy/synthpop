@@ -4,7 +4,7 @@ Post-processing module to recalculate and replace the kinematics of a catalog.
 
 __all__ = ["RecalculateKinematics", ]
 __author__ = "M.J. Huston"
-__date__ = "2024-05-14"
+__date__ = "2025-05-14"
 
 import pandas
 import numpy as np

@@ -77,11 +77,6 @@ class Koshimoto2021Bulge(Kinematics):
         # Solid body velocity
         v_sb = self.omega_p * R
 
-        # Calculate velocities in bar frame
-        vxp = v_sb*(yp/R) + v_x_stream
-        vyp = v_sb*(-xp/R)
-        vzp = np.repeat(0, len(z))
-
         # velocity dispersions
         sigma_x = self.vel_disp(abs(xp), abs(yp), abs(zp), 0)
         sigma_y = self.vel_disp(abs(xp), abs(yp), abs(zp), 1)
@@ -92,7 +87,6 @@ class Koshimoto2021Bulge(Kinematics):
         dvy = np.random.normal(0, sigma_y)
         dvz = np.random.normal(0, sigma_z)
 
-        # Calculate velocities in bar frame
         # Calculate velocities in bar frame
         vxp = v_sb*(yp/R) + v_x_stream + dvx
         vyp = v_sb*(-xp/R) + dvy
