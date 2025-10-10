@@ -1,8 +1,10 @@
 *._*
 synthpop/demo/*/*.png
+synthpop/demo/*.png
 synthpop/demo/*/*.pdf
 synthpop/data/extinction
 synthpop/data/isochrones
+run*.py
 outputfiles
 
 *.DS_Store

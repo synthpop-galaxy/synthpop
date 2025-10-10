@@ -72,8 +72,11 @@ class SpiseaGenerator(StarGenerator):
         self.synthpop_imf_module = imf_module
 
         # SPISEA specific setings
-        if (evolution_module.evo_model_name=='MISTv1.2') or (evolution_module.evo_model_name=='MISTv1.0'):
-            self.spisea_evo_model = spisea_evolution.MISTv1(version=float(evolution_module.evo_model_name[-3:]))
+        if evolution_module.evo_model_name[:6]=='MISTv1': #.2') or (evolution_module.evo_model_name=='MISTv1.0'):
+            n_version = float(evolution_module.evo_model_name[5:8])
+            synthpop_extension = ("synthpop" in evolution_module.evo_model_name.lower())
+            self.spisea_evo_model = spisea_evolution.MISTv1(version=n_version,
+                                                            synthpop_extension=synthpop_extension)
             self.feh_list = np.array([-4.0,-3.5,-3.0,-2.5,-2.0,-1.75,-1.5,-1.25,
                                       -1.0,-0.75,-0.5,-0.25,0,0.25,0.5])
             self.log_age_list = np.linspace(5.0,10.3,107)
@@ -109,7 +112,7 @@ class SpiseaGenerator(StarGenerator):
         #self.spisea_imf = imf_module.spisea_imf
         #self.multiplicity = imf_module.add_companions
         #self.spisea_imf = getattr(spisea_imf.imf, imf_module.spisea_imf_name)()
-        self.spisea_filters = [filt.replace('-',',') for filt in glbl_params.chosen_bands]
+        self.spisea_filters = [filt.replace('-',',') for filt in evolution_module.bands]
         
         # SPISEA limitations
         self.spisea_max_log_age = 10.14

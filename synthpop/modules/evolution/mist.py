@@ -107,6 +107,8 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         """
 
         self.magsys, self.none_mag_cols, self.bands = self.get_mag_systems(columns)
+        with open(f"{EVOLUTION_DIR}/mist_effective_wavelengths.json") as f:
+            self.eff_wavelengths = json.load(f)
 
         # Check for isochrone directory and create if needed
         os.makedirs(self.FOLDER, exist_ok=True)

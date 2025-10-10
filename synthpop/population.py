@@ -184,8 +184,10 @@ class Population:
         # get magnitudes from evolution class
         if isinstance(self.evolution, list):
             self.bands = list(self.evolution[0].bands)
+            self.eff_wavelengths = dict(self.evolution[0].eff_wavelengths)
         else:
             self.bands = list(self.evolution.bands)
+            self.eff_wavelengths = dict(self.evolution.eff_wavelengths)
 
         # check if main magnitued is in self.bands
         if self.glbl_params.maglim[0] not in self.bands:
@@ -195,11 +197,11 @@ class Population:
             raise ValueError(msg)
 
         # check if all bands are in eff_wavelengths:
-        if len(not_found := set(self.bands) - self.glbl_params.eff_wavelengths.keys()) != 0:
+        if len(not_found := set(self.bands) - self.eff_wavelengths.keys()) != 0:
             raise KeyError(f"Effect Wavelengths for {not_found} are not specified")
 
         # set wavelength bands and effective wavelength
-        self.extinction.set_bands(self.bands, self.glbl_params.eff_wavelengths)
+        self.extinction.set_bands(self.bands, self.eff_wavelengths)
 
         self.av_mass_corr = None
         if self.glbl_params.star_generator=="SpiseaGenerator":
