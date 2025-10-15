@@ -64,6 +64,7 @@ class PopParams(BaseModel, extra="allow"):
     metallicity_func_kwargs: ModuleKwargs
     population_density_kwargs: ModuleKwargs
     kinematics_func_kwargs: ModuleKwargs
+    ifmr_kwargs: ModuleKwargs = None
 
     evolution_kwargs: Optional[Union[ModuleKwargs, List[ModuleKwargs]]] = None
 
@@ -162,6 +163,7 @@ class Parameters:
             self.evolution_class = ModuleKwargs.parse_obj(self.evolution_class)
 
         self.extinction_map_kwargs = ModuleKwargs.parse_obj(self.extinction_map_kwargs)
+        self.ifmr_kwargs = ModuleKwargs.parse_obj(self.ifmr_kwargs)
 
         if isinstance(self.extinction_law_kwargs, list):
             self.extinction_law_kwargs = [

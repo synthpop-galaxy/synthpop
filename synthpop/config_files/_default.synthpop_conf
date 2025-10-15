@@ -127,7 +127,8 @@
             "'population_name'":[
                         {"name":"MIST", "interpolator":"LagrangeInterpolator" , "#comment" : "a different interpolator for 'population_name'" }
             ]
-        }
+        },
+        "ifmr_kwargs": {"name": "PopsycleIfmrs"}
     },
 
     "PHOTOMETRIC_OUTPUTS":{

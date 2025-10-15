@@ -57,12 +57,13 @@ else:  # continue import when if synthpop is imported
 
 class SpiseaGenerator(StarGenerator):
     def __init__(self, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, logger):
+            glbl_params, position, max_mass, ifmr_module, logger):
         # General synthpop things
         spisea_dir=const.ISOCHRONES_DIR+'/spisea/'
         self.generator_name = 'SpiseaGenerator'
         self.age_module = age_module
         self.met_module = met_module
+        self.ifmr_module = ifmr_module
         self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
         self.ref_band = glbl_params.maglim[0]
@@ -95,9 +96,11 @@ class SpiseaGenerator(StarGenerator):
         #self.spisea_evo_model = getattr(spisea_evolution, evolution_module.evo_model_name)()
         self.spisea_atm_func = getattr(spisea_atmospheres, evolution_module.atm_func_name)
         self.spisea_wd_atm_func = getattr(spisea_atmospheres, evolution_module.wd_atm_func_name)
-        self.spisea_ifmr = None
-        if evolution_module.ifmr_name is not None:
-            self.spisea_ifmr = getattr(spisea_ifmr, evolution_module.ifmr_name)()
+        #self.spisea_ifmr = None
+        if self.ifmr_module.name == 'PopsycleIfmrs':
+            self.spisea_ifmr = getattr(spisea_ifmr, ifmr_module.spisea_ifmr_name)()
+        else:
+            raise ValueError("Invalid IFMR module for SpiseaGenerator. Only PopsycleIfmrs is available at this time.")
         self.spisea_multiplicity = None
         if evolution_module.multiplicity_name is not None:
             self.spisea_multiplicity = getattr(spisea.multiplicity, evolution_module.multiplicity_name)()
@@ -267,6 +270,7 @@ class SpiseaGenerator(StarGenerator):
             m_initial[stars_done:stars_done+n_bin] = cluster_comb['mass'].to_numpy()
             age[stars_done:stars_done+n_bin] = 10**bin2d[0] / 1e9
             met[stars_done:stars_done+n_bin] = self.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
+            not_evolved[stars_done:stars_done+n_bin] = np.isnan(cluster_comb['L']) * (cluster_comb['phase'].to_numpy()<100)
             conv_props = self.spisea_props_to_synthpop(props, cluster_comb)
             for prop in props:
                 s_props[prop][stars_done:stars_done+n_bin] = conv_props[prop]

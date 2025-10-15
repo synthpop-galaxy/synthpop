@@ -42,6 +42,7 @@ except ImportError:
         CombineEvolution, MUST_HAVE_COLUMNS
     from modules.age import Age
     from modules.initial_mass_function import InitialMassFunction
+    from modules.initial_final_mass_relation import InitialFinalMassRelation
     from modules.kinematics import Kinematics
     from modules.metallicity import Metallicity
     from modules.population_density import PopulationDensity
@@ -58,6 +59,7 @@ else:  # continue import when if synthpop is imported
         CombineEvolution, MUST_HAVE_COLUMNS
     from .modules.age import Age
     from .modules.initial_mass_function import InitialMassFunction
+    from .modules.initial_final_mass_relation import InitialFinalMassRelation
     from .modules.kinematics import Kinematics
     from .modules.metallicity import Metallicity
     from .modules.population_density import PopulationDensity
@@ -178,7 +180,7 @@ class Population:
         # placeholder for profiles etc. initialized via the assign_subclasses
         (
             self.population_density, self.imf, self.age, self.metallicity,
-            self.kinematics, self.evolution, self.extinction
+            self.kinematics, self.evolution, self.extinction, self.ifmr
             ) = self.assign_subclasses()
 
         # get magnitudes from evolution class
@@ -205,9 +207,9 @@ class Population:
 
         self.av_mass_corr = None
         if self.glbl_params.star_generator=="SpiseaGenerator":
-            if self.lost_mass_option != 3:
-                logger.warning("Setting lost_mass_option to 3 for SpiseaGenerator.")
-                self.lost_mass_option = 3
+            # if self.lost_mass_option != 3:
+            #     logger.warning("Setting lost_mass_option to 3 for SpiseaGenerator.")
+            #     self.lost_mass_option = 3
             if self.skip_lowmass_stars:
                 logger.warning("Setting skip_lowmass_stars to False for SpiseaGenerator.")
                 self.skip_lowmass_stars = False
@@ -217,12 +219,14 @@ class Population:
                 from .spisea_generator import SpiseaGenerator
             self.generator = SpiseaGenerator(
                 self.imf, self.age, self.metallicity, self.evolution,
-                self.glbl_params, self.position, self.max_mass, logger
+                self.glbl_params, self.position, self.max_mass, 
+                self.ifmr, logger
                 )
         else:
             self.generator = StarGenerator(
                 self.imf, self.age, self.metallicity, self.evolution,
-                self.glbl_params, self.position, self.max_mass, logger
+                self.glbl_params, self.position, self.max_mass, 
+                self.ifmr, logger
                 )
 
     def assign_subclasses(self):
@@ -245,8 +249,9 @@ class Population:
         age = self.get_age_class()
         metallicity = self.get_metallicity_class()
         kinematics = self.get_kinematics_class(population_density)
+        ifmr = self.get_ifmr_class()
 
-        return population_density, imf, age, metallicity, kinematics, evolution, extinction
+        return population_density, imf, age, metallicity, kinematics, evolution, extinction, ifmr
 
     def get_evolution_class(self):
         evolution_class_config = self.get_evolution_class_config()
@@ -395,6 +400,17 @@ class Population:
             keyword_name='imf_func_kwargs',
             population_file=self.pop_params._filename)
         return imf
+
+    def get_ifmr_class(self):
+        # logger.debug("%s : using InitialFinalMassRelation subclass '%s'", self.name,
+        #              self.pop_params.ifmr_kwargs.name)
+        # ifmr = sp_utils.get_subclass(
+        #     InitialFinalMassRelation, self.pop_params.ifmr_kwargs,
+        #     keyword_name='ifmr_kwargs',
+        #     population_file=self.pop_params._filename)
+        ifmr = sp_utils.get_subclass(InitialFinalMassRelation, self.glbl_params.ifmr_kwargs,
+                        initialize=True, population_file=self.pop_params._filename)
+        return ifmr
 
     def get_age_class(self):
         logger.debug("%s : using Age subclass '%s'", self.name,
@@ -617,6 +633,7 @@ class Population:
             {const.REQ_ISO_PROPS[0], self.glbl_params.maglim[0]},
             min_mass=self.min_mass, max_mass=self.max_mass)
         # get evolved mass
+        # TODO: I don't like how this mass column is being grabbed right now.
         mass_evolved = s_props[const.REQ_ISO_PROPS[0]]
         # assume no mass loss for not evolved stars
         mass_evolved[not_evolved] = m_initial[not_evolved]
@@ -626,6 +643,7 @@ class Population:
         av_mass_corr = np.mean(mass_evolved) / average_m_initial
 
         self.av_mass_corr = av_mass_corr
+        #pdb.set_trace()
 
         return av_mass_corr
 

@@ -13,6 +13,7 @@ from typing import Set, Tuple, Dict, Union
 import numpy as np
 import time
 import pandas
+import pdb
 
 # Local Imports
 # used to allow running as main and importing to another script
@@ -72,9 +73,10 @@ class StarGenerator:
     """
 
     def __init__(self, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, logger):
+            glbl_params, position, max_mass, ifmr_module, logger):
         self.generator_name = 'StarGenerator'
         self.imf_module = imf_module
+        self.ifmr_module = ifmr_module
         self.age_module = age_module
         self.met_module = met_module
         if isinstance(evolution_module, list):
@@ -133,6 +135,9 @@ class StarGenerator:
 
         ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = self.get_evolved_props(
             m_initial, met, age, props)
+
+        ref_mag, s_props, inside_grid = self.apply_ifmr(m_initial, met,
+            ref_mag, s_props, final_phase_flag, inside_grid)
 
         return m_initial, age, met, ref_mag, s_props, final_phase_flag, inside_grid, not_evolved
 
@@ -262,5 +267,25 @@ class StarGenerator:
             #    break
         self.logger.debug(f"used time = {time.time() - ti:.2f}s")
         return mag, s_track, in_final_phase, inside_grid, not_performed
+
+    def apply_ifmr(self, m_init, met, ref_mag, s_props, final_phase_flag, inside_grid):
+        """
+        Apply the IFMR to catch stars evolved past the grid and make them
+        the appropriate dark remnant
+        """
+        m_compact, m_phase = self.ifmr_module.process_compact_objects(
+            m_init[final_phase_flag], met[final_phase_flag])
+        ref_mag[final_phase_flag] = np.nan
+        for key in s_props.keys():
+            if key=='star_mass':
+                s_props[key][final_phase_flag] = m_compact
+            elif key=='phase':
+                s_props[key][final_phase_flag] = m_phase
+            else:
+                s_props[key][final_phase_flag] = np.nan
+        inside_grid[final_phase_flag] = True
+        return ref_mag, s_props, inside_grid
+
+
 
 
