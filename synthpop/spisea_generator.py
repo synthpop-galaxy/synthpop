@@ -57,13 +57,14 @@ else:  # continue import when if synthpop is imported
 
 class SpiseaGenerator(StarGenerator):
     def __init__(self, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, ifmr_module, logger):
+            glbl_params, position, max_mass, ifmr_module, mult_module, logger):
         # General synthpop things
         spisea_dir=const.ISOCHRONES_DIR+'/spisea/'
         self.generator_name = 'SpiseaGenerator'
         self.age_module = age_module
         self.met_module = met_module
         self.ifmr_module = ifmr_module
+        self.mult_module = mult_module
         self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
         self.ref_band = glbl_params.maglim[0]

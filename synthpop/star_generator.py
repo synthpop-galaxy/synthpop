@@ -29,11 +29,6 @@ except ImportError:
     from modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
     from modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
         CombineEvolution, MUST_HAVE_COLUMNS
-    from modules.age import Age
-    from modules.initial_mass_function import InitialMassFunction
-    from modules.kinematics import Kinematics
-    from modules.metallicity import Metallicity
-    from modules.population_density import PopulationDensity
 
 else:  # continue import when if synthpop is imported
     from . import synthpop_utils as sp_utils
@@ -44,11 +39,6 @@ else:  # continue import when if synthpop is imported
     from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
     from .modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
         CombineEvolution, MUST_HAVE_COLUMNS
-    from .modules.age import Age
-    from .modules.initial_mass_function import InitialMassFunction
-    from .modules.kinematics import Kinematics
-    from .modules.metallicity import Metallicity
-    from .modules.population_density import PopulationDensity
 
 
 class StarGenerator:
@@ -73,10 +63,11 @@ class StarGenerator:
     """
 
     def __init__(self, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, ifmr_module, logger):
+            glbl_params, position, max_mass, ifmr_module, mult_module, logger):
         self.generator_name = 'StarGenerator'
         self.imf_module = imf_module
         self.ifmr_module = ifmr_module
+        self.mult_module = mult_module
         self.age_module = age_module
         self.met_module = met_module
         if isinstance(evolution_module, list):
@@ -113,9 +104,27 @@ class StarGenerator:
             velocities = np.column_stack([u, v, w, ])
 
         # generate star at the positions
-        return position, r_inner, proper_motions, velocities, vr_lsr, \
-            self.generate_star_at_location(
+        stars, shared_prop_idxs = self.generate_star_at_location(
             position[:, 0:3], props, min_mass, self.max_mass)
+        stars.loc[:,'x'] = position[:,0][shared_prop_idxs]
+        stars.loc[:,'y'] = position[:,1][shared_prop_idxs]
+        stars.loc[:,'z'] = position[:,2][shared_prop_idxs]
+        stars.loc[:,'Dist'] = position[:,3][shared_prop_idxs]
+        stars.loc[:,'l'] = position[:,4][shared_prop_idxs]
+        stars.loc[:,'b'] = position[:,5][shared_prop_idxs]
+        stars.loc[:,'r_inner'] = r_inner[shared_prop_idxs]
+        stars.loc[:,'vr_bc'] = proper_motions[:,0][shared_prop_idxs]
+        stars.loc[:,'mul'] = proper_motions[:,1][shared_prop_idxs]
+        stars.loc[:,'mub'] = proper_motions[:,2][shared_prop_idxs]
+        stars.loc[:,'U'] = velocities[:,0][shared_prop_idxs]
+        stars.loc[:,'V'] = velocities[:,1][shared_prop_idxs]
+        stars.loc[:,'W'] = velocities[:,2][shared_prop_idxs]
+        stars.loc[:,'VR_LSR'] = vr_lsr[shared_prop_idxs]
+
+        return stars
+        # return position, r_inner, proper_motions, velocities, vr_lsr, \
+        #     self.generate_star_at_location(
+        #     position[:, 0:3], props, min_mass, self.max_mass)
 
     def generate_star_at_location(self, position, props, min_mass=None, max_mass=None):
         """
@@ -133,13 +142,37 @@ class StarGenerator:
         met = self.met_module.draw_random_metallicity(
             N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=age)
 
+        pri_ids, m_initial_companions, periods = self.mult_module.generate_companions(m_initial)
+
+        init_ids = np.arange(n_stars)
+        init_ids_stacked = np.insert(init_ids, pri_ids+1, pri_ids)
+        is_binary_init = np.isin(init_ids, pri_ids).astype(int)
+        m_initial = np.insert(m_initial, pri_ids+1, m_initial_companions)
+        age = age[init_ids_stacked]
+        met = met[init_ids_stacked]
+        all_ids = np.arange(len(m_initial))
+        is_binary = np.insert(is_binary_init, pri_ids+1, 2)
+        pri_ids_new = all_ids[is_binary<2]
+        pri_id_stacked = np.insert(pri_ids_new, pri_ids+1, pri_ids_new[pri_ids])
+        logP_stacked = np.repeat(np.nan, len(pri_id_stacked))
+        logP_stacked[is_binary>1] = periods
+
         ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = self.get_evolved_props(
             m_initial, met, age, props)
 
         ref_mag, s_props, inside_grid = self.apply_ifmr(m_initial, met,
             ref_mag, s_props, final_phase_flag, inside_grid)
 
-        return m_initial, age, met, ref_mag, s_props, final_phase_flag, inside_grid, not_evolved
+        stars = pandas.DataFrame.from_dict({"iMass": m_initial, "age": age, "Fe/H_initial":met,
+                          "In_Final_Phase": final_phase_flag, "inside_grid": inside_grid,
+                          "not_evolved": not_evolved, "Is_Binary":is_binary,
+                          "ID": all_ids, "primary_ID": pri_id_stacked,
+                          "ref_mag": ref_mag, 'Mass': s_props['star_mass'],
+                          "logP": logP_stacked}|s_props)
+
+        #pdb.set_trace()
+
+        return stars, init_ids_stacked
 
     def get_evolved_props(
             self,

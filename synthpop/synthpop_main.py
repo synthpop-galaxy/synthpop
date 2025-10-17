@@ -361,6 +361,7 @@ class SynthPop:
         field_list = []
         distributions = {}
 
+        max_star_id = -1
         for population in self.populations:
             # for each population, generate the field
             population_df, pop_distributions = population.generate_field()
@@ -372,6 +373,11 @@ class SynthPop:
             logger.debug(
                 "%s : Number of stars generated: %i (%i columns)",
                 population.name, *population_df.shape)
+
+            if len(population_df)>0:
+                population_df.loc[:,'ID'] = population_df['ID'].to_numpy() + max_star_id + 1
+                population_df.loc[:,'primary_ID'] = population_df['primary_ID'].to_numpy() + max_star_id + 1
+                max_star_id = int(np.max(population_df['ID']))
 
             # collect data frame into field_list
             field_list.append(population_df)

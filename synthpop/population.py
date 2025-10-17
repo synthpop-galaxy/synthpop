@@ -46,6 +46,7 @@ except ImportError:
     from modules.kinematics import Kinematics
     from modules.metallicity import Metallicity
     from modules.population_density import PopulationDensity
+    from modules.multiplicity import Multiplicity
 
 else:  # continue import when if synthpop is imported
     from . import synthpop_utils as sp_utils
@@ -63,6 +64,7 @@ else:  # continue import when if synthpop is imported
     from .modules.kinematics import Kinematics
     from .modules.metallicity import Metallicity
     from .modules.population_density import PopulationDensity
+    from .modules.multiplicity import Multiplicity
 
 
 class Population:
@@ -180,7 +182,7 @@ class Population:
         # placeholder for profiles etc. initialized via the assign_subclasses
         (
             self.population_density, self.imf, self.age, self.metallicity,
-            self.kinematics, self.evolution, self.extinction, self.ifmr
+            self.kinematics, self.evolution, self.extinction, self.ifmr, self.mult
             ) = self.assign_subclasses()
 
         # get magnitudes from evolution class
@@ -220,13 +222,13 @@ class Population:
             self.generator = SpiseaGenerator(
                 self.imf, self.age, self.metallicity, self.evolution,
                 self.glbl_params, self.position, self.max_mass, 
-                self.ifmr, logger
+                self.ifmr, self.mult, logger
                 )
         else:
             self.generator = StarGenerator(
                 self.imf, self.age, self.metallicity, self.evolution,
                 self.glbl_params, self.position, self.max_mass, 
-                self.ifmr, logger
+                self.ifmr, self.mult, logger
                 )
 
     def assign_subclasses(self):
@@ -250,8 +252,9 @@ class Population:
         metallicity = self.get_metallicity_class()
         kinematics = self.get_kinematics_class(population_density)
         ifmr = self.get_ifmr_class()
+        mult = self.get_mult_class()
 
-        return population_density, imf, age, metallicity, kinematics, evolution, extinction, ifmr
+        return population_density, imf, age, metallicity, kinematics, evolution, extinction, ifmr, mult
 
     def get_evolution_class(self):
         evolution_class_config = self.get_evolution_class_config()
@@ -411,6 +414,17 @@ class Population:
         ifmr = sp_utils.get_subclass(InitialFinalMassRelation, self.glbl_params.ifmr_kwargs,
                         initialize=True, population_file=self.pop_params._filename)
         return ifmr
+
+    def get_mult_class(self):
+        # logger.debug("%s : using InitialFinalMassRelation subclass '%s'", self.name,
+        #              self.pop_params.ifmr_kwargs.name)
+        # ifmr = sp_utils.get_subclass(
+        #     InitialFinalMassRelation, self.pop_params.ifmr_kwargs,
+        #     keyword_name='ifmr_kwargs',
+        #     population_file=self.pop_params._filename)
+        mult = sp_utils.get_subclass(Multiplicity, self.glbl_params.multiplicity_kwargs,
+                        initialize=True, population_file=self.pop_params._filename)
+        return mult
 
     def get_age_class(self):
         logger.debug("%s : using Age subclass '%s'", self.name,
@@ -628,17 +642,17 @@ class Population:
         positions = np.array(
             self.position.draw_random_point_in_slice(0, self.max_distance, n_stars))
 
-        (m_initial, age, met, _, s_props, _, _, not_evolved
-        ) = self.generator.generate_star_at_location(positions[0:3].T,
+        star_sample, _ = self.generator.generate_star_at_location(positions[0:3].T,
             {const.REQ_ISO_PROPS[0], self.glbl_params.maglim[0]},
             min_mass=self.min_mass, max_mass=self.max_mass)
         # get evolved mass
         # TODO: I don't like how this mass column is being grabbed right now.
-        mass_evolved = s_props[const.REQ_ISO_PROPS[0]]
+        mass_evolved = star_sample['Mass'].to_numpy()
         # assume no mass loss for not evolved stars
-        mass_evolved[not_evolved] = m_initial[not_evolved]
+        not_evolved = star_sample['not_evolved'].to_numpy()
+        mass_evolved[not_evolved] = star_sample['iMass'].to_numpy()[not_evolved]
         # get average mass from imf
-        average_m_initial = self.imf.average_mass(min_mass=self.min_mass, max_mass=self.max_mass)
+        average_m_initial = np.mean(star_sample['iMass'].to_numpy())
         # estimate mass loss correction
         av_mass_corr = np.mean(mass_evolved) / average_m_initial
 
@@ -697,24 +711,24 @@ class Population:
 
         return n_star_expected, mass_per_slice
 
-    @staticmethod
-    def convert_to_dataframe(
-            popid, initial_parameters, m_evolved, final_phase_flag,
-            galactic_coordinates, proper_motions, cartesian_coordinates, velocities,
-            vr_lsr, extinction_in_map, props, user_props, mags, headers
-            ):
-        """ convert data to a pandas data_frame"""
-        df = pandas.DataFrame(np.column_stack(
-            [np.repeat(popid, len(final_phase_flag)),  # pop,
-                initial_parameters,  # iMass, age, Fe/H,
-                m_evolved, final_phase_flag,  # Mass, In_Final_Phase
-                galactic_coordinates, proper_motions,  # Dist, l, b, Vr, mu_l, mu_b,
-                cartesian_coordinates, velocities,  # x, y, z,  U, V, W,
-                vr_lsr, extinction_in_map,  # VR_LSR, extinction_in_map
-                props, user_props, mags  # all specified props and magnitudes
-                ]
-            ), columns=headers)
-        return df
+    # @staticmethod
+    # def convert_to_dataframe(
+    #         popid, initial_parameters, m_evolved, final_phase_flag,
+    #         galactic_coordinates, proper_motions, cartesian_coordinates, velocities,
+    #         vr_lsr, extinction_in_map, props, user_props, mags, headers
+    #         ):
+    #     """ convert data to a pandas data_frame"""
+    #     df = pandas.DataFrame(np.column_stack(
+    #         [np.repeat(popid, len(final_phase_flag)),  # pop,
+    #             initial_parameters,  # iMass, age, Fe/H,
+    #             m_evolved, final_phase_flag,  # Mass, In_Final_Phase
+    #             galactic_coordinates, proper_motions,  # Dist, l, b, Vr, mu_l, mu_b,
+    #             cartesian_coordinates, velocities,  # x, y, z,  U, V, W,
+    #             vr_lsr, extinction_in_map,  # VR_LSR, extinction_in_map
+    #             props, user_props, mags  # all specified props and magnitudes
+    #             ]
+    #         ), columns=headers)
+    #     return df
 
     def generate_field(self) -> Tuple[pandas.DataFrame, Dict]:
         """
@@ -852,6 +866,7 @@ class Population:
             pbar = tqdm(total=sum(missing_stars))
         neg_missing_stars = np.minimum(missing_stars,0)
         gen_missing_stars = np.maximum(missing_stars,0)
+        current_max_id = -1
         while any(missing_stars > 0):
             if (sum(gen_missing_stars)>self.glbl_params.chunk_size) and not (self.generator.generator_name=='SpiseaGenerator'):
                 final_expected_loop=False
@@ -863,27 +878,20 @@ class Population:
                 final_expected_loop=True
                 gen_stars_chunk = np.copy(gen_missing_stars)
 
-            position, r_inner, proper_motions, velocities, vr_lsr, \
-            (m_initial, age, met, ref_mag, s_props, final_phase_flag, 
-                inside_grid, not_evolved) = self.generator.generate_stars(radii, 
+            df = self.generator.generate_stars(radii, 
                 gen_stars_chunk, mass_limit, self.do_kinematics, props_list)
 
-            initial_parameters = np.column_stack([m_initial, age, met])
-
             # extract magnitudes and convert to observed magnitudes if needed
-            mags, extinction_in_map = self.extract_magnitudes(
-                r_inner, position[:, 3:6], ref_mag, s_props, inside_grid, not_evolved)
+            df = self.extract_magnitudes(df)
 
             # extract properties
-            m_evolved, props, user_props = self.extract_properties(
-                m_initial, s_props, const.REQ_ISO_PROPS,
-                self.glbl_params.opt_iso_props, inside_grid, not_evolved)
+            df = self.extract_properties(df)
 
             # Keep track of all stars generated for option 3, until mass loss estimation is complete
             if self.lost_mass_option==3 and not opt3_mass_loss_done:
-                all_m_initial += list(m_initial)
-                all_m_evolved += list(m_evolved)
-                all_r_inner   += list(r_inner)
+                all_m_initial += list(star_set['iMass'])
+                all_m_evolved += list(star_set['Mass'])
+                all_r_inner   += list(star_set['r_inner'])
                 if final_expected_loop:
                     missing_stars = self.check_field(
                                 radii, average_imass_per_star, np.array(all_m_initial), np.array(all_m_evolved), np.array(all_r_inner),
@@ -896,15 +904,24 @@ class Population:
                 missing_stars -= gen_stars_chunk
 
             # Convert Table to pd.DataFrame
-            df = self.convert_to_dataframe(
-                self.popid, initial_parameters, m_evolved, final_phase_flag,
-                position[:, 3:6], proper_motions, position[:, 0:3], velocities,
-                vr_lsr, extinction_in_map, props, user_props, mags, headers
-                )
+            # df = self.convert_to_dataframe(
+            #     self.popid, initial_parameters, m_evolved, final_phase_flag,
+            #     position[:, 3:6], proper_motions, position[:, 0:3], velocities,
+            #     vr_lsr, extinction_in_map, props, user_props, mags, headers
+            #     )
 
             # add to previous drawn data
-            if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) and (not self.glbl_params.lost_mass_option==3):
-                df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
+            if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) \
+                                and (not self.glbl_params.lost_mass_option==3):
+                #df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
+                dim_primaries_ID = df['ID'][(df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]) & (df['Is_Binary']<1)]
+                drop_stars = (np.isin(df['ID'], dim_primaries_ID) | np.isin(df['primary_ID'], dim_primaries_ID))
+                df.drop(index=drop_stars, inplace=True)
+            df.loc[:,'ID'] = df['ID'] + current_max_id + 1
+            df.loc[:,'primary_ID'] = df['primary_ID'] + current_max_id + 1
+            current_max_id = int(np.max(df['ID']))
+            df.drop(columns=['ref_mag','inside_grid','In_Final_Phase','not_evolved', 'star_mass',
+                             'r_inner'], inplace=True)
             df_list.append(df)
             loop_counts += 1
             if use_pbar:
@@ -914,17 +931,17 @@ class Population:
             gen_missing_stars = np.maximum(missing_stars,0)
 
         # combine the results from the different loops
-        if len(df_list) == 0:
-            population_df = pandas.DataFrame(columns=headers, dtype=float)
-        else:
-            population_df = pandas.concat(df_list, ignore_index=True)
+        population_df = pandas.concat(df_list, ignore_index=True)
+        #pdb.set_trace()
         
         # Remove any excess stars
         if self.lost_mass_option==3:
             r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
             population_df = self.remove_stars(population_df, r_inner, neg_missing_stars, radii)
             population_df.reset_index(drop=True,inplace=True)
+        population_df.loc[:, 'pop'] = self.popid
 
+        #pdb.set_trace()
         to = time.time()  # end timer
 
         ################################################################
@@ -988,12 +1005,15 @@ class Population:
         Removes stars form data frame in the corresponding slice
         if missing_stars is < 0
         """
+        primary_ids, idxs, cts= np.unique(df['primary_ID'], return_index=True, return_counts=True)
+        avg_stars_per_system = np.mean(cts)
         preserve = np.ones(len(radii_star), bool)
         for r, n in zip(radii, missing_stars):
-            if n < 0:
-                t = preserve[radii_star == r]
-                t[n:] = False
-                preserve[radii_star == r] = t
+            scale_n = int(round(n/avg_stars_per_system))
+            if scale_n < 0:
+                primary_ids_slice = np.unique(df['primary_ID'].to_numpy()[radii_star==r])
+                drop_primary_ids = np.random.choice(primary_ids_slice, replace=False, size=scale_n)
+                preserve[np.isin(df['primary_ID'].to_numpy(), drop_primary_ids)] = False
         return df[preserve]
 
     def check_field(
@@ -1103,24 +1123,21 @@ class Population:
 
         return u, v, w, vr, mu_l, mu_b, vr_lsr
 
-    def extract_magnitudes(
-            self, radii_inner, galactic_coordinates, ref_mag,
-            props, inside_grid=None, not_evolved=None
-            ):
+    def extract_magnitudes(self, df):
 
-        if inside_grid is None:
-            inside_grid = np.ones(len(ref_mag), bool)
-        if not_evolved is None:
-            not_evolved = np.zeros(len(ref_mag), bool)
+        inside_grid = df['inside_grid'].to_numpy()
+        not_evolved = df['not_evolved'].to_numpy()
+        ref_mag = df['ref_mag'].to_numpy()
 
-
-        mags = np.full((len(ref_mag), len(self.bands)), 9999.)
+        #mags = np.full((len(ref_mag), len(self.bands)), 9999.)
+        mags = df[self.bands].to_numpy()
         extinction_in_map = np.zeros(len(ref_mag))
+        galactic_coordinates = df[['Dist', 'l','b']].to_numpy()
 
         dist_module = 5 * np.log10(galactic_coordinates[:, 0] * 100)
 
-        for i, band in enumerate(self.bands):
-            mags[:, i] = props[band]
+        # for i, band in enumerate(self.bands):
+        #     mags[:, i] = df[band]
 
         if self.glbl_params.obsmag:
             ref_mag[inside_grid] += dist_module[inside_grid]
@@ -1143,37 +1160,28 @@ class Population:
         mags[np.logical_not(inside_grid)] = np.nan
         mags[not_evolved] = np.nan
 
-        return mags, extinction_in_map
+        for i,band in enumerate(self.bands):
+            df.loc[:,band] = mags[:,i]
+        df.loc[:,self.extinction.A_or_E_type] = extinction_in_map
 
-    @staticmethod
-    def extract_properties(
-            m_initial, props, req_keys, user_keys,
-            inside_grid=None, not_evolved=None
-            ):
+        return df
+
+    #@staticmethod
+    def extract_properties(self,df):
         # default masks
-        if inside_grid is None:
-            inside_grid = np.ones(len(ref_mag), bool)
-        if not_evolved is None:
-            not_evolved = np.zeros(len(ref_mag), bool)
+        inside_grid = df['inside_grid'].to_numpy()
+        not_evolved = df['not_evolved'].to_numpy()
 
-        # setup numpy array to store data
-        default_props = np.zeros((len(m_initial), len(req_keys)))
-        user_props = np.zeros((len(m_initial), len(user_keys)))
+        evolved_props = const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props
 
-        # store key into default_props and user_props
-        for i, key in enumerate(req_keys):
-            default_props[:, i] = props[key]
-        for i, key in enumerate(user_keys):
-            user_props[:, i] = props[key]
+        for prop in evolved_props:
+            df.loc[np.logical_not(inside_grid), prop] = np.nan
+            df.loc[not_evolved, prop] = np.nan
+        df.loc[np.logical_not(inside_grid), 'Mass'] = df['iMass'][np.logical_not(inside_grid)]
+        df.loc[np.logical_not(inside_grid), 'star_mass'] = df['iMass'][np.logical_not(inside_grid)]
+        df.loc[not_evolved, 'Mass'] = df['iMass'][not_evolved]
+        df.loc[not_evolved, 'star_mass'] = df['iMass'][not_evolved]
 
-        # replace data outside grid with nan
-        default_props[np.logical_not(inside_grid), 1:] = np.nan
-        default_props[not_evolved, 1:] = np.nan
-        default_props[not_evolved, 0] = m_initial[not_evolved]
-
-        user_props[np.logical_not(inside_grid)] = np.nan
-        user_props[not_evolved] = np.nan
-
-        return default_props[:, 0], default_props[:, 1:], user_props
+        return df 
 
 
