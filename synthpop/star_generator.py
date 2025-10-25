@@ -144,18 +144,25 @@ class StarGenerator:
 
         pri_ids, m_initial_companions, periods = self.mult_module.generate_companions(m_initial)
 
-        init_ids = np.arange(n_stars)
-        init_ids_stacked = np.insert(init_ids, pri_ids+1, pri_ids)
-        is_binary_init = np.isin(init_ids, pri_ids).astype(int)
-        m_initial = np.insert(m_initial, pri_ids+1, m_initial_companions)
-        age = age[init_ids_stacked]
-        met = met[init_ids_stacked]
-        all_ids = np.arange(len(m_initial))
-        is_binary = np.insert(is_binary_init, pri_ids+1, 2)
-        pri_ids_new = all_ids[is_binary<2]
-        pri_id_stacked = np.insert(pri_ids_new, pri_ids+1, pri_ids_new[pri_ids])
-        logP_stacked = np.repeat(np.nan, len(pri_id_stacked))
-        logP_stacked[is_binary>1] = periods
+        if len(pri_ids>0):
+            init_ids = np.arange(n_stars)
+            init_ids_stacked = np.insert(init_ids, pri_ids+1, pri_ids)
+            is_binary_init = np.isin(init_ids, pri_ids).astype(int)
+            m_initial = np.insert(m_initial, pri_ids+1, m_initial_companions)
+            age = age[init_ids_stacked]
+            met = met[init_ids_stacked]
+            all_ids = np.arange(len(m_initial))
+            is_binary = np.insert(is_binary_init, pri_ids+1, 2)
+            pri_ids_new = all_ids[is_binary<2]
+            pri_id_stacked = np.insert(pri_ids_new, pri_ids+1, pri_ids_new[pri_ids])
+            logP_stacked = np.repeat(np.nan, len(pri_id_stacked))
+            logP_stacked[is_binary>1] = periods
+        else:
+            all_ids = np.arange(n_stars)
+            init_ids_stacked = all_ids
+            is_binary = np.zeros(n_stars)
+            pri_id_stacked = all_ids
+            logP_stacked = np.repeat(np.nan, n_stars)
 
         ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = self.get_evolved_props(
             m_initial, met, age, props)

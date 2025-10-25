@@ -63,7 +63,8 @@
 
     "ISOCHRONE_INTERPOLATION":{
         "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
-        "ifmr_kwargs": {"name": "PopsycleIfmrs"}
+        "ifmr_kwargs": {"name": "PopsycleIfmrs", "ifmr_name":"SukhboldN20"},
+        "multiplicity_kwargs": {"name": "NoMultiplicity"}
         },
 
     "PHOTOMETRIC_OUTPUTS":{
@@ -76,7 +77,7 @@
     },
     
     "OUTPUT":{
-        "post_processing_kwargs": [{"name":"ProcessDarkCompactObjects", "remove":false}, {"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}}],
+        "post_processing_kwargs": [{"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}}],
     
         "output_location":"outputfiles/default",
         "output_filename_pattern": "{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}",

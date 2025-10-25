@@ -1,16 +1,10 @@
 """
-Post-processing to account for dim compact objects, based on PopSyCLE (Rose et al 2022).
-
-The module will take all objects that have evolved past the MIST grid, and assign them a final
-mass, removing their photometry. Optionally, one can just remove all of these objects instead.
-
-It can also optionally add random kick velocities to neutron stars and black holes, according to 
-a Maxwellian distribution with a user-input mean.
+Assign final compact object types and masses based on PopSyCLE (Rose et al 2022).
 """
 
 __all__ = ["PopsycleIfmrs", ]
 __author__ = "M.J. Huston"
-__date__ = "2024-05-23"
+__date__ = "2025-10-14"
 
 import pandas
 import numpy as np

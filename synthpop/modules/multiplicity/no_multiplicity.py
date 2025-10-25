@@ -18,7 +18,7 @@ try:
 except (ImportError, ValueError):
 	from synthpop.constants import (SYNTHPOP_DIR, DEFAULT_MODEL_DIR, DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_DIR)
 
-class NoMultiplicity(Mutiplicity):
+class NoMultiplicity(Multiplicity):
 	def __init__(self, **kwargs):
 		"""
 		Hi

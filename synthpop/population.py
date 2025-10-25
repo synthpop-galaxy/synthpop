@@ -914,12 +914,15 @@ class Population:
             if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) \
                                 and (not self.glbl_params.lost_mass_option==3):
                 #df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
-                dim_primaries_ID = df['ID'][(df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]) & (df['Is_Binary']<1)]
+                dim_primaries_ID = df['ID'][((df[self.glbl_params.maglim[0]]>self.glbl_params.maglim[1]) | np.isnan(df[self.glbl_params.maglim[0]])) & (df['Is_Binary']<2)]
                 drop_stars = (np.isin(df['ID'], dim_primaries_ID) | np.isin(df['primary_ID'], dim_primaries_ID))
-                df.drop(index=drop_stars, inplace=True)
-            df.loc[:,'ID'] = df['ID'] + current_max_id + 1
-            df.loc[:,'primary_ID'] = df['primary_ID'] + current_max_id + 1
-            current_max_id = int(np.max(df['ID']))
+                #pdb.set_trace()
+                df.drop(index=df.index[drop_stars], inplace=True)
+                #print(df)
+            if len(df)>0:
+                df.loc[:,'ID'] = df['ID'] + current_max_id + 1
+                df.loc[:,'primary_ID'] = df['primary_ID'] + current_max_id + 1
+                current_max_id = int(np.max(df['ID']))
             df.drop(columns=['ref_mag','inside_grid','In_Final_Phase','not_evolved', 'star_mass',
                              'r_inner'], inplace=True)
             df_list.append(df)
@@ -932,14 +935,14 @@ class Population:
 
         # combine the results from the different loops
         population_df = pandas.concat(df_list, ignore_index=True)
-        #pdb.set_trace()
         
         # Remove any excess stars
-        if self.lost_mass_option==3:
+        if (self.lost_mass_option==3) and (len(population_df)>0):
             r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
             population_df = self.remove_stars(population_df, r_inner, neg_missing_stars, radii)
             population_df.reset_index(drop=True,inplace=True)
-        population_df.loc[:, 'pop'] = self.popid
+        if len(population_df)>0:
+            population_df.loc[:, 'pop'] = self.popid
 
         #pdb.set_trace()
         to = time.time()  # end timer
@@ -1131,7 +1134,8 @@ class Population:
 
         #mags = np.full((len(ref_mag), len(self.bands)), 9999.)
         mags = df[self.bands].to_numpy()
-        extinction_in_map = np.zeros(len(ref_mag))
+        #pdb.set_trace()
+        #extinction_in_map = np.zeros(len(ref_mag))
         galactic_coordinates = df[['Dist', 'l','b']].to_numpy()
 
         dist_module = 5 * np.log10(galactic_coordinates[:, 0] * 100)
@@ -1154,15 +1158,17 @@ class Population:
             for i, band in enumerate(self.bands):
                 mags[:, i] += extinction_dict.get(band, 0)
 
-        mag_le_limit = ref_mag < self.glbl_params.maglim[1]
+        #mag_le_limit = ref_mag < self.glbl_params.maglim[1]
 
-        mags[np.logical_not(mag_le_limit)] = np.nan
+        #mags[np.logical_not(mag_le_limit)] = np.nan
         mags[np.logical_not(inside_grid)] = np.nan
         mags[not_evolved] = np.nan
 
         for i,band in enumerate(self.bands):
             df.loc[:,band] = mags[:,i]
         df.loc[:,self.extinction.A_or_E_type] = extinction_in_map
+        df.loc[:,'ref_mag'] = ref_mag
+        #pdb.set_trace()
 
         return df
 

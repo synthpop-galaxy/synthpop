@@ -26,6 +26,7 @@ from typing import Tuple, Dict, Iterator
 # Non-Standard Imports
 import pandas
 import numpy as np
+import pdb
 
 # check if astropy is installed
 if importlib.util.find_spec("astropy") is not None:
@@ -390,12 +391,27 @@ class SynthPop:
         # check if velocities should be generated after all positions are generated
         if self.parms.kinematics_at_the_end:
             field_df = self.do_kinematics(field_df)
+        #pdb.set_trace()
 
         # check if faint stars and stars outside the grid should be kept or removed
         if self.parms.maglim[-1] != 'keep':
-            logger.info('remove stars which are outside of the isochrone grid ')
-            field_df = field_df[field_df[self.parms.maglim[0]] < self.parms.maglim[1]]
-            logger.info('cleand field: Number of stars generated: %i (%i columns)', *field_df.shape)
+            logger.info('remove stars which are too faint ')
+            #field_df = field_df[field_df[self.parms.maglim[0]] < self.parms.maglim[1]]
+            dim_primaries_ID = field_df['ID'][((field_df[self.parms.maglim[0]]>self.parms.maglim[1])
+                                        | np.isnan(field_df[self.parms.maglim[0]])) & (field_df['Is_Binary']<1)]
+            drop_stars = (np.isin(field_df['ID'], dim_primaries_ID) | np.isin(field_df['primary_ID'], dim_primaries_ID))
+                #pdb.set_trace()
+            field_df.drop(index=field_df.index[drop_stars], inplace=True)
+            logger.info('cleaned field: Number of stars generated: %i (%i columns)', *field_df.shape)
+            
+        # reset object ids
+        field_df.reset_index(drop=True, inplace=True)
+        if len(field_df)<np.max(field_df['ID']+1):
+            new_ids = np.arange(len(field_df))
+            old_ids = field_df['ID'].to_numpy().copy()
+            old_prim_ids = field_df['primary_ID'].to_numpy().copy()
+            field_df.loc[:, 'ID'] = new_ids
+            field_df.loc[:, 'primary_ID'] = np.where(old_ids[:,np.newaxis]==old_prim_ids)[0]
 
         # log output columns and statistics
         logger.info(f"included_columns = {list(field_df.columns)}")
