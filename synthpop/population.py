@@ -935,7 +935,7 @@ class Population:
 
         # combine the results from the different loops
         if len(df_list)==0:
-            population_df=pandas.DataFrame
+            population_df=pandas.DataFrame()
         else:
             population_df = pandas.concat(df_list, ignore_index=True)
         
