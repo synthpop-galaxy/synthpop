@@ -934,7 +934,10 @@ class Population:
             gen_missing_stars = np.maximum(missing_stars,0)
 
         # combine the results from the different loops
-        population_df = pandas.concat(df_list, ignore_index=True)
+        if len(df_list)==0:
+            population_df=pandas.DataFrame
+        else:
+            population_df = pandas.concat(df_list, ignore_index=True)
         
         # Remove any excess stars
         if (self.lost_mass_option==3) and (len(population_df)>0):

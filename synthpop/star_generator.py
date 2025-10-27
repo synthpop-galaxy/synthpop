@@ -170,12 +170,14 @@ class StarGenerator:
         ref_mag, s_props, inside_grid = self.apply_ifmr(m_initial, met,
             ref_mag, s_props, final_phase_flag, inside_grid)
 
-        stars = pandas.DataFrame.from_dict({"iMass": m_initial, "age": age, "Fe/H_initial":met,
+        star_dict = {"iMass": m_initial, "age": age, "Fe/H_initial":met,
                           "In_Final_Phase": final_phase_flag, "inside_grid": inside_grid,
                           "not_evolved": not_evolved, "Is_Binary":is_binary,
                           "ID": all_ids, "primary_ID": pri_id_stacked,
                           "ref_mag": ref_mag, 'Mass': s_props['star_mass'],
-                          "logP": logP_stacked}|s_props)
+                          "logP": logP_stacked}
+        star_dict.update(s_props)
+        stars = pandas.DataFrame.from_dict(star_dict)
 
         #pdb.set_trace()
 
