@@ -406,12 +406,12 @@ class SynthPop:
             
         # reset object ids
         field_df.reset_index(drop=True, inplace=True)
-        if len(field_df)<np.max(field_df['ID']+1):
-            new_ids = np.arange(len(field_df))
-            old_ids = field_df['ID'].to_numpy().copy()
-            old_prim_ids = field_df['primary_ID'].to_numpy().copy()
-            field_df.loc[:, 'ID'] = new_ids
-            field_df.loc[:, 'primary_ID'] = np.where(old_ids[:,np.newaxis]==old_prim_ids)[0]
+#        if len(field_df)<np.max(field_df['ID']+1):
+#            new_ids = np.arange(len(field_df))
+#            old_ids = field_df['ID'].to_numpy().copy()
+#            old_prim_ids = field_df['primary_ID'].to_numpy().copy()
+#            field_df.loc[:, 'ID'] = new_ids
+#            field_df.loc[:, 'primary_ID'] = np.where(old_ids[:,np.newaxis]==old_prim_ids)[0]
 
         # log output columns and statistics
         logger.info(f"included_columns = {list(field_df.columns)}")
