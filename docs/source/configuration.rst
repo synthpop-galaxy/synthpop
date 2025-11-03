@@ -338,8 +338,6 @@ For the MIST evolution module, the following filters are available:
 
 For MIST isochrone stellar property options, see `their documentation here <https://waps.cfa.harvard.edu/MIST/README_tables.pdf>`_
 
-**col_names**: columns names for output for the columns determined in **opt_iso_props**
-
 example::
 
     "PHOTOMETRIC_OUTPUTS":{
@@ -348,8 +346,7 @@ example::
         "eff_wavelengths": {"json_file":"AAA_effective_wavelengths.json"},
         "obsmag":true,
 
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
-        "col_names":["logL", "Teff", "logg" ,"Fe/H_evolved","log_radius"]
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"]
     },
 
 OUTPUT
