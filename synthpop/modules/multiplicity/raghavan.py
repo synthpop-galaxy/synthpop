@@ -99,6 +99,18 @@ class Raghavan(Multiplicity):
 
 		return logP
 
+	def draw_eccentricities(self, logP):
+		"""
+		Draw a random eccentricity based on period
+		"""
+		e_arr = np.zeros(len(logP))
+		not_circularized = (10**logP > 12)
+		n_draw = np.sum(not_circularized)
+		n_rand = np.random.rand(n_draw)
+		e_drawn = n_rand * 0.6/0.8 * (n_rand<=0.8) + (1-np.sqrt((1-n_rand)/0.2)*0.4)*(n_rand>0.8)
+		e_arr[not_circularized] = e_drawn
+		return e_arr
+
 	def generate_companions(self, pri_masses):
 		"""
 		Generates companion stars
@@ -128,5 +140,6 @@ class Raghavan(Multiplicity):
 		
 		# Draw periods for binary stars
 		periods = self.draw_periods(n_sec_stars)
+		eccentricities = self.draw_eccentricities(periods)
 					
-		return pri_id, sec_masses, periods
+		return pri_id, sec_masses, periods, eccentricities
