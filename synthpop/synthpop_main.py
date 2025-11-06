@@ -393,7 +393,7 @@ class SynthPop:
 
         # log output columns and statistics
         logger.info(f"included_columns = {list(field_df.columns)}")
-        sp_utils.log_basic_statistics(field_df, "stats_field")
+        #sp_utils.log_basic_statistics(field_df, "stats_field")
 
         return field_df, distributions
 

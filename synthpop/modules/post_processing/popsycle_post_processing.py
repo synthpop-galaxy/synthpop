@@ -36,6 +36,8 @@ class PopsyclePostProcessing(PostProcessing):
         for Galaxia, saving the file to the set file name + '.ebf' and returning
         the DataFrame with modified columns.
         """
+        print(f"Beginning PopSyCLE postprocessing.")
+
         self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg, self.model.solid_angle)}_psc"
         
         # Translate extinction to Ebv extinction

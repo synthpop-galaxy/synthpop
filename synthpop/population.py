@@ -903,7 +903,8 @@ class Population:
         logger.info(f'generated_stars = {len(population_df)}')
         if len(population_df) != 0:
 
-            logger.info(f'generated_total_iMass = {population_df["iMass"].sum():.4f}')
+            catalog_iMass = np.sum(population_df["iMass"].to_numpy())
+            logger.info(f'generated_total_iMass = {catalog_iMass:.4f}')
             gg = population_df.groupby(pandas.cut(population_df.Dist, radii), observed=False)
             if self.skip_lowmass_stars:
                 im_incl = (gg["iMass"].sum()
@@ -913,7 +914,8 @@ class Population:
 
                 logger.info(f'generated_total_iMass_incl_lowmass = {im_incl.sum():.4f}')
 
-            logger.info(f'generated_total_eMass = {population_df["Mass"].sum():.4f}')
+            catalog_eMass = np.sum(population_df["Mass"].to_numpy())
+            logger.info(f'generated_total_eMass = {catalog_eMass:.4f}')
             if self.skip_lowmass_stars:
                 em_incl = (gg["Mass"].sum()
                            + gg.size() * frac_lowmass[0] * frac_lowmass[1]
@@ -922,11 +924,11 @@ class Population:
                 logger.info(f'generated_total_eMass_incl_lowmass = {em_incl:.4f}')
 
             logger.info(f'det_mass_loss_corr = '
-                        f'{population_df["Mass"].sum() / population_df["iMass"].sum():.4f}')
+                        f'{catalog_eMass/catalog_iMass:.4f}')
             if self.skip_lowmass_stars:
                 logger.info(f'det_mass_loss_corr_incl_lowmass = {em_incl / im_incl}')
 
-            logger.debug(f'average_mass_per_star = {population_df["Mass"].mean():.4f}')
+            logger.debug(f'average_mass_per_star = {np.sum(population_df["Mass"].to_numpy()):.4f}')
             if self.skip_lowmass_stars:
                 mean_mass = em_incl * ((1 - frac_lowmass[1]) / gg.size()).sum()
                 logger.debug(f'average_mass_per_star_incl_lowmass = {mean_mass:.4f}')
