@@ -936,7 +936,7 @@ class Population:
         else:
             criteria = None
 
-        sp_utils.log_basic_statistics(population_df, f"stats_{self.name}", criteria)
+        #sp_utils.log_basic_statistics(population_df, f"stats_{self.name}", criteria)
         logger.log(25, '# Done')
         logger.flush()
 
