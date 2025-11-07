@@ -31,8 +31,8 @@ popsycle_nonmag_cols = ['glat', 'glon', 'rad',
                         'vr', 'mu_lcosb', 'mu_b', 
                         'vx', 'vy', 'vz', 
                         'zams_mass', 'mass', 'systemMass', 
-                        'mbol', 'grav', 'teff', 'feh',
-                        'exbv',
+                        'mbol', 'grav', 'teff', 'feh', 'age',
+                        'exbv', 'popid',
                         'isMultiple', 'N_companions', 'rem_id', 'obj_id'] 
 
 class PopsyclePostProcessing(PostProcessing):
@@ -80,10 +80,11 @@ class PopsyclePostProcessing(PostProcessing):
                                  'x': 'px', 'y': 'py', 'z': 'pz',
                                  'U': 'vx', 'V': 'vy', 'W': 'vz',
                                  'vr_bc': 'vr', 'mul': 'mu_lcosb', 'mub': 'mu_b',
-                                 'E(B-V)': 'exbv',
+                                 'E(B-V)': 'exbv', 'pop': 'popid',
                                  'b': 'glat', 'l': 'glon', 'Dist': 'rad',
                                  'log_g': 'grav', 'log_Teff': 'teff', '[Fe/H]': 'feh'}, 
                          inplace=True)
+        dataframe.loc[:,'age'] = np.log10(dataframe['age']*1e9)
 
         wrap_idx = dataframe[dataframe['glon'] > 180].index
         dataframe.loc[wrap_idx, 'glon'] -= 360
@@ -99,6 +100,7 @@ class PopsyclePostProcessing(PostProcessing):
         dataframe.loc[:, 'rem_id'] = (phases*(phases>100)).astype(int)
         dataframe.loc[:, 'obj_id'] = np.arange(0, len(dataframe))
 
+        print("PopSyCLE dataframe modifications complete - binning and saving file")
         _, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude, longitude, surveyArea, self.bin_edges_number)
         
         with h5py.File(f"{self.output_root}.h5", 'w') as h5file:
