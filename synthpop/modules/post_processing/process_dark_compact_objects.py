@@ -293,9 +293,10 @@ class ProcessDarkCompactObjects(PostProcessing):
         """
         Perform the post-processing and return the modified DataFrame.
         """
+        print(f"Beginning compact object postprocessing.")
 
         # Pick out which stars need processed
-        in_final_phase = np.array(dataframe['In_Final_Phase']).astype(bool)
+        #in_final_phase = np.array(dataframe['In_Final_Phase']).astype(bool)
         proc_stars = dataframe[dataframe['In_Final_Phase']==1].index
         # If we want to remove compact objects, do so and return
         if self.remove:
@@ -368,5 +369,7 @@ class ProcessDarkCompactObjects(PostProcessing):
         # Results into data frame
         dataframe.loc[proc_stars, 'Mass'] = m_compact
         dataframe.loc[proc_stars, 'phase'] = 100+m_type
+
+        print(f"Compact object postprocessing complete.")
             
         return dataframe

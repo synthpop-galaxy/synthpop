@@ -806,6 +806,8 @@ class Population:
         ti = time.time()  # start timer
         missing_stars = total_stars
         loop_counts = 0
+        catalog_iMass = 0.0
+        catalog_eMass = 0.0
         logger.debug("generate stellar properties")
         if self.lost_mass_option==3:
             all_m_initial = []
@@ -870,7 +872,14 @@ class Population:
             # add to previous drawn data
             if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) and (not self.glbl_params.lost_mass_option==3):
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
+                loop_iMass = df['iMass'].sum()
+                loop_eMass = df['Mass'].sum()
+            else:
+                loop_iMass = np.sum(m_initial)
+                loop_eMass = np.sum(m_evolved)
             df_list.append(df)
+            catalog_iMass += loop_iMass
+            catalog_eMass += loop_eMass
             loop_counts += 1
             if use_pbar:
                 pbar.update(np.sum(gen_stars_chunk))
@@ -889,6 +898,8 @@ class Population:
             r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
             population_df = self.remove_stars(population_df, r_inner, neg_missing_stars, radii)
             population_df.reset_index(drop=True,inplace=True)
+            catalog_iMass = population_df['iMass'].sum()
+            catalog_eMass = population_df['Mass'].sum()
 
         to = time.time()  # end timer
 
@@ -903,7 +914,6 @@ class Population:
         logger.info(f'generated_stars = {len(population_df)}')
         if len(population_df) != 0:
 
-            catalog_iMass = np.sum(population_df["iMass"].to_numpy())
             logger.info(f'generated_total_iMass = {catalog_iMass:.4f}')
             gg = population_df.groupby(pandas.cut(population_df.Dist, radii), observed=False)
             if self.skip_lowmass_stars:
@@ -914,7 +924,6 @@ class Population:
 
                 logger.info(f'generated_total_iMass_incl_lowmass = {im_incl.sum():.4f}')
 
-            catalog_eMass = np.sum(population_df["Mass"].to_numpy())
             logger.info(f'generated_total_eMass = {catalog_eMass:.4f}')
             if self.skip_lowmass_stars:
                 em_incl = (gg["Mass"].sum()

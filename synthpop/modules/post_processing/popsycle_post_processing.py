@@ -14,41 +14,54 @@ import h5py
 import os
 from popsycle.synthetic import _get_bin_edges, _bin_lb_hdf5
 
-filter_matching_mist = {"2MASS_J": 'ubv_J',
-                   "2MASS_H": 'ubv_H',
-                   "2MASS_Ks": 'ubv_K',
-                   "Bessell_U": 'ubv_U',
-                   "Bessell_I": 'ubv_I',
-                   "Bessell_B": 'ubv_B',
-                   "Bessell_V": 'ubv_V',
-                   "Bessell_R": 'ubv_R'
-                   }
+filter_set_dict = {'ubv': ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K']}
+
+filter_matching_mist = {'ubv_J': "2MASS_J",
+                        'ubv_H': "2MASS_H",
+                        'ubv_K': "2MASS_Ks",
+                        'ubv_U': "Bessell_U",
+                        'ubv_I': "Bessell_I",
+                        'ubv_B': "Bessell_B",
+                        'ubv_V': "Bessell_V",
+                        'ubv_R': "Bessell_R"
+                       }
+
+popsycle_nonmag_cols = ['glat', 'glon', 'rad',
+                        'px', 'py', 'pz', 
+                        'vr', 'mu_lcosb', 'mu_b', 
+                        'vx', 'vy', 'vz', 
+                        'zams_mass', 'mass', 'systemMass', 
+                        'mbol', 'grav', 'teff', 'feh',
+                        'exbv',
+                        'isMultiple', 'N_companions', 'rem_id', 'obj_id'] 
 
 class PopsyclePostProcessing(PostProcessing):
 
-    def __init__(self, model, logger, bin_edges_number=None, **kwargs):
+    def __init__(self, model, logger, bin_edges_number=None, filter_sets=['ubv'], **kwargs):
         super().__init__(model, logger, **kwargs)
         self.bin_edges_number = bin_edges_number
+        #self.filter_sets = filter_sets
+        self.mag_cols = []
+        for fset in filter_sets:
+            self.mag_cols += [fset+'_'+f for f in filter_set_dict[fset]]
 
     def do_post_processing(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """
         Converts DataFrame into format needed for input to PopSyCLE as a replacement
-        for Galaxia, saving the file to the set file name + '.ebf' and returning
-        the DataFrame with modified columns.
+        for Galaxia, saving the file to the set file name + '_psc.h5'.
         """
         print(f"Beginning PopSyCLE postprocessing.")
 
         self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg, self.model.solid_angle)}_psc"
         
         # Translate extinction to Ebv extinction
-        extinction = self.model.populations[0].extinction
-        extinction_type = self.model.populations[0].extinction.A_or_E_type
-        ext_in_map = dataframe[extinction_type].to_numpy()
-        Av = extinction.extinction_at_lambda(0.544579, ext_in_map)
-        Ab = extinction.extinction_at_lambda(0.438074, ext_in_map)
-        dataframe["E(B-V)"] = Ab - Av
-
-        star_dict = pd.DataFrame()
+        if not self.model.populations[0].extinction.A_or_E_type=="E(B-V)":
+            extinction = self.model.populations[0].extinction
+            extinction_type = self.model.populations[0].extinction.A_or_E_type
+            ext_in_map = dataframe[extinction_type].to_numpy()
+            Av = extinction.extinction_at_lambda(0.544579, ext_in_map)
+            Ab = extinction.extinction_at_lambda(0.438074, ext_in_map)
+            dataframe.loc[:,"E(B-V)"] = Ab - Av
         
         # create log (with same info as galaxia log)
         #dtype = [('latitude', 'f8'), ('longitude', 'f8'), ('surveyArea', 'f8')]
@@ -63,46 +76,36 @@ class PopsyclePostProcessing(PostProcessing):
         with open(self.output_root + '_synthpop_params.txt', 'w') as params_file:
             params_file.write(f"seed {self.model.parms.random_seed}\n")
 
-        star_dict['zams_mass'] = dataframe["iMass"]
-        star_dict['mass'] = dataframe["Mass"]
-        star_dict['systemMass'] = star_dict['mass']
-        star_dict['px'] = dataframe["x"]
-        star_dict['py'] = dataframe["y"]
-        star_dict['pz'] = dataframe["z"]
-        star_dict['vx'] = dataframe["U"]
-        star_dict['vy'] = dataframe["V"]
-        star_dict['vz'] = dataframe["W"]
-        star_dict['vr'] = dataframe['vr_bc']
-        star_dict['mu_lcosb'] = dataframe['mul']
-        star_dict['mu_b'] = dataframe['mub']
-        star_dict['exbv'] = dataframe["E(B-V)"]
-        star_dict['glat'] = dataframe["b"]
-        star_dict['glon'] = dataframe["l"]
-        wrap_idx = star_dict[star_dict['glon'] > 180].index
-        star_dict.loc[wrap_idx, 'glon'] -= 360
+        dataframe.rename(columns={'iMass': 'zams_mass','Mass': 'mass', 
+                                 'x': 'px', 'y': 'py', 'z': 'pz',
+                                 'U': 'vx', 'V': 'vy', 'W': 'vz',
+                                 'vr_bc': 'vr', 'mul': 'mu_lcosb', 'mub': 'mu_b',
+                                 'E(B-V)': 'exbv',
+                                 'b': 'glat', 'l': 'glon', 'Dist': 'rad',
+                                 'log_g': 'grav', 'log_Teff': 'teff', '[Fe/H]': 'feh'}, 
+                         inplace=True)
+
+        wrap_idx = dataframe[dataframe['glon'] > 180].index
+        dataframe.loc[wrap_idx, 'glon'] -= 360
+        dataframe.loc[:, 'mbol'] = -2.5 * dataframe["log_L"].to_numpy() + 4.75
+        dataframe.loc[:, 'systemMass'] = dataframe['mass']
+
+        dataframe.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
+                         inplace=True)
         
-        star_dict['mbol'] = -2.5 * dataframe["log_L"] + 4.75
-        star_dict['grav'] = dataframe["log_g"]
-        star_dict['teff'] = dataframe["log_Teff"]
-        star_dict['feh'] = dataframe["[Fe/H]"]
-        star_dict['rad'] = dataframe["Dist"]
-        for filter in self.model.parms.chosen_bands:
-            if filter in filter_matching_mist:
-                star_dict[filter_matching_mist[filter]] = dataframe[filter]
-        
-        star_dict['isMultiple'] = np.zeros(dataframe.shape[0], dtype=int)
-        star_dict['N_companions'] = np.zeros(dataframe.shape[0], dtype=int)
+        dataframe.loc[:, 'isMultiple'] = np.zeros(dataframe.shape[0], dtype=int)
+        dataframe.loc[:, 'N_companions'] = np.zeros(dataframe.shape[0], dtype=int)
         phases = np.nan_to_num(dataframe['phase'].to_numpy())
-        star_dict['rem_id'] = (phases*(phases>100)).astype(int)
-        star_dict['obj_id'] = np.arange(0, len(star_dict))
+        dataframe.loc[:, 'rem_id'] = (phases*(phases>100)).astype(int)
+        dataframe.loc[:, 'obj_id'] = np.arange(0, len(dataframe))
 
         _, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude, longitude, surveyArea, self.bin_edges_number)
         
-        h5file = h5py.File(f"{self.output_root}.h5", 'w')
-        h5file['lat_bin_edges'] = lat_bin_edges
-        h5file['long_bin_edges'] = long_bin_edges
+        with h5py.File(f"{self.output_root}.h5", 'w') as h5file:
+            h5file['lat_bin_edges'] = lat_bin_edges
+            h5file['long_bin_edges'] = long_bin_edges
         
-        _bin_lb_hdf5(lat_bin_edges, long_bin_edges, star_dict, self.output_root)
+        _bin_lb_hdf5(lat_bin_edges, long_bin_edges, dataframe[popsycle_nonmag_cols+self.mag_cols], self.output_root)
         print(f"PopSyCLE formatted output saved in {self.output_root}.h5")
     
         return dataframe
