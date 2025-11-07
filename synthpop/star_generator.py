@@ -142,43 +142,58 @@ class StarGenerator:
         met = self.met_module.draw_random_metallicity(
             N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=age)
 
-        pri_ids, m_initial_companions, periods = self.mult_module.generate_companions(m_initial)
+        if self.mult_module is not None:
+            pri_ids, m_initial_companions, periods, eccentricities = \
+                        self.mult_module.generate_companions(m_initial)
 
-        if len(pri_ids>0):
-            init_ids = np.arange(n_stars)
-            init_ids_stacked = np.insert(init_ids, pri_ids+1, pri_ids)
-            is_binary_init = np.isin(init_ids, pri_ids).astype(int)
-            m_initial = np.insert(m_initial, pri_ids+1, m_initial_companions)
-            age = age[init_ids_stacked]
-            met = met[init_ids_stacked]
-            all_ids = np.arange(len(m_initial))
-            is_binary = np.insert(is_binary_init, pri_ids+1, 2)
-            pri_ids_new = all_ids[is_binary<2]
-            pri_id_stacked = np.insert(pri_ids_new, pri_ids+1, pri_ids_new[pri_ids])
-            logP_stacked = np.repeat(np.nan, len(pri_id_stacked))
-            logP_stacked[is_binary>1] = periods
+            if len(pri_ids>0):
+                init_ids = np.arange(n_stars)
+                init_ids_stacked = np.insert(init_ids, pri_ids+1, pri_ids)
+                is_binary_init = np.isin(init_ids, pri_ids).astype(int)
+                m_initial = np.insert(m_initial, pri_ids+1, m_initial_companions)
+                age = age[init_ids_stacked]
+                met = met[init_ids_stacked]
+                all_ids = np.arange(len(m_initial))
+                is_binary = np.insert(is_binary_init, pri_ids+1, 2)
+                pri_ids_new = all_ids[is_binary<2]
+                pri_id_stacked = np.insert(pri_ids_new, pri_ids+1, pri_ids_new[pri_ids])
+                logP_stacked = np.repeat(np.nan, len(pri_id_stacked))
+                logP_stacked[is_binary>1] = periods
+                ecc_stacked = np.repeat(np.nan, len(pri_id_stacked))
+                ecc_stacked[is_binary>1] = eccentricities
+            else:
+                all_ids = np.arange(n_stars)
+                init_ids_stacked = all_ids
+                is_binary = np.zeros(n_stars)
+                pri_id_stacked = all_ids
+                logP_stacked = np.repeat(np.nan, n_stars)
+                ecc_stacked = np.repeat(np.nan, n_stars)
         else:
-            all_ids = np.arange(n_stars)
-            init_ids_stacked = all_ids
-            is_binary = np.zeros(n_stars)
-            pri_id_stacked = all_ids
-            logP_stacked = np.repeat(np.nan, n_stars)
+            init_ids_stacked = np.arange(len(m_initial))
 
         ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = self.get_evolved_props(
             m_initial, met, age, props)
 
-        ref_mag, s_props, inside_grid = self.apply_ifmr(m_initial, met,
-            ref_mag, s_props, final_phase_flag, inside_grid)
+        if self.ifmr_module is not None:
+            ref_mag, s_props, inside_grid = self.apply_ifmr(m_initial, met,
+                ref_mag, s_props, final_phase_flag, inside_grid)
 
-        star_dict = {"iMass": m_initial, "age": age, "Fe/H_initial":met,
-                          "In_Final_Phase": final_phase_flag, "inside_grid": inside_grid,
-                          "not_evolved": not_evolved, "Is_Binary":is_binary,
-                          "ID": all_ids, "primary_ID": pri_id_stacked,
-                          "ref_mag": ref_mag, 'Mass': s_props['star_mass'],
-                          "logP": logP_stacked}
+        if self.mult_module is not None:
+            star_dict = {"iMass": m_initial, "age": age, "Fe/H_initial":met,
+                              "In_Final_Phase": final_phase_flag, "inside_grid": inside_grid,
+                              "not_evolved": not_evolved, "Is_Binary":is_binary,
+                              "ID": all_ids, "primary_ID": pri_id_stacked,
+                              "ref_mag": ref_mag,
+                              "logP": logP_stacked, "eccentricity": ecc_stacked,
+                              "Mass": s_props['star_mass']}
+        else:
+            star_dict = {"iMass": m_initial, "age": age, "Fe/H_initial":met,
+                              "In_Final_Phase": final_phase_flag, "inside_grid": inside_grid,
+                              "not_evolved": not_evolved, "ref_mag": ref_mag,
+                              "Mass": s_props['star_mass']}
+                              
         star_dict.update(s_props)
         stars = pandas.DataFrame.from_dict(star_dict)
-
         #pdb.set_trace()
 
         return stars, init_ids_stacked

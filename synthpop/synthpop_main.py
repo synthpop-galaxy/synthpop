@@ -375,7 +375,7 @@ class SynthPop:
                 "%s : Number of stars generated: %i (%i columns)",
                 population.name, *population_df.shape)
 
-            if len(population_df)>0:
+            if (len(population_df)>0) and (self.parms.multiplicity_kwargs is not None):
                 population_df.loc[:,'ID'] = population_df['ID'].to_numpy() + max_star_id + 1
                 population_df.loc[:,'primary_ID'] = population_df['primary_ID'].to_numpy() + max_star_id + 1
                 max_star_id = int(np.max(population_df['ID']))
@@ -396,12 +396,15 @@ class SynthPop:
         # check if faint stars and stars outside the grid should be kept or removed
         if self.parms.maglim[-1] != 'keep':
             logger.info('remove stars which are too faint ')
-            #field_df = field_df[field_df[self.parms.maglim[0]] < self.parms.maglim[1]]
-            dim_primaries_ID = field_df['ID'][((field_df[self.parms.maglim[0]]>self.parms.maglim[1])
-                                        | np.isnan(field_df[self.parms.maglim[0]])) & (field_df['Is_Binary']<1)]
-            drop_stars = (np.isin(field_df['ID'], dim_primaries_ID) | np.isin(field_df['primary_ID'], dim_primaries_ID))
-                #pdb.set_trace()
-            field_df.drop(index=field_df.index[drop_stars], inplace=True)
+            if self.parms.multiplicity_kwargs is not None:
+                dim_primaries_ID = field_df['ID'][((field_df[self.parms.maglim[0]]>self.parms.maglim[1])
+                                            | np.isnan(field_df[self.parms.maglim[0]])) & (field_df['Is_Binary']<1)]
+                drop_stars = (np.isin(field_df['ID'], dim_primaries_ID) | np.isin(field_df['primary_ID'], dim_primaries_ID))
+                    #pdb.set_trace()
+                field_df.drop(index=field_df.index[drop_stars], inplace=True)
+            else:
+                field_df = field_df[field_df[self.parms.maglim[0]] < self.parms.maglim[1]]
+
             logger.info('cleaned field: Number of stars generated: %i (%i columns)', *field_df.shape)
             
         # reset object ids

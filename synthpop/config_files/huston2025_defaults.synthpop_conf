@@ -64,7 +64,7 @@
     "ISOCHRONE_INTERPOLATION":{
         "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
         "ifmr_kwargs": {"name": "PopsycleIfmrs", "ifmr_name":"SukhboldN20"},
-        "multiplicity_kwargs": {"name": "NoMultiplicity"}
+        "multiplicity_kwargs": null
         },
 
     "PHOTOMETRIC_OUTPUTS":{

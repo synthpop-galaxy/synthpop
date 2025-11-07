@@ -38,7 +38,7 @@ class DeriveBinaryParameters(PostProcessing):
         dataframe.loc[:,"system_logL"] = dataframe['log_L']
         for i in dataframe[dataframe['Is_Binary']>0].index:
             dataframe.loc[i, "system_mass"] = np.sum(dataframe['Mass'][in_system[i][0]])
-            dataframe.loc[i, "system_logL"] = np.log10(np.sum(10**dataframe['log_L'][in_system[i][0]]))
+            dataframe.loc[i, "system_logL"] = np.log10(np.nansum(10**dataframe['log_L'][in_system[i][0]]))
             if dataframe['Is_Binary'][i]>1:
                 dataframe.loc[i, "q"] = dataframe['Mass'][i]/dataframe['Mass'][
                                             dataframe['primary_ID'][i]]

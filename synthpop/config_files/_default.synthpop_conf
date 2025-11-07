@@ -128,8 +128,8 @@
                         {"name":"MIST", "interpolator":"LagrangeInterpolator" , "#comment" : "a different interpolator for 'population_name'" }
             ]
         },
-        "ifmr_kwargs": {"name": "NoIfmr"},
-        "multiplicity_kwargs": {"name": "NoMultiplicity"}
+        "ifmr_kwargs": null,
+        "multiplicity_kwargs": null
     },
 
     "PHOTOMETRIC_OUTPUTS":{

@@ -913,13 +913,15 @@ class Population:
             # add to previous drawn data
             if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) \
                                 and (not self.glbl_params.lost_mass_option==3):
-                #df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
-                dim_primaries_ID = df['ID'][((df[self.glbl_params.maglim[0]]>self.glbl_params.maglim[1]) | np.isnan(df[self.glbl_params.maglim[0]])) & (df['Is_Binary']<2)]
-                drop_stars = (np.isin(df['ID'], dim_primaries_ID) | np.isin(df['primary_ID'], dim_primaries_ID))
+                if self.mult is not None:
+                    dim_primaries_ID = df['ID'][((df[self.glbl_params.maglim[0]]>self.glbl_params.maglim[1]) | np.isnan(df[self.glbl_params.maglim[0]])) & (df['Is_Binary']<2)]
+                    drop_stars = (np.isin(df['ID'], dim_primaries_ID) | np.isin(df['primary_ID'], dim_primaries_ID))
+                    df.drop(index=df.index[drop_stars], inplace=True)
+                else:
+                    df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
                 #pdb.set_trace()
-                df.drop(index=df.index[drop_stars], inplace=True)
                 #print(df)
-            if len(df)>0:
+            if (len(df)>0) and (self.mult is not None):
                 df.loc[:,'ID'] = df['ID'] + current_max_id + 1
                 df.loc[:,'primary_ID'] = df['primary_ID'] + current_max_id + 1
                 current_max_id = int(np.max(df['ID']))

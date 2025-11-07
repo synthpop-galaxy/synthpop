@@ -164,8 +164,10 @@ class Parameters:
             self.evolution_class = ModuleKwargs.parse_obj(self.evolution_class)
 
         self.extinction_map_kwargs = ModuleKwargs.parse_obj(self.extinction_map_kwargs)
-        self.ifmr_kwargs = ModuleKwargs.parse_obj(self.ifmr_kwargs)
-        self.multiplicity_kwargs = ModuleKwargs.parse_obj(self.multiplicity_kwargs)
+        if self.ifmr_kwargs is not None:
+            self.ifmr_kwargs = ModuleKwargs.parse_obj(self.ifmr_kwargs)
+        if self.multiplicity_kwargs is not None:
+            self.multiplicity_kwargs = ModuleKwargs.parse_obj(self.multiplicity_kwargs)
 
         if isinstance(self.extinction_law_kwargs, list):
             self.extinction_law_kwargs = [

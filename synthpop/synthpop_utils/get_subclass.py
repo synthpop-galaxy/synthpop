@@ -71,6 +71,10 @@ class SubClassLoader:
         # get subclass_name, filename and not_a_sub_class  from kwargs
         # if isinstance(modul_kwargs, dict):
         #     modul_kwargs = ModuleKwargs.parse_obj(modul_kwargs)
+        if (modul_kwargs is None) and (ParentClass.__name__ in
+                    ['InitialFinalMassRelation','Multiplicity']):
+            logger.debug('setting %s class to None', ParentClass.__name__)
+            return None
         kwargs = modul_kwargs.init_kwargs
         subclass_name = modul_kwargs.name
         filename = modul_kwargs.filename
