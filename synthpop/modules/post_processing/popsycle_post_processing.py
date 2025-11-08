@@ -16,15 +16,25 @@ from popsycle.synthetic import _get_bin_edges, _bin_lb_hdf5
 
 filter_set_dict = {'ubv': ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K']}
 
-filter_matching_mist = {'ubv_J': "2MASS_J",
-                        'ubv_H': "2MASS_H",
-                        'ubv_K': "2MASS_Ks",
+filter_matching_mist = {'ubv_J': "UKIDSS_J",
+                        'ubv_H': "UKIDSS_H",
+                        'ubv_K': "UKIDSS_K",
                         'ubv_U': "Bessell_U",
                         'ubv_I': "Bessell_I",
                         'ubv_B': "Bessell_B",
                         'ubv_V': "Bessell_V",
                         'ubv_R': "Bessell_R"
                        }
+
+synthpop_nonmag_cols = ['l', 'b', 'Dist',
+                        'x', 'y', 'z',
+                        'vr_bc', 'mul','mub',
+                        'U', 'V', 'W',
+                        'iMass','Mass',
+                        'log_L', 'log_g', 'log_Teff', '[Fe/H]', 'age',
+                        'pop', 'phase'
+                        ]
+synthpop_nonmag_bin_cols = []
 
 popsycle_nonmag_cols = ['glat', 'glon', 'rad',
                         'px', 'py', 'pz', 
@@ -42,8 +52,10 @@ class PopsyclePostProcessing(PostProcessing):
         self.bin_edges_number = bin_edges_number
         #self.filter_sets = filter_sets
         self.mag_cols = []
+        self.synthpop_mag_cols = []
         for fset in filter_sets:
             self.mag_cols += [fset+'_'+f for f in filter_set_dict[fset]]
+            self.synthpop_mag_cols += [filter_matching_mist[fset+'_'+f] for f in filter_set_dict[fset]]
 
     def do_post_processing(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         """
@@ -51,6 +63,14 @@ class PopsyclePostProcessing(PostProcessing):
         for Galaxia, saving the file to the set file name + '_psc.h5'.
         """
         print(f"Beginning PopSyCLE postprocessing.")
+
+        # Drop unused data
+        cols_to_cut = []
+        for col in dataframe.keys():
+            if col not in (synthpop_nonmag_cols+self.synthpop_mag_cols+synthpop_nonmag_bin_cols+
+                            [self.model.populations[0].extinction.A_or_E_type]):
+                cols_to_cut.append(col)
+        dataframe.drop(columns=cols_to_cut, inplace=True)
 
         self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg, self.model.solid_angle)}_psc"
         
@@ -62,6 +82,7 @@ class PopsyclePostProcessing(PostProcessing):
             Av = extinction.extinction_at_lambda(0.544579, ext_in_map)
             Ab = extinction.extinction_at_lambda(0.438074, ext_in_map)
             dataframe.loc[:,"E(B-V)"] = Ab - Av
+            dataframe.drop(columns=[extinction_type], inplace=True)
         
         # create log (with same info as galaxia log)
         #dtype = [('latitude', 'f8'), ('longitude', 'f8'), ('surveyArea', 'f8')]
