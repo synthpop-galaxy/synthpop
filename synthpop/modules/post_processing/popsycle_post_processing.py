@@ -62,7 +62,7 @@ class PopsyclePostProcessing(PostProcessing):
         Converts DataFrame into format needed for input to PopSyCLE as a replacement
         for Galaxia, saving the file to the set file name + '_psc.h5'.
         """
-        print(f"Beginning PopSyCLE postprocessing.")
+        self.logger.info(f"Beginning PopSyCLE postprocessing.")
 
         # Drop unused data
         cols_to_cut = []
@@ -71,6 +71,7 @@ class PopsyclePostProcessing(PostProcessing):
                             [self.model.populations[0].extinction.A_or_E_type]):
                 cols_to_cut.append(col)
         dataframe.drop(columns=cols_to_cut, inplace=True)
+        self.logger.info("Unused columns dropped")
 
         self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg, self.model.solid_angle)}_psc"
         
@@ -78,11 +79,15 @@ class PopsyclePostProcessing(PostProcessing):
         if not self.model.populations[0].extinction.A_or_E_type=="E(B-V)":
             extinction = self.model.populations[0].extinction
             extinction_type = self.model.populations[0].extinction.A_or_E_type
-            ext_in_map = dataframe[extinction_type].to_numpy()
-            Av = extinction.extinction_at_lambda(0.544579, ext_in_map)
-            Ab = extinction.extinction_at_lambda(0.438074, ext_in_map)
-            dataframe.loc[:,"E(B-V)"] = Ab - Av
-            dataframe.drop(columns=[extinction_type], inplace=True)
+            dataframe.rename(columns={extinction_type:'ext_orig'}, inplace=True)
+            #ext_in_map = dataframe[extinction_type].to_numpy()
+            Av_Aref = extinction.extinction_at_lambda(0.544579, 1.0)
+            Ab_Aref = extinction.extinction_at_lambda(0.438074, 1.0)
+            pd.eval("exbv = (Ab_Aref - Av_Aref)*dataframe.ext_orig", target=dataframe, inplace=True)
+            dataframe.drop(columns=['ext_orig'], inplace=True)
+            self.logger.info("E(B-V) calculated")
+        else:
+            dataframe.rename(columns={"E(B-V)":'exbv'}, inplace=True)
         
         # create log (with same info as galaxia log)
         #dtype = [('latitude', 'f8'), ('longitude', 'f8'), ('surveyArea', 'f8')]
@@ -96,32 +101,47 @@ class PopsyclePostProcessing(PostProcessing):
         os.makedirs('/'.join(self.output_root.split('/')[:-1]), exist_ok=True)
         with open(self.output_root + '_synthpop_params.txt', 'w') as params_file:
             params_file.write(f"seed {self.model.parms.random_seed}\n")
+        self.logger.info("Parameter file written")
 
         dataframe.rename(columns={'iMass': 'zams_mass','Mass': 'mass', 
                                  'x': 'px', 'y': 'py', 'z': 'pz',
                                  'U': 'vx', 'V': 'vy', 'W': 'vz',
                                  'vr_bc': 'vr', 'mul': 'mu_lcosb', 'mub': 'mu_b',
-                                 'E(B-V)': 'exbv', 'pop': 'popid',
+                                 'pop': 'popid',
                                  'b': 'glat', 'l': 'glon', 'Dist': 'rad',
                                  'log_g': 'grav', 'log_Teff': 'teff', '[Fe/H]': 'feh'}, 
                          inplace=True)
-        dataframe.loc[:,'age'] = np.log10(dataframe['age']*1e9)
+        self.logger.info("Basic columns renamed")
+        pd.eval('age = log10(dataframe.age*1e9)', target=dataframe, inplace=True)
+        #dataframe.loc[:,'age'] = np.log10(dataframe['age']*1e9)
+        self.logger.info("Age units converted")
 
-        wrap_idx = dataframe[dataframe['glon'] > 180].index
-        dataframe.loc[wrap_idx, 'glon'] -= 360
-        dataframe.loc[:, 'mbol'] = -2.5 * dataframe["log_L"].to_numpy() + 4.75
-        dataframe.loc[:, 'systemMass'] = dataframe['mass']
+        #wrap_idx = dataframe[dataframe['glon'] > 180].index
+        #dataframe.loc[wrap_idx, 'glon'] -= 360
+        pd.eval('glon = dataframe.glon - (dataframe.glon>180)*360', target=dataframe, inplace=True)
+        self.logger.info("Galactic longitude wrapped")
+        pd.eval("mbol = -2.5 * dataframe.log_L + 4.75", target=dataframe, inplace=True)
+        self.logger.info("Added mbol via eval")
+        # dataframe.loc[:, 'mbol2'] = -2.5 * dataframe["log_L"].to_numpy() + 4.75
+        # self.logger.info("Added mbol2 via loc")
+        # dataframe.loc[:, 'systemMass2'] = dataframe['mass']
+        # self.logger.info("Added systemMass2 via loc insertion")
+        pd.eval("systemMass = dataframe.mass", target=dataframe, inplace=True)
+        self.logger.info("Added systemMass via eval")
+
 
         dataframe.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
                          inplace=True)
+        self.logger.info("Renamed mag cols")
         
         dataframe.loc[:, 'isMultiple'] = np.zeros(dataframe.shape[0], dtype=int)
         dataframe.loc[:, 'N_companions'] = np.zeros(dataframe.shape[0], dtype=int)
         phases = np.nan_to_num(dataframe['phase'].to_numpy())
         dataframe.loc[:, 'rem_id'] = (phases*(phases>100)).astype(int)
         dataframe.loc[:, 'obj_id'] = np.arange(0, len(dataframe))
+        self.logger.info("Multiplicity and remnant columns added")
 
-        print("PopSyCLE dataframe modifications complete - binning and saving file")
+        self.logger.info("PopSyCLE dataframe modifications complete - binning and saving file")
         _, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude, longitude, surveyArea, self.bin_edges_number)
         
         with h5py.File(f"{self.output_root}.h5", 'w') as h5file:
@@ -129,6 +149,6 @@ class PopsyclePostProcessing(PostProcessing):
             h5file['long_bin_edges'] = long_bin_edges
         
         _bin_lb_hdf5(lat_bin_edges, long_bin_edges, dataframe[popsycle_nonmag_cols+self.mag_cols], self.output_root)
-        print(f"PopSyCLE formatted output saved in {self.output_root}.h5")
+        self.logger.info(f"PopSyCLE formatted output saved in {self.output_root}.h5")
     
         return dataframe
