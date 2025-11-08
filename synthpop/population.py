@@ -909,14 +909,16 @@ class Population:
             #     position[:, 3:6], proper_motions, position[:, 0:3], velocities,
             #     vr_lsr, extinction_in_map, props, user_props, mags, headers
             #     )
+            if self.mult is not None:
+                comb_mags = df.groupby('primary_ID')[self.glbl_params.maglim[0]].apply(lambda m: 
+                                -2.5*np.log10(np.sum(10**(-0.4*np.nan_to_num(m, nan=99))))*np.nan**np.all(np.isnan(m)))
+                df.loc[:, 'system_'+self.glbl_params.maglim[0]] = comb_mags[df['primary_ID'].to_numpy()].to_numpy()
 
             # add to previous drawn data
             if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) \
                                 and (not self.glbl_params.lost_mass_option==3):
                 if self.mult is not None:
-                    dim_primaries_ID = df['ID'][((df[self.glbl_params.maglim[0]]>self.glbl_params.maglim[1]) | np.isnan(df[self.glbl_params.maglim[0]])) & (df['Is_Binary']<2)]
-                    drop_stars = (np.isin(df['ID'], dim_primaries_ID) | np.isin(df['primary_ID'], dim_primaries_ID))
-                    df.drop(index=df.index[drop_stars], inplace=True)
+                    df = df[df['system_'+self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
                 else:
                     df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
                 #pdb.set_trace()

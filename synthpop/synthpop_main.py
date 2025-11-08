@@ -397,11 +397,7 @@ class SynthPop:
         if self.parms.maglim[-1] != 'keep':
             logger.info('remove stars which are too faint ')
             if self.parms.multiplicity_kwargs is not None:
-                dim_primaries_ID = field_df['ID'][((field_df[self.parms.maglim[0]]>self.parms.maglim[1])
-                                            | np.isnan(field_df[self.parms.maglim[0]])) & (field_df['Is_Binary']<1)]
-                drop_stars = (np.isin(field_df['ID'], dim_primaries_ID) | np.isin(field_df['primary_ID'], dim_primaries_ID))
-                    #pdb.set_trace()
-                field_df.drop(index=field_df.index[drop_stars], inplace=True)
+                field_df = field_df[field_df['system_'+self.parms.maglim[0]] < self.parms.maglim[1]]
             else:
                 field_df = field_df[field_df[self.parms.maglim[0]] < self.parms.maglim[1]]
 
