@@ -909,7 +909,7 @@ class Population:
             #     position[:, 3:6], proper_motions, position[:, 0:3], velocities,
             #     vr_lsr, extinction_in_map, props, user_props, mags, headers
             #     )
-            if self.mult is not None:
+            if (self.mult is not None) and ('system_'+self.glbl_params.maglim[0] not in df.keys()):
                 comb_mags = df.groupby('primary_ID')[self.glbl_params.maglim[0]].apply(lambda m: 
                                 -2.5*np.log10(np.sum(10**(-0.4*np.nan_to_num(m, nan=99))))*np.nan**np.all(np.isnan(m)))
                 df.loc[:, 'system_'+self.glbl_params.maglim[0]] = comb_mags[df['primary_ID'].to_numpy()].to_numpy()

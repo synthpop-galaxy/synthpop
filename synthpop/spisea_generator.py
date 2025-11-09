@@ -181,9 +181,7 @@ class SpiseaGenerator(StarGenerator):
             velocities = np.column_stack([u, v, w, ])
 
         # generate star at the positions
-        return position, r_inner, proper_motions, velocities, vr_lsr, \
-            self.generate_star_at_location(
-            position[:, 0:3], props, min_mass, self.max_mass, avg_mass_per_star=avg_mass_per_star)
+        return stars
 
     def generate_star_at_location(self, position, props, min_mass=None, max_mass=None, avg_mass_per_star=None):
         """
@@ -241,6 +239,7 @@ class SpiseaGenerator(StarGenerator):
         for bin2d in bins2d:
             # Use a minimum mass per cluster so we don't get an error
             clusters = []
+            companions = []
             n_bin = int(bin2d[-1])
             print("Starting SPISEA cluster generation for bin log_age="+str(round(bin2d[0],2))+" [M/H]="+str(bin2d[1])+" for "+str(n_bin)+" stars")
             cluster_stars_needed = n_bin
@@ -257,11 +256,19 @@ class SpiseaGenerator(StarGenerator):
                 cluster=spisea_synthetic.ResolvedCluster(isochrone, self.spisea_imf, generate_mass, ifmr=self.spisea_ifmr,
                                                             keep_low_mass_stars=True)
                 star_systems = cluster.star_systems.to_pandas()
-                star_systems = star_systems[(star_systems['mass']>min_mass) & (star_systems['mass']<max_mass)]
+                keep_idx = ((star_systems['mass']>min_mass) & (star_systems['mass']<max_mass))
+                star_systems = star_systems[keep_idx]
                 clusters.append(star_systems)
-                assert (not hasattr(clusters[-1], 'companions')), "Error: Companions not yet implemented."
+                n_companions = 0
+                if self.mult_module is not None:
+                    n_companions = len(cluster.companions)
+                    companions.append(cluster.companions.to_pandas())
+                #assert (not hasattr(clusters[-1], 'companions')), "Error: Companions not yet implemented."
                 cluster_stars_needed -= len(star_systems)
+                cluster_stars_needed -= n_companions
+
             cluster_comb = pd.concat(clusters, ignore_index=True)
+            comps_comb = pd.concat()
             # Drop any excess stars
             if cluster_stars_needed<0:
                 drop_idx = np.random.choice(cluster_comb.index.to_numpy(), size=-cluster_stars_needed, replace=False)
@@ -281,5 +288,5 @@ class SpiseaGenerator(StarGenerator):
             stars_done += n_bin
 
         ref_mag = s_props[self.ref_band]
-        return m_initial, age, met, ref_mag, s_props, final_phase_flag, inside_grid, not_evolved
+        return stars, init_ids_stacked
 
