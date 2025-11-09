@@ -1137,7 +1137,7 @@ class Population:
 
         inside_grid = df['inside_grid'].to_numpy()
         not_evolved = df['not_evolved'].to_numpy()
-        ref_mag = df['ref_mag'].to_numpy()
+        #ref_mag = df['ref_mag'].to_numpy()
 
         #mags = np.full((len(ref_mag), len(self.bands)), 9999.)
         mags = df[self.bands].to_numpy()
@@ -1151,7 +1151,7 @@ class Population:
         #     mags[:, i] = df[band]
 
         if self.glbl_params.obsmag:
-            ref_mag[inside_grid] += dist_module[inside_grid]
+            #ref_mag[inside_grid] += dist_module[inside_grid]
             mags[inside_grid] += dist_module[inside_grid, np.newaxis]
 
         extinction_in_map, extinction_dict = self.extinction.get_extinctions(
@@ -1161,9 +1161,14 @@ class Population:
 
         if self.glbl_params.obsmag:
             ext_mag = extinction_dict.get(self.glbl_params.maglim[0], 0)
-            ref_mag[:] += ext_mag
+            #ref_mag[:] += ext_mag
             for i, band in enumerate(self.bands):
-                mags[:, i] += extinction_dict.get(band, 0)
+                mags[:, i] += extinction_dict.get(band, 0)   
+
+            if 'system_'+self.glbl_params.maglim[0] in df:
+                #sys_mags = df['system_'+self.glbl_params.maglim[0]].to_numpy()
+                #sys_mags += dist_module + ext_mag
+                df.loc[:,'system_'+self.glbl_params.maglim[0]] += dist_module + ext_mag
 
         #mag_le_limit = ref_mag < self.glbl_params.maglim[1]
 
@@ -1174,7 +1179,7 @@ class Population:
         for i,band in enumerate(self.bands):
             df.loc[:,band] = mags[:,i]
         df.loc[:,self.extinction.A_or_E_type] = extinction_in_map
-        df.loc[:,'ref_mag'] = ref_mag
+        #df.loc[:,'ref_mag'] = ref_mag
         #pdb.set_trace()
 
         return df
