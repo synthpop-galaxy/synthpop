@@ -265,7 +265,6 @@ class SpiseaGenerator(StarGenerator):
                     companions.append(cluster.companions.to_pandas())
                 #assert (not hasattr(clusters[-1], 'companions')), "Error: Companions not yet implemented."
                 cluster_stars_needed -= len(star_systems)
-                cluster_stars_needed -= n_companions
 
             cluster_comb = pd.concat(clusters, ignore_index=True)
             comps_comb = pd.concat()
@@ -275,18 +274,18 @@ class SpiseaGenerator(StarGenerator):
                 cluster_comb.drop(index=drop_idx, inplace=True)
             # Get data from SPISEA cluster into SynthPop's formats
             #print(stars_done,stars_done+n_bin,len(cluster_comb), cluster_stars_needed, drop_idx)
-            m_initial[stars_done:stars_done+n_bin] = cluster_comb['mass'].to_numpy()
-            age[stars_done:stars_done+n_bin] = 10**bin2d[0] / 1e9
-            met[stars_done:stars_done+n_bin] = self.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
-            not_evolved[stars_done:stars_done+n_bin] = np.isnan(cluster_comb['L']) * (cluster_comb['phase'].to_numpy()<100)
-            conv_props = self.spisea_props_to_synthpop(props, cluster_comb)
-            for prop in props:
-                s_props[prop][stars_done:stars_done+n_bin] = conv_props[prop]
-            final_phase_flag[stars_done:stars_done+n_bin] = (np.isnan(cluster_comb.L.to_numpy()) & (cluster_comb.phase.to_numpy()>100.0))
+            # m_initial[stars_done:stars_done+n_bin] = cluster_comb['mass'].to_numpy()
+            # age[stars_done:stars_done+n_bin] = 10**bin2d[0] / 1e9
+            # met[stars_done:stars_done+n_bin] = self.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
+            # not_evolved[stars_done:stars_done+n_bin] = np.isnan(cluster_comb['L']) * (cluster_comb['phase'].to_numpy()<100)
+            # conv_props = self.spisea_props_to_synthpop(props, cluster_comb)
+            # for prop in props:
+            #     s_props[prop][stars_done:stars_done+n_bin] = conv_props[prop]
+            # final_phase_flag[stars_done:stars_done+n_bin] = (np.isnan(cluster_comb.L.to_numpy()) & (cluster_comb.phase.to_numpy()>100.0))
 
             # Bin complete
             stars_done += n_bin
 
         ref_mag = s_props[self.ref_band]
-        return stars, init_ids_stacked
+        return stars, companions
 
