@@ -72,12 +72,13 @@
         "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "2MASS_J", "2MASS_H", "2MASS_Ks"],
         "obsmag":true,
 
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"],
-        "col_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius","phase"]
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"]
     },
     
     "OUTPUT":{
-        "post_processing_kwargs": [{"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}}],
+        "post_processing_kwargs": [{"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}},
+                                   {"name":"RenameColumns", "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
+                                                            "new_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius"]}],
     
         "output_location":"outputfiles/default",
         "output_filename_pattern": "{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}",

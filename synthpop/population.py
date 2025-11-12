@@ -764,7 +764,7 @@ class Population:
 
         # collect all the column names
         # required_properties + optional_properties + magnitudes
-        headers = const.COL_NAMES + self.glbl_params.col_names + self.bands
+        headers = const.COL_NAMES + self.glbl_params.opt_iso_props + self.bands
         # replace "ExtinctionInMap" with the output of the extinction map
         if 'ExtinctionInMap' in headers:
             extinction_index = headers.index("ExtinctionInMap")
@@ -998,7 +998,7 @@ class Population:
         else:
             criteria = None
 
-        sp_utils.log_basic_statistics(population_df, f"stats_{self.name}", criteria)
+        #sp_utils.log_basic_statistics(population_df, f"stats_{self.name}", criteria)
         logger.log(25, '# Done')
         logger.flush()
 
@@ -1119,17 +1119,7 @@ class Population:
         vr, mu_l, mu_b = self.coord_trans.uvw_to_vrmulb(star_l_deg, star_b_deg, dist, u, v, w)
 
         # correct for motion of the sun
-        # following Beaulieu et al. (2000)
-        vr_lsr = (
-            vr
-            + self.sun.v_lsr * np.sin(star_l_deg * np.pi / 180)
-            * np.sin(star_b_deg * np.pi / 180)
-            + self.sun.v_pec * (
-                np.sin(star_b_deg * np.pi / 180) * np.sin(self.sun.b_apex_deg * np.pi / 180)
-                + np.cos(star_b_deg * np.pi / 180) * np.cos(self.sun.b_apex_deg * np.pi / 180)
-                * np.cos(star_l_deg * np.pi / 180 - self.sun.l_apex_deg * np.pi / 180)
-                )
-            )
+        vr_lsr = self.coord_trans.vr_bc_to_vr_lsr(star_l_deg, star_b_deg, vr)
 
         return u, v, w, vr, mu_l, mu_b, vr_lsr
 
