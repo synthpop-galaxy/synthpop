@@ -77,7 +77,6 @@ class Population:
     name : string
     l_deg : float
     b_deg : float
-    solid_angle : float
     popid : int
     params : dict
 
@@ -99,8 +98,6 @@ class Population:
     mc_totmass(self,r_inner,r_outer,N) : float [M_sun]
         monte carlo to calculate the total mass in between radius_1 and radius_2 within
         self.solid_angle_sr using N draws
-    central_totmass(self,r_inner,r_outer) : float [M_sun]
-        use the central density of a slice to estimate the total mass within the slice
     estimate_field(self,) :
         float [M_sun], float [number of stars]
         estimate the total mass and stars in a field
@@ -114,9 +111,7 @@ class Population:
         estimates the evolved parameter for each star in the field
     """
     def __init__(
-            self, pop_params: str, population_index: int, glbl_params: Parameters,
-            **positional_kwargs
-            ):
+            self, pop_params: str, population_index: int, glbl_params: Parameters):
         # machinery to import parameter file for a population only given filename
         self.glbl_params = glbl_params
         self.sun = glbl_params.sun
@@ -141,11 +136,11 @@ class Population:
                 sun=self.glbl_params.sun, **self.glbl_params.warp)
 
         # default pointing is Galactic anti-center
-        self.l_deg = 180
-        self.b_deg = 0
-        self.solid_angle_sr = 1e-12
-        self.position = Position(
-                self.coord_trans, **{**self.glbl_params.window_type, **positional_kwargs}
+        #self.l_deg = 180
+        #self.b_deg = 0
+        #self.solid_angle_sr = 1e-12
+        self.position = Position(logger,
+                self.coord_trans, self.glbl_params.field_shape, None
             )
 
         # read min and maximum mass from parameters
@@ -456,8 +451,8 @@ class Population:
         return kinematics
 
     def set_position(
-            self, l_deg: float, b_deg: float, solid_angle: float, solid_angle_unit: str,
-            **position_kwargs
+            self, l_deg: float, b_deg: float, field_shape: str, field_scale: float or tuple or np.ndarray, 
+            field_scale_unit: str
             ):
         """
         set a new location and broadcast the new location position and extinction
@@ -467,12 +462,12 @@ class Population:
             galactic longitude
         b_deg : float [degree]
             galactic latitude
-        solid_angle : float [solid_angle_unit]
-            setting size of the cone
-        solid_angle_unit : str
-            unit for solid_ange
-        position_kwargs: dict
-            keywords forwarded to the position class
+        field_shape : str
+            shape of field on-sky: circle or box
+        field_scale : float 
+            setting size of the cone or box
+        field_scale_unit : str
+            unit for field_scale
         Returns
         -------
 
@@ -481,20 +476,28 @@ class Population:
         # set up essential class properties
         self.l_deg = l_deg
         self.b_deg = b_deg
-        if solid_angle_unit.lower() in ["sr", "steradian"]:
-            self.solid_angle_sr = solid_angle
-        elif solid_angle_unit.lower() in ["square degree", "sdeg", "deg^2", "degree^2"]:
-            self.solid_angle_sr = solid_angle * (np.pi / 180) ** 2
+        self.field_shape=field_shape
+        if hasattr(field_scale, '__len__'):
+            field_scale = np.array(field_scale)
+        if field_scale_unit.lower() in ["rad", "radian", 'radians']:
+            self.field_scale_deg = field_scale / (np.pi / 180)
+        elif field_scale_unit.lower() in ["deg", "degree", 'degrees']:
+            self.field_scale_deg = field_scale
+        elif field_scale_unit.lower() in ['am', 'arcminute', 'arcmin', 'arcminutes']:
+            self.field_scale_deg = field_scale / 60
+        elif field_scale_unit.lower() in ['as', 'arcsecond', 'arcsec', 'arcseconds']:
+            self.field_scale_deg = field_scale / 60**2
         else:
-            raise ValueError(f"solid angle unit '{solid_angle_unit}' is not supported")
+            raise ValueError(f"field_scale unit '{field_scale_unit}' is not supported")
 
         # flag to mark that coordinates have been set
-        self.position.update_location(l_deg, b_deg, self.solid_angle_sr)
+        self.position.update_location(l_deg, b_deg, field_shape, self.field_scale_deg)
 
-        logger.debug(
-            f"{self.name} : position is set to "
-            f"{self.l_deg: .3f}, {self.b_deg: .3f} with solid angle"
-            f"{self.solid_angle_sr:.3e} sr ({solid_angle:.3e} {solid_angle_unit})")
+        logger.debug(f"{self.name} : position is set to {l_deg: .3f}, {b_deg: .3f}")
+        if field_shape=='circle':
+            logger.debug(f"{self.field_scale_deg} deg radius circle. ({field_scale} {field_scale_unit})")
+        if field_shape=='box':
+            logger.debug(f"{self.position.l_hw_deg}, {self.position.b_hw_deg} degree l, b half-width box")
 
     def mc_totmass(self, r_inner: float, r_outer: float, n_picks: int = 1000) -> float:
         """
@@ -521,7 +524,10 @@ class Population:
             total mass in the slice
         """
         # calculate volume of slice, needs to be kpc^3, r_inner and r_outer in kpc
-        volume = (1 / 3) * self.solid_angle_sr * (r_outer ** 3 - r_inner ** 3)
+        if self.field_shape == 'circle':
+            volume = (1 / 3) * np.pi*(self.position.lb_radius_deg*np.pi/180)**2 * (r_outer ** 3 - r_inner ** 3)
+        elif self.field_shape == 'box':
+            volume = (1 / 3) * 4*self.position.l_hw_deg*self.position.b_hw_deg*(np.pi/180)**2 * (r_outer ** 3 - r_inner ** 3)
 
         # MC draws of density
         d, lstar_deg, bstar_deg = self.position.draw_random_point_in_slice(r_inner,
@@ -533,32 +539,6 @@ class Population:
 
         return total_mass
 
-    def central_totmass(self, r_inner: float, r_outer: float) -> float:
-        """
-        Returns the mass using the denisty in the center of a slice
-
-        Parameters
-        ----------
-        r_inner : float [kpc]
-            inner radius of the slice
-        r_outer : float [kpc]
-            outer radius of the slice
-
-        Returns
-        -------
-        totmass: float [Msun]
-            mass of a slice using the central density
-        """
-
-        # calculate volume of slice, needs to be kpc-3, r_inner and r_outer in kpc
-        volume = (1 / 3) * self.solid_angle_sr * (r_outer ** 3 - r_inner ** 3)
-        r, phi_rad, z = self.coord_trans.dlb_to_rphiz((r_outer + r_inner) / 2, self.l_deg, self.b_deg)
-        density = self.population_density.density(r, phi_rad, z)
-
-        totmass = volume * density
-
-        return totmass
-
     def estimate_field(self, **kwargs) -> Tuple[float, float]:
         """
         estimate the field in the current pointing
@@ -566,7 +546,7 @@ class Population:
 
         if self.position.l_deg is None:
             msg = ("coordinates where not set."
-                   "You must run set_position(l_deg, b_deg, solid_angle_sr)"
+                   "You must run set_position(l_deg, b_deg, field_shape, field_scale, field_scale_unit)"
                    "before running 'estimate_field' or 'generate_field'")
             logger.critical(msg)
             raise AttributeError(msg)
@@ -730,7 +710,7 @@ class Population:
     #         ), columns=headers)
     #     return df
 
-    def generate_field(self) -> Tuple[pandas.DataFrame, Dict]:
+    def generate_field(self) -> pandas.DataFrame:
         """
         Generate the stars in the field
         estimates the number of stars from a density distribution
@@ -746,8 +726,8 @@ class Population:
 
         """
         if self.position.l_deg is None:
-            msg = ("coordinates where not set."
-                   "You must run set_position(l_deg, b_deg, solid_angle_sr)"
+            msg = ("coordinates were not set."
+                   "You must run set_position(l_deg, b_deg, field_shape, field_scale, field_scale_unit)"
                    "before running 'estimate_field' or 'generate_field'")
             logger.critical(msg)
             raise AttributeError(msg)
@@ -757,8 +737,6 @@ class Population:
         # array of radii to use
         radii = np.arange(0, self.max_distance + self.step_size, self.step_size)
 
-        # placeholder to collect distributions
-        distribution = {}
         # placeholder to collect data frames
         df_list = []
 
@@ -826,11 +804,6 @@ class Population:
         total_stars = np.random.poisson(n_star_expected * (1 - frac_lowmass[1]) / self.scale_factor)
 
         expected_total_imass = n_star_expected * average_imass_per_star
-
-        distribution["distance_distribution"] = np.vstack(
-            [(radii[1:] + radii[:-1]) / 2, n_star_expected]).T
-        distribution["distance_distribution_comment"] = \
-            "pairs of distances in [kpc] and number of stars in the slice"
 
         logger.info("# From density profile (number density)")
 
@@ -1002,7 +975,7 @@ class Population:
         logger.log(25, '# Done')
         logger.flush()
 
-        return population_df, distribution
+        return population_df
 
     @staticmethod
     def remove_stars(

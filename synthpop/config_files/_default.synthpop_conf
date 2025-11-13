@@ -19,9 +19,12 @@
         "l_set_type":null,
         "b_set":null,
         "b_set_type": null,
-        "#comment3":"Solid angle of cone/pyramid in units defined by solid_angle_unit [sr, or deg^2]",
-        "solid_angle": null,
-        "solid_angle_unit": "deg^2"
+        "#comment3":"Field shape - options are circle or box",
+        "field_shape": "circle",
+        "#comment4":"Field size - for circle, radius. for box, side half-width for square or two half-widths for (l, b)",
+        "field_scale": null,
+        "#comment5":"Field scale unit. Options are rad, deg, arcmin, arcsec",
+        "field_scale_unit": "deg"
     },
 
     "SEED":{"random_seed":null},
@@ -68,9 +71,6 @@
         "max_distance":15,
         "#comment2":"Step size in kpc",
         "distance_step_size":0.10,
-
-        "#comment3":"Window type - currently only allows cone",
-        "window_type":{"window_type":"cone" , "#kwargs for windowtype": null},
 
         "#comment4":"Limiting mass [min_mass, max_mass]",
         "mass_lims":{"min_mass":0.08,"max_mass":100},
@@ -144,7 +144,7 @@
         "obsmag":true,
 
         "#comment5": "Optional properties from the isochrones; these can overlap with the default properties.",
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"],
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"]
     },
 
     "OUTPUT": {
@@ -156,7 +156,7 @@
             "filename": "optional: path of the file ",
             "further_keywords": "additional keyword arguments"
             },
-        "post_processing_kwargs": "post_processing_kwargs": [{"name":"RenameColumns", 
+        "post_processing_kwargs": [{"name":"RenameColumns", 
             "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
             "new_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius"]}],
 

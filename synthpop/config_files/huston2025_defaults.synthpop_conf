@@ -10,8 +10,9 @@
         "l_set_type":null,
         "b_set":null,
         "b_set_type": null,
-        "solid_angle": null,
-        "solid_angle_unit": "deg^2"
+        "field_shape": "circle",
+        "field_scale": null,
+        "field_scale_unit": "deg"
     },
 
     "COORDINATE_SYSTEM":{

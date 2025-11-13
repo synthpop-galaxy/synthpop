@@ -66,8 +66,6 @@ class SynthPop:
         list of population.json files detected in the model directory
     population : list<Population>
         list of the initialized population objects
-    solid_angle : float [sr]
-        size of the cone
     min_mass, max_mass : float [Msun]
         minimum and maximum mass of the Star generation
     filename_base : str
@@ -145,8 +143,9 @@ class SynthPop:
 
         self.l_deg = None
         self.b_deg = None
-        self.solid_angle = None
-        self.solid_angle_unit = None
+        self.field_shape = self.parms.field_shape
+        self.field_scale = self.parms.field_scale
+        self.field_scale_unit = self.parms.field_scale_unit
 
     def get_iter_loc(self) -> Iterator[Tuple[float, float]]:
         """ returns an iterator for the defined locations """
@@ -223,8 +222,7 @@ class SynthPop:
         self.populations_are_initialized = True
 
     def update_location(
-            self, l_deg: float, b_deg: float, solid_angle: float, solid_angle_unit: str = "deg^2",
-            **positional_kwargs
+            self, l_deg: float, b_deg: float, field_shape: str, field_scale: float or tuple or np.ndarray, field_scale_unit: str
             ) -> None:
         """
         Simple wrapper to update filename, logfile, and all
@@ -236,18 +234,18 @@ class SynthPop:
             galactic longitude for the center of the cone
         b_deg : float ['deg']
             galactic longitude for the center of the cone
-        solid_angle : float [deg^2]
-            steradians for the cone size
-        solid_angle_unit : str
-            unit for steradians
-        positional_kwargs :
-            any keyword to be passed to Position
+        field_shape : str 
+            shape of the field: may be 'circle' or 'box'
+        field_scale : float or tuple of floats
+            scale of the field: radius for circle, half-wdith for square, or l and b half-width for rectangle
+        field_scale_unit : str
+            unit for field scale
         """
 
         if not self.save_data:
             self.filename_base = f'dump_file{np.random.randint(0, 999999):06d}'
         else:
-            self.filename_base = self.get_filename(l_deg, b_deg, solid_angle)
+            self.filename_base = self.get_filename(l_deg, b_deg)
 
         if not self.parms.overwrite:
             if os.path.isfile(ff := f"{self.filename_base}.{self.parms.output_file_type[0].lower()}"):
@@ -260,8 +258,8 @@ class SynthPop:
         # update populations with the coordinates for the field
         logger.log(25, f"# set location to: ")
         logger.log(25, f"l, b = ({l_deg:.2f} deg, {b_deg:.2f} deg)")
-        logger.log(25, f"# set solid_angle to:")
-        logger.log(25, f"solid_angle = {solid_angle:.3e} {solid_angle_unit}")
+        logger.log(25, f"# set field scale to:")
+        logger.log(25, f"field_scale = {field_scale:.3e} {field_scale_unit}")
 
         # placeholder for future position kwargs
         # (e.g. when we have the option for a pyramid cone)
@@ -269,15 +267,16 @@ class SynthPop:
         # update position in populations
         for population in self.populations:
             population.set_position(
-                l_deg, b_deg, solid_angle, solid_angle_unit, **positional_kwargs)
+                l_deg, b_deg, field_shape, field_scale, field_scale_unit)
         self.l_deg = l_deg
         self.b_deg = b_deg
-        self.solid_angle = solid_angle
-        self.solid_angle_unit = solid_angle_unit
+        self.field_shape = field_shape
+        self.field_scale = field_scale
+        self.field_scale_unit = field_scale_unit
 
         logger.debug("All Populations updated to (l,b) = "
                      f"({self.populations[0].b_deg:.2f},{self.populations[0].b_deg:.2f}) "
-                     f"and Solid Angle = {self.populations[0].solid_angle_sr} sr.")
+                     f"and Field Scale = {self.populations[0].field_scale_deg} deg.")
 
     def estimate_field_population(self) -> None:
         """
@@ -341,7 +340,7 @@ class SynthPop:
 
         return field_df
 
-    def generate_fields(self) -> Tuple[pandas.DataFrame, Dict]:
+    def generate_fields(self) -> pandas.DataFrame:
         """
         calls the generate_field for all the populations and collects the data in a common
         pandas dataframe.
@@ -350,8 +349,6 @@ class SynthPop:
         -------
         field_df: DataFrame
             DataFrame including the generated Stars from all populations
-        distributions: dict
-            collection of intrinsic distributions for each population
         """
 
         logger.create_info_section('Generate Field')
@@ -360,16 +357,11 @@ class SynthPop:
         self.estimate_field_population()
         # Placeholder to collect all the data_frames from the populations
         field_list = []
-        distributions = {}
 
         max_star_id = -1
         for population in self.populations:
             # for each population, generate the field
-            population_df, pop_distributions = population.generate_field()
-
-            # collect distribution under the population name
-            # be careful if two populations share the same name
-            distributions[population.name] = pop_distributions
+            population_df = population.generate_field()
 
             logger.debug(
                 "%s : Number of stars generated: %i (%i columns)",
@@ -416,7 +408,7 @@ class SynthPop:
         logger.info(f"included_columns = {list(field_df.columns)}")
         #sp_utils.log_basic_statistics(field_df, "stats_field")
 
-        return field_df, distributions
+        return field_df 
 
     def write_astrotable(self, filename: str, df: pandas.DataFrame, extension: str) -> None:
         """
@@ -505,7 +497,7 @@ class SynthPop:
 
         return filename
 
-    def get_filename(self, l_deg: float, b_deg: float, solid_angle: float) -> str:
+    def get_filename(self, l_deg: float, b_deg: float) -> str:
         """
         create a file name for a given position
 
@@ -513,8 +505,6 @@ class SynthPop:
         ----------
         l_deg, b_deg : float [deg]
             galactic coordinates
-        solid_angle: float [rad]
-            solid angle of the cone
 
         Returns
         -------
@@ -531,7 +521,6 @@ class SynthPop:
             "date": datetime.datetime.now().date(),
             "l_deg": l_deg,
             "b_deg": b_deg,
-            "solid_angle_sr": solid_angle,
             "model_name": self.parms.model_name,
             "name_for_output": self.parms.name_for_output,
             }
@@ -543,9 +532,10 @@ class SynthPop:
         return filename_base
 
     def process_location(
-            self, l_deg: float, b_deg: float, solid_angle: float, solid_angle_unit: str = 'deg^2',
+            self, l_deg: float, b_deg: float, field_shape: str, 
+            field_scale: float or tuple or np.ndarray, field_scale_unit: str,
             save_data: bool = True
-            ) -> Tuple[pandas.DataFrame, Dict]:
+            ) -> pandas.DataFrame:
         """
         Performs the field generation for a given position.
 
@@ -553,10 +543,12 @@ class SynthPop:
         ----------
         l_deg, b_deg : float [deg]
             galactic coordinates
-        solid_angle : float [deg^2]
-            Area of the cone
-        solid_angle_unit : str
-            Unit of the provided solid_angle
+        field_shape : str
+            shape of the field
+        field_scale : float or tuple or np.ndarray
+            scale of the field (radius or half-width(s))
+        field_scale_unit : str
+            Unit of the provided field_scale
         save_data : bool
             If True the DataFrame is saved to disk
             If False the DataFrame are only returned,
@@ -565,8 +557,6 @@ class SynthPop:
         -------
         field_df : DataFrame
             Generated stars as Pandas Dataframe
-        distributions: dict
-            collection of intrinsic distributions for each population
         """
 
         # store boolean if data should be stored to disc
@@ -579,11 +569,12 @@ class SynthPop:
 
         # Step 1: Set the location and cone size
         self.update_location(l_deg=l_deg, b_deg=b_deg,
-                             solid_angle=solid_angle, solid_angle_unit=solid_angle_unit)
+                             field_shape=field_shape, field_scale=field_scale, 
+                             field_scale_unit=field_scale_unit)
 
         # Step 2: Generate all the fields for each population
         ti = time.time()
-        field_df, distributions = self.generate_fields()
+        field_df = self.generate_fields()
         t1 = time.time() - ti
 
         # Step 3: Save the results
@@ -602,13 +593,13 @@ class SynthPop:
         t2 = time.time() - ti
 
         # log end statement
-        logger.log(15, f"{solid_angle}, {l_deg:.3f}, {b_deg:.3f}, done")
+        logger.log(15, f"{l_deg:.3f}, {b_deg:.3f}, done")
         logger.debug("---------------------------------------------------------------")
         logger.debug(f"Took total time {time.process_time()}")
         logger.debug(f'generate field: {t1:.1f}s | save field {t2:.1f}s')
         logger.info("---------------------------------------------------------------\n")
 
-        return field_df, distributions
+        return field_df
 
     def process_all(self, forced=False) -> None:
         """
@@ -625,8 +616,9 @@ class SynthPop:
         # Go through each b and l combination
         for l_b_deg in self.parms.loc:
             self.process_location(
-                *l_b_deg, solid_angle=self.parms.solid_angle,
-                solid_angle_unit=self.parms.solid_angle_unit)
+                *l_b_deg, field_shape=self.parms.field_shape,
+                field_scale=self.parms.field_scale, 
+                field_scale_unit=self.parms.field_scale_unit)
 
 
 def main(configfile: str = None, **kwargs):

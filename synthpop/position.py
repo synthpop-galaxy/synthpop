@@ -30,8 +30,6 @@ class Position:
         Galactic latitude of the current field in degrees.
     b_rad : float [radian]
         Galactic latitude of the current field in radians.
-    cone_angle : float [radian]
-        opening angle of the cone
 
     Methods
     -------
@@ -48,7 +46,7 @@ class Position:
     # placeholder for transformation matrix between the rectangular equatorial coordinate system
     # and the rectangular Galactic coordinate
 
-    def __init__(self, coord_trans, **kwargs):
+    def __init__(self, logger, coord_trans, field_shape, field_scale_deg):
         """
         Initialization
 
@@ -68,10 +66,18 @@ class Position:
         self.l_rad = None
         self.b_deg = None
         self.b_rad = None
+        self.logger = logger
         #  convert solid angle to half cone angle using wiki formula:
-        self.cone_angle = None
+        self.field_shape = field_shape
+        if field_shape=='circle':
+            self.lb_radius_deg = None
+        elif field_shape=='box':
+            self.l_hw_deg = None
+            self.b_hw_deg = None
+        else:
+            raise ValueError(f"field_shape {field_shape} not valid. Please use 'circle' or 'box'.")
 
-    def update_location(self, l_deg: float, b_deg: float, solid_angle: float):
+    def update_location(self, l_deg: float, b_deg: float, field_shape: str, field_scale_deg: float):
         """
         Set the location and solid_angle
 
@@ -86,8 +92,17 @@ class Position:
         self.l_rad = l_deg * np.pi / 180.
         self.b_deg = b_deg
         self.b_rad = b_deg * np.pi / 180.
+        self.field_shape = field_shape
         #  convert solid angle to half cone angle using wiki formula:
-        self.cone_angle = sp_utils.solidangle_to_half_cone_angle(solid_angle)
+        if self.field_shape=='circle':
+            self.lb_radius_deg = field_scale_deg
+        elif self.field_shape=='box':
+            if hasattr(field_scale_deg, 'len'):
+                self.l_hw_deg = field_scale_deg[0]
+                self.b_hw_deg = field_scale_deg[1]
+            else:
+                self.l_hw_deg = field_scale_deg
+                self.b_hw_deg = field_scale_deg
 
     def draw_random_point_in_slice(self, dist_inner: float, dist_outer: float, n_stars: int = 1) \
             -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -134,13 +149,16 @@ class Position:
 
         # generate a cone uniformly around l=0, b=0 with solidAngle as covered area
         # Phi in the paper
-        st_dir = np.random.uniform(0, 2 * np.pi, size=n_stars)
-        # Theta in the paper
-        st_rad = np.arccos(np.random.uniform(np.cos(self.cone_angle), 1, size=n_stars))
-
-        # Estimate offset to center in ra and dec
-        delta_l_rad = st_rad * np.sin(st_dir)
-        delta_b_rad = st_rad * np.cos(st_dir)
+        if self.field_shape=='circle':
+            st_dir = np.random.uniform(0, 2 * np.pi, size=n_stars)
+            # Theta in the paper
+            st_rad = np.arccos(np.random.uniform(np.cos(self.lb_radius_deg*np.pi/180), 1, size=n_stars))
+            # Estimate offset to center in ra and dec
+            delta_l_rad = st_rad * np.sin(st_dir)
+            delta_b_rad = st_rad * np.cos(st_dir)
+        if self.field_shape=='box':
+            delta_l_rad = np.pi/180 * self.l_hw_deg * np.random.uniform(-1, 1, size=n_stars)
+            delta_b_rad = np.pi/180 * self.b_hw_deg * np.random.uniform(-1, 1, size=n_stars)
 
         # rotate cone to l_deg, b_deg
         star_l_rad, star_b_rad = self.rotate_00_to_lb(delta_l_rad, delta_b_rad)
