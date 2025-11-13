@@ -56,11 +56,12 @@ else:  # continue import when if synthpop is imported
     from .modules.population_density import PopulationDensity
 
 class SpiseaGenerator(StarGenerator):
-    def __init__(self, imf_module, age_module, met_module, evolution_module,
+    def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
             glbl_params, position, max_mass, ifmr_module, mult_module, logger):
         # General synthpop things
         spisea_dir=const.ISOCHRONES_DIR+'/spisea/'
         self.generator_name = 'SpiseaGenerator'
+        self.density_module = density_module
         self.age_module = age_module
         self.met_module = met_module
         self.ifmr_module = ifmr_module

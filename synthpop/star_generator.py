@@ -62,9 +62,10 @@ class StarGenerator:
         maximum allowed stellar mass
     """
 
-    def __init__(self, imf_module, age_module, met_module, evolution_module,
+    def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
             glbl_params, position, max_mass, ifmr_module, mult_module, logger):
         self.generator_name = 'StarGenerator'
+        self.density_module = density_module
         self.imf_module = imf_module
         self.ifmr_module = ifmr_module
         self.mult_module = mult_module
@@ -84,7 +85,7 @@ class StarGenerator:
     def generate_stars(self, radii, missing_stars, mass_limit,
         do_kinematics, props):
         position = np.vstack([
-            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, n_stars))
+            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, n_stars, population_density_func=self.density_module.density))
             for r_inner, r_outer, n_stars in zip(radii, radii[1:], missing_stars)
             ])
 

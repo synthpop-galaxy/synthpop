@@ -214,13 +214,13 @@ class Population:
                 from spisea_generator import SpiseaGenerator
             except:
                 from .spisea_generator import SpiseaGenerator
-            self.generator = SpiseaGenerator(
+            self.generator = SpiseaGenerator(self.population_density,
                 self.imf, self.age, self.metallicity, self.evolution,
                 self.glbl_params, self.position, self.max_mass, 
                 self.ifmr, self.mult, logger
                 )
         else:
-            self.generator = StarGenerator(
+            self.generator = StarGenerator(self.population_density,
                 self.imf, self.age, self.metallicity, self.evolution,
                 self.glbl_params, self.position, self.max_mass, 
                 self.ifmr, self.mult, logger

@@ -52,12 +52,12 @@ class Position:
 
         Parameters
         ----------
-        l_deg, b_deg : float [deg]
-            galactic longitude and latitude in degrees
-        solid_angle : float [sr]
-            size of the cone
-        **kwargs :
-            Future keyword arguments to specify the shape of the field.
+        logger
+        coord_trans
+        field_shape : str
+            circle or box field shape
+        field_scale_deg : float or np.ndarray
+            circle radius or box half-widths
         """
 
         self.coord_trans = coord_trans
@@ -104,7 +104,8 @@ class Position:
                 self.l_hw_deg = field_scale_deg
                 self.b_hw_deg = field_scale_deg
 
-    def draw_random_point_in_slice(self, dist_inner: float, dist_outer: float, n_stars: int = 1) \
+    def draw_random_point_in_slice(self, dist_inner: float, dist_outer: float, n_stars: int = 1,
+                                    population_density_func=None) \
             -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Draw one or more random point in a slice
@@ -144,22 +145,39 @@ class Position:
         star_b_deg : float, ndarray [deg]
             galactic latitude of the drawn positions
         """
-        # draw as described above
-        d_kpc = np.cbrt(np.random.uniform(dist_inner ** 3, dist_outer ** 3, size=n_stars))
 
         # generate a cone uniformly around l=0, b=0 with solidAngle as covered area
         # Phi in the paper
-        if self.field_shape=='circle':
-            st_dir = np.random.uniform(0, 2 * np.pi, size=n_stars)
-            # Theta in the paper
-            st_rad = np.arccos(np.random.uniform(np.cos(self.lb_radius_deg*np.pi/180), 1, size=n_stars))
-            # Estimate offset to center in ra and dec
-            delta_l_rad = st_rad * np.sin(st_dir)
-            delta_b_rad = st_rad * np.cos(st_dir)
-        if self.field_shape=='box':
-            delta_l_rad = np.pi/180 * self.l_hw_deg * np.random.uniform(-1, 1, size=n_stars)
-            delta_b_rad = np.pi/180 * self.b_hw_deg * np.random.uniform(-1, 1, size=n_stars)
+        if population_density_func is None:
+            d_kpc = np.cbrt(np.random.uniform(dist_inner ** 3, dist_outer ** 3, size=n_stars))
+            if self.field_shape=='circle':
+                st_dir = np.random.uniform(0, 2 * np.pi, size=n_stars)
+                # Theta in the paper
+                st_rad = np.arccos(np.random.uniform(np.cos(self.lb_radius_deg*np.pi/180), 1, size=n_stars))
+                # Estimate offset to center in ra and dec
+                delta_l_rad = st_rad * np.sin(st_dir)
+                delta_b_rad = st_rad * np.cos(st_dir)
+            if self.field_shape=='box':
+                delta_l_rad = np.pi/180 * self.l_hw_deg * np.random.uniform(-1, 1, size=n_stars)
+                delta_b_rad = np.pi/180 * self.b_hw_deg * np.random.uniform(-1, 1, size=n_stars)
+        else:
+            if self.field_shape == 'circle':
+                grid = np.mgrid[dist_inner:dist_outer:20j, 0:2*np.pi:20j, 0:self.lb_radius_deg:20j]
+                dist_pts, st_dir_pts, st_rad_pts = np.fromiter(map(np.ravel, grid))
+                delta_l_pts_rad = st_rad_pts * np.sin(st_dir_pts)
+                delta_b_pts_rad = st_rad_pts * np.cos(st_dir_pts)
+                l_pts_rad, b_pts_rad = self.rotate_00_to_lb(delta_l_pts_rad, delta_b_pts_rad)
+                r_pts, phi_pts, z_pts = self.coord_trans.dlb_to_rphiz(dist_pts, l_pts_rad*180/np.pi, b_pts_rad*180/np.pi)
+                density_pts = population_density_func(r_pts, phi_pts, z_pts)
+                density_pts = density_pts.reshape(grid[0].shape)
+                dist_grid_pts = np.unique(dist_pts)
+                density_dist_sum = np.cumsum(np.sum(density_pts, axis=(1,2)))
+                d_kpc = np.random.uniform(0, density_dist_sum[-1], size=n_stars)
+                # NEED to transform from drawn cumulative probability back to distance
+                # Then move on to the next dimension and do it again
 
+
+            raise NotImplementedError('Density scaling within slice not yet implemented')
         # rotate cone to l_deg, b_deg
         star_l_rad, star_b_rad = self.rotate_00_to_lb(delta_l_rad, delta_b_rad)
 

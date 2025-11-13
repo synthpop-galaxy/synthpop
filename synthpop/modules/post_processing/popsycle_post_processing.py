@@ -73,7 +73,7 @@ class PopsyclePostProcessing(PostProcessing):
         dataframe.drop(columns=cols_to_cut, inplace=True)
         self.logger.info("Unused columns dropped")
 
-        self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg, self.model.solid_angle)}_psc"
+        self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg)}_psc"
         
         # Translate extinction to Ebv extinction
         if not self.model.populations[0].extinction.A_or_E_type=="E(B-V)":
