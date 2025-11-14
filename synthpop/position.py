@@ -148,7 +148,7 @@ class Position:
 
         # generate a cone uniformly around l=0, b=0 with solidAngle as covered area
         # Phi in the paper
-        if population_density_func is None:
+        if True: #population_density_func is None:
             d_kpc = np.cbrt(np.random.uniform(dist_inner ** 3, dist_outer ** 3, size=n_stars))
             if self.field_shape=='circle':
                 st_dir = np.random.uniform(0, 2 * np.pi, size=n_stars)
@@ -161,23 +161,50 @@ class Position:
                 delta_l_rad = np.pi/180 * self.l_hw_deg * np.random.uniform(-1, 1, size=n_stars)
                 delta_b_rad = np.pi/180 * self.b_hw_deg * np.random.uniform(-1, 1, size=n_stars)
         else:
-            if self.field_shape == 'circle':
-                grid = np.mgrid[dist_inner:dist_outer:20j, 0:2*np.pi:20j, 0:self.lb_radius_deg:20j]
-                dist_pts, st_dir_pts, st_rad_pts = np.fromiter(map(np.ravel, grid))
-                delta_l_pts_rad = st_rad_pts * np.sin(st_dir_pts)
-                delta_b_pts_rad = st_rad_pts * np.cos(st_dir_pts)
-                l_pts_rad, b_pts_rad = self.rotate_00_to_lb(delta_l_pts_rad, delta_b_pts_rad)
-                r_pts, phi_pts, z_pts = self.coord_trans.dlb_to_rphiz(dist_pts, l_pts_rad*180/np.pi, b_pts_rad*180/np.pi)
-                density_pts = population_density_func(r_pts, phi_pts, z_pts)
-                density_pts = density_pts.reshape(grid[0].shape)
-                dist_grid_pts = np.unique(dist_pts)
-                density_dist_sum = np.cumsum(np.sum(density_pts, axis=(1,2)))
-                d_kpc = np.random.uniform(0, density_dist_sum[-1], size=n_stars)
-                # NEED to transform from drawn cumulative probability back to distance
-                # Then move on to the next dimension and do it again
+            pass
+            #if self.field_shape == 'circle':
+                # # Make a grid, sum over angles, inverse transform distances
+                # dist_pts_unique = np.linspace(dist_inner, dist_outer, 20)
+                # st_dir_pts_unique = np.linspace(0,2*np.pi, 20)
+                # st_rad_pts_unique = np.linspace(0,self.lb_radius_deg, 20)
+                # grid = np.meshgrid(dist_pts_unique, st_dir_pts_unique, st_rad_pts_unique)
+                # dist_pts, st_dir_pts, st_rad_pts = np.fromiter(map(np.ravel, grid))
+                # delta_l_pts_rad = st_rad_pts * np.sin(st_dir_pts)
+                # delta_b_pts_rad = st_rad_pts * np.cos(st_dir_pts)
+                # l_pts_rad, b_pts_rad = self.rotate_00_to_lb(delta_l_pts_rad, delta_b_pts_rad)
+                # r_pts, phi_pts, z_pts = self.coord_trans.dlb_to_rphiz(dist_pts, l_pts_rad*180/np.pi, b_pts_rad*180/np.pi)
+                # density_pts = population_density_func(r_pts, phi_pts, z_pts)
+                # density_pts = density_pts.reshape(grid[0].shape)
+                # density_dist_sum = np.cumsum(np.sum(density_pts, axis=(1,2)))
+                # d_kpc = np.interp(np.random.uniform(0, density_dist_sum[-1], size=n_stars), density_dist_sum, dist_pts_unique)
+                # # Then move on to the next dimension and do it again
+                # grid = np.meshgrid(d_kpc, st_dir_pts_unique, st_rad_pts_unique)
+                # dist_pts, st_dir_pts, st_rad_pts = np.fromiter(map(np.ravel, grid))
+                # delta_l_pts_rad = st_rad_pts * np.sin(st_dir_pts)
+                # delta_b_pts_rad = st_rad_pts * np.cos(st_dir_pts)
+                # l_pts_rad, b_pts_rad = self.rotate_00_to_lb(delta_l_pts_rad, delta_b_pts_rad)
+                # r_pts, phi_pts, z_pts = self.coord_trans.dlb_to_rphiz(dist_pts, l_pts_rad*180/np.pi, b_pts_rad*180/np.pi)
+                # density_pts = population_density_func(r_pts, phi_pts, z_pts)
+                # density_pts = density_pts.reshape(grid[0].shape)
+                # density_st_dir_sum = np.cumsum(np.sum(density_pts, axis=2))
+                # rand_pts = np.random.uniform(size=n_stars)
+                # st_dir_radian = np.fromiter(map(np.interp(rand_pts[i]*density_str_dir_sum[-1, i], density_st_dir_sum[:,i], st_dir_pts_unique), range(n_stars)))
+                # # Ok, one more dimension let's goooooo
+                # grid1 = np.meshgrid(d_kpc, st_rad_pts_unique)
+                # grid2 = np.meshgrid(st_dir_radian, st_rad_pts_unique)
+                # dist_pts = np.ravel(grid1[0])
+                # st_dir_pts = np.ravel(grid2[0])
+                # st_rad_pts = np.ravel(grid2[1])
+                # delta_l_pts_rad = st_rad_pts * np.sin(st_dir_pts)
+                # delta_b_pts_rad = st_rad_pts * np.cos(st_dir_pts)
+                # l_pts_rad, b_pts_rad = self.rotate_00_to_lb(delta_l_pts_rad, delta_b_pts_rad)
+                # r_pts, phi_pts, z_pts = self.coord_trans.dlb_to_rphiz(dist_pts, l_pts_rad*180/np.pi, b_pts_rad*180/np.pi)
+                # density_pts = population_density_func(r_pts, phi_pts, z_pts)
+                # density_pts = density_pts.reshape(grid0[0].reshape)
+                # density_st_rad_sum = np.cumsum(np.sum(density_pts))
+                """Ok, so that was a mess. But it was close....."""
 
-
-            raise NotImplementedError('Density scaling within slice not yet implemented')
+            #raise NotImplementedError('Density scaling within slice not yet implemented')
         # rotate cone to l_deg, b_deg
         star_l_rad, star_b_rad = self.rotate_00_to_lb(delta_l_rad, delta_b_rad)
 
