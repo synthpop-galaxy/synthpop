@@ -497,7 +497,7 @@ class Population:
         if field_shape=='circle':
             logger.debug(f"{self.field_scale_deg} deg radius circle. ({field_scale} {field_scale_unit})")
         if field_shape=='box':
-            logger.debug(f"{self.position.l_hw_deg}, {self.position.b_hw_deg} degree l, b half-width box")
+            logger.debug(f"{self.position.l_length_deg}, {self.position.b_length_deg} degree l, b length box")
 
     def mc_totmass(self, r_inner: float, r_outer: float, n_picks: int = 1000) -> float:
         """
@@ -527,7 +527,7 @@ class Population:
         if self.field_shape == 'circle':
             volume = (1 / 3) * np.pi*(self.position.lb_radius_deg*np.pi/180)**2 * (r_outer ** 3 - r_inner ** 3)
         elif self.field_shape == 'box':
-            volume = (1 / 3) * 4*self.position.l_hw_deg*self.position.b_hw_deg*(np.pi/180)**2 * (r_outer ** 3 - r_inner ** 3)
+            volume = (1 / 3) * self.position.l_length_deg*self.position.b_length_deg*(np.pi/180)**2 * (r_outer ** 3 - r_inner ** 3)
 
         # MC draws of density
         d, lstar_deg, bstar_deg = self.position.draw_random_point_in_slice(r_inner,

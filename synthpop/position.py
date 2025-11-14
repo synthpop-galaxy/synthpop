@@ -57,7 +57,7 @@ class Position:
         field_shape : str
             circle or box field shape
         field_scale_deg : float or np.ndarray
-            circle radius or box half-widths
+            circle radius or box side lengths
         """
 
         self.coord_trans = coord_trans
@@ -72,8 +72,8 @@ class Position:
         if field_shape=='circle':
             self.lb_radius_deg = None
         elif field_shape=='box':
-            self.l_hw_deg = None
-            self.b_hw_deg = None
+            self.l_length_deg = None
+            self.b_length_deg = None
         else:
             raise ValueError(f"field_shape {field_shape} not valid. Please use 'circle' or 'box'.")
 
@@ -98,11 +98,11 @@ class Position:
             self.lb_radius_deg = field_scale_deg
         elif self.field_shape=='box':
             if hasattr(field_scale_deg, 'len'):
-                self.l_hw_deg = field_scale_deg[0]
-                self.b_hw_deg = field_scale_deg[1]
+                self.l_length_deg = field_scale_deg[0]
+                self.b_length_deg = field_scale_deg[1]
             else:
-                self.l_hw_deg = field_scale_deg
-                self.b_hw_deg = field_scale_deg
+                self.l_length_deg = field_scale_deg
+                self.b_length_deg = field_scale_deg
 
     def draw_random_point_in_slice(self, dist_inner: float, dist_outer: float, n_stars: int = 1,
                                     population_density_func=None) \
@@ -158,8 +158,8 @@ class Position:
                 delta_l_rad = st_rad * np.sin(st_dir)
                 delta_b_rad = st_rad * np.cos(st_dir)
             if self.field_shape=='box':
-                delta_l_rad = np.pi/180 * self.l_hw_deg * np.random.uniform(-1, 1, size=n_stars)
-                delta_b_rad = np.pi/180 * self.b_hw_deg * np.random.uniform(-1, 1, size=n_stars)
+                delta_l_rad = np.pi/180 * self.l_length_deg/2 * np.random.uniform(-1, 1, size=n_stars)
+                delta_b_rad = np.pi/180 * self.b_length_deg/2 * np.random.uniform(-1, 1, size=n_stars)
         else:
             pass
             #if self.field_shape == 'circle':
