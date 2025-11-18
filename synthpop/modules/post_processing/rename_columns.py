@@ -7,7 +7,7 @@ __all__ = ["RenameColumns", ]
 __author__ = "M.J. Huston"
 __date__ = "2025-08-13"
 
-import pandas
+import pandas as pd
 import numpy as np
 from ._post_processing import PostProcessing
 
@@ -28,10 +28,14 @@ class RenameColumns(PostProcessing):
         self.old_names = old_names
         self.new_names = new_names
 
-    def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
+    def do_post_processing(self, system_df: pd.DataFrame
+            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
         """
         Make the column name changes.
         """
-        
-        dataframe.rename(columns=dict(zip(self.old_names, self.new_names)), inplace=True)
-        return dataframe
+        system_df.rename(columns=dict(zip(self.old_names, self.new_names)), inplace=True)
+        if companion_df is not None:
+            for i, column in enumerate(self.old_names):
+                if column in companion_df.columns:
+                    companion_df.rename(columns={column: self.new_names[i]}, inplace=True)
+        return system_df, companion_df

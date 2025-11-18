@@ -6,7 +6,7 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __date__ = "2022-11-16"
 
-import pandas
+import pandas as pd
 from types import ModuleType
 from .. import default_sun
 
@@ -37,19 +37,26 @@ class PostProcessing:
         #: Solar and LSR parameters
         self.sun = sun if sun is not None else default_sun
 
-    def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
+    def do_post_processing(self, system_df: pd.DataFrame
+            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
         """
         This is a placeholder for the postprocessing.
         It must accept the pandas data frame and must return a pandas data frame.
 
         Parameters
         ----------
-        dataframe : dataframe
-            original SynthPop output as pandas data frame
+        system_df : pandas dataframe
+            original SynthPop output for star systems
+            (may be all individual stars if no multiplicity)
+        companion_df : pandas dataframe
+            original SynthPop output for companions
+            (may be None for no multiplicity)
 
         Returns
         -------
-        dataframe : dataframe
-            modified pandas data frame
+        system_df : pandas dataframe
+            modified star systems table
+        companion_df : pandas dataframe
+            modified companions table
         """
-        return dataframe
+        return system_df, companion_df

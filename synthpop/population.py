@@ -36,6 +36,7 @@ except ImportError:
     from position import Position
     from star_generator import StarGenerator
     from synthpop_utils.synthpop_logging import logger
+    from synthpop_utils.utils_functions import add_magnitudes, combine_system_mags
     from synthpop_utils import coordinates_transformation as coord_trans
     from synthpop_utils import Parameters
     from modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
@@ -54,6 +55,7 @@ else:  # continue import when if synthpop is imported
     from .position import Position
     from .star_generator import StarGenerator
     from .synthpop_utils.synthpop_logging import logger
+    from .synthpop_utils.utils_functions import add_magnitudes, combine_system_mags
     from .synthpop_utils import coordinates_transformation as coord_trans
     from .synthpop_utils import Parameters
     from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
@@ -855,8 +857,7 @@ class Population:
             # extract magnitudes and properties
             df, comp_df = self.apply_extinction(df, comp_df)
             if self.glbl_params.combine_system_mags and (comp_df is not None):
-                df = self.combine_system_mags(df, comp_df)
-            # NOTE MY PROGRESS STOPPED HERE
+                df = combine_system_mags(df, comp_df, self.bands)
             # TODO: need to deal w spisea gen doing auto-combined mags
 
             # Keep track of all stars generated for option 3, until mass loss estimation is complete
@@ -1107,22 +1108,5 @@ class Population:
         #pdb.set_trace()
 
         return df, comp_df
-        
-    @staticmethod
-    def add_magnitudes(mags):
-        mags = np.array(mags)
-        fluxes = np.nan_to_num(10**(-0.4*mags))
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=RuntimeWarning,
-                        message='divide by zero encountered in log')
-            mag_sum = -2.5*np.log10(np.sum(fluxes, axis=0))
-        if np.isinf(mag_sum):
-            mag_sum = np.nan
-        return mag_sum
 
-    def combine_system_mags(self, df, comp_df):
-        combined_gb = pandas.concat([df[['system_idx']+self.bands],
-                comp_df[['system_idx']+self.bands]]).groupby('system_idx')
-        for band in self.bands:
-            df[band] = combined_gb[band].apply(self.add_magnitudes)
-        return df
+

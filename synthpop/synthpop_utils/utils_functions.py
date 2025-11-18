@@ -1,14 +1,12 @@
 """ This file contains several utils function """
-__all__ = ['solidangle_to_half_cone_angle', 'half_cone_angle_to_solidangle', "rotation_matrix"]
+__all__ = ['solidangle_to_half_cone_angle', 'half_cone_angle_to_solidangle',
+            "rotation_matrix", "add_magnitudes", "combine_system_mags"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
-
 
 import numpy as np
 
-
 def solidangle_to_half_cone_angle(solid_angle):
     return np.arccos(1 - solid_angle / (2. * np.pi))
-
 
 def half_cone_angle_to_solidangle(cone_angle):
     return (2. * np.pi) * (1 - np.cos(cone_angle))
@@ -71,3 +69,21 @@ def rotation_matrix(
         return np.array([[ct, zero, -st], [zero, one, zero], [st, zero, ct]])
     if axis == 'z':
         return np.array([[ct, -st, zero], [st, ct, zero], [zero, zero, one]])
+
+def add_magnitudes(mags):
+    mags = np.array(mags)
+    fluxes = np.nan_to_num(10**(-0.4*mags))
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=RuntimeWarning,
+                    message='divide by zero encountered in log')
+        mag_sum = -2.5*np.log10(np.sum(fluxes, axis=0))
+    if np.isinf(mag_sum):
+        mag_sum = np.nan
+    return mag_sum
+
+def combine_system_mags(df, comp_df, filters):
+    combined_gb = pandas.concat([df[['system_idx']+filters],
+            comp_df[['system_idx']+filters]]).groupby('system_idx')
+    for band in filters:
+        df[band] = combined_gb[band].apply(add_magnitudes)
+    return df

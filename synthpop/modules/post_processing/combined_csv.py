@@ -7,7 +7,7 @@ __author__ = "J. Klüter"
 __date__ = "2023-01-23"
 
 import os
-import pandas
+import pandas as pd
 from ._post_processing import PostProcessing
 
 class CombinedCsv(PostProcessing):
@@ -26,22 +26,39 @@ class CombinedCsv(PostProcessing):
         else:
             #: File name for combined output
             self.combined_filename = combined_filename
+        split_fname = self.combined_filename.split('.')
+        self.combined_companion_filename = '.'.join(
+                split_fname[:-1]+['_companion', split_fname[-1]])
         if os.path.isfile(self.combined_filename):
             os.remove(self.combined_filename)
 
-    def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
+    def do_post_processing(self, system_df: pd.DataFrame
+            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
         """
         Combine all catalogs into one output csv file, and returns the unchanged DataFrame.
         """
         # check if the file exist, if so it will not write a new header
         file_exist = os.path.isfile(self.combined_filename)
         # convert dataframe to csv sting
-        csv_data = dataframe.to_csv(index=False, header=file_exist)
+        csv_data = system_df.to_csv(index=False, header=file_exist)
 
         # open the file in append mode
-        self.logger.info(f"attach {dataframe.shape[0]} to {self.combined_filename}")
+        self.logger.info(f"attach {system_df.shape[0]} to {self.combined_filename}")
         with open(self.combined_filename, "a") as f:
             # write the data to the file
             f.write(csv_data)
+        
+        if companion_df is not None
+            # check if the file exist, if so it will not write a new header
+            file_exist = os.path.isfile(self.combined_companion_filename)
+            # convert dataframe to csv sting
+            csv_data = companion_df.to_csv(index=False, header=file_exist)
 
-        return dataframe
+            # open the file in append mode
+            self.logger.info(f"attach {companion_df.shape[0]} to" + \
+                             f"{self.combined_companion_filename}")
+            with open(self.combined_companion_filename, "a") as f:
+                # write the data to the file
+                f.write(csv_data)
+
+        return system_df, companion_df

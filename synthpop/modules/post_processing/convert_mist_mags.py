@@ -7,7 +7,7 @@ __all__ = ["ConvertMistMags", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-02-23"
 
-import pandas
+import pandas as pd 
 import numpy as np
 from ._post_processing import PostProcessing
 
@@ -27,7 +27,8 @@ class ConvertMistMags(PostProcessing):
         super().__init__(model,logger, **kwargs)
         self.conversions = conversions
 
-    def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
+    def do_post_processing(self, system_df: pd.DataFrame
+            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
         """
         Perform the magnitude conversions and returns the modified DataFrame.
         """
@@ -262,24 +263,46 @@ class ConvertMistMags(PostProcessing):
             
         for system_new in self.conversions.keys():
             for filt in self.conversions[system_new]:
-                if filt in dataframe.keys():
+                if filt in system_df.keys():
                     idx = np.where(mist_filters==filt)[0][0]
                     system_old = mist_systems[idx]
                     if system_old==system_new:
                         print(filt,'already in system',system_new)
                     elif system_old=='Vega' and system_new=='AB':
-                        dataframe[filt] = dataframe[filt] + mist_mag_vega_ab[idx]
+                        system_df[filt] = system_df[filt] + mist_mag_vega_ab[idx]
                     elif system_old=='Vega' and system_new=='ST':
-                        dataframe[filt] = dataframe[filt] + mist_mag_vega_st[idx]
+                        system_df[filt] = system_df[filt] + mist_mag_vega_st[idx]
                     elif system_old=='AB' and system_new=='Vega':
-                        dataframe[filt] = dataframe[filt] - mist_mag_vega_ab[idx]
+                        system_df[filt] = system_df[filt] - mist_mag_vega_ab[idx]
                     elif system_old=='ST' and system_new=='Vega':
-                        dataframe[filt] = dataframe[filt] - mist_mag_vega_st[idx]
+                        system_df[filt] = system_df[filt] - mist_mag_vega_st[idx]
                     elif system_old=='AB' and system_new=='ST':
-                        dataframe[filt] = dataframe[filt] - mist_mag_vega_ab[idx] + mist_mag_vega_st[idx]
+                        system_df[filt] = system_df[filt] - mist_mag_vega_ab[idx] + mist_mag_vega_st[idx]
                     elif system_old=='ST' and system_new=='AB':
-                        dataframe[filt] = dataframe[filt] - mist_mag_vega_st[idx] + mist_mag_vega_ab[idx]
+                        system_df[filt] = system_df[filt] - mist_mag_vega_st[idx] + mist_mag_vega_ab[idx]
                     else:
                         raise ValueError('Invalid magnitude system conversion: '+system_old+
                             ' -> '+system_new)
-        return dataframe
+        if companion_df is not None:
+            for filt in self.conversions[system_new]:
+                if filt in companion_df.keys():
+                    idx = np.where(mist_filters==filt)[0][0]
+                    system_old = mist_systems[idx]
+                    if system_old==system_new:
+                        print(filt,'already in system',system_new)
+                    elif system_old=='Vega' and system_new=='AB':
+                        companion_df[filt] = companion_df[filt] + mist_mag_vega_ab[idx]
+                    elif system_old=='Vega' and system_new=='ST':
+                        companion_df[filt] = companion_df[filt] + mist_mag_vega_st[idx]
+                    elif system_old=='AB' and system_new=='Vega':
+                        companion_df[filt] = companion_df[filt] - mist_mag_vega_ab[idx]
+                    elif system_old=='ST' and system_new=='Vega':
+                        companion_df[filt] = companion_df[filt] - mist_mag_vega_st[idx]
+                    elif system_old=='AB' and system_new=='ST':
+                        companion_df[filt] = companion_df[filt] - mist_mag_vega_ab[idx] + mist_mag_vega_st[idx]
+                    elif system_old=='ST' and system_new=='AB':
+                        companion_df[filt] = companion_df[filt] - mist_mag_vega_st[idx] + mist_mag_vega_ab[idx]
+                    else:
+                        raise ValueError('Invalid magnitude system conversion: '+system_old+
+                            ' -> '+system_new)
+        return system_df, companion_df

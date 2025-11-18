@@ -6,7 +6,7 @@ __all__ = ["AdditionalCuts", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-05-14"
 
-import pandas
+import pandas as pd
 import numpy as np
 from ._post_processing import PostProcessing
 
@@ -39,26 +39,30 @@ class AdditionalCuts(PostProcessing):
         self.standard_cuts = standard_cuts
         self.difference_cuts = difference_cuts
 
-    def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
+    def do_post_processing(self, system_df: pd.DataFrame
+            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
         """
-        Make the cuts and return the modified catalog.
+        Make the cuts based on the system table parameters
+        and applies to both tables.
         """
         
         if not self.standard_cuts==None:
             for cut in self.standard_cuts:
                 if cut[1]=='min':
-                    dataframe = dataframe[dataframe[cut[0]]>cut[2]]
+                    system_df = system_df[system_df[cut[0]]>cut[2]]
                 elif cut[1]=='max':
-                    dataframe = dataframe[dataframe[cut[0]]<cut[2]]
+                    system_df = system_df[system_df[cut[0]]<cut[2]]
                 else:
                     raise ValueError('Invalid cut type: '+cut[1]+'. Valid types are min and max')
         if not self.difference_cuts==None:
             for cut in self.difference_cuts:
                 if cut[2]=='min':
-                    dataframe = dataframe[(dataframe[cut[0]]-dataframe[cut[1]])>cut[3]]
+                    system_df = system_df[(system_df[cut[0]]-system_df[cut[1]])>cut[3]]
                 elif cut[2]=='max':
-                    dataframe = dataframe[(dataframe[cut[0]]-dataframe[cut[1]])<cut[3]]
+                    system_df = system_df[(system_df[cut[0]]-system_df[cut[1]])<cut[3]]
                 else:
                     raise ValueError('Invalid cut type: '+cut[2]+'. Valid types are min and max')
-        dataframe.reset_index(drop=True, inplace=True)
-        return dataframe
+        if companion_df is not None:
+            companion_df = companion_df[np.isin(companion_df['system_idx'].to_numpy(),
+                                        system_df['system_idx'].to_numpy)]
+        return system_df, companion_df

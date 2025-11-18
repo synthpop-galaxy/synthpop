@@ -8,10 +8,14 @@ __all__ = ["Blending", ]
 __author__ = "M.J. Huston"
 __date__ = "2025-05-08"
 
-import pandas
+import pandas as pd 
 import numpy as np
 from ._post_processing import PostProcessing
 from scipy.spatial import KDTree
+try:
+    from synthpop_utils.utils_functions import add_magnitudes, combine_system_mags
+except:
+    from .synthpop_utils.utils_functions import add_magnitudes, combine_system_mags
 
 class Blending(PostProcessing):
     """
@@ -44,19 +48,25 @@ class Blending(PostProcessing):
             exts[in_pop] = ext_at_filt[in_pop]
         return mags_noext+exts
 
-    def do_post_processing(self, dataframe: pandas.DataFrame) -> pandas.DataFrame:
-        dataframe.reset_index(inplace=True, drop=True)
-        delta_l = np.array(dataframe['l'] - self.model.l_deg) * np.cos(self.model.b_deg*np.pi/180.0) * 3600
-        delta_b = np.array(dataframe['b'] - self.model.b_deg) * 3600
+    def do_post_processing(self, system_df: pd.DataFrame
+            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):        system_df.reset_index(inplace=True, drop=True)
+        
+        delta_l = np.array(system_df['l'] - self.model.l_deg) * np.cos(self.model.b_deg*np.pi/180.0) * 3600
+        delta_b = np.array(system_df['b'] - self.model.b_deg) * 3600
         pts = np.transpose([delta_l, delta_b])
         kdt = KDTree(pts)
         res = kdt.query_ball_point(pts, self.blend_radius)
+        if (not self.model.parms.combine_system_mags) and (companion_df is not None):
+            system_df_new = combine_system_mags(system_df.copy(), companion_df, self.model.populations[0].bands)
+        else:
+            system_df_new = system_df
         for filt in self.filters:
             if self.model.parms.obsmag:
-                mags = np.array(dataframe[filt])
+                mags = np.array(system_df_new[filt])
             else:
-                mags = self.get_obs_mags(dataframe, filt)
-            mag_arr = np.array(list(map(lambda i: -2.5*np.log10(np.sum(10**(-0.4*mags[i]))), res)))
-            dataframe[filt+'_bl'] = mag_arr
+                mags = self.get_obs_mags(system_df_new, filt)
+
+            mag_arr = np.array(list(map(lambda i: add_magnitudes(mags[i]), res)))
+            system_df[filt+'_bl'] = mag_arr
          
-        return dataframe
+        return system_df, companion_df
