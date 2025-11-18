@@ -142,6 +142,7 @@
         "chosen_bands": ["Bessell_B", "Bessell_V", "Bessell_I", "Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3", "2MASS_J", "2MASS_H", "2MASS_Ks", "Z087", "W146"],
         "#comment4":"Set obsmag to true for observed magnitude, false for absolute magnitudes",
         "obsmag":true,
+        "combine_system_mags": true,
 
         "#comment5": "Optional properties from the isochrones; these can overlap with the default properties.",
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"]

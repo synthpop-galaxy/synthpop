@@ -24,6 +24,7 @@ import pdb
 import numpy as np
 import pandas
 from tqdm.auto import tqdm
+import warnings
 
 # Local Imports
 # used to allow running as main and importing to another script
@@ -217,13 +218,13 @@ class Population:
             self.generator = SpiseaGenerator(self.population_density,
                 self.imf, self.age, self.metallicity, self.evolution,
                 self.glbl_params, self.position, self.max_mass, 
-                self.ifmr, self.mult, logger
+                self.ifmr, self.mult, self.bands, logger
                 )
         else:
             self.generator = StarGenerator(self.population_density,
                 self.imf, self.age, self.metallicity, self.evolution,
                 self.glbl_params, self.position, self.max_mass, 
-                self.ifmr, self.mult, logger
+                self.ifmr, self.mult, self.bands, logger
                 )
 
     def assign_subclasses(self):
@@ -626,15 +627,11 @@ class Population:
             {const.REQ_ISO_PROPS[0], self.glbl_params.maglim[0]},
             min_mass=self.min_mass, max_mass=self.max_mass)
         # get evolved mass
-        # TODO: I don't like how this mass column is being grabbed right now.
-        mass_evolved = star_sample['Mass'].to_numpy()
-        # assume no mass loss for not evolved stars
-        not_evolved = star_sample['not_evolved'].to_numpy()
-        mass_evolved[not_evolved] = star_sample['iMass'].to_numpy()[not_evolved]
-        # get average mass from imf
-        average_m_initial = np.mean(star_sample['iMass'].to_numpy())
+        average_m_evolved = star_sample['system_Mass'].mean()
+        # get average mass
+        average_m_initial = star_sample['iMass'].mean()
         # estimate mass loss correction
-        av_mass_corr = np.mean(mass_evolved) / average_m_initial
+        av_mass_corr = average_m_evolved / average_m_initial
 
         self.av_mass_corr = av_mass_corr
         #pdb.set_trace()
@@ -739,6 +736,7 @@ class Population:
 
         # placeholder to collect data frames
         df_list = []
+        comp_df_list = []
 
         # collect all the column names
         # required_properties + optional_properties + magnitudes
@@ -851,19 +849,20 @@ class Population:
                 final_expected_loop=True
                 gen_stars_chunk = np.copy(gen_missing_stars)
 
-            df = self.generator.generate_stars(radii, 
+            df, comp_df = self.generator.generate_stars(radii,
                 gen_stars_chunk, mass_limit, self.do_kinematics, props_list)
 
-            # extract magnitudes and convert to observed magnitudes if needed
-            df = self.extract_magnitudes(df)
-
-            # extract properties
-            df = self.extract_properties(df)
+            # extract magnitudes and properties
+            df, comp_df = self.apply_extinction(df, comp_df)
+            if self.glbl_params.combine_system_mags and (comp_df is not None):
+                df = self.combine_system_mags(df, comp_df)
+            # NOTE MY PROGRESS STOPPED HERE
+            # TODO: need to deal w spisea gen doing auto-combined mags
 
             # Keep track of all stars generated for option 3, until mass loss estimation is complete
             if self.lost_mass_option==3 and not opt3_mass_loss_done:
                 all_m_initial += list(star_set['iMass'])
-                all_m_evolved += list(star_set['Mass'])
+                all_m_evolved += list(star_set['system_Mass'])
                 all_r_inner   += list(star_set['r_inner'])
                 if final_expected_loop:
                     missing_stars = self.check_field(
@@ -876,33 +875,23 @@ class Population:
             else:
                 missing_stars -= gen_stars_chunk
 
-            # Convert Table to pd.DataFrame
-            # df = self.convert_to_dataframe(
-            #     self.popid, initial_parameters, m_evolved, final_phase_flag,
-            #     position[:, 3:6], proper_motions, position[:, 0:3], velocities,
-            #     vr_lsr, extinction_in_map, props, user_props, mags, headers
-            #     )
-            if (self.mult is not None) and ('system_'+self.glbl_params.maglim[0] not in df.keys()):
-                comb_mags = df.groupby('primary_ID')[self.glbl_params.maglim[0]].apply(lambda m: 
-                                -2.5*np.log10(np.sum(10**(-0.4*np.nan_to_num(m, nan=99))))*np.nan**np.all(np.isnan(m)))
-                df.loc[:, 'system_'+self.glbl_params.maglim[0]] = comb_mags[df['primary_ID'].to_numpy()].to_numpy()
-
             # add to previous drawn data
             if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) \
                                 and (not self.glbl_params.lost_mass_option==3):
-                if self.mult is not None:
-                    df = df[df['system_'+self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
-                else:
-                    df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
-                #pdb.set_trace()
-                #print(df)
+                df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             if (len(df)>0) and (self.mult is not None):
-                df.loc[:,'ID'] = df['ID'] + current_max_id + 1
-                df.loc[:,'primary_ID'] = df['primary_ID'] + current_max_id + 1
-                current_max_id = int(np.max(df['ID']))
-            df.drop(columns=['ref_mag','inside_grid','In_Final_Phase','not_evolved', 'star_mass',
-                             'r_inner'], inplace=True)
+                comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]
+            elif (len(df)==0) and (self.mult is not None):
+                comp_df.drop(comp_df.index, inplace=True)
+                
+            df.loc[:,'system_idx'] += (current_max_id + 1)
+            if self.mult is not None:
+                comp_df.loc[:,'system_idx'] += (current_max_id + 1)
+            if len(df)>0:
+                current_max_id = int(np.max(df['system_idx']))
+            df.drop(columns=['r_inner'], inplace=True)
             df_list.append(df)
+            comp_df_list.append(comp_df)
             loop_counts += 1
             if use_pbar:
                 pbar.update(np.sum(gen_stars_chunk))
@@ -913,16 +902,24 @@ class Population:
         # combine the results from the different loops
         if len(df_list)==0:
             population_df=pandas.DataFrame()
+            population_comp_df=pandas.DataFrame()
         else:
             population_df = pandas.concat(df_list, ignore_index=True)
+            if self.mult is not None:
+                population_comp_df = pandas.concat(comp_df_list, ignore_index=True)
+        if self.mult is None:
+            population_comp_df = None
         
         # Remove any excess stars
         if (self.lost_mass_option==3) and (len(population_df)>0):
             r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
-            population_df = self.remove_stars(population_df, r_inner, neg_missing_stars, radii)
-            population_df.reset_index(drop=True,inplace=True)
+            population_df = self.remove_stars(population_df, population_comp_df,
+                                    r_inner, neg_missing_stars, radii)
+            #population_df.reset_index(drop=True,inplace=True)
         if len(population_df)>0:
             population_df.loc[:, 'pop'] = self.popid
+            if population_comp_df is not None:
+                population_comp_df.loc[:,'pop'] = self.popid
 
         #pdb.set_trace()
         to = time.time()  # end timer
@@ -966,20 +963,15 @@ class Population:
                 mean_mass = em_incl * ((1 - frac_lowmass[1]) / gg.size()).sum()
                 logger.debug(f'average_mass_per_star_incl_lowmass = {mean_mass:.4f}')
 
-        if self.glbl_params.maglim[-1] != 'keep':
-            criteria = population_df[self.glbl_params.maglim[0]] < self.glbl_params.maglim[1]
-        else:
-            criteria = None
-
-        #sp_utils.log_basic_statistics(population_df, f"stats_{self.name}", criteria)
         logger.log(25, '# Done')
         logger.flush()
 
-        return population_df
+        return population_df, population_comp_df
 
     @staticmethod
     def remove_stars(
             df: pandas.DataFrame,
+            comp_df: pandas.DataFrame,
             radii_star: np.ndarray,
             missing_stars: np.ndarray,
             radii: np.ndarray
@@ -988,16 +980,16 @@ class Population:
         Removes stars form data frame in the corresponding slice
         if missing_stars is < 0
         """
-        primary_ids, idxs, cts= np.unique(df['primary_ID'], return_index=True, return_counts=True)
-        avg_stars_per_system = np.mean(cts)
+        #primary_ids, idxs, cts= np.unique(df['primary_ID'], return_index=True, return_counts=True)
+        #avg_stars_per_system = np.mean(cts)
         preserve = np.ones(len(radii_star), bool)
         for r, n in zip(radii, missing_stars):
             scale_n = int(round(n/avg_stars_per_system))
             if scale_n < 0:
-                primary_ids_slice = np.unique(df['primary_ID'].to_numpy()[radii_star==r])
+                primary_ids_slice = np.unique(df['system_idx'].to_numpy()[radii_star==r])
                 drop_primary_ids = np.random.choice(primary_ids_slice, replace=False, size=scale_n)
-                preserve[np.isin(df['primary_ID'].to_numpy(), drop_primary_ids)] = False
-        return df[preserve]
+                preserve[np.isin(df['system_idx'].to_numpy(), drop_primary_ids)] = False
+        return df[preserve], comp_df[np.isin(comp_df['system_idx'], df['system_idx'][preserve])]
 
     def check_field(
             self,
@@ -1096,26 +1088,9 @@ class Population:
 
         return u, v, w, vr, mu_l, mu_b, vr_lsr
 
-    def extract_magnitudes(self, df):
-
-        inside_grid = df['inside_grid'].to_numpy()
-        not_evolved = df['not_evolved'].to_numpy()
-        #ref_mag = df['ref_mag'].to_numpy()
-
-        #mags = np.full((len(ref_mag), len(self.bands)), 9999.)
-        mags = df[self.bands].to_numpy()
-        #pdb.set_trace()
-        #extinction_in_map = np.zeros(len(ref_mag))
+    def apply_extinction(self, df, comp_df):
         galactic_coordinates = df[['Dist', 'l','b']].to_numpy()
-
         dist_module = 5 * np.log10(galactic_coordinates[:, 0] * 100)
-
-        # for i, band in enumerate(self.bands):
-        #     mags[:, i] = df[band]
-
-        if self.glbl_params.obsmag:
-            #ref_mag[inside_grid] += dist_module[inside_grid]
-            mags[inside_grid] += dist_module[inside_grid, np.newaxis]
 
         extinction_in_map, extinction_dict = self.extinction.get_extinctions(
             galactic_coordinates[:, 1],
@@ -1123,46 +1098,31 @@ class Population:
             galactic_coordinates[:, 0])
 
         if self.glbl_params.obsmag:
-            ext_mag = extinction_dict.get(self.glbl_params.maglim[0], 0)
-            #ref_mag[:] += ext_mag
             for i, band in enumerate(self.bands):
-                mags[:, i] += extinction_dict.get(band, 0)   
+                ext_band = extinction_dict.get(band, 0)
+                df.loc[:,band] += ext_band
+                comp_df.loc[:,band] += ext_band[comp_df['system_idx'].to_numpy()]
 
-            if 'system_'+self.glbl_params.maglim[0] in df:
-                #sys_mags = df['system_'+self.glbl_params.maglim[0]].to_numpy()
-                #sys_mags += dist_module + ext_mag
-                df.loc[:,'system_'+self.glbl_params.maglim[0]] += dist_module + ext_mag
-
-        #mag_le_limit = ref_mag < self.glbl_params.maglim[1]
-
-        #mags[np.logical_not(mag_le_limit)] = np.nan
-        mags[np.logical_not(inside_grid)] = np.nan
-        mags[not_evolved] = np.nan
-
-        for i,band in enumerate(self.bands):
-            df.loc[:,band] = mags[:,i]
         df.loc[:,self.extinction.A_or_E_type] = extinction_in_map
-        #df.loc[:,'ref_mag'] = ref_mag
         #pdb.set_trace()
 
+        return df, comp_df
+        
+    @staticmethod
+    def add_magnitudes(mags):
+        mags = np.array(mags)
+        fluxes = np.nan_to_num(10**(-0.4*mags))
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=RuntimeWarning,
+                        message='divide by zero encountered in log')
+            mag_sum = -2.5*np.log10(np.sum(fluxes, axis=0))
+        if np.isinf(mag_sum):
+            mag_sum = np.nan
+        return mag_sum
+
+    def combine_system_mags(self, df, comp_df):
+        combined_gb = pandas.concat([df[['system_idx']+self.bands],
+                comp_df[['system_idx']+self.bands]]).groupby('system_idx')
+        for band in self.bands:
+            df[band] = combined_gb[band].apply(self.add_magnitudes)
         return df
-
-    #@staticmethod
-    def extract_properties(self,df):
-        # default masks
-        inside_grid = df['inside_grid'].to_numpy()
-        not_evolved = df['not_evolved'].to_numpy()
-
-        evolved_props = const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props
-
-        for prop in evolved_props:
-            df.loc[np.logical_not(inside_grid), prop] = np.nan
-            df.loc[not_evolved, prop] = np.nan
-        df.loc[np.logical_not(inside_grid), 'Mass'] = df['iMass'][np.logical_not(inside_grid)]
-        df.loc[np.logical_not(inside_grid), 'star_mass'] = df['iMass'][np.logical_not(inside_grid)]
-        df.loc[not_evolved, 'Mass'] = df['iMass'][not_evolved]
-        df.loc[not_evolved, 'star_mass'] = df['iMass'][not_evolved]
-
-        return df 
-
-

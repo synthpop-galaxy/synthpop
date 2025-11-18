@@ -357,29 +357,37 @@ class SynthPop:
         self.estimate_field_population()
         # Placeholder to collect all the data_frames from the populations
         field_list = []
+        field_companions_list = []
 
         max_star_id = -1
         for population in self.populations:
             # for each population, generate the field
-            population_df = population.generate_field()
+            population_df, population_comp_df = population.generate_field()
 
             logger.debug(
-                "%s : Number of stars generated: %i (%i columns)",
+                "%s : Number of star systems generated: %i (%i columns)",
                 population.name, *population_df.shape)
 
-            if (len(population_df)>0) and (self.parms.multiplicity_kwargs is not None):
-                population_df.loc[:,'ID'] = population_df['ID'].to_numpy() + max_star_id + 1
-                population_df.loc[:,'primary_ID'] = population_df['primary_ID'].to_numpy() + max_star_id + 1
-                max_star_id = int(np.max(population_df['ID']))
+            population_df.loc[:,'system_idx'] += (max_star_id + 1)
+            if population_comp_df is not None:
+                if len(population_comp_df)>0:
+                    population_comp_df.loc[:, 'system_idx'] += (max_star_id + 1)
+            if len(population_df)>0:
+                max_star_id = int(np.max(population_df['system_idx']))
 
             # collect data frame into field_list
             field_list.append(population_df)
+            field_companions_list.append(population_comp_df)
 
         # combine them into one common data frame
         logger.create_info_section('Combine Populations')
         field_df = pandas.concat(field_list, ignore_index=True)
+        if self.parms.multiplicity_kwargs is not None:
+            field_companions_df = pandas.concat(field_companions_list, ignore_index=True)
+        else:
+            field_companions_df = None
 
-        logger.info('Number of stars generated: %i (%i columns)', *field_df.shape)
+        logger.info('Number of star systems generated: %i (%i columns)', *field_df.shape)
         # check if velocities should be generated after all positions are generated
         if self.parms.kinematics_at_the_end:
             field_df = self.do_kinematics(field_df)
@@ -388,15 +396,15 @@ class SynthPop:
         # check if faint stars and stars outside the grid should be kept or removed
         if self.parms.maglim[-1] != 'keep':
             logger.info('remove stars which are too faint ')
-            if self.parms.multiplicity_kwargs is not None:
-                field_df = field_df[field_df['system_'+self.parms.maglim[0]] < self.parms.maglim[1]]
-            else:
-                field_df = field_df[field_df[self.parms.maglim[0]] < self.parms.maglim[1]]
+            field_df = field_df[field_df[self.parms.maglim[0]] < self.parms.maglim[1]]
+            if field_companions_df is not None:
+                field_companions_df = field_companions_df[np.isin(field_companions_df[
+                            'system_idx'].to_numpy(), field_df['system_idx'].to_numpy())]
 
             logger.info('cleaned field: Number of stars generated: %i (%i columns)', *field_df.shape)
             
         # reset object ids
-        field_df.reset_index(drop=True, inplace=True)
+        #field_df.reset_index(drop=True, inplace=True)
 #        if len(field_df)<np.max(field_df['ID']+1):
 #            new_ids = np.arange(len(field_df))
 #            old_ids = field_df['ID'].to_numpy().copy()
@@ -408,7 +416,7 @@ class SynthPop:
         logger.info(f"included_columns = {list(field_df.columns)}")
         #sp_utils.log_basic_statistics(field_df, "stats_field")
 
-        return field_df 
+        return field_df, field_companions_df
 
     def write_astrotable(self, filename: str, df: pandas.DataFrame, extension: str) -> None:
         """
@@ -444,7 +452,7 @@ class SynthPop:
         # save table
         tab.write(filename, format=extension, overwrite=True)
 
-    def write_to_file(self, df: pandas.DataFrame) -> str:
+    def write_to_file(self, df: pandas.DataFrame, companions=False) -> str:
         """
         write the results to disc
 
@@ -486,6 +494,8 @@ class SynthPop:
         kwargs.update(output_save_kwargs)
         # add extension to filename_base.
         filename = f"{self.filename_base}.{extension}"
+        if companions:
+            filename = f"{self.filename_base}_companions.{extension}"
         logger.log(25, 'write result to "%s"', filename)
 
         if extension.startswith('SAVE_ERROR'):
@@ -574,7 +584,7 @@ class SynthPop:
 
         # Step 2: Generate all the fields for each population
         ti = time.time()
-        field_df = self.generate_fields()
+        field_df, field_companions_df = self.generate_fields()
         t1 = time.time() - ti
 
         # Step 3: Save the results
@@ -582,14 +592,16 @@ class SynthPop:
         if isinstance(self.post_processing, list):
             # have multiple post-processing
             for post_processing in self.post_processing:
-                field_df = post_processing(field_df)
+                field_df, field_companions_df = post_processing(field_df, field_companions_df)
         else:
             # have single postprocessing
-            field_df = self.post_processing(field_df)
+            field_df, field_companions_df = self.post_processing(field_df, field_companions_df)
 
         if self.save_data:
             logger.create_info_subsection('Save result')
-            self.write_to_file(field_df)
+            self.write_to_file(field_df, companions=False)
+            if self.parms.multiplicity_kwargs is not None:
+                self.write_to_file(field_companions_df, companions=True)
         t2 = time.time() - ti
 
         # log end statement
@@ -613,7 +625,7 @@ class SynthPop:
         # create output location, if it does not exist
         os.makedirs(self.parms.output_location, exist_ok=True)
 
-        # Go through each b and l combination
+        # Go through each b and l  combination
         for l_b_deg in self.parms.loc:
             self.process_location(
                 *l_b_deg, field_shape=self.parms.field_shape,

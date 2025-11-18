@@ -202,7 +202,7 @@ class Position:
                 # density_pts = population_density_func(r_pts, phi_pts, z_pts)
                 # density_pts = density_pts.reshape(grid0[0].reshape)
                 # density_st_rad_sum = np.cumsum(np.sum(density_pts))
-                """Ok, so that was a mess. But it was close....."""
+                #Ok, so that was a mess. But it was close.....
 
             #raise NotImplementedError('Density scaling within slice not yet implemented')
         # rotate cone to l_deg, b_deg

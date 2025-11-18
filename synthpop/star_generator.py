@@ -63,7 +63,7 @@ class StarGenerator:
     """
 
     def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, ifmr_module, mult_module, logger):
+            glbl_params, position, max_mass, ifmr_module, mult_module, bands, logger):
         self.generator_name = 'StarGenerator'
         self.density_module = density_module
         self.imf_module = imf_module
@@ -78,9 +78,12 @@ class StarGenerator:
         self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
         self.ref_band = glbl_params.maglim[0]
+        self.bands = bands
+        self.obsmag = glbl_params.obsmag
         self.position=position
         self.max_mass = max_mass
         self.logger = logger
+        self.system_mags = False
 
     def generate_stars(self, radii, missing_stars, mass_limit,
         do_kinematics, props):
@@ -105,99 +108,91 @@ class StarGenerator:
             velocities = np.column_stack([u, v, w, ])
 
         # generate star at the positions
-        stars, shared_prop_idxs = self.generate_star_at_location(
+        star_systems, companions = self.generate_star_at_location(
             position[:, 0:3], props, min_mass, self.max_mass)
-        stars.loc[:,'x'] = position[:,0][shared_prop_idxs]
-        stars.loc[:,'y'] = position[:,1][shared_prop_idxs]
-        stars.loc[:,'z'] = position[:,2][shared_prop_idxs]
-        stars.loc[:,'Dist'] = position[:,3][shared_prop_idxs]
-        stars.loc[:,'l'] = position[:,4][shared_prop_idxs]
-        stars.loc[:,'b'] = position[:,5][shared_prop_idxs]
-        stars.loc[:,'r_inner'] = r_inner[shared_prop_idxs]
-        stars.loc[:,'vr_bc'] = proper_motions[:,0][shared_prop_idxs]
-        stars.loc[:,'mul'] = proper_motions[:,1][shared_prop_idxs]
-        stars.loc[:,'mub'] = proper_motions[:,2][shared_prop_idxs]
-        stars.loc[:,'U'] = velocities[:,0][shared_prop_idxs]
-        stars.loc[:,'V'] = velocities[:,1][shared_prop_idxs]
-        stars.loc[:,'W'] = velocities[:,2][shared_prop_idxs]
-        stars.loc[:,'VR_LSR'] = vr_lsr[shared_prop_idxs]
+        star_systems.loc[:,'x'] = position[:,0]
+        star_systems.loc[:,'y'] = position[:,1]
+        star_systems.loc[:,'z'] = position[:,2]
+        star_systems.loc[:,'Dist'] = position[:,3]
+        star_systems.loc[:,'l'] = position[:,4]
+        star_systems.loc[:,'b'] = position[:,5]
+        star_systems.loc[:,'r_inner'] = r_inner
+        star_systems.loc[:,'vr_bc'] = proper_motions[:,0]
+        star_systems.loc[:,'mul'] = proper_motions[:,1]
+        star_systems.loc[:,'mub'] = proper_motions[:,2]
+        star_systems.loc[:,'U'] = velocities[:,0]
+        star_systems.loc[:,'V'] = velocities[:,1]
+        star_systems.loc[:,'W'] = velocities[:,2]
+        star_systems.loc[:,'VR_LSR'] = vr_lsr
+        
+        if self.obsmag:
+            dist_modulus = 5*np.log10(position[:,3] * 100)
+            for band in self.bands:
+                star_systems.loc[:,band] += dist_modulus
+                if companions is not None:
+                    companions.loc[:,band] += dist_modulus[
+                            companions['system_idx'].to_numpy()]
 
-        return stars
-        # return position, r_inner, proper_motions, velocities, vr_lsr, \
-        #     self.generate_star_at_location(
-        #     position[:, 0:3], props, min_mass, self.max_mass)
+        return star_systems, companions
 
     def generate_star_at_location(self, position, props, min_mass=None, max_mass=None):
         """
         generates stars at the given positions
         """
         n_stars = len(position)
-        # generate mass
+        # Generate base properties: intial mass, age, metallicity
         m_initial = self.imf_module.draw_random_mass(
             min_mass=min_mass, max_mass=max_mass, N=n_stars)
-
-        # generate age
         age = self.age_module.draw_random_age(n_stars)
-
-        # generate  metallicity
         met = self.met_module.draw_random_metallicity(
             N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=age)
 
+        # Generate evolved properties
+        s_props, final_phase_flag = self.get_evolved_props(m_initial, met, age, props)
+
+        # If assigned, apply IFMR to handle NS and BH evolution
+        if self.ifmr_module is not None:
+            s_props = self.apply_ifmr(m_initial, met, s_props, final_phase_flag)
+                
+        # If assigned, generate companions
         if self.mult_module is not None:
+            # Adopt metallicity and age of primary; generate init mass and orbits
             pri_ids, m_initial_companions, periods, eccentricities = \
                         self.mult_module.generate_companions(m_initial)
+            # Evolve companion stars
+            comp_s_props, comp_final_phase_flag = self.get_evolved_props(
+                 m_initial_companions, met[pri_ids], age[pri_ids], props)
+            # Apply IFMR if present
+            if self.ifmr_module is not None:
+                comp_s_props = self.apply_ifmr(m_initial_companions,
+                    met[pri_ids], comp_s_props, comp_final_phase_flag)
 
-            if len(pri_ids>0):
-                init_ids = np.arange(n_stars)
-                init_ids_stacked = np.insert(init_ids, pri_ids+1, pri_ids)
-                is_binary_init = np.isin(init_ids, pri_ids).astype(int)
-                m_initial = np.insert(m_initial, pri_ids+1, m_initial_companions)
-                age = age[init_ids_stacked]
-                met = met[init_ids_stacked]
-                all_ids = np.arange(len(m_initial))
-                is_binary = np.insert(is_binary_init, pri_ids+1, 2)
-                pri_ids_new = all_ids[is_binary<2]
-                pri_id_stacked = np.insert(pri_ids_new, pri_ids+1, pri_ids_new[pri_ids])
-                logP_stacked = np.repeat(np.nan, len(pri_id_stacked))
-                logP_stacked[is_binary>1] = periods
-                ecc_stacked = np.repeat(np.nan, len(pri_id_stacked))
-                ecc_stacked[is_binary>1] = eccentricities
-            else:
-                all_ids = np.arange(n_stars)
-                init_ids_stacked = all_ids
-                is_binary = np.zeros(n_stars)
-                pri_id_stacked = all_ids
-                logP_stacked = np.repeat(np.nan, n_stars)
-                ecc_stacked = np.repeat(np.nan, n_stars)
-        else:
-            init_ids_stacked = np.arange(len(m_initial))
-
-        ref_mag, s_props, final_phase_flag, inside_grid, not_evolved = self.get_evolved_props(
-            m_initial, met, age, props)
-
-        if self.ifmr_module is not None:
-            ref_mag, s_props, inside_grid = self.apply_ifmr(m_initial, met,
-                ref_mag, s_props, final_phase_flag, inside_grid)
-
-        if self.mult_module is not None:
-            star_dict = {"iMass": m_initial, "age": age, "Fe/H_initial":met,
-                              "In_Final_Phase": final_phase_flag, "inside_grid": inside_grid,
-                              "not_evolved": not_evolved, "Is_Binary":is_binary,
-                              "ID": all_ids, "primary_ID": pri_id_stacked,
-                              "ref_mag": ref_mag,
-                              "logP": logP_stacked, "eccentricity": ecc_stacked,
-                              "Mass": s_props['star_mass']}
-        else:
-            star_dict = {"iMass": m_initial, "age": age, "Fe/H_initial":met,
-                              "In_Final_Phase": final_phase_flag, "inside_grid": inside_grid,
-                              "not_evolved": not_evolved, "ref_mag": ref_mag,
-                              "Mass": s_props['star_mass']}
-                              
+        # Compile star systems table for output
+        m_final = s_props['star_mass']
+        star_dict = {"iMass": m_initial, "age": age, "Fe/H_initial":met,
+                          "n_companions":np.zeros(len(m_initial)),
+                          "system_idx": np.arange(len(m_initial)),
+                          "Mass": m_final,
+                          "system_Mass": m_final}
         star_dict.update(s_props)
-        stars = pandas.DataFrame.from_dict(star_dict)
-        #pdb.set_trace()
+        star_systems = pandas.DataFrame.from_dict(star_dict)
 
-        return stars, init_ids_stacked
+        # If assigned, generate companions table and adjust systems table
+        if self.mult_module is not None:
+            unique_pris, comp_count = np.unique(pri_ids, return_counts=True)
+            m_final_companions = comp_s_props['star_mass']
+            comp_dict = {"iMass": m_initial_companions, "Mass": m_final_companions,
+                         "system_idx": pri_ids}
+            comp_dict.update(comp_s_props)
+            companions = pandas.DataFrame.from_dict(comp_dict)
+            # Update systems table
+            star_systems.loc[unique_pris,"n_companions"] = comp_count
+            comp_mass_sums = companions.groupby("system_idx")['Mass'].sum()
+            star_systems.loc[comp_mass_sums.index, "system_Mass"] += comp_mass_sums
+        else:
+            companions = None
+
+        return star_systems, companions
 
     def get_evolved_props(
             self,
@@ -230,7 +225,7 @@ class StarGenerator:
         mag: ndarray
             list of the main magnitude
         s_track: dict
-            collection of ndarratys for each of the interpolated properties
+            collection of ndarrays for each of the interpolated properties
         inside_grid: ndarray
             used to check if the the star is inside the isochrone grid
         """
@@ -239,7 +234,7 @@ class StarGenerator:
 
         # placeholders
         s_track = {p: np.ones(len(m_init)) * np.nan for p in props}
-        mag = np.nan * np.ones(len(m_init))
+        #mag = np.nan * np.ones(len(m_init))
         inside_grid = np.ones(len(m_init), bool)
         in_final_phase = np.zeros(len(m_init), bool)
         not_performed = np.ones(len(m_init), bool)
@@ -263,31 +258,17 @@ class StarGenerator:
             # check if there are any stars for this step
             if len(which) == 0:
                 continue
-            # loop over bunches of at most chunk_size to reduce memory usage
-            '''if len(which) > self.chunk_size * 6 / 5:
-                chunk_size = self.chunk_size
-                use_chunks = True
-            else:
-                chunk_size = len(which) + 1
-                use_chunks = False
-            count_c = 0
 
-            if use_chunks:
-                print(count_c, "/", len(which), end="")'''
-
-            #for which2 in np.array_split(which, len(which) // chunk_size + 1):
-                # evolve the stars
-            which2=which
             if accept_np_arrays:
                 s_props_i, inside_grid_i, in_final_phase_i = evolution_i.get_evolved_props(
-                    m_init[which2], met[which2], age[which2], props, **kwargs)
+                    m_init[which], met[which], age[which], props, **kwargs)
 
             else:
                 # This can be used if self.evolution.get_evolved_props
                 # can not handle multiple stars and numpy array:
-                m_initial = m_init[which2]
-                metallicity = met[which2]
-                age2 = age[which2]
+                m_initial = m_init[which]
+                metallicity = met[which]
+                age2 = age[which]
                 s_props_array, inside_grid_i, in_final_phase_i = np.array([
                     evolution_i.get_evolved_props(
                         m_initial[i], metallicity[i], age2[i] * 1e9, props, **kwargs)
@@ -301,39 +282,40 @@ class StarGenerator:
 
             # update results to data array
             # update primary magnitude (used for limits etc)
-            mag_i = s_props_i.get(self.ref_band)
-            mag[which2] = mag_i
+            #mag_i = s_props_i.get(self.ref_band)
+            #mag[which] = mag_i
 
             # update flags
-            inside_grid[which2] = inside_grid_i
-            in_final_phase[which2] = in_final_phase_i
+            inside_grid[which] = inside_grid_i
+            in_final_phase[which] = in_final_phase_i
 
             # update properties
             for key in s_track.keys():
-                s_track[key][which2] = s_props_i[key]
-
-            #count_c += len(which2)
-            #if use_chunks:
-            #    print("\r", count_c, "/", len(which), end='')
-            # End loop we are removing here
+                s_track[key][which] = s_props_i[key]
 
             # update the list of not performed stars
             not_performed[which] = False
-            #if use_chunks: print('')
-            # check if anything left to do
-            #if not any(not_performed):
-            #    break
+            if not any(not_performed):
+                break
         self.logger.debug(f"used time = {time.time() - ti:.2f}s")
-        return mag, s_track, in_final_phase, inside_grid, not_performed
+        for prop in props:
+            if prop == 'star_mass':
+                s_track[prop][np.logical_not(inside_grid)] = \
+                                m_init[np.logical_not(inside_grid)]
+                s_track[prop][not_performed] = m_init[not_performed]
+            else:
+                s_track[prop][np.logical_not(inside_grid)] = np.nan
+                s_track[prop][not_performed] = m_init[not_performed]
+        return s_track, in_final_phase
 
-    def apply_ifmr(self, m_init, met, ref_mag, s_props, final_phase_flag, inside_grid):
+    def apply_ifmr(self, m_init, met, s_props, final_phase_flag):
         """
         Apply the IFMR to catch stars evolved past the grid and make them
         the appropriate dark remnant
         """
         m_compact, m_phase = self.ifmr_module.process_compact_objects(
             m_init[final_phase_flag], met[final_phase_flag])
-        ref_mag[final_phase_flag] = np.nan
+        #ref_mag[final_phase_flag] = np.nan
         for key in s_props.keys():
             if key=='star_mass':
                 s_props[key][final_phase_flag] = m_compact
@@ -341,8 +323,7 @@ class StarGenerator:
                 s_props[key][final_phase_flag] = m_phase
             else:
                 s_props[key][final_phase_flag] = np.nan
-        inside_grid[final_phase_flag] = True
-        return ref_mag, s_props, inside_grid
+        return s_props
 
 
 
