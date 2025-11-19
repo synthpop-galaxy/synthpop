@@ -366,8 +366,7 @@ class SynthPop:
                 "%s : Number of star systems generated: %i (%i columns)",
                 population.name, *population_df.shape)
 
-            if population_comp_df is not None:
-                if len(population_comp_df)>0:
+            if population_comp_df is not None and (len(population_comp_df)>0):
                     population_comp_df.loc[:, 'system_idx'] += (max_star_id + 1)
             if len(population_df)>0:
                 population_df.loc[:,'system_idx'] += (max_star_id + 1)
@@ -540,8 +539,10 @@ class SynthPop:
         return filename_base
 
     def process_location(
-            self, l_deg: float, b_deg: float, field_shape: str, 
-            field_scale: float or tuple or np.ndarray, field_scale_unit: str,
+            self, l_deg: float, b_deg: float,
+            field_shape: str = None,
+            field_scale: float = None,
+            field_scale_unit: str = None,
             save_data: bool = True
             ) -> pandas.DataFrame:
         """
@@ -566,6 +567,12 @@ class SynthPop:
         field_df : DataFrame
             Generated stars as Pandas Dataframe
         """
+        if field_shape is None:
+            field_shape = self.parms.field_shape
+        if field_scale is None:
+            field_scale = self.parms.field_scale
+        if field_scale_unit is None:
+            field_scale_unit = self.parms.field_scale_unit
 
         # store boolean if data should be stored to disc
         self.save_data = save_data
