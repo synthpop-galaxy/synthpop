@@ -152,7 +152,6 @@ class SynthPop:
         Wrapper function that initializes all the populations for the model.
         Can initialize with coordinates, but it is not necessary.
 
-
         Parameters
         ----------
         forced : bool
@@ -168,7 +167,7 @@ class SynthPop:
             logger.debug("populations are already initialized")
             return
 
-        logger.create_info_section('initialize population')
+        logger.create_info_section('Initialize populations')
 
         # get the model directory
         if not os.path.split(self.parms.model_name)[0]:
@@ -214,11 +213,12 @@ class SynthPop:
             Population(pop_params, pop_id, self.parms)
             for pop_id, pop_params in self.population_params.items()
             ]
-        logger.info("# all population are initialized")
+        logger.info("# All populations are initialized")
         self.populations_are_initialized = True
 
     def update_location(
-            self, l_deg: float, b_deg: float, field_shape: str, field_scale: float or tuple or np.ndarray, field_scale_unit: str
+            self, l_deg: float, b_deg: float, field_shape: str,
+            field_scale: float or tuple or np.ndarray, field_scale_unit: str
             ) -> None:
         """
         Simple wrapper to update filename, logfile, and all
@@ -249,8 +249,10 @@ class SynthPop:
                 logger.critical(msg)
                 raise FileExistsError(msg)
 
-        logger.update_location(f"{self.filename_base}.log", no_log_file=(not self.save_data))
-        logger.create_info_section('update location')
+        logger.update_location(f"{self.filename_base}.log", self.parms.parameters_dict,
+                                l_deg, b_deg, field_shape, field_scale, field_scale_unit,
+                                no_log_file=(not self.save_data))
+        logger.create_info_section('Update location')
         # update populations with the coordinates for the field
         logger.log(25, f"# set location to: ")
         logger.log(25, f"l, b = ({l_deg:.2f} deg, {b_deg:.2f} deg)")

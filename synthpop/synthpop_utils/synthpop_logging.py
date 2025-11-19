@@ -1,8 +1,8 @@
 """
-This module consist the logging class of the SynthPopFramework.
-It mainly works like a standard python logger.
-But can change the logging location and provided function
-to create sections in the logfile .
+This module consist the logging class of the SynthPop framework.
+It mainly works like a standard python logger
+but can change the logging location and provided function
+to create sections in the logfile.
 """
 
 __all__ = ["SynthpopLogger", "logger", "log_basic_statistics"]
@@ -16,6 +16,7 @@ from datetime import datetime
 import os
 import tempfile
 import numpy as np
+import json
 
 try:
     from constants import SYNTHPOP_DIR
@@ -23,7 +24,6 @@ except (ImportError, ValueError):
     from ..constants import SYNTHPOP_DIR
 
 LENGTH = 75
-
 
 class SynthpopLogger(logging.Logger):
     def __init__(
@@ -102,7 +102,7 @@ class SynthpopLogger(logging.Logger):
 
         # log date and time
         now = datetime.now()
-        self.info(f'Execution Date: {now.strftime("%d-%m-%Y %H:%M:%S")}')
+        self.info(f'Execution Date: {now.strftime("%Y-%m-%d %H:%M:%S")}')
 
     def create_info_section(self, msg):
         if len(msg) > LENGTH - 6:
@@ -130,11 +130,13 @@ class SynthpopLogger(logging.Logger):
             self.stream_logger.stream.write(f"\n\n{updated_msg}\n")
 
     def save_log_file(self, file_path):
-        self.current_file.seek(0)
+        #self.current_file.seek(0)
         with open(file_path, 'w') as f:
-            shutil.copyfileobj(self.current_file, f)
+            pass
+        #pdb.set_trace()
 
-    def update_location(self, filename, no_log_file=False):
+    def update_location(self, filename, parms_dict, l_deg, b_deg, field_shape,
+                        field_scale, field_scale_unit, no_log_file=False):
         """
         Copy the logfile header to a new location
         and continues logging at the new location
@@ -163,6 +165,18 @@ class SynthpopLogger(logging.Logger):
         self.filelogger.setLevel(self.stream_level)
         self.filelogger.setFormatter(self.file_formatter)
         self.addHandler(self.filelogger)
+        
+        if not no_log_file:
+            log_dict = parms_dict.copy()
+            log_dict.update({'l_set': [l_deg], 'b_set': [b_deg], 'l_set_type':'pairs',
+                         'b_set_type':'pairs', 'field_shape': field_shape,
+                         'field_scale': field_scale, 'field_scale_unit': field_scale_unit,
+                        })
+            now = datetime.now()
+            self.info(f'Execution Date: {now.strftime("%Y-%m-%d %H:%M:%S")}')
+            self.create_info_section("Settings")
+            self.create_info_subsection("Copy the following to a config file to redo this model generation:")
+            self.info(json.dumps(log_dict, indent=4))
 
     def cleanup(self):
         if self.file_logging_enabled:

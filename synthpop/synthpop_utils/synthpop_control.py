@@ -131,6 +131,7 @@ class Parameters:
         #     self.eff_wavelengths = tmp_eff_wavelengths
 
         # log settings to file
+        self.parameters_dict = {key: item for key, item in self.__dict__.items() if not key.startswith('_')}
         self.log_settings()
 
         # check if Settings are ok
@@ -238,9 +239,7 @@ class Parameters:
         """
         logger.create_info_subsection('copy the following to a config file'
                                       ' to redo this model generation', 20)
-        json_object = json.dumps(
-            {key: item for key, item in self.__dict__.items() if not key.startswith('_')},
-            indent=4)
+        json_object = json.dumps(self.parameters_dict, indent=4)
         logger.info(json_object)
 
     def read_default_config(self, default_config_file: str):
