@@ -920,7 +920,8 @@ class Population:
         if len(population_df)>0:
             population_df.loc[:, 'pop'] = self.popid
             if population_comp_df is not None:
-                population_comp_df.loc[:,'pop'] = self.popid
+                if len(population_comp_df)>0:
+                    population_comp_df.loc[:,'pop'] = self.popid
 
         #pdb.set_trace()
         to = time.time()  # end timer

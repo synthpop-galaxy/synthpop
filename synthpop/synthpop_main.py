@@ -607,7 +607,7 @@ class SynthPop:
         logger.debug(f'generate field: {t1:.1f}s | save field {t2:.1f}s')
         logger.info("---------------------------------------------------------------\n")
 
-        return field_df
+        return field_df, field_companions_df
 
     def process_all(self, forced=False) -> None:
         """
