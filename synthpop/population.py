@@ -919,9 +919,8 @@ class Population:
             #population_df.reset_index(drop=True,inplace=True)
         if len(population_df)>0:
             population_df.loc[:, 'pop'] = self.popid
-            if population_comp_df is not None:
-                if len(population_comp_df)>0:
-                    population_comp_df.loc[:,'pop'] = self.popid
+            if population_comp_df is not None and len(population_comp_df)>0:
+                population_comp_df.loc[:,'pop'] = self.popid
 
         #pdb.set_trace()
         to = time.time()  # end timer
@@ -1103,7 +1102,8 @@ class Population:
             for i, band in enumerate(self.bands):
                 ext_band = extinction_dict.get(band, 0)
                 df.loc[:,band] += ext_band
-                comp_df.loc[:,band] += ext_band[comp_df['system_idx'].to_numpy()]
+                if comp_df is not None and (len(comp_df)>0):
+                    comp_df.loc[:,band] += ext_band[comp_df['system_idx'].to_numpy()]
 
         df.loc[:,self.extinction.A_or_E_type] = extinction_in_map
         #pdb.set_trace()
