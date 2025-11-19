@@ -25,8 +25,8 @@ class EquatorialCoordinates(PostProcessing):
         super().__init__(model,logger, **kwargs)
         self.keep_galactic = keep_galactic
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         Perform the magnitude conversions and returns the modified DataFrame.
         """

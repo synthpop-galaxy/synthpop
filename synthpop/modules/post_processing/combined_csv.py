@@ -32,8 +32,8 @@ class CombinedCsv(PostProcessing):
         if os.path.isfile(self.combined_filename):
             os.remove(self.combined_filename)
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         Combine all catalogs into one output csv file, and returns the unchanged DataFrame.
         """

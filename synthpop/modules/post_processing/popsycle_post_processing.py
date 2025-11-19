@@ -57,8 +57,8 @@ class PopsyclePostProcessing(PostProcessing):
             self.mag_cols += [fset+'_'+f for f in filter_set_dict[fset]]
             self.synthpop_mag_cols += [filter_matching_mist[fset+'_'+f] for f in filter_set_dict[fset]]
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         Converts DataFrame into format needed for input to PopSyCLE as a replacement
         for Galaxia, saving the file to the set file name + '_psc.h5'.

@@ -1,10 +1,10 @@
 """
 SynthPop is a modular framework to generate synthetic galaxy population models.
-For usage see README.md!
+For usage see README.md and our ReadTheDocs site!
 
-This file contains the main SynthPop class and main function.
-Which handles the setting of synthpop, data collection
-from the different populations and saving process.
+This file contains the main SynthPop class and main function,
+which handles the setting of synthpop, data collection
+from the populations, and the saving process.
 The generation process for each population is performed by
 the Population class defined in population.py.
 """
@@ -28,31 +28,27 @@ import pandas
 import numpy as np
 import pdb
 
-# check if astropy is installed
+# Check if astropy is installed:
+# only needed if the output format is VoTable or FITS-table.
 if importlib.util.find_spec("astropy") is not None:
     import astropy.table as astrotable
-
 else:
     pass
-    # astropy is only needed if the output format is either VoTable or FITS-table
-
+    
 # Local Imports
 try:
     from . import constants as const
-
+    from .modules.post_processing import PostProcessing
+    from . import synthpop_utils as sp_utils
+    from .population import Population
+    from .synthpop_utils.synthpop_logging import logger
 except (ImportError, ValueError) as e:
     import constants as const
     import synthpop_utils as sp_utils
     from modules.post_processing import PostProcessing
     from population import Population
     from synthpop_utils.synthpop_logging import logger
-
-else:
-    from .modules.post_processing import PostProcessing
-    from . import synthpop_utils as sp_utils
-    from .population import Population
-    from .synthpop_utils.synthpop_logging import logger
-
+    
 
 class SynthPop:
     """
@@ -92,7 +88,7 @@ class SynthPop:
     get_filename(l_deg: float, b_deg: float, solid_angle_sr: float) : None
         generate the base of the filename (i.e. without extension) for a given location
     process_location(l_deg: float, b_deg: float,
-            solid_angle_sr: float, save_data: bool) : Pandas.DataFrame Dict
+            solid_angle_sr: float, save_data: bool) : Pandas.DataFrame, Pandas.DataFrame
         process a given location.
     process_all() : None
         process all locations as specified in the configuration
@@ -368,11 +364,11 @@ class SynthPop:
                 "%s : Number of star systems generated: %i (%i columns)",
                 population.name, *population_df.shape)
 
-            population_df.loc[:,'system_idx'] += (max_star_id + 1)
             if population_comp_df is not None:
                 if len(population_comp_df)>0:
                     population_comp_df.loc[:, 'system_idx'] += (max_star_id + 1)
             if len(population_df)>0:
+                population_df.loc[:,'system_idx'] += (max_star_id + 1)
                 max_star_id = int(np.max(population_df['system_idx']))
 
             # collect data frame into field_list

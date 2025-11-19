@@ -25,8 +25,8 @@ class CombineTables(PostProcessing):
     def __init__(self, model, logger, **kwargs):
         super().__init__(model, logger, **kwargs)
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         Perform the post-processing and return the modified DataFrame.
         """

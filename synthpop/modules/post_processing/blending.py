@@ -48,8 +48,8 @@ class Blending(PostProcessing):
             exts[in_pop] = ext_at_filt[in_pop]
         return mags_noext+exts
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):        system_df.reset_index(inplace=True, drop=True)
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         
         delta_l = np.array(system_df['l'] - self.model.l_deg) * np.cos(self.model.b_deg*np.pi/180.0) * 3600
         delta_b = np.array(system_df['b'] - self.model.b_deg) * 3600

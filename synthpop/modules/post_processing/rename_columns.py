@@ -28,8 +28,8 @@ class RenameColumns(PostProcessing):
         self.old_names = old_names
         self.new_names = new_names
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         Make the column name changes.
         """

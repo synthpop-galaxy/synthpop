@@ -9,6 +9,7 @@ __date__ = "2022-11-16"
 import pandas as pd
 from types import ModuleType
 from .. import default_sun
+from typing import Tuple
 
 class PostProcessing:
     """
@@ -37,8 +38,8 @@ class PostProcessing:
         #: Solar and LSR parameters
         self.sun = sun if sun is not None else default_sun
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         This is a placeholder for the postprocessing.
         It must accept the pandas data frame and must return a pandas data frame.

@@ -1,9 +1,14 @@
-""" This file contains several utils function """
-__all__ = ['solidangle_to_half_cone_angle', 'half_cone_angle_to_solidangle',
+"""
+This file contains several utility functions.
+"""
+
+__all__ = ["solidangle_to_half_cone_angle", "half_cone_angle_to_solidangle",
             "rotation_matrix", "add_magnitudes", "combine_system_mags"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 
 import numpy as np
+import pandas as pd
+import warnings
 
 def solidangle_to_half_cone_angle(solid_angle):
     return np.arccos(1 - solid_angle / (2. * np.pi))
@@ -82,7 +87,7 @@ def add_magnitudes(mags):
     return mag_sum
 
 def combine_system_mags(df, comp_df, filters):
-    combined_gb = pandas.concat([df[['system_idx']+filters],
+    combined_gb = pd.concat([df[['system_idx']+filters],
             comp_df[['system_idx']+filters]]).groupby('system_idx')
     for band in filters:
         df[band] = combined_gb[band].apply(add_magnitudes)

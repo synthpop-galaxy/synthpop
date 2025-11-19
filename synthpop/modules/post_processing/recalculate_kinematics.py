@@ -25,8 +25,8 @@ class RecalculateKinematics(PostProcessing):
         super().__init__(model,logger, **kwargs)
         self.pop_ids = pop_ids
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         Replace the kinematic columns and return the modified catalog.
         """

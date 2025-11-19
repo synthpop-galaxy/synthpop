@@ -29,8 +29,8 @@ class GullsPostProcessing(PostProcessing):
         self.cat_type = cat_type
         self.model = model
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
 
         if companion_df is not None:
             raise ValueError("Must run combine_tables postproc before"+ \

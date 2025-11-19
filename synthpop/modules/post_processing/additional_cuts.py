@@ -39,8 +39,8 @@ class AdditionalCuts(PostProcessing):
         self.standard_cuts = standard_cuts
         self.difference_cuts = difference_cuts
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         Make the cuts based on the system table parameters
         and applies to both tables.

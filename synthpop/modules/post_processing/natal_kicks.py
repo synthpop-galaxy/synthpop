@@ -31,8 +31,8 @@ class NatalKicks(PostProcessing):
         self.kick_mean_ns = kick_mean_ns
         self.kick_mean_bh = kick_mean_bh
 
-    def do_post_processing(self, system_df: pd.DataFrame
-            companion_df: pd.DataFrame) -> (pd.DataFrame pd.DataFrame):
+    def do_post_processing(self, system_df: pd.DataFrame,
+            companion_df: pd.DataFrame):
         """
         Perform the post-processing and return the modified DataFrame.
         """
