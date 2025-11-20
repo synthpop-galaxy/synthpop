@@ -36,7 +36,7 @@ except ImportError:
     from position import Position
     from star_generator import StarGenerator
     from synthpop_utils.synthpop_logging import logger
-    from synthpop_utils.utils_functions import add_magnitudes, combine_system_mags
+    from synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
     from synthpop_utils import coordinates_transformation as coord_trans
     from synthpop_utils import Parameters
     from modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
@@ -55,7 +55,7 @@ else:  # continue import when if synthpop is imported
     from .position import Position
     from .star_generator import StarGenerator
     from .synthpop_utils.synthpop_logging import logger
-    from .synthpop_utils.utils_functions import add_magnitudes, combine_system_mags
+    from .synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
     from .synthpop_utils import coordinates_transformation as coord_trans
     from .synthpop_utils import Parameters
     from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
@@ -854,12 +854,15 @@ class Population:
             df, comp_df = self.generator.generate_stars(radii,
                 gen_stars_chunk, mass_limit, self.do_kinematics, props_list)
 
-            # extract magnitudes and properties
+            # Make sure main df has selection option for primary or system mags
             df, comp_df = self.apply_extinction(df, comp_df)
-            if self.glbl_params.combine_system_mags and (comp_df is not None):
+            if self.glbl_params.combine_system_mags and (comp_df is not None) \
+                        and (not self.generator.system_mags):
                 df = combine_system_mags(df, comp_df, self.bands)
-            # TODO: need to deal w spisea gen doing auto-combined mags
-
+            if (not self.glbl_params.combine_system_mags) and (comp_df is not None) \
+                        and (self.generator.system_mags):
+                df = get_primary_mags(df, comp_df, self.bands)
+                
             # Keep track of all stars generated for option 3, until mass loss estimation is complete
             if self.lost_mass_option==3 and not opt3_mass_loss_done:
                 all_m_initial += list(star_set['iMass'])
@@ -912,7 +915,8 @@ class Population:
             population_comp_df = None
         
         # Remove any excess stars
-        if (self.lost_mass_option==3) and (len(population_df)>0):
+        if (self.lost_mass_option==3) and (len(population_df)>0) and
+            (self.generator.generator_name != 'SpiseaGenerator'):
             r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
             population_df = self.remove_stars(population_df, population_comp_df,
                                     r_inner, neg_missing_stars, radii)

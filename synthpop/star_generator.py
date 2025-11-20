@@ -182,7 +182,8 @@ class StarGenerator:
             unique_pris, comp_count = np.unique(pri_ids, return_counts=True)
             m_final_companions = comp_s_props['star_mass']
             comp_dict = {"iMass": m_initial_companions, "Mass": m_final_companions,
-                         "system_idx": pri_ids}
+                         "system_idx": pri_ids, "period": periods,
+                         "eccentricity": eccentricities}
             comp_dict.update(comp_s_props)
             companions = pandas.DataFrame.from_dict(comp_dict)
             # Update systems table

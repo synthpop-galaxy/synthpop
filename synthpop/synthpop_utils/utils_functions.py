@@ -85,10 +85,32 @@ def add_magnitudes(mags):
     if np.isinf(mag_sum):
         mag_sum = np.nan
     return mag_sum
+    
+def subtract_magnitudes(mag_sum, mags):
+    mags = np.array(mags)
+    fluxes = np.nan_to_num(10**(-0.4*mags))
+    flux_sum = np.nan_to_num(10**(-0.4*mag_sum))
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=RuntimeWarning,
+                    message='divide by zero encountered in log')
+        mag_diff = -2.5*np.log10(flux_sum - np.sum(fluxes, axis=0))
+    if np.isinf(mag_diff):
+        mag_diff = np.nan
+    return mag_diff
 
 def combine_system_mags(df, comp_df, filters):
     combined_gb = pd.concat([df[['system_idx']+filters],
             comp_df[['system_idx']+filters]]).groupby('system_idx')
     for band in filters:
-        df[band] = combined_gb[band].apply(add_magnitudes)
+        df.loc[:,band] = combined_gb[band].apply(add_magnitudes)
+    return df
+
+# TODO: NEEDS TESTED WHEN SPISEA GEN WORKING AGAIN
+def get_primary_mags(df, comp_df, filters):
+    comps_gb = comp_df[['system_idx']+filters].groupby('system_idx')
+    primary_idxs = df.index[df['n_companions']>0]
+    for band in filters:
+        df.loc[primary_idxs,band] = np.from_iter(map(lambda idx:
+                subtract_magnitudes(df.loc[idx, band], comps_gb[idx][band]),
+                primary_idxs), float)
     return df
