@@ -915,7 +915,7 @@ class Population:
             population_comp_df = None
         
         # Remove any excess stars
-        if (self.lost_mass_option==3) and (len(population_df)>0) and
+        if (self.lost_mass_option==3) and (len(population_df)>0) and \
             (self.generator.generator_name != 'SpiseaGenerator'):
             r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
             population_df = self.remove_stars(population_df, population_comp_df,
