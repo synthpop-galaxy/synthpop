@@ -21,6 +21,7 @@ from spisea import ifmr as spisea_ifmr
 import os
 import pdb
 import pandas as pd
+from astropy.table import vstack
 
 # Local Imports
 # used to allow running as main and importing to another script
@@ -77,6 +78,7 @@ class SpiseaGenerator(StarGenerator):
         self.synthpop_imf_module = imf_module
 
         # SPISEA specific setings
+        # TODO: there's some wack stuff here. clean it up
         if evolution_module.evo_model_name[:6]=='MISTv1': #.2') or (evolution_module.evo_model_name=='MISTv1.0'):
             n_version = float(evolution_module.evo_model_name[5:8])
             synthpop_extension = ("synthpop" in evolution_module.evo_model_name.lower())
@@ -106,9 +108,10 @@ class SpiseaGenerator(StarGenerator):
         else:
             raise ValueError("Invalid IFMR module for SpiseaGenerator. Only PopsycleIfmrs is available at this time.")
         self.spisea_multiplicity = None
-        if evolution_module.multiplicity_name is not None:
+        if self.mult_module is not None:
             self.spisea_multiplicity = getattr(spisea.multiplicity, evolution_module.multiplicity_name)()
-            raise NotImplementedError("Stellar multiplicity via SPISEA is not yet implemented.")
+            #raise NotImplementedError("Stellar multiplicity via SPISEA is not yet implemented.")
+        if self.ifmr
         if imf_module.imf_name=='Kroupa':
             self.spisea_imf = spisea_imfs.Kroupa_2001(multiplicity=self.spisea_multiplicity)
         elif imf_module.imf_name=='Piecewise Powerlaw':
@@ -130,21 +133,22 @@ class SpiseaGenerator(StarGenerator):
         self.mh_list = np.log10(np.array(self.spisea_evo_model.z_list) / self.spisea_evo_model.z_solar)
 
     @staticmethod
-    def spisea_props_to_synthpop(spisea_df):
-        #print(spisea_df.keys())
-        spisea_df.rename({'mass_current': 'Mass', 'mass':'iMass', 'logg':'log_g',
-                          'N_companions': 'n_companions'})
-        pd.eval('log_L = np.log10(lums/Lsun_w)', local_dict={'Lsun_w': const.Lsun_w,
-                'lums':spisea_df['L']}, target=spisea_df, inplace=True)
-        pd.eval('log_Teff = np.log10(Teffs)', local_dict={'Teffs'=spisea_df['Teff']},
-                target=spisea_df, inplace=True)
-        pd.eval('log_R = np.log10((np.sqrt(lums/(4*np.pi*sigma_sb*Teffs**4)))/Rsun_m)',
-                local_dict={'Lsun_w': const.Lsun_w, 'sigma_sb':const.sigma_sb, 'Rsun_m':const.Rsun_m,
-                'lums':spisea_df['L'], 'Teffs'=spisea_df['Teff']},
-                target=spisea_df, inplace=True)
-        spisea_df.drop(columns=['Teff', 'L', 'isMultiple', 'systemMass'], inplace=True, errors='ignore')
+    def spisea_props_to_synthpop(spisea_tab):
+        renames = {'mass_current': 'Mass', 'mass':'iMass', 'logg':'log_g',
+                          'N_companions': 'n_companions'}
+        sp_dict = {}
+        for col in spisea_tab.columns:
+            if col in renames:
+                sp_dict[renames[col]] = np.array(spisea_tab[col])
+            elif col not in ['Teff', 'L', 'isMultiple', 'systemMass']:
+                sp_dict[col] = np.array(spisea_tab[col])
+        lums = np.array(spisea_tab['L'])
+        teffs = np.array(spisea_tab['Teff'])
+        sp_dict['log_L'] = np.log10(lums/const.Lsun_w)
+        sp_dict['log_Teff'] = np.log10(teffs)
+        sp_dict['log_R'] = np.log10((np.sqrt(lums/(4*np.pi*const.sigma_sb*teffs**4)))/const.Rsun_m)
 
-        return spisea_df
+        return sp_dict
 
     def generate_stars(self, radii, missing_stars, mass_limit,
         do_kinematics, props):
@@ -214,37 +218,49 @@ class SpiseaGenerator(StarGenerator):
         if single_age and single_feh:
             age_all = self.log_age_list[np.argmin(np.abs(self.log_age_list-np.log10(self.age_module.age_value*1e9)))]
             mh_all = self.mh_list[np.argmin(np.abs(self.feh_list-self.met_module.metallicity_value))]
+            comb_bin_idxs = np.arange(n_stars)
             bins2d = [[age_all, feh_all, n_stars]]
         elif single_age:
             # Sample metallicities in [Fe/H], then bin by nearest grid point
             age_all = self.log_age_list[np.argmin(np.abs(self.log_age_list-np.log10(self.age_module.age_value*1e9)))]
             fehs = self.met_module.draw_random_metallicity(
                     N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=10**age_all/1e9)
-            feh_bins = np.unique(np.argmin(np.abs(self.feh_list - fehs[:, None]), axis=1), return_counts=True)
-            bins2d = np.transpose([np.ones(len(feh_bins[0]))*age_all, self.mh_list[feh_bins[0]], feh_bins[1]])
+            feh_bins, comb_bin_idxs, feh_bin_cts = np.unique(np.argmin(np.abs(self.feh_list - fehs[:, None]), axis=1), 
+                                                              return_inverse=True, return_counts=True)
+            bins2d = np.transpose([np.ones(len(feh_bins))*age_all, self.mh_list[feh_bins], feh_bin_cts])
         elif single_feh:
             # Sample ages in log10(yr), then bin by nearest grid point
             ages = np.log10(self.age_module.draw_random_age(n_stars)*1e9)
-            age_bins = np.unique(np.argmin(np.abs(self.log_age_list - ages[:, None]), axis=1), return_counts=True)
+            age_bins, comb_bin_idxs, age_bin_cts = np.unique(np.argmin(np.abs(self.log_age_list - ages[:, None]), axis=1), 
+                                                              return_inverse=True, return_counts=True)
             mh_all = self.mh_list[np.argmin(np.abs(self.feh_list-self.met_module.metallicity_value))]
-            bins2d = np.transpose([self.log_age_list[age_bins[0]], np.ones(len(age_bins[0]))*mh_all, age_bins[1]])
+            bins2d = np.transpose([self.log_age_list[age_bins], np.ones(len(age_bins))*mh_all, age_bin_cts])
         else:
             ages = np.log10(self.age_module.draw_random_age(n_stars)*1e9)
             fehs = self.met_module.draw_random_metallicity(
                 N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=10**np.mean(ages)/1e9)
             comb_vals = np.transpose([np.argmin(np.abs(self.log_age_list - ages[:, None]), axis=1), np.argmin(np.abs(self.feh_list-fehs[:,None]), axis=1)])
-            comb_bins = np.unique(comb_vals, axis=0, return_counts=True)
-            bin_ages = self.log_age_list[comb_bins[0][:,0]]
-            bin_mhs = self.mh_list[comb_bins[0][:,1]]
-            bins2d = np.transpose([bin_ages, bin_mhs, comb_bins[1]])
+            comb_bins, comb_bin_idxs, comb_bin_cts = np.unique(comb_vals, axis=0, return_inverse=True, return_counts=True)
+            bin_ages = self.log_age_list[comb_bins[:,0]]
+            bin_mhs = self.mh_list[comb_bins[:,1]]
+            bins2d = np.transpose([bin_ages, bin_mhs, comb_bin_cts])
 
         # Set up data arrays
         star_systems_list = []
         companions_list = []
         # TODO: need to deal with matching stars back in to proper positions in case metallicity is position-dependent :/
+        # We have the bin array inverses now, so that should help, right ??
+        star_systems_data = {param: np.zeros(n_stars) for param in props}
+        star_systems_data['age'] = np.zeros(n_stars)
+        star_systems_data['Fe/H_initial'] = np.zeros(n_stars)
+        star_systems_data['system_idx'] = np.zeros(n_stars)
+        companions_data = {param: [] for param in props}
+        companions_data['system_idx'] = []
 
         max_system_idx = -1
-        for bin2d in bins2d:
+        for i_bin, bin2d in enumerate(bins2d):
+            # Figure out where stars in this bin fit in the data set (so their positions and age/met can be correlated)
+            star_idxs_in_bin = np.where(comb_bin_idxs==i_bin)[0]
             # Use a minimum mass per cluster so we don't get an error
             star_systems_list_bin = []
             companions_list_bin = []
@@ -263,9 +279,6 @@ class SpiseaGenerator(StarGenerator):
                                     filters=self.spisea_filters)
                 cluster=spisea_synthetic.ResolvedCluster(isochrone, self.spisea_imf, generate_mass, ifmr=self.spisea_ifmr,
                                                             keep_low_mass_stars=True)
-                star_systems_i = cluster.star_systems.to_pandas()
-                if cluster.companions is not None:
-                    companions_i = cluster.companions.to_pandas()
                 keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
                 star_systems_i = star_systems_i[keep_idx]
                 if cluster.companions is not None:
@@ -276,9 +289,9 @@ class SpiseaGenerator(StarGenerator):
                 max_system_idx = star_systems_i['system_idx'].max()
                 cluster_stars_needed -= len(star_systems_i)
 
-            star_systems_bin = pd.concat(clusters, ignore_index=True)
+            star_systems_bin = vstack(star_systems_list_bin)
             if len(companions_list_bin)>0:
-                companions_bin = pd.concat(companions_list_bin)
+                companions_bin = vstack(companions_list_bin)
             else:
                 companions_bin = None
             # Drop any excess stars
@@ -286,21 +299,22 @@ class SpiseaGenerator(StarGenerator):
                 drop_idx = np.random.choice(star_systems_bin.index.to_numpy(),
                                 size=-cluster_stars_needed, replace=False)
                 star_systems_bin.drop(index=drop_idx, inplace=True)
+            # Get the data into the expected form and dropped in place in the star list
+            star_systems_bin = self.spisea_props_to_synthpop(star_systems_bin)
+            for param in props+['system_idx', 'n_companions']:
+                star_systems_data[param][star_idxs_in_bin] = star_systems_bin[param]
+            star_systems_data['age'][star_idxs_in_bin] = 10**bin2d[0] / 1e9
+            star_systems_data['Fe/H_initial'][star_idxs_in_bin] = self.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
             # Drop any companions whose systems got dropped
-            if self.mult_module is not None and len(companions>0):
-                companions_bin = companions_bin[np.isin(companions['system_idx'], star_systems['system_idx'])]
-                
-            star_systems.loc[:,'age'] = 10**bin2d[0] / 1e9
-            star_systems.loc[:,'Fe/H_initial'] =self.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
-
-            # Bin complete
-            star_systems_list.append(star_systems_bin)
-            companions_list.append(companions_bin)
+            if self.mult_module is not None and len(companions_bin>0):
+                companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_data['system_idx'])]
+            if self.mult_module is not None and len(companions_bin>0):
+                for param in props+['system_idx']:
+                    companions_data[param] += list(companions_bin['system_idx'])
             
-        star_systems = pd.concat(star_systems_list)
-        companions = pd.concat(companions_list) if (self.mult_module is not None) else None
+        star_systems = pd.DataFrame(star_systems_data)
+        companions = pd.DataFrame(companions_data) if (self.mult_module is not None) else None
         
-        star_systems = self.spisea_props_to_synthpop(star_systems)
         star_systems.loc[:,'system_Mass'] = star_systems['Mass']
         if self.mult_module is not None and len(companions>0):
             companions = self.spisea_props_to_synthpop(companions)
