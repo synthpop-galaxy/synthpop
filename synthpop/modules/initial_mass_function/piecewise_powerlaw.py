@@ -44,7 +44,7 @@ class PiecewisePowerlaw(InitialMassFunction):
             alphas: tuple[float] = (1), splitpoints: tuple[float] = (), **kwargs
             ):
         super().__init__(min_mass, max_mass)
-        self.imf_name = 'Piecewise Powerlaw'
+        self.imf_name = 'PiecewisePowerlaw'
 
         self.alphas = alphas
         self.splitpoints = splitpoints

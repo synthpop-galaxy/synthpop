@@ -22,7 +22,7 @@ from typing import Tuple, Dict, Union
 import pdb
 # Non-Standard Imports
 import numpy as np
-import pandas
+import pandas as pd
 from tqdm.auto import tqdm
 import warnings
 
@@ -104,7 +104,7 @@ class Population:
     estimate_field(self,) :
         float [M_sun], float [number of stars]
         estimate the total mass and stars in a field
-    generate_field(self) : pandas.DataFrame
+    generate_field(self) : pd.DataFrame
         generate stars in slices of self.step_size out to self.max_distance
     generate_stars_in_slice(self,r_inner,r_outer,N) :np.array
         generate the initial parameter for N = stars in a slices slice r_inner and r_outer
@@ -621,12 +621,13 @@ class Population:
             # use previously estimate values
             return self.av_mass_corr
 
+        logger.info(f"Evolving test set from population {self.popid} to estimate average initial->final mass ratio")
         # generate positions for a test sample
         positions = np.array(
             self.position.draw_random_point_in_slice(0, self.max_distance, n_stars))
 
         star_sample, _ = self.generator.generate_star_at_location(positions[0:3].T,
-            {const.REQ_ISO_PROPS[0], self.glbl_params.maglim[0]},
+            {'star_mass'},
             min_mass=self.min_mass, max_mass=self.max_mass)
         # get evolved mass
         average_m_evolved = star_sample['system_Mass'].mean()
@@ -697,7 +698,7 @@ class Population:
     #         vr_lsr, extinction_in_map, props, user_props, mags, headers
     #         ):
     #     """ convert data to a pandas data_frame"""
-    #     df = pandas.DataFrame(np.column_stack(
+    #     df = pd.DataFrame(np.column_stack(
     #         [np.repeat(popid, len(final_phase_flag)),  # pop,
     #             initial_parameters,  # iMass, age, Fe/H,
     #             m_evolved, final_phase_flag,  # Mass, In_Final_Phase
@@ -709,7 +710,7 @@ class Population:
     #         ), columns=headers)
     #     return df
 
-    def generate_field(self) -> pandas.DataFrame:
+    def generate_field(self) -> pd.DataFrame:
         """
         Generate the stars in the field
         estimates the number of stars from a density distribution
@@ -905,12 +906,12 @@ class Population:
 
         # combine the results from the different loops
         if len(df_list)==0:
-            population_df=pandas.DataFrame()
-            population_comp_df=pandas.DataFrame()
+            population_df=pd.DataFrame()
+            population_comp_df=pd.DataFrame()
         else:
-            population_df = pandas.concat(df_list, ignore_index=True)
+            population_df = pd.concat(df_list, ignore_index=True)
             if self.mult is not None:
-                population_comp_df = pandas.concat(comp_df_list, ignore_index=True)
+                population_comp_df = pd.concat(comp_df_list, ignore_index=True)
         if self.mult is None:
             population_comp_df = None
         
@@ -923,8 +924,8 @@ class Population:
             #population_df.reset_index(drop=True,inplace=True)
         if len(population_df)>0:
             population_df.loc[:, 'pop'] = self.popid
-            if population_comp_df is not None and len(population_comp_df)>0:
-                population_comp_df.loc[:,'pop'] = self.popid
+            # if population_comp_df is not None and len(population_comp_df)>0:
+            #     population_comp_df.loc[:,'pop'] = self.popid
 
         #pdb.set_trace()
         to = time.time()  # end timer
@@ -941,7 +942,7 @@ class Population:
         if len(population_df) != 0:
 
             logger.info(f'generated_total_iMass = {population_df["iMass"].sum():.4f}')
-            gg = population_df.groupby(pandas.cut(population_df.Dist, radii), observed=False)
+            gg = population_df.groupby(pd.cut(population_df.Dist, radii), observed=False)
             if self.skip_lowmass_stars:
                 im_incl = (gg["iMass"].sum()
                            + gg.size() * frac_lowmass[0] * frac_lowmass[1]
@@ -975,12 +976,12 @@ class Population:
 
     @staticmethod
     def remove_stars(
-            df: pandas.DataFrame,
-            comp_df: pandas.DataFrame,
+            df: pd.DataFrame,
+            comp_df: pd.DataFrame,
             radii_star: np.ndarray,
             missing_stars: np.ndarray,
             radii: np.ndarray
-            ) -> pandas.DataFrame:
+            ) -> pd.DataFrame:
         """
         Removes stars form data frame in the corresponding slice
         if missing_stars is < 0
@@ -1095,7 +1096,6 @@ class Population:
 
     def apply_extinction(self, df, comp_df):
         galactic_coordinates = df[['Dist', 'l','b']].to_numpy()
-        dist_module = 5 * np.log10(galactic_coordinates[:, 0] * 100)
 
         extinction_in_map, extinction_dict = self.extinction.get_extinctions(
             galactic_coordinates[:, 1],
@@ -1107,7 +1107,9 @@ class Population:
                 ext_band = extinction_dict.get(band, 0)
                 df.loc[:,band] += ext_band
                 if comp_df is not None and (len(comp_df)>0):
-                    comp_df.loc[:,band] += ext_band[comp_df['system_idx'].to_numpy()]
+                    sys_idxs = df['system_idx'].to_numpy()
+                    ext_band_series = pd.Series(ext_band, index=sys_idxs)
+                    comp_df.loc[:,band] += ext_band_series[comp_df['system_idx'].to_numpy()].to_numpy()
 
         df.loc[:,self.extinction.A_or_E_type] = extinction_in_map
         #pdb.set_trace()

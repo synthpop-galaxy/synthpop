@@ -43,6 +43,7 @@ class InitialMassFunction(ABC):
         """
         Initialize the IMF class for a Population class
         """
+        self.spisea_imf = None
         self.logger = logger
         # default mass limits
         if min_mass is  None: min_mass = 0.01

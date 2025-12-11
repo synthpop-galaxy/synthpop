@@ -15,10 +15,11 @@ import numpy as np
 import time
 from spisea import evolution as spisea_evolution
 from spisea import atmospheres as spisea_atmospheres
-from spisea.imf import imf as spisea_imfs
+from spisea.imf import imf as spisea_imf
+from spisea.imf import multiplicity as spisea_multiplicity
 from spisea import synthetic as spisea_synthetic
 from spisea import ifmr as spisea_ifmr
-import os
+import os, sys
 import pdb
 import pandas as pd
 from astropy.table import vstack
@@ -56,6 +57,15 @@ else:  # continue import when if synthpop is imported
     from .modules.metallicity import Metallicity
     from .modules.population_density import PopulationDensity
 
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
+
 class SpiseaGenerator(StarGenerator):
     def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
             glbl_params, position, max_mass, ifmr_module, mult_module, bands, logger):
@@ -63,79 +73,58 @@ class SpiseaGenerator(StarGenerator):
         spisea_dir=const.ISOCHRONES_DIR+'/spisea/'
         self.generator_name = 'SpiseaGenerator'
         self.density_module = density_module
-        self.age_module = age_module
-        self.met_module = met_module
+        self.imf_module = imf_module
         self.ifmr_module = ifmr_module
         self.mult_module = mult_module
+        self.age_module = age_module
+        self.met_module = met_module
+        self.evolution_module = evolution_module
         self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
         self.ref_band = glbl_params.maglim[0]
+        self.bands = bands
+        self.obsmag = glbl_params.obsmag
         self.position = position
         self.max_mass = max_mass
         self.logger = logger
-        self.bands = bands
         self.system_mags = True
-        self.synthpop_imf_module = imf_module
 
         # SPISEA specific setings
-        # TODO: there's some wack stuff here. clean it up
-        if evolution_module.evo_model_name[:6]=='MISTv1': #.2') or (evolution_module.evo_model_name=='MISTv1.0'):
-            n_version = float(evolution_module.evo_model_name[5:8])
-            synthpop_extension = ("synthpop" in evolution_module.evo_model_name.lower())
-            self.spisea_evo_model = spisea_evolution.MISTv1(version=n_version,
-                                                            synthpop_extension=synthpop_extension)
-            self.feh_list = np.array([-4.0,-3.5,-3.0,-2.5,-2.0,-1.75,-1.5,-1.25,
-                                      -1.0,-0.75,-0.5,-0.25,0,0.25,0.5])
-            self.log_age_list = np.linspace(5.0,10.3,107)
-            self.log_age_list[0] = 5.01
-        elif evolution_module.evo_model_name=='MergedBaraffePisaEkstromParsec':
-            self.spisea_evo_model = spisea_evolution.MergedBaraffePisaEkstromParsec()
-            self.feh_list = np.array([0.0])
-            self.log_age_list = np.linspace(6.0,10.1,83)
-            self.log_age_list[-1] = 10.9
-            Warning(f"Evolution module {evolution_module.evo_model_name} only includes solar metallicy. All stars will be assigned solar metallicity.")
-        else:
-            raise ValueError("Invalid SPISEA evolution_model. Only MISTv1.0, MISTv1.2, and MergedBaraffePisaEkstromParsec are available at this time.")
-        self.spisea_dir = spisea_dir+evolution_module.evo_model_name+'/'
+        self.spisea_dir = spisea_dir+evolution_module.spisea_evolution.model_version_name+'/'
         os.makedirs(self.spisea_dir, exist_ok=True)
-
-        #self.spisea_evo_model = getattr(spisea_evolution, evolution_module.evo_model_name)()
-        self.spisea_atm_func = getattr(spisea_atmospheres, evolution_module.atm_func_name)
-        self.spisea_wd_atm_func = getattr(spisea_atmospheres, evolution_module.wd_atm_func_name)
-        #self.spisea_ifmr = None
-        if self.ifmr_module.name == 'PopsycleIfmrs':
-            self.spisea_ifmr = getattr(spisea_ifmr, ifmr_module.spisea_ifmr_name)()
-        else:
-            raise ValueError("Invalid IFMR module for SpiseaGenerator. Only PopsycleIfmrs is available at this time.")
-        self.spisea_multiplicity = None
-        if self.mult_module is not None:
-            self.spisea_multiplicity = getattr(spisea.multiplicity, evolution_module.multiplicity_name)()
-            #raise NotImplementedError("Stellar multiplicity via SPISEA is not yet implemented.")
-        if self.ifmr
-        if imf_module.imf_name=='Kroupa':
-            self.spisea_imf = spisea_imfs.Kroupa_2001(multiplicity=self.spisea_multiplicity)
-        elif imf_module.imf_name=='Piecewise Powerlaw':
-            self.spisea_imf = spisea_imfs.IMF_broken_powerlaw([imf_module.min_mass, *imf_module.splitpoints, imf_module.max_mass],
-                                                    -np.array(imf_module.alphas), multiplicity=self.spisea_multiplicity)
-        else:
-            raise ValueError("Invalid IMF for SPISEA Generator; must use Kroupa or PiecewisePowerlaw.")
-        #self.spisea_imf = imf_module.spisea_imf
-        #self.multiplicity = imf_module.add_companions
-        #self.spisea_imf = getattr(spisea_imf.imf, imf_module.spisea_imf_name)()
-        self.spisea_filters = [filt.replace('-',',') for filt in evolution_module.bands]
         
-        # SPISEA limitations
-        self.spisea_max_log_age = 10.14
-        self.spisea_min_log_age = 5.0101
-        self.spisea_max_feh = 0.5
-        self.spisea_min_feh = -4.0
-        #self.spisea_age_bins =  100
-        self.mh_list = np.log10(np.array(self.spisea_evo_model.z_list) / self.spisea_evo_model.z_solar)
+
+        if (self.mult_module is not None) and (self.mult_module.name!='SpiseaMultiplicity'):
+            raise ValueError("Only SpiseaMultiplicity Multiplicity objects can be used by SpiseaGenerator")
+        if self.imf_module.imf_name=='Kroupa':
+            if self.mult_module is not None:
+                self.imf_module.spisea_imf = spisea_imf.Kroupa_2001(multiplicity=self.mult_module.spisea_multiplicity)
+            else:
+                self.imf_module.spisea_imf = spisea_imf.Kroupa_2001()
+        elif self.imf_module.imf_name=='PiecewisePowerlaw':
+            if self.mult_module is not None:
+                self.imf_module.spisea_imf = spisea_imf.IMF_broken_powerlaw([imf_module.min_mass, *imf_module.splitpoints, imf_module.max_mass],
+                                                    -np.array(imf_module.alphas), multiplicity=self.mult_module.spisea_multiplicity)
+            else:
+                self.imf_module.spisea_imf = spisea_imf.IMF_broken_powerlaw([imf_module.min_mass, *imf_module.splitpoints, imf_module.max_mass],
+                                                    -np.array(imf_module.alphas))
+        elif self.imf_module.imf_name=='SpiseaImf':
+            if (self.imf_module.spisea_multiplicity is None) and (self.mult_module is None):
+                pass
+            # Re-initialize IMF module with proper multiplicity if needed
+            elif (self.imf_module.spisea_multiplicity is None) and (self.mult_module.multiplicity_name=='SpiseaMultiplicity'):
+                self.imf_module.spisea_imf = getattr(spisea_imf, self.imf_module.spisea_imf_name)(
+                            massLimits=np.array([self.imf_module.min_mass, self.imf_module.max_mass]), 
+                            multiplicity=self.mult_module.spisea_multiplicity, **self.imf_module.spisea_imf_kwargs)
+        else:
+            raise ValueError("Invalid IMF for SPISEA Generator; must use Kroupa, PiecewisePowerlaw, or SpiseaImf")
+
+        self.mh_list = np.log10(np.array(self.evolution_module.spisea_evolution.z_list) / self.evolution_module.spisea_evolution.z_solar)
 
     @staticmethod
     def spisea_props_to_synthpop(spisea_tab):
         renames = {'mass_current': 'Mass', 'mass':'iMass', 'logg':'log_g',
-                          'N_companions': 'n_companions'}
+                          'N_companions': 'n_companions', 'e':"eccentricity"}
         sp_dict = {}
         for col in spisea_tab.columns:
             if col in renames:
@@ -147,6 +136,7 @@ class SpiseaGenerator(StarGenerator):
         sp_dict['log_L'] = np.log10(lums/const.Lsun_w)
         sp_dict['log_Teff'] = np.log10(teffs)
         sp_dict['log_R'] = np.log10((np.sqrt(lums/(4*np.pi*const.sigma_sb*teffs**4)))/const.Rsun_m)
+        sp_dict['star_mass'] = sp_dict['Mass']
 
         return sp_dict
 
@@ -195,8 +185,10 @@ class SpiseaGenerator(StarGenerator):
             for band in self.bands:
                 star_systems.loc[:,band] += dist_modulus
                 if companions is not None:
-                    companions.loc[:,band] += dist_modulus[
-                            companions['system_idx'].to_numpy()]
+                    sys_idxs = star_systems['system_idx'].to_numpy()
+                    dist_modulus_series = pd.Series(dist_modulus, index=sys_idxs)
+                    companions.loc[:,band] += dist_modulus_series[
+                            companions['system_idx'].to_numpy()].to_numpy()
 
         return star_systems, companions
 
@@ -206,7 +198,7 @@ class SpiseaGenerator(StarGenerator):
         """
         #pdb.set_trace()
         if avg_mass_per_star is None:
-            avg_mass_per_star = self.synthpop_imf_module.average_mass(min_mass=min_mass, max_mass=self.max_mass)
+            avg_mass_per_star = 1 #self.synthpop_imf_module.average_mass(min_mass=min_mass, max_mass=self.max_mass)
 
         n_stars = len(position)
 
@@ -216,32 +208,32 @@ class SpiseaGenerator(StarGenerator):
         
         # NOTE: We check Fe/H then convert to M/H for SPISEA
         if single_age and single_feh:
-            age_all = self.log_age_list[np.argmin(np.abs(self.log_age_list-np.log10(self.age_module.age_value*1e9)))]
-            mh_all = self.mh_list[np.argmin(np.abs(self.feh_list-self.met_module.metallicity_value))]
+            age_all = self.evolution_module.log_age_list[np.argmin(np.abs(self.evolution_module.log_age_list-np.log10(self.age_module.age_value*1e9)))]
+            mh_all = self.mh_list[np.argmin(np.abs(self.evolution_module.feh_list-self.met_module.metallicity_value))]
             comb_bin_idxs = np.arange(n_stars)
             bins2d = [[age_all, feh_all, n_stars]]
         elif single_age:
             # Sample metallicities in [Fe/H], then bin by nearest grid point
-            age_all = self.log_age_list[np.argmin(np.abs(self.log_age_list-np.log10(self.age_module.age_value*1e9)))]
+            age_all = self.evolution_module.log_age_list[np.argmin(np.abs(self.evolution_module.log_age_list-np.log10(self.age_module.age_value*1e9)))]
             fehs = self.met_module.draw_random_metallicity(
                     N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=10**age_all/1e9)
-            feh_bins, comb_bin_idxs, feh_bin_cts = np.unique(np.argmin(np.abs(self.feh_list - fehs[:, None]), axis=1), 
+            feh_bins, comb_bin_idxs, feh_bin_cts = np.unique(np.argmin(np.abs(self.evolution_module.feh_list - fehs[:, None]), axis=1), 
                                                               return_inverse=True, return_counts=True)
             bins2d = np.transpose([np.ones(len(feh_bins))*age_all, self.mh_list[feh_bins], feh_bin_cts])
         elif single_feh:
             # Sample ages in log10(yr), then bin by nearest grid point
             ages = np.log10(self.age_module.draw_random_age(n_stars)*1e9)
-            age_bins, comb_bin_idxs, age_bin_cts = np.unique(np.argmin(np.abs(self.log_age_list - ages[:, None]), axis=1), 
+            age_bins, comb_bin_idxs, age_bin_cts = np.unique(np.argmin(np.abs(self.evolution_module.log_age_list - ages[:, None]), axis=1), 
                                                               return_inverse=True, return_counts=True)
-            mh_all = self.mh_list[np.argmin(np.abs(self.feh_list-self.met_module.metallicity_value))]
-            bins2d = np.transpose([self.log_age_list[age_bins], np.ones(len(age_bins))*mh_all, age_bin_cts])
+            mh_all = self.mh_list[np.argmin(np.abs(self.evolution_module.feh_list-self.met_module.metallicity_value))]
+            bins2d = np.transpose([self.evolution_module.log_age_list[age_bins], np.ones(len(age_bins))*mh_all, age_bin_cts])
         else:
             ages = np.log10(self.age_module.draw_random_age(n_stars)*1e9)
             fehs = self.met_module.draw_random_metallicity(
                 N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=10**np.mean(ages)/1e9)
-            comb_vals = np.transpose([np.argmin(np.abs(self.log_age_list - ages[:, None]), axis=1), np.argmin(np.abs(self.feh_list-fehs[:,None]), axis=1)])
+            comb_vals = np.transpose([np.argmin(np.abs(self.evolution_module.log_age_list - ages[:, None]), axis=1), np.argmin(np.abs(self.evolution_module.feh_list-fehs[:,None]), axis=1)])
             comb_bins, comb_bin_idxs, comb_bin_cts = np.unique(comb_vals, axis=0, return_inverse=True, return_counts=True)
-            bin_ages = self.log_age_list[comb_bins[:,0]]
+            bin_ages = self.evolution_module.log_age_list[comb_bins[:,0]]
             bin_mhs = self.mh_list[comb_bins[:,1]]
             bins2d = np.transpose([bin_ages, bin_mhs, comb_bin_cts])
 
@@ -251,11 +243,18 @@ class SpiseaGenerator(StarGenerator):
         # TODO: need to deal with matching stars back in to proper positions in case metallicity is position-dependent :/
         # We have the bin array inverses now, so that should help, right ??
         star_systems_data = {param: np.zeros(n_stars) for param in props}
+        star_systems_data['iMass'] = np.zeros(n_stars)
+        star_systems_data['Mass'] = np.zeros(n_stars)
         star_systems_data['age'] = np.zeros(n_stars)
         star_systems_data['Fe/H_initial'] = np.zeros(n_stars)
-        star_systems_data['system_idx'] = np.zeros(n_stars)
+        star_systems_data['system_idx'] = np.zeros(n_stars, dtype=int)
+        star_systems_data['n_companions'] = np.zeros(n_stars)
         companions_data = {param: [] for param in props}
         companions_data['system_idx'] = []
+        companions_data['iMass'] = []
+        companions_data['Mass'] = []
+        companions_data['eccentricity'] = []
+        companions_data['log_a'] = []
 
         max_system_idx = -1
         for i_bin, bin2d in enumerate(bins2d):
@@ -265,28 +264,32 @@ class SpiseaGenerator(StarGenerator):
             star_systems_list_bin = []
             companions_list_bin = []
             n_bin = int(bin2d[-1])
-            print("Starting SPISEA cluster generation for bin log_age="+str(round(bin2d[0],2))+" [M/H]="+str(bin2d[1])+" for "+str(n_bin)+" stars")
+            self.logger.debug("Starting SPISEA cluster generation for bin log_age="+str(round(bin2d[0],2))+
+                                " [M/H]="+str(bin2d[1])+" for "+str(n_bin)+" stars")
             cluster_stars_needed = n_bin
-            generate_mass = np.minimum(np.maximum(cluster_stars_needed*avg_mass_per_star*1.1, 10.0), 
+            generate_mass = np.minimum(np.maximum(cluster_stars_needed*avg_mass_per_star*1.1, 100.0), 
                                     self.chunk_size*avg_mass_per_star)
             # Loop until we have enough stars
             while cluster_stars_needed > 0:
-                isochrone = spisea_synthetic.IsochronePhot(logAge=bin2d[0], AKs=0,
-                                    distance=10, metallicity=bin2d[1],
-                                    evo_model=self.spisea_evo_model, atm_func=self.spisea_atm_func,
-                                    wd_atm_func=self.spisea_wd_atm_func, iso_dir=self.spisea_dir,
-                                    min_mass=min_mass, max_mass=max_mass,
-                                    filters=self.spisea_filters)
-                cluster=spisea_synthetic.ResolvedCluster(isochrone, self.spisea_imf, generate_mass, ifmr=self.spisea_ifmr,
-                                                            keep_low_mass_stars=True)
-                keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
-                star_systems_i = star_systems_i[keep_idx]
-                if cluster.companions is not None:
-                    companions_i.loc[:,'system_idx'] += (max_system_idx + 1)
+                with HiddenPrints():
+                    isochrone = spisea_synthetic.IsochronePhot(logAge=bin2d[0], AKs=0,
+                                        distance=10, metallicity=bin2d[1],
+                                        evo_model=self.evolution_module.spisea_evolution, atm_func=self.evolution_module.spisea_atm_func,
+                                        wd_atm_func=self.evolution_module.spisea_wd_atm_func, iso_dir=self.spisea_dir,
+                                        min_mass=np.min(min_mass), max_mass=max_mass,
+                                        filters=self.evolution_module.bands_obs_str)
+                    cluster=spisea_synthetic.ResolvedCluster(isochrone, self.imf_module.spisea_imf, generate_mass, 
+                                                    ifmr=self.ifmr_module.spisea_ifmr, keep_low_mass_stars=True)
+                star_systems_i = cluster.star_systems
+                if "companions" in cluster.__dir__():
+                    companions_i = cluster.companions
+                    companions_i['system_idx'] += (max_system_idx + 1)
                     companions_list_bin.append(companions_i)
-                star_systems_i.loc[:, 'system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
-                star_systems_list_bin.append(star_systems_i)
+                star_systems_i['system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
                 max_system_idx = star_systems_i['system_idx'].max()
+                keep_idx = ((star_systems_i['mass']>np.min(min_mass)) & (star_systems_i['mass']<max_mass))
+                star_systems_i = star_systems_i[keep_idx]
+                star_systems_list_bin.append(star_systems_i)
                 cluster_stars_needed -= len(star_systems_i)
 
             star_systems_bin = vstack(star_systems_list_bin)
@@ -296,32 +299,34 @@ class SpiseaGenerator(StarGenerator):
                 companions_bin = None
             # Drop any excess stars
             if cluster_stars_needed<0:
-                drop_idx = np.random.choice(star_systems_bin.index.to_numpy(),
-                                size=-cluster_stars_needed, replace=False)
-                star_systems_bin.drop(index=drop_idx, inplace=True)
+                star_systems_bin = star_systems_bin[:cluster_stars_needed]
             # Get the data into the expected form and dropped in place in the star list
             star_systems_bin = self.spisea_props_to_synthpop(star_systems_bin)
-            for param in props+['system_idx', 'n_companions']:
+            for param in list(props)+['iMass','Mass','system_idx', 'n_companions']:
                 star_systems_data[param][star_idxs_in_bin] = star_systems_bin[param]
             star_systems_data['age'][star_idxs_in_bin] = 10**bin2d[0] / 1e9
-            star_systems_data['Fe/H_initial'][star_idxs_in_bin] = self.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
+            star_systems_data['Fe/H_initial'][star_idxs_in_bin] = self.evolution_module.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
             # Drop any companions whose systems got dropped
-            if self.mult_module is not None and len(companions_bin>0):
+            if self.imf_module.spisea_imf.make_multiples and len(companions_bin)>0:
                 companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_data['system_idx'])]
-            if self.mult_module is not None and len(companions_bin>0):
-                for param in props+['system_idx']:
-                    companions_data[param] += list(companions_bin['system_idx'])
-            
+                companions_bin = self.spisea_props_to_synthpop(companions_bin)
+            if self.imf_module.spisea_imf.make_multiples and len(companions_bin)>0:
+                for param in list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']:
+                    companions_data[param] += list(companions_bin[param])
+
         star_systems = pd.DataFrame(star_systems_data)
-        companions = pd.DataFrame(companions_data) if (self.mult_module is not None) else None
-        
+        star_systems.drop(columns='star_mass', inplace=True)
+        companions = pd.DataFrame(companions_data) if (self.imf_module.spisea_imf.make_multiples) else None
+
         star_systems.loc[:,'system_Mass'] = star_systems['Mass']
-        if self.mult_module is not None and len(companions>0):
-            companions = self.spisea_props_to_synthpop(companions)
-            comp_mass_sums = companions.groupby("system_idx")['Mass'].sum()
-            primary_idxs = star_systems.index[star_systems['n_companions']>0]
-            star_systems.loc[primary_idxs,'system_Mass'] += comp_mass_sums[
-                                    star_systems['system_idx'][primary_idxs]]
+        if self.imf_module.spisea_imf.make_multiples:
+            #companions = self.spisea_props_to_synthpop(companions)
+            companions.drop(columns='star_mass', inplace=True)
+            if len(companions)>0:
+                comp_mass_sums = companions.groupby("system_idx")['Mass'].sum()
+                primary_idxs = star_systems.index[star_systems['n_companions']>0]
+                star_systems.loc[primary_idxs,'system_Mass'] += comp_mass_sums[
+                                        star_systems['system_idx'][primary_idxs]]
 
         return star_systems, companions
 
