@@ -57,14 +57,19 @@ else:  # continue import when if synthpop is imported
     from .modules.metallicity import Metallicity
     from .modules.population_density import PopulationDensity
 
-class HiddenPrints:
+class BlockSpiseaPrints:
+    def __init__(self, block_prints):
+        self.block_prints=block_prints
+
     def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
+        if self.block_prints:
+            self._original_stdout = sys.stdout
+            sys.stdout = open(os.devnull, 'w')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout.close()
-        sys.stdout = self._original_stdout
+        if self.block_prints:
+            sys.stdout.close()
+            sys.stdout = self._original_stdout
 
 class SpiseaGenerator(StarGenerator):
     def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
@@ -271,7 +276,7 @@ class SpiseaGenerator(StarGenerator):
                                     self.chunk_size*avg_mass_per_star)
             # Loop until we have enough stars
             while cluster_stars_needed > 0:
-                with HiddenPrints():
+                with BlockSpiseaPrints(block_prints=self.evolution_module.block_spisea_prints):
                     isochrone = spisea_synthetic.IsochronePhot(logAge=bin2d[0], AKs=0,
                                         distance=10, metallicity=bin2d[1],
                                         evo_model=self.evolution_module.spisea_evolution, atm_func=self.evolution_module.spisea_atm_func,
