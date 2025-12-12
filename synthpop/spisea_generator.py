@@ -97,7 +97,9 @@ class SpiseaGenerator(StarGenerator):
         # SPISEA specific setings
         self.spisea_dir = spisea_dir+evolution_module.spisea_evolution.model_version_name+'/'
         os.makedirs(self.spisea_dir, exist_ok=True)
-        
+
+        if self.evolution_module.name != 'SpiseaCluster':
+            raise ValueError("To use SpiseaGenerator, the evolution class must be SpiseaCluster.")        
 
         if (self.mult_module is not None) and (self.mult_module.name!='SpiseaMultiplicity'):
             raise ValueError("Only SpiseaMultiplicity Multiplicity objects can be used by SpiseaGenerator")
