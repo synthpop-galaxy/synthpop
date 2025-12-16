@@ -163,7 +163,7 @@ class Position:
         else:
             pass
             #if self.field_shape == 'circle':
-                # # Make a grid, sum over angles, inverse transform distances
+                # Make a grid, sum over angles, inverse transform distances
                 # dist_pts_unique = np.linspace(dist_inner, dist_outer, 20)
                 # st_dir_pts_unique = np.linspace(0,2*np.pi, 20)
                 # st_rad_pts_unique = np.linspace(0,self.lb_radius_deg, 20)
@@ -175,7 +175,10 @@ class Position:
                 # r_pts, phi_pts, z_pts = self.coord_trans.dlb_to_rphiz(dist_pts, l_pts_rad*180/np.pi, b_pts_rad*180/np.pi)
                 # density_pts = population_density_func(r_pts, phi_pts, z_pts)
                 # density_pts = density_pts.reshape(grid[0].shape)
-                # density_dist_sum = np.cumsum(np.sum(density_pts, axis=(1,2)))
+                # density_dist_sum0 = np.sum(density_pts, axis=(1,2))
+                # density_dist_scaling0 = dist_pts_unique**2
+                # density_dist_scaling = density_dist_scaling0[:-1]*density_dist_sum0[:-1] + density_dist_scaling0[1:]*density_dist_sum0[1:]
+                # density_dist_sum = np.cumsum(np.concatenate(([0], density_dist_scaling)))
                 # d_kpc = np.interp(np.random.uniform(0, density_dist_sum[-1], size=n_stars), density_dist_sum, dist_pts_unique)
                 # # Then move on to the next dimension and do it again
                 # grid = np.meshgrid(d_kpc, st_dir_pts_unique, st_rad_pts_unique)
@@ -203,6 +206,21 @@ class Position:
                 # density_pts = density_pts.reshape(grid0[0].reshape)
                 # density_st_rad_sum = np.cumsum(np.sum(density_pts))
                 #Ok, so that was a mess. But it was close.....
+
+                # Let's try again .... rejection method
+                # dist_pts_unique = np.cbrt(np.linspace(dist_inner ** 3, dist_outer ** 3, n_grid_pts))
+                # st_dir_pts_unique = np.linspace(0,2*np.pi, n_grid_pts)
+                # st_rad_pts_unique = np.arccos(np.linspace(np.cos(self.lb_radius_deg*np.pi/180), 1, n_grid_pts))
+                # grid = np.meshgrid(dist_pts_unique, st_dir_pts_unique, st_rad_pts_unique)
+                # dist_pts, st_dir_pts, st_rad_pts = np.fromiter(map(np.ravel, grid))
+                # delta_l_pts_rad = st_rad_pts * np.sin(st_dir_pts)
+                # delta_b_pts_rad = st_rad_pts * np.cos(st_dir_pts)
+                # l_pts_rad, b_pts_rad = self.rotate_00_to_lb(delta_l_pts_rad, delta_b_pts_rad)
+                # r_pts, phi_pts, z_pts = self.coord_trans.dlb_to_rphiz(dist_pts, l_pts_rad*180/np.pi, b_pts_rad*180/np.pi)
+                # density_pts = population_density_func(r_pts, phi_pts, z_pts)
+                # density_pt_max = np.max(density_pts)
+                # ugh idk i can finish this some time, but i think it's gonna be real inefficient
+
 
             #raise NotImplementedError('Density scaling within slice not yet implemented')
         # rotate cone to l_deg, b_deg
