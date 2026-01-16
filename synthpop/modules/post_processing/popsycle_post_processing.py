@@ -33,8 +33,7 @@ filter_spisea_dict = {'UKIDSS_J': "m_ukirt_J",
                         'Bessell_I': "m_ubv_I",
                         'Bessell_B': "m_ubv_B",
                         'Bessell_V': "m_ubv_V",
-                        'Bessell_R': "m_ubv_R"
-                       }
+                        'Bessell_R': "m_ubv_R"}
 
 synthpop_nonmag_cols = ['l', 'b', 'Dist',
                         'x', 'y', 'z',
@@ -92,6 +91,7 @@ class PopsyclePostProcessing(PostProcessing):
             companion_df.rename(columns={filter_spisea_dict[f]:f for f in filter_spisea_dict},
                          inplace=True)
 
+
         # Drop unused data
         cols_to_cut = []
         for col in system_df.keys():
@@ -108,7 +108,7 @@ class PopsyclePostProcessing(PostProcessing):
 
         map = system_df.set_index('system_idx')['iMass'].squeeze()
         companion_df['zams_mass_prim'] = companion_df['system_idx'].map(map)
-        
+
         # Translate extinction to Ebv extinction
         if not self.model.populations[0].extinction.A_or_E_type=="E(B-V)":
             extinction = self.model.populations[0].extinction
@@ -151,7 +151,7 @@ class PopsyclePostProcessing(PostProcessing):
                                  'pop': 'popid',
                                  'b': 'glat', 'l': 'glon', 'Dist': 'rad',
                                  'log_g': 'grav', 'log_Teff': 'teff', '[Fe/H]': 'feh',
-                                 'n_companions':'N_companions', 'system_idx':'obj_id'}, 
+                                 'n_companions':'N_companions', 'system_idx':'obj_id'},
                          inplace=True)
         companion_df.rename(columns={'iMass':'zams_mass', 'log_Teff': 'teff', 'log_L':'L',
                             'log_g':'logg', 'Mass':'mass', '[Fe/H]':'metallicity',
