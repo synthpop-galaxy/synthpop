@@ -543,7 +543,7 @@ class SynthPop:
             field_shape: str = None,
             field_scale: float = None,
             field_scale_unit: str = None,
-            save_data: bool = True
+            save_data: bool = True, **kwargs
             ) -> pandas.DataFrame:
         """
         Performs the field generation for a given position.
@@ -597,10 +597,10 @@ class SynthPop:
         if isinstance(self.post_processing, list):
             # have multiple post-processing
             for post_processing in self.post_processing:
-                field_df, field_companions_df = post_processing(field_df, field_companions_df)
+                field_df, field_companions_df = post_processing(field_df, field_companions_df, **kwargs)
         else:
             # have single postprocessing
-            field_df, field_companions_df = self.post_processing(field_df, field_companions_df)
+            field_df, field_companions_df = self.post_processing(field_df, field_companions_df, **kwargs)
 
         if self.save_data:
             logger.create_info_subsection('Save result')
