@@ -292,6 +292,8 @@ class SpiseaGenerator(StarGenerator):
                     companions_i = cluster.companions
                     companions_i['system_idx'] += (max_system_idx + 1)
                     companions_list_bin.append(companions_i)
+                else:
+                    star_systems_i['n_companions'] = 0
                 star_systems_i['system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
                 max_system_idx = star_systems_i['system_idx'].max()
                 keep_idx = ((star_systems_i['mass']>np.min(min_mass)) & (star_systems_i['mass']<max_mass))

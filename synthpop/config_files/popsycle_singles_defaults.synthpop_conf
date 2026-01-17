@@ -1,0 +1,84 @@
+{   "SEED":{"random_seed":null},
+
+    "MANDATORY":{
+        "name_for_output":"popsycle_singles",
+        "model_name":"Huston2025"
+    },
+
+    "SIGHTLINES":{
+        "l_set":null,
+        "l_set_type":null,
+        "b_set":null,
+        "b_set_type": null,
+        "field_shape": "box",
+        "field_scale": null,
+        "field_scale_unit": "deg"
+    },
+
+    "COORDINATE_SYSTEM":{
+        "sun": {
+            "x": -8.178,
+            "y": 0.0,
+            "z": 0.017,
+            "u": 12.9,
+            "v": 245.6,
+            "w": 7.78,
+            "l_apex_deg": 56.24,
+            "b_apex_deg": 22.54
+        },
+        "lsr":{
+            "u_lsr": 1.8,
+            "v_lsr": 233.4,
+            "w_lsr": 0.53
+        },
+        "warp": {
+            "r_warp": 7.72,
+            "amp_warp": 0.060,
+            "amp_warp_pos": null,
+            "amp_warp_neg": null,
+            "alpha_warp": 1.33,
+            "phi_warp_deg": 17.5
+        }
+    },
+
+    "EXTINCTION_MAP":
+        {
+        "extinction_map_kwargs": {"name":"surot"},
+        "extinction_law_kwargs": [{"name":"SODC", "R_V":2.5}]
+        },
+
+    "POPULATION_GENERATION":{
+        "max_distance":25,
+        "distance_step_size":0.10,
+        "mass_lims":{"min_mass":0.08,"max_mass":100},
+        "N_mc_totmass":10000,
+        "lost_mass_option": 1,
+        "N_av_mass":50000,
+        "kinematics_at_the_end":false,
+        "scale_factor": 1,
+        "skip_lowmass_stars": false,
+        "chunk_size": 250000,
+        "star_generator": "SpiseaGenerator"
+    },
+
+    "ISOCHRONE_INTERPOLATION":{
+        "evolution_class": {"name":"SpiseaCluster", "block_spisea_prints":true},
+        "ifmr_kwargs": {"name":"SpiseaIfmr", "spisea_ifmr_name":"IFMR_N20_Sukhbold"},
+        "multiplicity_kwargs": null
+    },
+
+    "PHOTOMETRIC_OUTPUTS":{
+        "maglim":["m_ubv_I", 99, "keep"],
+        "chosen_bands": ["ubv", "ukirt"],
+        "obsmag":false,
+        "combine_system_mags":true,
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase"]
+    },
+    
+    "OUTPUT":{
+        "post_processing_kwargs":[{"name": "popsycle_post_processing"}],
+        "save_data": false,
+        "output_location":"synthpop_output",
+        "output_filename_pattern":"{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}"
+    }
+}
