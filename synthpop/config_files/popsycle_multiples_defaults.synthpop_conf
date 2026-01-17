@@ -1,7 +1,7 @@
 {   "SEED":{"random_seed":null},
 
     "MANDATORY":{
-        "name_for_output":"popsycle_multiples",
+        "name_for_output":"synthpop_multiples",
         "model_name":"Huston2025"
     },
 
