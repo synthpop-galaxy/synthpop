@@ -113,3 +113,32 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
     def get_evolved_props(**kwargs):
         raise ValueError("SpiseaCluster Evolution module is only compatible with SpiseaGenerator, not StarGenerator")
         return
+
+def generate_effective_wavelengths_json():
+    import pysynphot
+    with open(f'{EVOLUTION_DIR}/spisea_filters.json') as f:
+        d = json.load(f)
+    def do_filts(sys,flts):
+        efflamsi = {}
+        for flt in flts:
+                flt_name = sys+','+flt
+                filt = spisea_synthetic.get_filter_info(flt_name)
+                obs = pysynphot.Observation(pysynphot.Vega, filt).efflam()
+                assert str(filt.waveunits) == 'angstrom'
+                efflamsi[flt_name] = obs*1e-4
+                #pdb.set_trace()
+        return efflamsi
+
+    efflams = {}
+    for sys in d:
+        flts = d[sys]
+        if isinstance(flts,dict):
+            for subsys in flts:
+                efflams.update(do_filts(sys+','+subsys,flts[subsys]))
+        else:
+            efflams.update(do_filts(sys,flts))
+
+    json_object = json.dumps(efflams, indent=4)
+    with open(f"{EVOLUTION_DIR}/spisea_effective_wavelengths.json", "w") as outfile:
+        outfile.write(json_object)
+    return
