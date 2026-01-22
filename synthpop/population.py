@@ -503,6 +503,10 @@ class Population:
         if field_shape=='box':
             logger.debug(f"{self.position.l_length_deg}, {self.position.b_length_deg} degree l, b length box")
 
+        assert not np.any(np.isnan(self.extinction.get_extinctions([l_deg], [b_deg], [self.max_distance])[0])), \
+            fr"{self.extinction.extinction_map_name} not valid in direction l_deg={l_deg}, b_deg={b_deg} " \
+            f"at max distance {self.max_distance}. Check the map's sky coverage."
+
     def mc_totmass(self, r_inner: float, r_outer: float, n_picks: int = 1000) -> float:
         """
         Monte Carlo integration of the total mass in a slice,
