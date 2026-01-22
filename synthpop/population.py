@@ -204,6 +204,7 @@ class Population:
 
         # set wavelength bands and effective wavelength
         self.extinction.set_bands(self.bands, self.eff_wavelengths)
+        self.extinction.validate_extinction()
 
         self.av_mass_corr = None
         if self.glbl_params.star_generator=="SpiseaGenerator":
