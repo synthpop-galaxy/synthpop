@@ -21,10 +21,10 @@ MOMENTS_DIR = f"{SYNTHPOP_DIR}/data/moments"  # location where moment grids are 
 # Note that the Isochrones also need the initial mass, age, and metallicity for the interpolation
 REQ_ISO_PROPS = ["star_mass"]
 
-# Columnnames for output table
+# Column names for output table
 # You can rename each column, but you must keep the order!
 # If you add further items to REQ_ISO_PROPS, you must add the column names at the end.
-COL_NAMES = [
+REQ_COL_NAMES = [
         "pop", "iMass", "age",  "Fe/H_initial", "Mass",
         "In_Final_Phase", "Dist", "l", "b",
         "vr_bc", "mul", "mub",  "x", "y", "z",  "U", "V", "W", "VR_LSR", "ExtinctionInMap"]

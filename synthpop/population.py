@@ -748,7 +748,7 @@ class Population:
 
         # collect all the column names
         # required_properties + optional_properties + magnitudes
-        headers = const.COL_NAMES + self.glbl_params.opt_iso_props + self.bands
+        headers = const.REQ_COL_NAMES + self.glbl_params.opt_iso_props + self.bands
         # replace "ExtinctionInMap" with the output of the extinction map
         if 'ExtinctionInMap' in headers:
             extinction_index = headers.index("ExtinctionInMap")
@@ -825,8 +825,9 @@ class Population:
         self.population_density.average_mass = average_imass_per_star * av_mass_corr
         self.population_density.av_mass_corr = av_mass_corr
 
-        if not self.glbl_params.kinematics_at_the_end:
-            logger.info("# Determine velocities when position are generated ")
+        if self.glbl_params.kinematics_at_the_end:
+            logger.warning("kinematics_at_the_end option is no longer valid in SynthPop version 2.")
+            logger.warning("Kinematics will be calculated when a population is generated.")
 
         ################################################################
         #                  Generate Stars                              #
@@ -886,8 +887,7 @@ class Population:
                 missing_stars -= gen_stars_chunk
 
             # add to previous drawn data
-            if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.kinematics_at_the_end) \
-                                and (not self.glbl_params.lost_mass_option==3):
+            if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.lost_mass_option==3):
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             if (len(df)>0) and (self.mult is not None):
                 comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]

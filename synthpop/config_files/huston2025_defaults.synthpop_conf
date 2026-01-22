@@ -55,7 +55,6 @@
         "N_mc_totmass":10000,
         "lost_mass_option": 1,
         "N_av_mass":50000,
-        "kinematics_at_the_end":false,
         "scale_factor": 1,
         "skip_lowmass_stars": false,
         "chunk_size": 250000,

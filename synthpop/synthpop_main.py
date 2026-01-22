@@ -77,8 +77,6 @@ class SynthPop:
         wrapper to update the location in all the populations
     estimate_field_population() : None
         wrapper to estimate the field output for each population
-    do_kinematics(field_df: pandas.DataFrame) : pandas.DataFrame
-        wrapper to call the kinematics generation in each population
     generate_fields() : None
         wrapper to generate all the populations
     write_astrotable(filename: str, df: pandas.DataFrame, extension: str) : None
@@ -286,58 +284,6 @@ class SynthPop:
             logger.debug(f"Population {population.name} estimates: {mass_est:0.2f} M_sun "
                          f"will produce {stars_est:.1f} stars.")
 
-    def do_kinematics(self, field_df: pandas.DataFrame) -> pandas.DataFrame:
-        """
-
-        A simple wrapper to call the kinematic generation of each population
-
-        Note that the change is performed in place. I.e. It will overwrite
-        what the kinematics in field_df is
-
-        Parameters
-        ----------
-        field_df : DataFrame
-           Generated stars
-
-        Returns
-        -------
-        field_df
-            dataframe of the generated stars
-        """
-
-        logger.info("# Determine velocities after all stars are evolved ")
-
-        # extract columns
-        all_mass = field_df.iloc[:, 4].to_numpy()
-        all_dist, all_l_deg, all_b_deg = field_df.iloc[:, [6, 7, 8]].to_numpy().T
-        all_x, all_y, all_z = field_df.iloc[:, [12, 13, 14]].to_numpy().T
-        all_density_classes = tuple(pop.population_density for pop in self.populations)
-
-        for pop_id, population in enumerate(self.populations):
-            # select stars which belongs to population
-            stars_with_pop_id = field_df[const.COL_NAMES[0]] == pop_id
-
-            # call do_kinematics for the current population
-            u, v, w, vr, mul, mub, vr_lsr = population.do_kinematics(
-                dist=all_dist[stars_with_pop_id],
-                star_l_deg=all_l_deg[stars_with_pop_id], star_b_deg=all_b_deg[stars_with_pop_id],
-                x=all_x[stars_with_pop_id], y=all_y[stars_with_pop_id], z=all_z[stars_with_pop_id],
-                mass=all_mass[stars_with_pop_id],
-                all_x=all_x, all_y=all_y, all_z=all_z, all_mass=all_mass,
-                all_density_classes=all_density_classes, pop_id=pop_id)
-
-            # update velocities in population file
-            field_df.loc[stars_with_pop_id, const.COL_NAMES[9]] = vr
-            field_df.loc[stars_with_pop_id, const.COL_NAMES[10]] = mul
-            field_df.loc[stars_with_pop_id, const.COL_NAMES[11]] = mub
-
-            field_df.loc[stars_with_pop_id, const.COL_NAMES[15]] = u
-            field_df.loc[stars_with_pop_id, const.COL_NAMES[16]] = v
-            field_df.loc[stars_with_pop_id, const.COL_NAMES[17]] = w
-            field_df.loc[stars_with_pop_id, const.COL_NAMES[18]] = vr_lsr
-
-        return field_df
-
     def generate_fields(self) -> pandas.DataFrame:
         """
         calls the generate_field for all the populations and collects the data in a common
@@ -385,10 +331,6 @@ class SynthPop:
             field_companions_df = None
 
         logger.info('Number of star systems generated: %i (%i columns)', *field_df.shape)
-        # check if velocities should be generated after all positions are generated
-        if self.parms.kinematics_at_the_end:
-            field_df = self.do_kinematics(field_df)
-        #pdb.set_trace()
 
         # check if faint stars and stars outside the grid should be kept or removed
         if self.parms.maglim[-1] != 'keep':

@@ -81,9 +81,6 @@
         "lost_mass_option": 1,
         "N_av_mass":20000,
 
-        "#comment7":"Flag for estimate the velocities for all stars at once",
-        "kinematics_at_the_end":false,
-
         "#comment8": "Scale down the number of generated stars n_gen = (n/scale_factor)",
         "scale_factor": 1,
         "#comment9": "Reduce the generation of low-mass stars which are to faint",

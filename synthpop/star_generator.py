@@ -75,7 +75,6 @@ class StarGenerator:
             self.evolution_module = evolution_module
         else:
             self.evolution_module = (evolution_module,)
-        self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
         self.ref_band = glbl_params.maglim[0]
         self.bands = bands
@@ -95,17 +94,12 @@ class StarGenerator:
         min_mass = np.repeat(mass_limit, missing_stars)
         r_inner = np.repeat(radii[:-1], missing_stars)
 
-        if self.kinematics_at_the_end:
-            proper_motions = np.full((len(position), 3), np.nan)
-            velocities = np.full((len(position), 3), np.nan)
-            vr_lsr = np.repeat(np.nan, len(position))
-        else:
-            u, v, w, vr_hc, mu_l, mu_b, vr_lsr = do_kinematics(
-                position[:, 3], position[:, 4], position[:, 5],
-                position[:, 0], position[:, 1], position[:, 2]
-                )
-            proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
-            velocities = np.column_stack([u, v, w, ])
+        u, v, w, vr_hc, mu_l, mu_b, vr_lsr = do_kinematics(
+            position[:, 3], position[:, 4], position[:, 5],
+            position[:, 0], position[:, 1], position[:, 2]
+            )
+        proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
+        velocities = np.column_stack([u, v, w, ])
 
         # generate star at the positions
         star_systems, companions = self.generate_star_at_location(
