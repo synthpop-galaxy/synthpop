@@ -203,8 +203,9 @@ class Population:
             raise KeyError(f"Effect Wavelengths for {not_found} are not specified")
 
         # set wavelength bands and effective wavelength
-        self.extinction.set_bands(self.bands, self.eff_wavelengths)
-        self.extinction.validate_extinction()
+        if self.extinction is not None:
+            self.extinction.set_bands(self.bands, self.eff_wavelengths)
+            self.extinction.validate_extinction()
 
         self.av_mass_corr = None
         if self.glbl_params.star_generator=="SpiseaGenerator":
@@ -361,27 +362,31 @@ class Population:
                 sp_utils.get_subclass(ExtinctionLaw, ext_law, initialize=False,
                                       population_file=self.pop_params._filename)
                 for ext_law in self.glbl_params.extinction_law_kwargs]
-        # combine Extinction and Extinction laws in a combined Class
-        Extinction = CombineExtinction(ext_map=ExtMap, ext_law=ExtLaw)
-        # initialize extinction
-        if not isinstance(self.glbl_params.extinction_law_kwargs, list):
-            ext_law_kwargs = [self.glbl_params.extinction_law_kwargs]
+        if (ExtLaw is None) or (ExtMap is None):
+            logger.warning('Extinction Map and/or Law is set to None -- no extinction will be applied.')
+            return None
         else:
-            ext_law_kwargs = self.glbl_params.extinction_law_kwargs
-        logger.log(15, '"extinction_law_kwargs" : [')
-        for ext_law_kwarg in ext_law_kwargs:
-            msg = f'    {ext_law_kwarg},'.replace("'", '"')
-            msg = msg.replace('False', 'false').replace('True', 'true')
-            msg = msg.replace('None', 'null')
-            logger.debug(f'initialize Extinction law with keywords {ext_law_kwarg}')
-            logger.log(15, msg)
-        logger.log(15, '   ]')
-        extinction = Extinction(
-            ext_map_kwargs=self.glbl_params.extinction_map_kwargs,
-            ext_law_kwargs=self.glbl_params.extinction_law_kwargs,
-            logger=logger
-        )
-        return extinction
+            # combine Extinction and Extinction laws in a combined Class
+            Extinction = CombineExtinction(ext_map=ExtMap, ext_law=ExtLaw)
+            # initialize extinction
+            if not isinstance(self.glbl_params.extinction_law_kwargs, list):
+                ext_law_kwargs = [self.glbl_params.extinction_law_kwargs]
+            else:
+                ext_law_kwargs = self.glbl_params.extinction_law_kwargs
+            logger.log(15, '"extinction_law_kwargs" : [')
+            for ext_law_kwarg in ext_law_kwargs:
+                msg = f'    {ext_law_kwarg},'.replace("'", '"')
+                msg = msg.replace('False', 'false').replace('True', 'true')
+                msg = msg.replace('None', 'null')
+                logger.debug(f'initialize Extinction law with keywords {ext_law_kwarg}')
+                logger.log(15, msg)
+            logger.log(15, '   ]')
+            extinction = Extinction(
+                ext_map_kwargs=self.glbl_params.extinction_map_kwargs,
+                ext_law_kwargs=self.glbl_params.extinction_law_kwargs,
+                logger=logger
+            )
+            return extinction
 
     def get_population_density_class(self):
         logger.debug("%s : using PopulationDensity subclass '%s'", self.name,
@@ -404,23 +409,11 @@ class Population:
         return imf
 
     def get_ifmr_class(self):
-        # logger.debug("%s : using InitialFinalMassRelation subclass '%s'", self.name,
-        #              self.pop_params.ifmr_kwargs.name)
-        # ifmr = sp_utils.get_subclass(
-        #     InitialFinalMassRelation, self.pop_params.ifmr_kwargs,
-        #     keyword_name='ifmr_kwargs',
-        #     population_file=self.pop_params._filename)
         ifmr = sp_utils.get_subclass(InitialFinalMassRelation, self.glbl_params.ifmr_kwargs,
                         initialize=True, population_file=self.pop_params._filename)
         return ifmr
 
     def get_mult_class(self):
-        # logger.debug("%s : using InitialFinalMassRelation subclass '%s'", self.name,
-        #              self.pop_params.ifmr_kwargs.name)
-        # ifmr = sp_utils.get_subclass(
-        #     InitialFinalMassRelation, self.pop_params.ifmr_kwargs,
-        #     keyword_name='ifmr_kwargs',
-        #     population_file=self.pop_params._filename)
         mult = sp_utils.get_subclass(Multiplicity, self.glbl_params.multiplicity_kwargs,
                         initialize=True, population_file=self.pop_params._filename)
         return mult
@@ -503,9 +496,10 @@ class Population:
         if field_shape=='box':
             logger.debug(f"{self.position.l_length_deg}, {self.position.b_length_deg} degree l, b length box")
 
-        assert not np.any(np.isnan(self.extinction.get_extinctions([l_deg], [b_deg], [self.max_distance])[0])), \
-            fr"{self.extinction.extinction_map_name} not valid in direction l_deg={l_deg}, b_deg={b_deg} " \
-            f"at max distance {self.max_distance}. Check the map's sky coverage."
+        if self.extinction is not None:
+            assert not np.any(np.isnan(self.extinction.get_extinctions([l_deg], [b_deg], [self.max_distance])[0])), \
+                fr"{self.extinction.extinction_map_name} not valid in direction l_deg={l_deg}, b_deg={b_deg} " \
+                f"at max distance {self.max_distance}. Check the map's sky coverage."
 
     def mc_totmass(self, r_inner: float, r_outer: float, n_picks: int = 1000) -> float:
         """
@@ -750,9 +744,8 @@ class Population:
         # required_properties + optional_properties + magnitudes
         headers = const.REQ_COL_NAMES + self.glbl_params.opt_iso_props + self.bands
         # replace "ExtinctionInMap" with the output of the extinction map
-        if 'ExtinctionInMap' in headers:
-            extinction_index = headers.index("ExtinctionInMap")
-            headers[extinction_index] = self.extinction.A_or_E_type
+        if self.extinction is not None:
+            headers.append(self.extinction.A_or_E_type)
         # requested properties
         props_list = set(const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props + self.bands)
 
@@ -825,10 +818,6 @@ class Population:
         self.population_density.average_mass = average_imass_per_star * av_mass_corr
         self.population_density.av_mass_corr = av_mass_corr
 
-        if self.glbl_params.kinematics_at_the_end:
-            logger.warning("kinematics_at_the_end option is no longer valid in SynthPop version 2.")
-            logger.warning("Kinematics will be calculated when a population is generated.")
-
         ################################################################
         #                  Generate Stars                              #
         ################################################################
@@ -862,7 +851,8 @@ class Population:
                 gen_stars_chunk, mass_limit, self.do_kinematics, props_list)
 
             # Make sure main df has selection option for primary or system mags
-            df, comp_df = self.apply_extinction(df, comp_df)
+            if self.extinction is not None:
+                df, comp_df = self.apply_extinction(df, comp_df)
             if self.glbl_params.combine_system_mags and (comp_df is not None) \
                         and (not self.generator.system_mags):
                 df = combine_system_mags(df, comp_df, self.bands)

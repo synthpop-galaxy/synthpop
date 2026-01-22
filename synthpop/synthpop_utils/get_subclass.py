@@ -72,7 +72,8 @@ class SubClassLoader:
         # if isinstance(modul_kwargs, dict):
         #     modul_kwargs = ModuleKwargs.parse_obj(modul_kwargs)
         if (modul_kwargs is None) and (ParentClass.__name__ in
-                    ['InitialFinalMassRelation','Multiplicity']):
+                    ['InitialFinalMassRelation','Multiplicity',
+                     'ExtinctionMap', 'ExtinctionLaw']):
             logger.debug('setting %s class to None', ParentClass.__name__)
             return None
         kwargs = modul_kwargs.init_kwargs
