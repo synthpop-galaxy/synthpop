@@ -31,3 +31,4 @@ Contents
    models
    modules
    changelog
+   contributors
