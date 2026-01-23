@@ -86,7 +86,6 @@ class SpiseaGenerator(StarGenerator):
         self.evolution_module = evolution_module
         self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
-        self.ref_band = glbl_params.maglim[0]
         self.bands = bands
         self.obsmag = glbl_params.obsmag
         self.position = position

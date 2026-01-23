@@ -192,7 +192,7 @@ class Population:
             self.eff_wavelengths = dict(self.evolution.eff_wavelengths)
 
         # check if main magnitued is in self.bands
-        if self.glbl_params.maglim[0] not in self.bands:
+        if (self.glbl_params.maglim is not None) and (self.glbl_params.maglim[0] not in self.bands):
             msg = f'{self.glbl_params.maglim[0]}, used as filter for' \
                   f' the magnitude limit is not in {self.bands}'
             logger.critical(msg)
@@ -766,7 +766,8 @@ class Population:
         mass_limit = np.ones(radii[:-1].shape) * self.min_mass  # new min mass for each
         frac_lowmass = (0., 0.)  # average mass/ fraction of stars
 
-        if (self.glbl_params.maglim[1] > 50) \
+        if (self.glbl_params.maglim is None) \
+                or (self.glbl_params.maglim[1] > 50) \
                 or (not self.skip_lowmass_stars) \
                 or (not self.glbl_params.obsmag):
             pass
@@ -877,7 +878,7 @@ class Population:
                 missing_stars -= gen_stars_chunk
 
             # add to previous drawn data
-            if (self.glbl_params.maglim[-1] != "keep") and (not self.glbl_params.lost_mass_option==3):
+            if (self.glbl_params.maglim is not None) and (not self.glbl_params.lost_mass_option==3):
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             if (len(df)>0) and (self.mult is not None):
                 comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]

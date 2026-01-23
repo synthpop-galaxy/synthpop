@@ -333,7 +333,7 @@ class SynthPop:
         logger.info('Number of star systems generated: %i (%i columns)', *field_df.shape)
 
         # check if faint stars and stars outside the grid should be kept or removed
-        if self.parms.maglim[-1] != 'keep':
+        if self.parms.maglim is not None:
             logger.info('remove stars which are too faint ')
             field_df = field_df[field_df[self.parms.maglim[0]] < self.parms.maglim[1]]
             if field_companions_df is not None:

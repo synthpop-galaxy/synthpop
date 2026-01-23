@@ -76,7 +76,6 @@ class StarGenerator:
         else:
             self.evolution_module = (evolution_module,)
         self.chunk_size = glbl_params.chunk_size
-        self.ref_band = glbl_params.maglim[0]
         self.bands = bands
         self.obsmag = glbl_params.obsmag
         self.position=position
@@ -274,11 +273,6 @@ class StarGenerator:
                 s_props_i = {
                     key: np.array([i[key] for i in s_props_array])
                     for key in s_props_array[0].keys()}
-
-            # update results to data array
-            # update primary magnitude (used for limits etc)
-            #mag_i = s_props_i.get(self.ref_band)
-            #mag[which] = mag_i
 
             # update flags
             inside_grid[which] = inside_grid_i

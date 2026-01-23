@@ -141,8 +141,8 @@ class Parameters:
             logger.critical(msg)
             raise ValueError(msg)
         if hasattr(self, "col_names"):
-            logger.critical("Warning: col_names input is no longer used in SynthPop v1.1+. Use RenameColumns "+ \
-                "post-processing module to change column names instead.")
+            logger.critical("Warning: col_names input is no longer used in SynthPop v1.1+. Use " \
+                "RenameColumns post-processing module to change column names instead.")
 
         # transfer l, b into a a location generator.
         self.loc = self.location_generator()
@@ -154,10 +154,18 @@ class Parameters:
         if self.output_location.endswith(os.sep) or self.output_location.endswith("/"):
             self.output_location = os.path.join(self.output_location, self.name_for_output)
 
-        if getattr(self, 'skip_lowmass_stars', False) \
-                and getattr(self, 'kinematics_at_the_end', False):
-            raise ValueError("'skip_lowmass_stars' and 'kinematics_at_the_end' "
-                             "can not be set to true simultaneously")
+        if getattr(self, 'kinematics_at_the_end', False):
+            raise ValueError("'kinematics_at_the_end' option has been removed in " \
+                             "SynthPop versions >=2.0.0")
+
+        if (self.maglim is not None) and ("keep" in self.maglim):
+            raise ValueError("In SynthPop >=2.0.0, the \"keep\"/\"remove\" maglim options have been " \
+                "removed for clarity. Use maglim=None to keep all stars or e.g. maglim=['Bessell_I', " \
+                "21] to trim a catalog.")
+        if (self.maglim is not None) and ("remove" in self.maglim):
+            logger.critical("Warning: In SynthPop >=2.0.0, the \"keep\"/\"remove\" maglim options have been " \
+                "removed for clarity. Use maglim=None to keep all stars or e.g. maglim=['Bessell_I', " \
+                "21] to trim a catalog. This catalog will be trimmed.")
         #
         self.sun = SunInfo(**self.sun, **self.lsr)
         # convert to ModuleKwargs BaseModels
