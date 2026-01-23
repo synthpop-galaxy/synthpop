@@ -36,14 +36,15 @@
     "population_density_kwargs" : {
         "name" : "Koshimoto2021Bulge",
         "parameterization" : "B",
-        "rho0" : 0.88,
-        "x0" : 1.56,
-        "y0" : 0.72,
-        "z0" : 0.49,
+        "rho0" : 2.64,
+        "x0" : 0.76,
+        "y0" : 0.31,
+        "z0" : 0.40,
         "C_perp" : 1.2,
-        "C_par" : 3.1,
-        "R_c" : 2.8,
-        "X_shape" : false
+        "C_par" : 1.3,
+        "R_c" : 5.2,
+        "X_shape" : true,
+        "b_X" : 1.38
     }
 }
 

@@ -12,9 +12,8 @@
     },
 
     "metallicity_func_kwargs" : {
-        "name" : "gaussian",
-        "mean" : -0.78,
-        "std" : 0.30
+        "name" : "single_value",
+        "metallicity_value" : -0.78
     },
 
     "kinematics_func_kwargs" : {

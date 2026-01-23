@@ -6,16 +6,14 @@
     },
     
     "age_func_kwargs" : {
-        "name" : "uniform",
+        "name" : "single_value",
         "#comment" : "units in gigayears",
-        "low_bound" : 5.0,
-        "high_bound" : 7.0
+        "age_value" : 6.0
     },
 
     "metallicity_func_kwargs" : {
-        "name" : "gaussian",
-        "mean" : -0.14,
-        "std" : 0.17
+        "name" : "single_value",
+        "metallicity_value" : -0.09
     },
 
     "kinematics_func_kwargs" : {
