@@ -1,18 +1,22 @@
 {
     "name" : "test_population_6",
+    
     "imf_func_kwargs" : {
         "name" : "kroupa"
     },
+
     "age_func_kwargs" : {
         "name" : "single_value",
         "#comment" : "units in gigayears",
         "age_value" : 4.23
     },
+
       "metallicity_func_kwargs": {
         "#comment": "From Gonzalez, O.A.; et al. 2015",
         "name": "SingleValue",
         "met_value": -1.14
     },
+
     "kinematics_func_kwargs" : {
         "name" : "VelocityGradient",
         "sigma_u" : 19.8,

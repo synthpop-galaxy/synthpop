@@ -36,9 +36,6 @@
         "offset":0.5,
         "power":1,
         "flare_flag" : true
-    },
-
-    "mass_corr" : 0.691252,
-    "n_star_corr" : 1.44665
+    }
 }
 

@@ -1,5 +1,6 @@
 {
     "name" : "test_population_1",
+    
     "imf_func_kwargs" : {
         "name" : "kroupa"
     },
@@ -27,14 +28,17 @@
         "sigma_v" : 12.8,
         "sigma_w" : 8.0
     },
-      "population_density_kwargs" : {
+      
+    "population_density_kwargs" : {
         "name" : "Besancon2003Halo",
         "p0" : 3.9e5,
         "e" : 0.76,
         "ac" : 0.5,
         "power" : -2.44
 
-    },    "kinematics_func_kwargs" : {
+    },    
+
+    "kinematics_func_kwargs" : {
         "name" : "VelocityGradient",
         "sigma_u" : 19.8,
         "sigma_v" : 12.8,

@@ -34,7 +34,6 @@
         "low_bound": -0.725,
         "high_bound": 0.625,
         "radial_gradient": -0.07
-
     },
 
     "kinematics_func_kwargs" : {
@@ -43,7 +42,8 @@
         "sigma_v": 17.257,
         "sigma_w": 14.044
     },
-      "warp":{
+
+    "warp":{
         "r_warp": 9.169,
         "amp_warp_pos": 0.45300,
         "amp_warp_neg": 0.39000,

@@ -36,9 +36,6 @@
         "hrm" : 1.320,
         "offset":0.5,
         "power":1
-    },
-    
-    "av_mass_corr" : 0.588717,
-    "n_star_corr" : 1.69861
+    }
 }
 

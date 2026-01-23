@@ -12,7 +12,6 @@
         "gamma_flare": 0.0001,
         "radius_flare": 10,
         "disk_cutoff": 100
-
     },
 
     "imf_func_kwargs" : {
@@ -43,7 +42,8 @@
         "sigma_v": 13.851,
         "sigma_w": 11.272
     },
-      "warp":{
+      
+    "warp":{
         "r_warp": 9.5515,
         "amp_warp_pos": 0.47175,
         "amp_warp_neg": 0.26700,
