@@ -130,9 +130,8 @@
     },
 
     "PHOTOMETRIC_OUTPUTS":{
-        "#comment1":["Limiting magnitude- [band, limit, opt]",
-            "opt ='keep','remove'"],
-        "maglim":["2MASS_Ks",30, "keep"],
+        "#comment1":["Limiting magnitude- null or [band, limit]"],
+        "maglim":null,
         "#comment2":["Magnitude systems and bands to generate for each star.",
             "use '[magsys,...]' to take all magnitudes from a given system",
             "or '{magsys1:[filter1, filter2,...], magsys2:'all',...}' to avoid confusion"],

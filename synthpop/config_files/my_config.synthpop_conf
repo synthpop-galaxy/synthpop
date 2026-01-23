@@ -12,7 +12,7 @@
     "extinction_law_kwargs": [{"name":"SODC", "R_V":2.5}],
     "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
 
-    "maglim":["2MASS_Ks",21, "remove"],
+    "maglim":["2MASS_Ks",21],
     "obsmag": true,
 
     "name_for_output":"default_synthpop",
