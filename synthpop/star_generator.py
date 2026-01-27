@@ -21,7 +21,6 @@ try:
 except ImportError:
     import constants as const
     import synthpop_utils as sp_utils
-    from position import Position
     from synthpop_utils.synthpop_logging import logger
     from synthpop_utils import coordinates_transformation as coord_trans
     from synthpop_utils import Parameters
@@ -31,7 +30,6 @@ except ImportError:
 
 else:  # continue import when if synthpop is imported
     from . import synthpop_utils as sp_utils
-    from .position import Position
     from .synthpop_utils.synthpop_logging import logger
     from .synthpop_utils import coordinates_transformation as coord_trans
     from .synthpop_utils import Parameters
@@ -52,7 +50,6 @@ class StarGenerator:
     evolution_module
     glbl_params : dict
         global model parameters
-    position
     max_mass : float
         maximum allowed stellar mass
     ifmr_module
@@ -63,7 +60,7 @@ class StarGenerator:
     """
 
     def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, ifmr_module, mult_module, bands, logger):
+            glbl_params, max_mass, ifmr_module, mult_module, bands, logger):
         self.generator_name = 'StarGenerator'
         self.density_module = density_module
         self.imf_module = imf_module
@@ -78,38 +75,30 @@ class StarGenerator:
         self.chunk_size = glbl_params.chunk_size
         self.bands = bands
         self.obsmag = glbl_params.obsmag
-        self.position=position
         self.max_mass = max_mass
         self.logger = logger
         self.system_mags = False
 
-    def generate_stars(self, radii, missing_stars, mass_limit, do_kinematics, props):
-        position = np.vstack([
-            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, 
-                    n_stars, population_density_func=self.density_module.density))
-            for r_inner, r_outer, n_stars in zip(radii, radii[1:], missing_stars)
-            ])
-
-        min_mass = np.repeat(mass_limit, missing_stars)
-        r_inner = np.repeat(radii[:-1], missing_stars)
+    def generate_stars(self, missing_stars, mass_limit, do_kinematics, props):
+        position = self.density_module.draw_random_positions(missing_stars)
+        min_mass = mass_limit
 
         u, v, w, vr_hc, mu_l, mu_b, vr_lsr = do_kinematics(
-            position[:, 3], position[:, 4], position[:, 5],
-            position[:, 0], position[:, 1], position[:, 2]
+            position[3], position[4], position[5],
+            position[0], position[1], position[2]
             )
         proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
         velocities = np.column_stack([u, v, w, ])
 
         # generate star at the positions
         star_systems, companions = self.generate_star_at_location(
-            position[:, 0:3], props, min_mass, self.max_mass)
-        star_systems.loc[:,'x'] = position[:,0]
-        star_systems.loc[:,'y'] = position[:,1]
-        star_systems.loc[:,'z'] = position[:,2]
-        star_systems.loc[:,'Dist'] = position[:,3]
-        star_systems.loc[:,'l'] = position[:,4]
-        star_systems.loc[:,'b'] = position[:,5]
-        star_systems.loc[:,'r_inner'] = r_inner
+            position[0:3], props, min_mass, self.max_mass)
+        star_systems.loc[:,'x'] = position[0]
+        star_systems.loc[:,'y'] = position[1]
+        star_systems.loc[:,'z'] = position[2]
+        star_systems.loc[:,'Dist'] = position[3]
+        star_systems.loc[:,'l'] = position[4]
+        star_systems.loc[:,'b'] = position[5]
         star_systems.loc[:,'vr_bc'] = proper_motions[:,0]
         star_systems.loc[:,'mul'] = proper_motions[:,1]
         star_systems.loc[:,'mub'] = proper_motions[:,2]
@@ -119,7 +108,7 @@ class StarGenerator:
         star_systems.loc[:,'VR_LSR'] = vr_lsr
         
         if self.obsmag:
-            dist_modulus = 5*np.log10(position[:,3] * 100)
+            dist_modulus = 5*np.log10(position[3] * 100)
             for band in self.bands:
                 star_systems.loc[:,band] += dist_modulus
                 if companions is not None:
@@ -132,13 +121,13 @@ class StarGenerator:
         """
         Generate stars at the given positions with observed properties.
         """
-        n_stars = len(position)
+        n_stars = len(position[0])
         # Generate base properties: intial mass, age, metallicity
         m_initial = self.imf_module.draw_random_mass(
-            min_mass=min_mass, max_mass=max_mass, N=n_stars)
+            min_mass=np.min(min_mass), max_mass=max_mass, N=n_stars)
         age = self.age_module.draw_random_age(n_stars)
         met = self.met_module.draw_random_metallicity(
-            N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=age)
+            N=n_stars, x=position[0], y=position[1], z=position[2], age=age)
 
         # Generate evolved properties
         s_props, final_phase_flag = self.get_evolved_props(m_initial, met, age, props)
