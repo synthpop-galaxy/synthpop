@@ -1,7 +1,6 @@
 """
-This file contains the StarGenerator,
-It generates stars based on the provided initial distributions,
-evolves them and applies the extinction.
+This file contains the StarGenerator, which generates stars based on the provided 
+initial distributions and evolves them according to isochrones.
 """
 
 __all__ = ["StarGenerator"]
@@ -51,15 +50,16 @@ class StarGenerator:
     age_module
     met_module
     evolution_module
-    kinematics_at_end : bool
-        if true, wait until all stars are generated to calculate kinematics
-    chunk_size : int
-        number of stars to generate per chunk to limit memory use
-    ref_band : str
-        primary photometric filter for catalog
+    glbl_params : dict
+        global model parameters
     position
     max_mass : float
         maximum allowed stellar mass
+    ifmr_module
+    mult_module
+    bands : list
+        photometric filters
+    logger
     """
 
     def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
@@ -83,10 +83,10 @@ class StarGenerator:
         self.logger = logger
         self.system_mags = False
 
-    def generate_stars(self, radii, missing_stars, mass_limit,
-        do_kinematics, props):
+    def generate_stars(self, radii, missing_stars, mass_limit, do_kinematics, props):
         position = np.vstack([
-            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, n_stars, population_density_func=self.density_module.density))
+            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, 
+                    n_stars, population_density_func=self.density_module.density))
             for r_inner, r_outer, n_stars in zip(radii, radii[1:], missing_stars)
             ])
 
@@ -130,7 +130,7 @@ class StarGenerator:
 
     def generate_star_at_location(self, position, props, min_mass=None, max_mass=None):
         """
-        generates stars at the given positions
+        Generate stars at the given positions with observed properties.
         """
         n_stars = len(position)
         # Generate base properties: intial mass, age, metallicity
@@ -197,9 +197,9 @@ class StarGenerator:
             **kwargs
             ) -> Tuple[np.ndarray, Dict, np.ndarray]:
         """
-        evolve the stars using a list of evolution classes given by self.evolution
-        each evolution class have a min and max mass range where it should be used.
-        the used class are ranked by the order in the list.
+        Evolve the stars using a list of evolution classes given by self.evolution.
+        Each evolution class can have a min and max mass range;
+        the first class in the list which allows the star's given mass is used.
 
         Parameters
         ----------
@@ -216,8 +216,6 @@ class StarGenerator:
 
         Returns
         -------
-        mag: ndarray
-            list of the main magnitude
         s_track: dict
             collection of ndarrays for each of the interpolated properties
         inside_grid: ndarray
@@ -228,13 +226,11 @@ class StarGenerator:
 
         # placeholders
         s_track = {p: np.ones(len(m_init)) * np.nan for p in props}
-        #mag = np.nan * np.ones(len(m_init))
         inside_grid = np.ones(len(m_init), bool)
         in_final_phase = np.zeros(len(m_init), bool)
         not_performed = np.ones(len(m_init), bool)
 
         # check if multiple evolution classes are sepecified
-
         for i, evolution_i in enumerate(self.evolution_module):
             # check if evolution has an atribute which says if numpy arrays can be used
             if hasattr(evolution_i, 'accept_np_arrays'):
@@ -300,11 +296,10 @@ class StarGenerator:
     def apply_ifmr(self, m_init, met, s_props, final_phase_flag):
         """
         Apply the IFMR to catch stars evolved past the grid and make them
-        the appropriate dark remnant
+        the appropriate dark remnant.
         """
         m_compact, m_phase = self.ifmr_module.process_compact_objects(
             m_init[final_phase_flag], met[final_phase_flag])
-        #ref_mag[final_phase_flag] = np.nan
         for key in s_props.keys():
             if key=='star_mass':
                 s_props[key][final_phase_flag] = m_compact

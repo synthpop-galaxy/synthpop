@@ -7,8 +7,10 @@ according to the dedicated modules for:
 3) age distribution,
 4) metallicity distribution,
 5+6) isochrone systems and interpolator,
-7+8) extinction map and law, and
-9) kinematics.
+7) initial-final mass relation,
+8) multiplicity,
+9+10) extinction map and law, and
+11) kinematics.
 """
 
 __all__ = ["Population"]
@@ -30,6 +32,23 @@ import warnings
 # used to allow running as main and importing to another script
 try:
     from . import constants as const
+    from . import synthpop_utils as sp_utils
+    from .position import Position
+    from .star_generator import StarGenerator
+    from .synthpop_utils.synthpop_logging import logger
+    from .synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
+    from .synthpop_utils import coordinates_transformation as coord_trans
+    from .synthpop_utils import Parameters
+    from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
+    from .modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
+        CombineEvolution, MUST_HAVE_COLUMNS
+    from .modules.age import Age
+    from .modules.initial_mass_function import InitialMassFunction
+    from .modules.initial_final_mass_relation import InitialFinalMassRelation
+    from .modules.kinematics import Kinematics
+    from .modules.metallicity import Metallicity
+    from .modules.population_density import PopulationDensity
+    from .modules.multiplicity import Multiplicity
 except ImportError:
     import constants as const
     import synthpop_utils as sp_utils
@@ -50,26 +69,6 @@ except ImportError:
     from modules.population_density import PopulationDensity
     from modules.multiplicity import Multiplicity
 
-else:  # continue import when if synthpop is imported
-    from . import synthpop_utils as sp_utils
-    from .position import Position
-    from .star_generator import StarGenerator
-    from .synthpop_utils.synthpop_logging import logger
-    from .synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
-    from .synthpop_utils import coordinates_transformation as coord_trans
-    from .synthpop_utils import Parameters
-    from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
-    from .modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
-        CombineEvolution, MUST_HAVE_COLUMNS
-    from .modules.age import Age
-    from .modules.initial_mass_function import InitialMassFunction
-    from .modules.initial_final_mass_relation import InitialFinalMassRelation
-    from .modules.kinematics import Kinematics
-    from .modules.metallicity import Metallicity
-    from .modules.population_density import PopulationDensity
-    from .modules.multiplicity import Multiplicity
-
-
 class Population:
     """
     Population subclass for model class.
@@ -89,6 +88,8 @@ class Population:
     metallicity : metallicity.Metallicity subclass
     population_density : population_density.PopulationDensity subclass
     position : position.Position class
+    ifmr : initial_final_mass_ratio.InitialFinalMassRatio subclass or None
+    mult : multiplicity.Multiplicity subclass or None
 
     Methods
     -------
@@ -209,9 +210,6 @@ class Population:
 
         self.av_mass_corr = None
         if self.glbl_params.star_generator=="SpiseaGenerator":
-            # if self.lost_mass_option != 3:
-            #     logger.warning("Setting lost_mass_option to 3 for SpiseaGenerator.")
-            #     self.lost_mass_option = 3
             if self.skip_lowmass_stars:
                 logger.warning("Setting skip_lowmass_stars to False for SpiseaGenerator.")
                 self.skip_lowmass_stars = False
@@ -241,7 +239,9 @@ class Population:
         metallicity,
         kinematics,
         evolution,
-        extinction
+        extinction,
+        ifmr,
+        multiplicity
         """
 
         evolution = self.get_evolution_class()
@@ -543,7 +543,7 @@ class Population:
 
     def estimate_field(self, **kwargs) -> Tuple[float, float]:
         """
-        estimate the field in the current pointing
+        Estimate the total mass and number of stars in the current field
         """
 
         if self.position.l_deg is None:
@@ -599,9 +599,8 @@ class Population:
             **kwargs
             ) -> float:
         """
-        Estimates the ratio between the average evolved mass and initialmass
-        Generates and evolve N stars in the cone,
-        Evolve them and estimates the average mass
+        Estimates the ratio between the average evolved mass and initial mass by
+        generating and evolving n_stars stars in the field andevolving them.
 
         Parameters
         ----------
@@ -636,7 +635,6 @@ class Population:
         av_mass_corr = average_m_evolved / average_m_initial
 
         self.av_mass_corr = av_mass_corr
-        #pdb.set_trace()
 
         return av_mass_corr
 
@@ -711,21 +709,20 @@ class Population:
 
     def generate_field(self) -> pd.DataFrame:
         """
-        Generate the stars in the field
-        estimates the number of stars from a density distribution
-        and generates stars based on the individual distributions
-        estimates evolved properties by interpolating the isochrones
+        Generate the stars in the field. The number of stars is determined by
+        the density distribution, and the individual evolved properties come
+        from isochrone interpolation. 
 
         Returns
         -------
         population_df : DataFrame
             collected stars for this population
-        distribution : dict
-            collected distributions, by now only the distance distribution
+        population_companions_df : DataFrame
+            companions for the population_df stars (None if no multiplicity)
 
         """
         if self.position.l_deg is None:
-            msg = ("coordinates were not set."
+            msg = ("Coordinates were not set."
                    "You must run set_position(l_deg, b_deg, field_shape, field_scale, field_scale_unit)"
                    "before running 'estimate_field' or 'generate_field'")
             logger.critical(msg)
@@ -1108,7 +1105,6 @@ class Population:
                     comp_df.loc[:,band] += ext_band_series[comp_df['system_idx'].to_numpy()].to_numpy()
 
         df.loc[:,self.extinction.A_or_E_type] = extinction_in_map
-        #pdb.set_trace()
 
         return df, comp_df
 

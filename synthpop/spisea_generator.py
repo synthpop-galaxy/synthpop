@@ -1,8 +1,8 @@
 
 """
-This file contains the in-progress Spisea alternative to StarGenerator,
+This file contains the SPISEA-based alternative to StarGenerator. 
 It bins stars by age and metallicity and generates SPISEA clusters,
-    then assigns them locations based on the population_density
+    then assigns them locations based on the population_density.
 """
 
 __all__ = ["SpiseaGenerator"]
@@ -96,10 +96,8 @@ class SpiseaGenerator(StarGenerator):
         # SPISEA specific setings
         self.spisea_dir = spisea_dir+evolution_module.spisea_evolution.model_version_name+'/'
         os.makedirs(self.spisea_dir, exist_ok=True)
-
         if self.evolution_module.name != 'SpiseaCluster':
             raise ValueError("To use SpiseaGenerator, the evolution class must be SpiseaCluster.")        
-
         if (self.mult_module is not None) and (self.mult_module.name!='SpiseaMultiplicity'):
             raise ValueError("Only SpiseaMultiplicity Multiplicity objects can be used by SpiseaGenerator")
         if self.imf_module.imf_name=='Kroupa':
@@ -146,10 +144,10 @@ class SpiseaGenerator(StarGenerator):
 
         return sp_dict
 
-    def generate_stars(self, radii, missing_stars, mass_limit,
-        do_kinematics, props):
+    def generate_stars(self, radii, missing_stars, mass_limit, do_kinematics, props):
         position = np.vstack([
-            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, n_stars, population_density_func=self.density_module.density))
+            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, 
+                n_stars, population_density_func=self.density_module.density))
             for r_inner, r_outer, n_stars in zip(radii, radii[1:], missing_stars)
             ])
 
@@ -200,9 +198,8 @@ class SpiseaGenerator(StarGenerator):
 
     def generate_star_at_location(self, position, props, min_mass=None, max_mass=None, avg_mass_per_star=None):
         """
-        generates stars at the given positions
+        Generates stars at the given positions
         """
-        #pdb.set_trace()
         if avg_mass_per_star is None:
             avg_mass_per_star = 1 #self.synthpop_imf_module.average_mass(min_mass=min_mass, max_mass=self.max_mass)
 
@@ -246,8 +243,6 @@ class SpiseaGenerator(StarGenerator):
         # Set up data arrays
         star_systems_list = []
         companions_list = []
-        # TODO: need to deal with matching stars back in to proper positions in case metallicity is position-dependent :/
-        # We have the bin array inverses now, so that should help, right ??
         star_systems_data = {param: np.zeros(n_stars) for param in props}
         star_systems_data['iMass'] = np.zeros(n_stars)
         star_systems_data['Mass'] = np.zeros(n_stars)
@@ -266,13 +261,13 @@ class SpiseaGenerator(StarGenerator):
         for i_bin, bin2d in enumerate(bins2d):
             # Figure out where stars in this bin fit in the data set (so their positions and age/met can be correlated)
             star_idxs_in_bin = np.where(comb_bin_idxs==i_bin)[0]
-            # Use a minimum mass per cluster so we don't get an error
             star_systems_list_bin = []
             companions_list_bin = []
             n_bin = int(bin2d[-1])
             self.logger.debug("Starting SPISEA cluster generation for bin log_age="+str(round(bin2d[0],2))+
                                 " [M/H]="+str(bin2d[1])+" for "+str(n_bin)+" stars")
             cluster_stars_needed = n_bin
+            # Use a minimum mass per cluster of 100.0 so we don't get an error
             generate_mass = np.minimum(np.maximum(cluster_stars_needed*avg_mass_per_star*1.1, 100.0), 
                                     self.chunk_size*avg_mass_per_star)
             # Loop until we have enough stars
