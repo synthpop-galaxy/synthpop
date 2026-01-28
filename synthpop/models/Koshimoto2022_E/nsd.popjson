@@ -2,7 +2,9 @@
     "name" : "nsd",
 
     "imf_func_kwargs" : {
-        "name" : "kroupa"
+        "name" : "PiecewisePowerlaw",
+        "alphas" : [0.18,1.10,2.31],
+        "splitpoints" : [0.08,0.84]
     },
     
     "age_func_kwargs" : {
