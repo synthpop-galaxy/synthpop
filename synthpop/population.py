@@ -564,7 +564,7 @@ class Population:
         positions = np.array(
             self.population_density.draw_random_positions(n_stars))
 
-        star_sample, _ = self.generator.generate_star_at_location(positions[0:3].T,
+        star_sample, _ = self.generator.generate_star_at_location(positions[0:3],
             {'star_mass'},
             min_mass=self.min_mass, max_mass=self.max_mass)
         # get evolved mass
@@ -687,7 +687,7 @@ class Population:
 
         n_star_expected = self.get_n_star_expected(average_imass_per_star, av_mass_corr)
 
-        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (np.sum(n_star_expected)>0):
+        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (n_star_expected>0):
             if n_star_expected < self.N_av_mass:
                 n_star_expected = self.N_av_mass
 
@@ -759,7 +759,7 @@ class Population:
         opt3_mass_loss_done=False
         use_pbar = (np.sum(total_stars)>self.glbl_params.chunk_size) * (self.generator.generator_name!='SpiseaGenerator')
         if use_pbar:
-            pbar = tqdm(total=sum(missing_stars))
+            pbar = tqdm(total=missing_stars)
         neg_missing_stars = np.minimum(missing_stars,0)
         gen_missing_stars = np.maximum(missing_stars,0)
         current_max_id = -1
