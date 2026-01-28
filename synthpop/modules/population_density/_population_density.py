@@ -14,7 +14,7 @@ import numpy as np
 from .. import const, default_sun
 from ... import synthpop_utils as sp_utils
 import pdb
-from scipy.integrate import simpson
+from scipy.integrate import simpson, cumulative_simpson
 
 class PopulationDensity(ABC):
     """
@@ -43,7 +43,7 @@ class PopulationDensity(ABC):
 
     def __init__(self,
             sun: ModuleType = None,
-            coord_trans: ModuleType = None,
+            coord_trans: ModuleType = sp_utils.coordinates_transformation.CoordTrans(),
             gamma_flare: float = None,
             h_flare: float = None,
             radius_flare: float = 0,
@@ -218,11 +218,14 @@ class PopulationDensity(ABC):
                 self.b_length_deg = field_scale_deg
         self.max_distance = max_distance
 
-        self.logger.info("setting up density grid")
+        if self.logger is not None:
+            self.logger.debug("setting up density grid")
         if self.field_shape == 'circle':
             self.density_grid_d_pts = np.linspace(0, self.max_distance, 1001)
             self.density_grid_st_dir = np.linspace(0, 2 * np.pi, 101)
-            self.density_grid_st_rad = np.flip(np.arccos(np.linspace(np.cos(self.lb_radius_deg*np.pi/180),1, 26)))
+            #self.density_grid_st_rad = np.flip(np.arccos(np.linspace(np.cos(self.lb_radius_deg*np.pi/180),1, 26)))
+            #self.density_grid_st_rad = np.linspace(0,self.lb_radius_deg*np.pi/180,31)
+            self.density_grid_st_rad = np.linspace(0,np.sqrt(self.lb_radius_deg*np.pi/180),51)**2
             d_grid, st_dir_grid, st_rad_grid = np.meshgrid(self.density_grid_d_pts, self.density_grid_st_dir, 
                                                  self.density_grid_st_rad)
             grid_shape = d_grid.shape
@@ -239,14 +242,14 @@ class PopulationDensity(ABC):
                                                 l_grid.ravel(), b_grid.ravel())
             # Get density at points and integrate
             self.density_grid = self.density(r_flat, phi_flat, z_flat).reshape(grid_shape)
+            #self.density_grid = np.ones(grid_shape)*1e8
             vol_elem = d_grid**2 * np.sin(st_rad_grid)
-            self.density_int_st_rad = simpson(self.density_grid*vol_elem, x=self.density_grid_st_rad, axis=2)
+            self.density_grid_vscaled = self.density_grid*vol_elem
+            self.density_int_st_rad = simpson(self.density_grid_vscaled, x=self.density_grid_st_rad, axis=2)
             self.density_int_st_dir = simpson(self.density_int_st_rad, x=self.density_grid_st_dir, axis=0)
             self.total_mass = simpson(self.density_int_st_dir, x=self.density_grid_d_pts, axis=0)
 
         elif self.field_shape == 'box':
-            # Box should be easier, right ?? RIGHT ???????
-            # Let's make a grid
             self.density_grid_d_pts = np.linspace(0, self.max_distance, 1001)
             delta_l_rad = self.l_length_deg/2 * np.pi/180 * np.linspace(-1, 1, 51)
             delta_b_rad = self.b_length_deg/2 * np.pi/180 * np.linspace(-1, 1, 51)
@@ -263,9 +266,10 @@ class PopulationDensity(ABC):
 
             # Evaluate the density across the grid, then integrate
             self.density_grid = self.density(r_flat, phi_flat, z_flat).reshape(grid_shape)
+            #self.density_grid = np.ones(grid_shape)*1e8
             vol_elem = d_grid**2 * np.cos(b_grid*np.pi/180)
-            self.vol_elem=vol_elem
-            self.density_int_b = simpson(self.density_grid*vol_elem, x=self.density_grid_b_pts*np.pi/180, axis=2)
+            self.density_grid_vscaled = self.density_grid*vol_elem
+            self.density_int_b = simpson(self.density_grid_vscaled, x=self.density_grid_b_pts*np.pi/180, axis=2)
             self.density_int_l = simpson(self.density_int_b, x=self.density_grid_l_pts*np.pi/180, axis=0)
             self.total_mass = simpson(self.density_int_l, x=self.density_grid_d_pts, axis=0)
 
@@ -305,14 +309,16 @@ class PopulationDensity(ABC):
 
         if self.field_shape == 'circle':
             # Select distances
-            d_cum_dens = np.cumsum(self.density_int_st_dir)-self.density_int_st_dir[0]
+            d_cum_dens = cumulative_simpson(self.density_int_st_dir, x=self.density_grid_d_pts, initial=0.0)
             rand_pts = np.random.rand(n_stars)*d_cum_dens[-1]
             d_kpc = np.interp(rand_pts, d_cum_dens, self.density_grid_d_pts)
 
             # Select radial direction from center
             idx_d_nearest = np.argmin(np.abs(self.density_grid_d_pts - d_kpc[:, None]), axis=1)
             int_st_rad_idx = self.density_int_st_rad[:,idx_d_nearest]
-            st_dir_cum_dens = (np.cumsum(int_st_rad_idx, axis=0) - int_st_rad_idx[0])
+            #st_dir_cum_dens = (np.cumsum(int_st_rad_idx, axis=0) - int_st_rad_idx[0])
+            st_dir_cum_dens = cumulative_simpson(int_st_rad_idx, x=self.density_grid_st_dir, axis=0, initial=0.0)
+            #pdb.set_trace()
             if np.any(st_dir_cum_dens[-1]==0.0):
                 # Deal with edge case
                 bad_pts = np.where(st_dir_cum_dens[-1]==0.0)
@@ -332,18 +338,21 @@ class PopulationDensity(ABC):
                 assert np.all(rand_pts<=st_dir_cum_dens[near_pts_hi,range(n_stars)])
 
             star_st_dir = (1-lin_fac)*self.density_grid_st_dir[near_pts_lo] + lin_fac*self.density_grid_st_dir[near_pts_hi]
+            #pdb.set_trace()
 
             # Select angular distance from center
             idx_st_dir_nearest = np.argmin(np.abs(self.density_grid_st_dir-star_st_dir[:, None]), axis=1)
-            rho_grid_idx = self.density_grid[idx_st_dir_nearest,idx_d_nearest,:]
-            st_rad_cum_dens = np.cumsum(rho_grid_idx, axis=1) - rho_grid_idx[:,0][:,None]
-            if np.any(st_rad_cum_dens[-1]==0.0):
+            rho_grid_idx = self.density_grid_vscaled[idx_st_dir_nearest,idx_d_nearest,:]
+            #st_rad_cum_dens = np.cumsum(rho_grid_idx, axis=1) #- rho_grid_idx[:,0][:,None]
+            st_rad_cum_dens = cumulative_simpson(rho_grid_idx, x=self.density_grid_st_rad, axis=1, initial=0.0) #- rho_grid_idx[:,0][:,None]
+            if np.any(st_rad_cum_dens[:,-1]==0.0):
                 # Deal with edge case
-                bad_pts = np.where(st_rad_cum_dens[-1]==0.0)
+                print('bad_pts',bad_pts)
+                bad_pts = np.where(st_rad_cum_dens[:,-1]==0.0)
                 new_idx_st_dir_nearest = idx_st_dir_nearest[bad_pts]+1
-                new_rho_grid_idx = self.density_grid[new_idx_st_dir_nearest,idx_d_nearest[bad_pts],:]
+                new_rho_grid_idx = self.density_grid_vscaled[new_idx_st_dir_nearest,idx_d_nearest[bad_pts],:]
                 st_rad_cum_dens[bad_pts] = (np.cumsum(new_rho_grid_idx, axis=1) - new_rho_grid_idx[:,0][:,None])[:,None,:]
-                #print('did it work ?',~np.any(b_cum_dens[-1]==0.0))
+                assert ~np.any(st_rad_cum_dens[:,-1]==0.0)
             rand_pts = np.random.random(n_stars)*st_rad_cum_dens[:,-1]
             near_pts_hi = np.minimum(np.maximum((st_rad_cum_dens <= rand_pts[:,None]).sum(axis=1),1),len(self.density_grid_st_rad)-1)
             near_pts_lo = np.maximum(near_pts_hi-1,0)
@@ -352,6 +361,7 @@ class PopulationDensity(ABC):
             assert np.all(lin_fac<=1)
             assert np.all(lin_fac>=0)
             star_st_rad = (1-lin_fac)*self.density_grid_st_rad[near_pts_lo] + lin_fac*self.density_grid_st_rad[near_pts_hi]
+            #pdb.set_trace()
 
             # Get into physically meaningful coordinates
             delta_l_rad = star_st_rad * np.sin(star_st_dir)
@@ -364,18 +374,18 @@ class PopulationDensity(ABC):
 
         elif self.field_shape == 'box':
             # Select distances
-            d_cum_dens = np.cumsum(self.density_int_l)-self.density_int_l[0]
+            d_cum_dens = cumulative_simpson(self.density_int_l, x=self.density_grid_d_pts, initial=0.0)
             rand_pts = np.random.rand(n_stars)*d_cum_dens[-1]
             d_kpc = np.interp(rand_pts, d_cum_dens, self.density_grid_d_pts)
 
             # Select longitudes
             idx_d_nearest = np.argmin(np.abs(self.density_grid_d_pts - d_kpc[:, None]), axis=1)
             int_b_idx = self.density_int_b[:,idx_d_nearest]
-            l_cum_dens = (np.cumsum(int_b_idx, axis=0) - int_b_idx[0])
+            #l_cum_dens = (np.cumsum(int_b_idx, axis=0) - int_b_idx[0])
+            l_cum_dens = cumulative_simpson(int_b_idx, x=self.density_grid_l_pts, axis=0, initial=0.0)
             if np.any(l_cum_dens[-1]==0.0):
                 # Deal with edge case
                 bad_pts = np.where(l_cum_dens[-1]==0.0)
-                #print('fixing bad pts,', bad_pts, 'try upping dist idx by 1 for these')
                 new_idx_d_nearest = idx_d_nearest[bad_pts]+1
                 idx_d_nearest[bad_pts] = new_idx_d_nearest
                 new_int_b_idx = self.density_int_b[:,new_idx_d_nearest]
@@ -395,17 +405,17 @@ class PopulationDensity(ABC):
 
             # Select latitudes
             idx_l_nearest = np.argmin(np.abs(self.density_grid_l_pts-star_l_deg[:, None]), axis=1)
-            rho_grid_idx = self.density_grid[idx_l_nearest,idx_d_nearest,:]
-            b_cum_dens = np.cumsum(rho_grid_idx, axis=1) - rho_grid_idx[:,0][:,None]
-            if np.any(b_cum_dens[-1]==0.0):
+            rho_grid_idx = self.density_grid_vscaled[idx_l_nearest,idx_d_nearest,:]
+            #b_cum_dens = np.cumsum(rho_grid_idx, axis=1) - rho_grid_idx[:,0][:,None]
+            b_cum_dens = cumulative_simpson(rho_grid_idx, x=self.density_grid_b_pts, axis=1, initial=0.0)
+            if np.any(b_cum_dens[:,-1]==0.0):
                 # Deal with edge case
-                bad_pts = np.where(b_cum_dens[-1]==0.0)
-                #pdb.set_trace()
-                #print('fixing bad pts,', bad_pts, 'try upping l idx by 1 for these')
+                print('bad pts')
+                bad_pts = np.where(b_cum_dens[:,-1]==0.0)
                 new_idx_l_nearest = idx_l_nearest[bad_pts]+1
                 new_rho_grid_idx = self.density_grid[new_idx_l_nearest,idx_d_nearest[bad_pts],:]
                 b_cum_dens[bad_pts] = (np.cumsum(new_rho_grid_idx, axis=1) - new_rho_grid_idx[:,0][:,None])[:,None,:]
-                #print('did it work ?',~np.any(b_cum_dens[-1]==0.0))
+                assert ~np.any(b_cum_dens[:,-1]==0.0)
             rand_pts = np.random.random(n_stars)*b_cum_dens[:,-1]
             near_pts_hi = np.minimum(np.maximum((b_cum_dens <= rand_pts[:,None]).sum(axis=1),1),len(self.density_grid_b_pts)-1)
             near_pts_lo = np.maximum(near_pts_hi-1,0)
