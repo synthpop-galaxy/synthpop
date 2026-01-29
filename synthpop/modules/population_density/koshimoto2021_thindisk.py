@@ -16,26 +16,30 @@ class Koshimoto2021Thindisk(PopulationDensity):
     
     Attributes
     ----------
-    R0 : float [kpc]
+    R : float [kpc]
         disk scale length
-    z0 : float [kpc]
-        disk scale height at the solar position for linear scale height model
-    z45 : float [kpc]
+    z_sun : float [kpc]
+        disk scale height at the solar position for linear scale height model 
+        and everywhere for the flat scale height model
+    z_45 : float [kpc]
         disk scale height at 4.5 kpc for linear scale height model
     rho0 : float [M_sum/kpc^3]
         mass density at the solar position
-    Rbreak : float [kpc]
+    R_break : float [kpc]
         distance within which surface density is flat
+    linear_z : boolean
+        if True, use linear scale height; if False, use flat
     """
 
-    def __init__(self, R0, z0, z45, rho0, Rbreak=5.3, **kwargs):
+    def __init__(self, R, z_sun, z_45, rho_sun, R_break=5.3, linear_z=False, **kwargs):
         super().__init__(**kwargs)
         self.density_unit = 'mass'
-        self.R0 = R0
-        self.z0 = z0
-        self.z45 = z45
-        self.rho0 = rho0
-        self.Rbreak = Rbreak
+        self.R = R
+        self.z_sun = z_sun
+        self.z_45 = z_45
+        self.rho_sun = rho_sun
+        self.R_break = R_break
+        self.linear_z = linear_z
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
@@ -56,14 +60,17 @@ class Koshimoto2021Thindisk(PopulationDensity):
             mass density or initial mass density should be specified in density_unit.
 
         """
-        r_greater_45 = r >= 4.5
-        zR = r_greater_45 * (self.z0 - (self.z0 - self.z45) * (self.sun.r - r) / (
-                    self.sun.r - 4.5)) + (1 - r_greater_45) * self.z45
+        r_greater_45 = (r > 4.5)
+        if self.linear_z:
+            zR = r_greater_45 * (self.z_sun - (self.z_sun - self.z_45) * (self.sun.r - r) / (
+                    self.sun.r - 4.5)) + (1 - r_greater_45) * self.z_45
+        else:
+            zR = self.z_sun
 
-        r_greater_break = r >= self.Rbreak 
-        rho = self.rho0 * self.z0 / zR * (
-                    r_greater_break * np.exp(-(r - self.sun.r) / self.R0) * (
+        r_greater_break = (r > self.R_break)
+        rho = self.rho_sun * self.z_sun / zR * (
+                    r_greater_break * np.exp(-(r - self.sun.r) / self.R) * (
                         1 / np.cosh(-abs(z) / zR)) ** 2 + (1 - r_greater_break) * np.exp(
-                -(self.Rbreak - self.sun.r) / self.R0) * (1 / np.cosh(-abs(z) / zR)) ** 2)
+                -(self.R_break - self.sun.r) / self.R) * (1 / np.cosh(-abs(z) / zR)) ** 2)
 
         return rho

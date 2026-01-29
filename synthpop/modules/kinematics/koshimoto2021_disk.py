@@ -87,7 +87,7 @@ class Koshimoto2021Disk(Kinematics):
 
         # Convert to Galactocentric coordinates
         r, phi_rad, z = self.coord_trans.xyz_to_rphiz(x, y, z)
-        # Set parameters from Koshimoto+21
+        # Set fixed parameters from Koshimoto+21
         T_min, T_max = 0.01, 10
         R_d = 2.6
         c1,c2,c3,c4 = 3.822, 0.524, 0.00567, 2.13
