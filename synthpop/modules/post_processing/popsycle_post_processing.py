@@ -148,7 +148,15 @@ class PopsyclePostProcessing(PostProcessing):
             h5file['lat_bin_edges'] = lat_bin_edges
             h5file['long_bin_edges'] = long_bin_edges
         
-        _bin_lb_hdf5(lat_bin_edges, long_bin_edges, dataframe[popsycle_nonmag_cols+self.mag_cols], self.output_root)
+        cols_to_save = popsycle_nonmag_cols + self.mag_cols
+
+        output_dict = {
+            col: dataframe[col].to_numpy()
+            for col in cols_to_save
+        }
+
+        _bin_lb_hdf5(lat_bin_edges, long_bin_edges, output_dict, self.output_root)
+
         self.logger.info(f"PopSyCLE formatted output saved in {self.output_root}.h5")
     
         return dataframe
