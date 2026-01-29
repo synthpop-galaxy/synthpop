@@ -27,7 +27,7 @@ class Besancon2003Bulge(PopulationDensity):
     """
         
     def __init__(self, x0=1.59, y0=0.424, z0=0.424, Rc=2.54, n0=1.37e10, bar_angle=11.1, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         self.population_density_name = "Besancon2003Bulge"
         self.density_unit = 'number'
         self.x0 = x0

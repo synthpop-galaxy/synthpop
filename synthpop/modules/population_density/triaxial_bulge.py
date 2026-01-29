@@ -33,8 +33,9 @@ class TriaxialBulge(PopulationDensity):
         angle of the bar
     """
 
-    def __init__(self, triaxial_type: str, density_unit: str, x0: float, y0: float, z0: float, rho0: float, Rmax=np.inf, bar_angle=29.4, **kwargs):
-        super().__init__()
+    def __init__(self, triaxial_type: str, density_unit: str, x0: float, y0: float, z0: float, rho0: float, 
+                 Rmax=np.inf, bar_angle=29.4 **kwargs):
+        super().__init__(**kwargs)
         self.population_density_name = "Bulge_Density"
         self.density_unit = density_unit
         self.x0 = x0
