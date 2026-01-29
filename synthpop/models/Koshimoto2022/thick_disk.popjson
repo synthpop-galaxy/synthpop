@@ -20,8 +20,8 @@
         "name" : "Koshimoto2021Disk",
         "sigma_r_sun" : 75.0,
         "sigma_z_sun" : 49.2,
-        "beta_r" : 0.32,
-        "beta_z" : 0.77,
+        "beta_r" : 0.0,
+        "beta_z" : 0.0,
         "R_sigma_r" : 180.0,
         "R_sigma_z" : 9.4,
         "pop_age" : 12.0
