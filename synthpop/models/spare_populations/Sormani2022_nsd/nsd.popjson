@@ -1,0 +1,35 @@
+{
+    "name" : "nsd",
+
+    "imf_func_kwargs" : {
+        "name" : "kroupa"
+    },
+    
+    "age_func_kwargs" : {
+        "name" : "single_value",
+        "#comment" : "units in gigayears",
+        "age_value" : 10.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "#comment":"From Gonzalez, O.A.; et al. 2015",
+        "name" : "double_gaussian",
+        "weight" : 0.323,
+        "mean1" : -0.31,
+        "std1" : 0.31,
+        "mean2" : 0.26,
+        "std2" : 0.20
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "kinematics_from_grid",
+        "moment_file":"sormani2022_koshimoto_grid.dat"
+    }, 
+
+    "population_density_kwargs" : {
+        "name" : "density_from_grid",
+        "moment_file":"sormani2022_koshimoto_grid.dat"
+    }
+}
+
+
