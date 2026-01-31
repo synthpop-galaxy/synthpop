@@ -47,6 +47,7 @@ class PopulationDensity(ABC):
             gamma_flare: float = None,
             h_flare: float = None,
             radius_flare: float = 0,
+            grid_resolution: float = 0.010,
             logger: ModuleType = None,
             **kwargs):
         """
@@ -61,9 +62,11 @@ class PopulationDensity(ABC):
         coord_trans: ModuleType
             the coordinate transformation package
             see synthpop_utils/coordinate_transformations
-        gamma_flare, radius_flare: float
+        gamma_flare, h_flare, radius_flare: float
             parameters to implement the flare of the milky way
-
+        grid_resolution: float
+            required spatial resolution in kpc for the density integration/interpolation
+            grid. for angular dimensions, use this cutoff at 10 kpc or max_distance if shorter.
         """
         # sun sun sun, here it comes
         self.logger = logger
@@ -87,6 +90,7 @@ class PopulationDensity(ABC):
         self.lb_radius_deg = None
         self.l_length_deg = None
         self.b_length_deg = None
+        self.grid_resolution = grid_resolution
 
     @abstractmethod
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
@@ -210,24 +214,37 @@ class PopulationDensity(ABC):
         if self.field_shape=='circle':
             self.lb_radius_deg = field_scale_deg
         elif self.field_shape=='box':
-            if hasattr(field_scale_deg, 'len'):
+            if isinstance(field_scale_deg, (list, tuple, set)):
                 self.l_length_deg = field_scale_deg[0]
                 self.b_length_deg = field_scale_deg[1]
             else:
                 self.l_length_deg = field_scale_deg
                 self.b_length_deg = field_scale_deg
         self.max_distance = max_distance
+        #pdb.set_trace()
 
         if self.logger is not None:
             self.logger.debug("setting up density grid")
+
+        # Set resolution, with simpson preferring odd number of points
+        grid_d_n_pts = int(np.ceil(self.max_distance/self.grid_resolution))
+        grid_d_n_pts += (grid_d_n_pts % 2)==0
+        self.density_grid_d_pts = np.linspace(0, self.max_distance, grid_d_n_pts)
         if self.field_shape == 'circle':
-            self.density_grid_d_pts = np.linspace(0, self.max_distance, 1001)
-            self.density_grid_st_dir = np.linspace(0, 2 * np.pi, 101)
+            grid_st_dir_n_pts = int(np.ceil(np.minimum(10.0,self.max_distance)*2*np.pi*self.lb_radius_deg*np.pi/180/self.grid_resolution))
+            grid_st_dir_n_pts += (grid_st_dir_n_pts % 2)==0
+            grid_st_dir_n_pts = np.maximum(grid_st_dir_n_pts, 21)
+            self.density_grid_st_dir = np.linspace(0, 2 * np.pi, grid_st_dir_n_pts)
+            # TODO: this is probably not totally accurate
+            grid_st_rad_n_pts = int(np.ceil(np.minimum(10.0,self.max_distance)*self.lb_radius_deg*np.pi/180/self.grid_resolution))
+            grid_st_rad_n_pts += (grid_st_dir_n_pts % 2)==0
+            grid_st_rad_n_pts = np.maximum(grid_st_rad_n_pts,11)
             #self.density_grid_st_rad = np.flip(np.arccos(np.linspace(np.cos(self.lb_radius_deg*np.pi/180),1, 26)))
             #self.density_grid_st_rad = np.linspace(0,self.lb_radius_deg*np.pi/180,31)
-            self.density_grid_st_rad = np.linspace(0,np.sqrt(self.lb_radius_deg*np.pi/180),51)**2
+            self.density_grid_st_rad = np.linspace(0,np.sqrt(self.lb_radius_deg*np.pi/180),grid_st_rad_n_pts)**2
             d_grid, st_dir_grid, st_rad_grid = np.meshgrid(self.density_grid_d_pts, self.density_grid_st_dir, 
                                                  self.density_grid_st_rad)
+            #pdb.set_trace()
             grid_shape = d_grid.shape
 
             # Get into physically meaningful coordinates
@@ -250,27 +267,33 @@ class PopulationDensity(ABC):
             self.total_mass = simpson(self.density_int_st_dir, x=self.density_grid_d_pts, axis=0)
 
         elif self.field_shape == 'box':
-            self.density_grid_d_pts = np.linspace(0, self.max_distance, 1001)
-            delta_l_rad = self.l_length_deg/2 * np.pi/180 * np.linspace(-1, 1, 51)
-            delta_b_rad = self.b_length_deg/2 * np.pi/180 * np.linspace(-1, 1, 51)
-            l_rad_pts, b_rad_pts = self.rotate_00_to_lb(delta_l_rad, delta_b_rad)
-            self.density_grid_l_pts = l_rad_pts * 180/np.pi
-            if np.abs(self.l_deg)<90:
-                self.density_grid_l_pts -= 360*(self.density_grid_l_pts>180)
-            self.density_grid_b_pts = b_rad_pts * 180/np.pi
-            d_grid, l_grid, b_grid = np.meshgrid(self.density_grid_d_pts, self.density_grid_l_pts, 
-                                                 self.density_grid_b_pts)
+            delta_l_rad_n_pts = int(np.ceil(np.minimum(10.0, self.max_distance)*self.l_length_deg*np.pi/180/self.grid_resolution))
+            delta_l_rad_n_pts += (delta_l_rad_n_pts % 2)==0
+            delta_l_rad_n_pts = np.maximum(21, delta_l_rad_n_pts)
+            delta_b_rad_n_pts = int(np.ceil(np.minimum(10.0, self.max_distance)*self.b_length_deg*np.pi/180/self.grid_resolution))
+            delta_b_rad_n_pts += (delta_b_rad_n_pts % 2)==0
+            delta_b_rad_n_pts = np.maximum(21, delta_b_rad_n_pts)
+            self.density_grid_dl_pts = self.l_length_deg/2 * np.pi/180 * np.linspace(-1, 1, delta_l_rad_n_pts)
+            self.density_grid_db_pts = self.b_length_deg/2 * np.pi/180 * np.linspace(-1, 1, delta_b_rad_n_pts)
+            #l_rad_pts, b_rad_pts = self.rotate_00_to_lb(delta_l_rad, delta_b_rad)
+            # self.density_grid_l_pts = l_rad_pts * 180/np.pi
+            # if np.abs(self.l_deg)<90:
+            #     self.density_grid_l_pts -= 360*(self.density_grid_l_pts>180)
+            # self.density_grid_b_pts = b_rad_pts * 180/np.pi
+            d_grid, dl_grid, db_grid = np.meshgrid(self.density_grid_d_pts, self.density_grid_dl_pts, 
+                                                 self.density_grid_db_pts)
             grid_shape = d_grid.shape
+            l_grid_ravel, b_grid_ravel = self.rotate_00_to_lb(dl_grid.ravel(), db_grid.ravel())
             r_flat, phi_flat, z_flat = self.coord_trans.dlb_to_rphiz(d_grid.ravel(), 
-                                                l_grid.ravel(), b_grid.ravel())
+                                                l_grid_ravel*180/np.pi, b_grid_ravel*180/np.pi)
 
             # Evaluate the density across the grid, then integrate
             self.density_grid = self.density(r_flat, phi_flat, z_flat).reshape(grid_shape)
             #self.density_grid = np.ones(grid_shape)*1e8
-            vol_elem = d_grid**2 * np.cos(b_grid*np.pi/180)
+            vol_elem = d_grid**2 * np.cos(b_grid_ravel.reshape(grid_shape)*np.pi/180)
             self.density_grid_vscaled = self.density_grid*vol_elem
-            self.density_int_b = simpson(self.density_grid_vscaled, x=self.density_grid_b_pts*np.pi/180, axis=2)
-            self.density_int_l = simpson(self.density_int_b, x=self.density_grid_l_pts*np.pi/180, axis=0)
+            self.density_int_b = simpson(self.density_grid_vscaled, x=self.density_grid_db_pts, axis=2)
+            self.density_int_l = simpson(self.density_int_b, x=self.density_grid_dl_pts, axis=0)
             self.total_mass = simpson(self.density_int_l, x=self.density_grid_d_pts, axis=0)
 
     def draw_random_positions(self, n_stars: int = 1) \
@@ -366,11 +389,6 @@ class PopulationDensity(ABC):
             # Get into physically meaningful coordinates
             delta_l_rad = star_st_rad * np.sin(star_st_dir)
             delta_b_rad = star_st_rad * np.cos(star_st_dir)
-            l_rad, b_rad = self.rotate_00_to_lb(delta_l_rad, delta_b_rad)
-            star_l_deg = l_rad * 180 / np.pi
-            if np.abs(self.l_deg)<90:
-                star_l_deg -= 360*(star_l_deg>180)
-            star_b_deg = b_rad * 180 / np.pi
 
         elif self.field_shape == 'box':
             # Select distances
@@ -382,7 +400,7 @@ class PopulationDensity(ABC):
             idx_d_nearest = np.argmin(np.abs(self.density_grid_d_pts - d_kpc[:, None]), axis=1)
             int_b_idx = self.density_int_b[:,idx_d_nearest]
             #l_cum_dens = (np.cumsum(int_b_idx, axis=0) - int_b_idx[0])
-            l_cum_dens = cumulative_simpson(int_b_idx, x=self.density_grid_l_pts, axis=0, initial=0.0)
+            l_cum_dens = cumulative_simpson(int_b_idx, x=self.density_grid_dl_pts, axis=0, initial=0.0)
             if np.any(l_cum_dens[-1]==0.0):
                 # Deal with edge case
                 bad_pts = np.where(l_cum_dens[-1]==0.0)
@@ -392,7 +410,7 @@ class PopulationDensity(ABC):
                 l_cum_dens[:,bad_pts] = (np.cumsum(new_int_b_idx, axis=0) - new_int_b_idx[0])[:,None,:]
                 assert ~np.any(l_cum_dens[-1]==0.0)
             rand_pts = np.random.random(n_stars)*l_cum_dens[-1]
-            near_pts_hi = np.minimum(np.maximum((l_cum_dens < rand_pts).sum(axis=0),1),len(self.density_grid_l_pts)-1)
+            near_pts_hi = np.minimum(np.maximum((l_cum_dens < rand_pts).sum(axis=0),1),len(self.density_grid_dl_pts)-1)
             near_pts_lo = np.maximum(near_pts_hi-1,0)
             near_pts_lo_dens = l_cum_dens[near_pts_lo,range(n_stars)]
             lin_fac = (rand_pts - near_pts_lo_dens) / (l_cum_dens[near_pts_hi,range(n_stars)]-near_pts_lo_dens)
@@ -401,13 +419,13 @@ class PopulationDensity(ABC):
                 assert np.all(rand_pts>=near_pts_lo_dens)
                 assert np.all(rand_pts<=l_cum_dens[near_pts_hi,range(n_stars)])
 
-            star_l_deg = (1-lin_fac)*self.density_grid_l_pts[near_pts_lo] + lin_fac*self.density_grid_l_pts[near_pts_hi]
+            delta_l_rad = (1-lin_fac)*self.density_grid_dl_pts[near_pts_lo] + lin_fac*self.density_grid_dl_pts[near_pts_hi]
 
             # Select latitudes
-            idx_l_nearest = np.argmin(np.abs(self.density_grid_l_pts-star_l_deg[:, None]), axis=1)
+            idx_l_nearest = np.argmin(np.abs(self.density_grid_dl_pts-star_dl_rad[:, None]), axis=1)
             rho_grid_idx = self.density_grid_vscaled[idx_l_nearest,idx_d_nearest,:]
             #b_cum_dens = np.cumsum(rho_grid_idx, axis=1) - rho_grid_idx[:,0][:,None]
-            b_cum_dens = cumulative_simpson(rho_grid_idx, x=self.density_grid_b_pts, axis=1, initial=0.0)
+            b_cum_dens = cumulative_simpson(rho_grid_idx, x=self.density_grid_db_pts, axis=1, initial=0.0)
             if np.any(b_cum_dens[:,-1]==0.0):
                 # Deal with edge case
                 print('bad pts')
@@ -417,14 +435,20 @@ class PopulationDensity(ABC):
                 b_cum_dens[bad_pts] = (np.cumsum(new_rho_grid_idx, axis=1) - new_rho_grid_idx[:,0][:,None])[:,None,:]
                 assert ~np.any(b_cum_dens[:,-1]==0.0)
             rand_pts = np.random.random(n_stars)*b_cum_dens[:,-1]
-            near_pts_hi = np.minimum(np.maximum((b_cum_dens <= rand_pts[:,None]).sum(axis=1),1),len(self.density_grid_b_pts)-1)
+            near_pts_hi = np.minimum(np.maximum((b_cum_dens <= rand_pts[:,None]).sum(axis=1),1),len(self.density_grid_db_pts)-1)
             near_pts_lo = np.maximum(near_pts_hi-1,0)
             near_pts_lo_dens = b_cum_dens[range(n_stars),near_pts_lo]
             lin_fac = np.nan_to_num((rand_pts - near_pts_lo_dens) / (b_cum_dens[range(n_stars),near_pts_hi]-near_pts_lo_dens))
             assert np.all(lin_fac<=1)
             assert np.all(lin_fac>=0)
-            star_b_deg = (1-lin_fac)*self.density_grid_b_pts[near_pts_lo] + lin_fac*self.density_grid_b_pts[near_pts_hi]
+            delta_b_rad = (1-lin_fac)*self.density_grid_db_pts[near_pts_lo] + lin_fac*self.density_grid_db_pts[near_pts_hi]
 
+        # Convert from deltas from window center to real l & b
+        star_l_rad, star_b_rad = self.rotate_00_to_lb(delta_l_rad, delta_b_rad)
+        star_l_deg = star_l_rad * 180/np.pi
+        star_b_deg = star_b_rad * 180/np.pi
+        if np.abs(self.l_deg)<90:
+            star_l_deg -= 360*(star_l_deg>180)
         # estimate galactocentric coordinates
         x, y, z = self.coord_trans.dlb_to_xyz(d_kpc, star_l_deg, star_b_deg)
 

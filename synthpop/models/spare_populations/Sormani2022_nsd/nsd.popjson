@@ -7,12 +7,12 @@
     
     "age_func_kwargs" : {
         "name" : "single_value",
-        "#comment" : "units in gigayears",
+        "#comment" : "NOT pulled from Sormani et al 2022",
         "age_value" : 10.0
     },
 
     "metallicity_func_kwargs" : {
-        "#comment":"From Gonzalez, O.A.; et al. 2015",
+        "#comment":"From Gonzalez, O.A.; et al. 2015, not Sormani et al 2022",
         "name" : "double_gaussian",
         "weight" : 0.323,
         "mean1" : -0.31,

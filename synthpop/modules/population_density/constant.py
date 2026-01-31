@@ -21,11 +21,11 @@ class Constant(PopulationDensity):
         density at all positions in [density_unit]/kpc^2
     """
 
-    def __init__(self, density_unit: str, rho = 1e8, **kwargs):
+    def __init__(self, density_unit = 'mass', rho = 1e8, **kwargs):
         super().__init__(**kwargs)
         self.population_density_name = "Constant"
         self.density_unit = density_unit
-        self.rho=rho
+        self.rho = rho
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
