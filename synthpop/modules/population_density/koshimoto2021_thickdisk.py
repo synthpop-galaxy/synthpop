@@ -27,7 +27,7 @@ class Koshimoto2021Thickdisk(PopulationDensity):
     """
 
     def __init__(self, rho_sun=(1.7e-3 + 4.4e-4 + 9.1e-6) * 10 ** 9, 
-                 z=0.903, R=2.200, R_break=5.300, **kwargs):
+                 z_sun=0.903, R=2.200, R_break=5.300, **kwargs):
         super().__init__(**kwargs)
         self.density_unit = 'mass'
         self.rho_sun = rho_sun

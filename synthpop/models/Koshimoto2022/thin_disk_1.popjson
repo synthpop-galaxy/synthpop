@@ -30,7 +30,7 @@
     "population_density_kwargs" : {
         "name" : "Koshimoto2021Thindisk",
         "#comment" : "rho0 in Msun/kpc**3 (10**9)",
-        "rho_sun" : 5.e6,
+        "rho_sun" : 5.2e6,
         "R" : 5.0,
         "z_sun" : 0.061,
         "z_45" : 0.036,

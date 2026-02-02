@@ -434,7 +434,7 @@ class PopulationDensity(ABC):
             delta_l_rad = (1-lin_fac)*self.density_grid_dl_pts[near_pts_lo] + lin_fac*self.density_grid_dl_pts[near_pts_hi]
 
             # Select latitudes
-            idx_l_nearest = np.argmin(np.abs(self.density_grid_dl_pts-star_dl_rad[:, None]), axis=1)
+            idx_l_nearest = np.argmin(np.abs(self.density_grid_dl_pts-delta_l_rad[:, None]), axis=1)
             rho_grid_idx = self.density_grid_vscaled[idx_l_nearest,idx_d_nearest,:]
             b_cum_dens = cumulative_simpson(rho_grid_idx, x=self.density_grid_db_pts, axis=1, initial=0.0)
             if np.any(b_cum_dens[:,-1]==0.0):
@@ -468,6 +468,73 @@ class PopulationDensity(ABC):
         x, y, z = self.coord_trans.dlb_to_xyz(d_kpc, star_l_deg, star_b_deg)
 
         return x, y, z, d_kpc, star_l_deg, star_b_deg
+
+
+    def draw_random_positions_rejection_method(self, n_stars: int = 1) \
+            -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Draw points from the density distribution. Uses a grid of density points and
+        CDF inversion in 3 dimensions.
+
+        Parameters
+        ----------
+        dist_max : float [kpc]
+            upper distance limit
+        n_stars : int, None, optional
+            number of stars drawn
+            if None return one position as float
+
+        Returns
+        -------
+
+        x : float, ndarray [kpc]
+            Cartesian X coordinate (centered at the galactic center) of the drawn positions
+        y : float, ndarray [kpc]
+            Cartesian Y coordinate (centered at the galactic center) of the drawn positions
+        z : float, ndarray [kpc]
+            Cartesian Z coordinate (centered at the galactic center) of the drawn positions
+
+        d_kpc : float, ndarray [kpc]
+            distances of the drawn positions
+        star_l_deg : float, ndarray [deg]
+            galactic longitude of the drawn positions
+        star_b_deg : float, ndarray [deg]
+            galactic latitude of the drawn positions
+        """
+        if n_stars==0:
+            return np.empty(0),np.empty(0),np.empty(0),np.empty(0),np.empty(0),np.empty(0)
+        density_grid_max = np.max(self.density_grid)
+
+        # Draw a bunch of points uniformly in the full window
+        coords = np.array(self.draw_random_point_in_slice(0,self.max_distance, n_stars*1000))
+        # Calculate density at these locations
+        r, phi, z = self.coord_trans.dlb_to_rphiz(*coords[3:])
+        rho_at_draws = self.density(r, phi, z)/density_grid_max
+        # Draw random numbers to compare to the drawn densities to select kept stars
+        keep_stars = np.where(rho_at_draws > np.random.rand(len(rho_at_draws)))[0]
+        if len(keep_stars)>n_stars:
+            keep_stars = keep_stars[:n_stars]
+        # See if we have any stars to keep
+        if len(keep_stars)==0:
+            pos_list = np.array([[],[],[],[],[],[]])
+        else:
+            pos_list = coords[:, keep_stars]
+        while len(pos_list[0]) < n_stars:
+            print(f"random positions drawn: {len(pos_list[0])} / {n_stars}")
+            # Draw a bunch of points uniformly in the full window
+            coords = np.array(self.draw_random_point_in_slice(0,self.max_distance, n_stars*10))
+            # Calculate density at these locations
+            r, phi, z = self.coord_trans.dlb_to_rphiz(*coords[3:])
+            rho_at_draws = self.density(r, phi, z)/density_grid_max
+            # Draw random numbers to compare to the drawn densities to select kept stars
+            keep_stars = np.where(rho_at_draws > np.random.rand(len(rho_at_draws)))[0]
+            if len(keep_stars)>(n_stars-len(pos_list[0])):
+                keep_stars = keep_stars[:n_stars]
+            if len(keep_stars)>0:
+                pos_list = np.concatenate([pos_list, coords[:, keep_stars]], axis=1)
+        return pos_list
+
+
 
     def draw_random_point_in_slice(self, dist_inner: float, dist_outer: float, n_stars: int = 1,
                                     population_density_func=None) \
