@@ -9,6 +9,10 @@ def check_precision(v_true, v_calc, prec):
 	print(v_true, v_calc)
 
 def test_mass_integration():
+	"""
+	Test the integration used to determine total stellar mass of a population in a given
+	field. Test two different field sizes each for each shape, using a constant density.
+	"""
 	constant_density = constant_density_module.Constant()
 	# Small circular field
 	field_scale_deg = 0.01

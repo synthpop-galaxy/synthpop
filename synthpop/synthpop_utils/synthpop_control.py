@@ -213,14 +213,14 @@ class Parameters:
         converts l_set and b_set into a location generator object
         as defined by the l/b_set_type
         """
-        if (self.l_set is None) or (self.b_set is None) or (self.solid_angle is None):
-            logger.critical("Location or solid_angle_sr are not  defined in the settings! "
+        if (self.l_set is None) or (self.b_set is None) or (self.field_scale is None):
+            logger.critical("Location or field size are not  defined in the settings! "
                             "Can not run main() or process_all()")
 
             # create
 
             def no_location():
-                logger.critical("Location or solid_angle_sr are not defined in the settings! "
+                logger.critical("Location or field size are not defined in the settings! "
                                 "Can not run main() or process_all()")
                 for _ in []:
                     yield 0, 0
