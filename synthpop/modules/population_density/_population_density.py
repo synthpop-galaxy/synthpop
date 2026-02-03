@@ -520,9 +520,9 @@ class PopulationDensity(ABC):
         else:
             pos_list = coords[:, keep_stars]
         while len(pos_list[0]) < n_stars:
-            print(f"random positions drawn: {len(pos_list[0])} / {n_stars}")
+            #print(f"random positions drawn: {len(pos_list[0])} / {n_stars}")
             # Draw a bunch of points uniformly in the full window
-            coords = np.array(self.draw_random_point_in_slice(0,self.max_distance, n_stars*10))
+            coords = np.array(self.draw_random_point_in_slice(0,self.max_distance, n_stars*100))
             # Calculate density at these locations
             r, phi, z = self.coord_trans.dlb_to_rphiz(*coords[3:])
             rho_at_draws = self.density(r, phi, z)/density_grid_max
