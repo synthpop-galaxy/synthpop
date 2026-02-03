@@ -13,7 +13,7 @@
 
     "metallicity_func_kwargs" : {
         "name" : "single_value",
-        "metallicity_value" : 0.01
+        "met_value" : 0.01
     },
 
     "kinematics_func_kwargs" : {

@@ -1,4 +1,3 @@
-
 """
 This file contains the SPISEA-based alternative to StarGenerator. 
 It bins stars by age and metallicity and generates SPISEA clusters,
@@ -28,10 +27,20 @@ from astropy.table import vstack
 # used to allow running as main and importing to another script
 try:
     from . import constants as const
+    from . import synthpop_utils as sp_utils
+    from .star_generator import StarGenerator
+    from .synthpop_utils.synthpop_logging import logger
+    from .synthpop_utils import coordinates_transformation as coord_trans
+    from .synthpop_utils import Parameters
+    from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
+    from .modules.age import Age
+    from .modules.initial_mass_function import InitialMassFunction
+    from .modules.kinematics import Kinematics
+    from .modules.metallicity import Metallicity
+    from .modules.population_density import PopulationDensity
 except ImportError:
     import constants as const
     import synthpop_utils as sp_utils
-    from position import Position
     from synthpop_utils.synthpop_logging import logger
     from synthpop_utils import coordinates_transformation as coord_trans
     from synthpop_utils import Parameters
@@ -42,20 +51,6 @@ except ImportError:
     from modules.metallicity import Metallicity
     from modules.population_density import PopulationDensity
     from star_generator import StarGenerator
-
-else:  # continue import when if synthpop is imported
-    from . import synthpop_utils as sp_utils
-    from .star_generator import StarGenerator
-    from .position import Position
-    from .synthpop_utils.synthpop_logging import logger
-    from .synthpop_utils import coordinates_transformation as coord_trans
-    from .synthpop_utils import Parameters
-    from .modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
-    from .modules.age import Age
-    from .modules.initial_mass_function import InitialMassFunction
-    from .modules.kinematics import Kinematics
-    from .modules.metallicity import Metallicity
-    from .modules.population_density import PopulationDensity
 
 class BlockSpiseaPrints:
     def __init__(self, block_prints):
@@ -73,7 +68,7 @@ class BlockSpiseaPrints:
 
 class SpiseaGenerator(StarGenerator):
     def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, ifmr_module, mult_module, bands, logger):
+            glbl_params, max_mass, ifmr_module, mult_module, bands, logger):
         # General synthpop things
         spisea_dir=const.ISOCHRONES_DIR+'/spisea/'
         self.generator_name = 'SpiseaGenerator'
@@ -84,11 +79,9 @@ class SpiseaGenerator(StarGenerator):
         self.age_module = age_module
         self.met_module = met_module
         self.evolution_module = evolution_module
-        self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
         self.bands = bands
         self.obsmag = glbl_params.obsmag
-        self.position = position
         self.max_mass = max_mass
         self.logger = logger
         self.system_mags = True
@@ -144,38 +137,26 @@ class SpiseaGenerator(StarGenerator):
 
         return sp_dict
 
-    def generate_stars(self, radii, missing_stars, mass_limit, do_kinematics, props):
-        position = np.vstack([
-            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, 
-                n_stars, population_density_func=self.density_module.density))
-            for r_inner, r_outer, n_stars in zip(radii, radii[1:], missing_stars)
-            ])
+    def generate_stars(self, missing_stars, mass_limit, do_kinematics, props):
+        position = self.density_module.draw_random_positions(missing_stars)
+        min_mass = mass_limit
 
-        min_mass = np.repeat(mass_limit, missing_stars)
-        r_inner = np.repeat(radii[:-1], missing_stars)
-
-        if self.kinematics_at_the_end:
-            proper_motions = np.full((len(position), 3), np.nan)
-            velocities = np.full((len(position), 3), np.nan)
-            vr_lsr = np.repeat(np.nan, len(position))
-        else:
-            u, v, w, vr_hc, mu_l, mu_b, vr_lsr = do_kinematics(
-                position[:, 3], position[:, 4], position[:, 5],
-                position[:, 0], position[:, 1], position[:, 2]
-                )
-            proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
-            velocities = np.column_stack([u, v, w, ])
+        u, v, w, vr_hc, mu_l, mu_b, vr_lsr = do_kinematics(
+            position[3], position[4], position[5],
+            position[0], position[1], position[2]
+            )
+        proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
+        velocities = np.column_stack([u, v, w, ])
 
         # generate star at the positions
         star_systems, companions = self.generate_star_at_location(
-            position[:, 0:3], props, min_mass, self.max_mass)
-        star_systems.loc[:,'x'] = position[:,0]
-        star_systems.loc[:,'y'] = position[:,1]
-        star_systems.loc[:,'z'] = position[:,2]
-        star_systems.loc[:,'Dist'] = position[:,3]
-        star_systems.loc[:,'l'] = position[:,4]
-        star_systems.loc[:,'b'] = position[:,5]
-        star_systems.loc[:,'r_inner'] = r_inner
+            position[0:3], props, min_mass, self.max_mass)
+        star_systems.loc[:,'x'] = position[0]
+        star_systems.loc[:,'y'] = position[1]
+        star_systems.loc[:,'z'] = position[2]
+        star_systems.loc[:,'Dist'] = position[3]
+        star_systems.loc[:,'l'] = position[4]
+        star_systems.loc[:,'b'] = position[5]
         star_systems.loc[:,'vr_bc'] = proper_motions[:,0]
         star_systems.loc[:,'mul'] = proper_motions[:,1]
         star_systems.loc[:,'mub'] = proper_motions[:,2]
@@ -185,7 +166,7 @@ class SpiseaGenerator(StarGenerator):
         star_systems.loc[:,'VR_LSR'] = vr_lsr
         
         if self.obsmag:
-            dist_modulus = 5*np.log10(position[:,3] * 100)
+            dist_modulus = 5*np.log10(position[3] * 100)
             for band in self.bands:
                 star_systems.loc[:,band] += dist_modulus
                 if companions is not None:
@@ -203,7 +184,7 @@ class SpiseaGenerator(StarGenerator):
         if avg_mass_per_star is None:
             avg_mass_per_star = 1 #self.synthpop_imf_module.average_mass(min_mass=min_mass, max_mass=self.max_mass)
 
-        n_stars = len(position)
+        n_stars = len(position[0])
 
         # First - check whether the age distribution is uniform
         single_age = (self.age_module.age_func_name=='single_value')
@@ -213,13 +194,13 @@ class SpiseaGenerator(StarGenerator):
         if single_age and single_feh:
             age_all = self.evolution_module.log_age_list[np.argmin(np.abs(self.evolution_module.log_age_list-np.log10(self.age_module.age_value*1e9)))]
             mh_all = self.mh_list[np.argmin(np.abs(self.evolution_module.feh_list-self.met_module.metallicity_value))]
-            comb_bin_idxs = np.arange(n_stars)
-            bins2d = [[age_all, feh_all, n_stars]]
+            comb_bin_idxs = np.zeros(n_stars,dtype=int)
+            bins2d = [[age_all, mh_all, n_stars]]
         elif single_age:
             # Sample metallicities in [Fe/H], then bin by nearest grid point
             age_all = self.evolution_module.log_age_list[np.argmin(np.abs(self.evolution_module.log_age_list-np.log10(self.age_module.age_value*1e9)))]
             fehs = self.met_module.draw_random_metallicity(
-                    N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=10**age_all/1e9)
+                    N=n_stars, x=position[0], y=position[1], z=position[2], age=10**age_all/1e9)
             feh_bins, comb_bin_idxs, feh_bin_cts = np.unique(np.argmin(np.abs(self.evolution_module.feh_list - fehs[:, None]), axis=1), 
                                                               return_inverse=True, return_counts=True)
             bins2d = np.transpose([np.ones(len(feh_bins))*age_all, self.mh_list[feh_bins], feh_bin_cts])
@@ -233,7 +214,7 @@ class SpiseaGenerator(StarGenerator):
         else:
             ages = np.log10(self.age_module.draw_random_age(n_stars)*1e9)
             fehs = self.met_module.draw_random_metallicity(
-                N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=10**np.mean(ages)/1e9)
+                N=n_stars, x=position[0], y=position[1], z=position[2], age=10**np.mean(ages)/1e9)
             comb_vals = np.transpose([np.argmin(np.abs(self.evolution_module.log_age_list - ages[:, None]), axis=1), np.argmin(np.abs(self.evolution_module.feh_list-fehs[:,None]), axis=1)])
             comb_bins, comb_bin_idxs, comb_bin_cts = np.unique(comb_vals, axis=0, return_inverse=True, return_counts=True)
             bin_ages = self.evolution_module.log_age_list[comb_bins[:,0]]

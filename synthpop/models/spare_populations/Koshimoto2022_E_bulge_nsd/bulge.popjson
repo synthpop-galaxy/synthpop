@@ -15,7 +15,7 @@
 
     "metallicity_func_kwargs" : {
         "name" : "single_value",
-        "metallicity_value" : 0.0
+        "met_value" : 0.0
     },
 
     "kinematics_func_kwargs" : {
@@ -23,7 +23,7 @@
         "v0_stream" : 49,
         "y0_stream" : 393,
         "C_par_r" : 1.0,
-        "C_perp_r" : 3.8
+        "C_perp_r" : 3.8,
         "C_par_z" : 1.0,
         "C_perp_z" : 3.0,
         "h0_r" : [0.82, 9.29, 0.86],
@@ -36,7 +36,7 @@
     "population_density_kwargs" : {
         "name" : "Koshimoto2021Bulge",
         "parameterization" : "E",
-        "rho0" : 9.72,
+        "rho0" : 9.72e9,
         "x0" : 0.67,
         "y0" : 0.28,
         "z0" : 0.24,
