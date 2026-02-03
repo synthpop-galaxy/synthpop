@@ -7,8 +7,10 @@ according to the dedicated modules for:
 3) age distribution,
 4) metallicity distribution,
 5+6) isochrone systems and interpolator,
-7+8) extinction map and law, and
-9) kinematics.
+7) initial-final mass relation,
+8) multiplicity,
+9+10) extinction map and law, and
+11) kinematics.
 """
 
 __all__ = ["Population"]
@@ -30,29 +32,7 @@ import warnings
 # used to allow running as main and importing to another script
 try:
     from . import constants as const
-except ImportError:
-    import constants as const
-    import synthpop_utils as sp_utils
-    from position import Position
-    from star_generator import StarGenerator
-    from synthpop_utils.synthpop_logging import logger
-    from synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
-    from synthpop_utils import coordinates_transformation as coord_trans
-    from synthpop_utils import Parameters
-    from modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
-    from modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
-        CombineEvolution, MUST_HAVE_COLUMNS
-    from modules.age import Age
-    from modules.initial_mass_function import InitialMassFunction
-    from modules.initial_final_mass_relation import InitialFinalMassRelation
-    from modules.kinematics import Kinematics
-    from modules.metallicity import Metallicity
-    from modules.population_density import PopulationDensity
-    from modules.multiplicity import Multiplicity
-
-else:  # continue import when if synthpop is imported
     from . import synthpop_utils as sp_utils
-    from .position import Position
     from .star_generator import StarGenerator
     from .synthpop_utils.synthpop_logging import logger
     from .synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
@@ -68,7 +48,24 @@ else:  # continue import when if synthpop is imported
     from .modules.metallicity import Metallicity
     from .modules.population_density import PopulationDensity
     from .modules.multiplicity import Multiplicity
-
+except ImportError:
+    import constants as const
+    import synthpop_utils as sp_utils
+    from star_generator import StarGenerator
+    from synthpop_utils.synthpop_logging import logger
+    from synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
+    from synthpop_utils import coordinates_transformation as coord_trans
+    from synthpop_utils import Parameters
+    from modules.extinction import ExtinctionLaw, ExtinctionMap, CombineExtinction
+    from modules.evolution import EvolutionIsochrones, EvolutionInterpolator, \
+        CombineEvolution, MUST_HAVE_COLUMNS
+    from modules.age import Age
+    from modules.initial_mass_function import InitialMassFunction
+    from modules.initial_final_mass_relation import InitialFinalMassRelation
+    from modules.kinematics import Kinematics
+    from modules.metallicity import Metallicity
+    from modules.population_density import PopulationDensity
+    from modules.multiplicity import Multiplicity
 
 class Population:
     """
@@ -89,6 +86,8 @@ class Population:
     metallicity : metallicity.Metallicity subclass
     population_density : population_density.PopulationDensity subclass
     position : position.Position class
+    ifmr : initial_final_mass_ratio.InitialFinalMassRatio subclass or None
+    mult : multiplicity.Multiplicity subclass or None
 
     Methods
     -------
@@ -98,16 +97,11 @@ class Population:
         convenience function to assign subsections to Population upon initialization
     update(self,**kwargs) : None
         update population with new kwargs (e.g., new l_deg and b_deg)
-    mc_totmass(self,r_inner,r_outer,N) : float [M_sun]
-        monte carlo to calculate the total mass in between radius_1 and radius_2 within
-        self.solid_angle_sr using N draws
     estimate_field(self,) :
         float [M_sun], float [number of stars]
         estimate the total mass and stars in a field
     generate_field(self) : pd.DataFrame
-        generate stars in slices of self.step_size out to self.max_distance
-    generate_stars_in_slice(self,r_inner,r_outer,N) :np.array
-        generate the initial parameter for N = stars in a slices slice r_inner and r_outer
+        generate stars out to self.max_distance
     check_field(self, TBD...) :
         estimates the number of missing stars in the generated field
     evolve_field(self,data) : float x 4
@@ -138,14 +132,6 @@ class Population:
             self.coord_trans = coord_trans.CoordTrans(
                 sun=self.glbl_params.sun, **self.glbl_params.warp)
 
-        # default pointing is Galactic anti-center
-        #self.l_deg = 180
-        #self.b_deg = 0
-        #self.solid_angle_sr = 1e-12
-        self.position = Position(logger,
-                self.coord_trans, self.glbl_params.field_shape, None
-            )
-
         # read min and maximum mass from parameters
         self.min_mass = self.glbl_params.mass_lims['min_mass']
         self.max_mass = self.glbl_params.mass_lims['max_mass']
@@ -157,8 +143,6 @@ class Population:
 
         self.step_size = getattr(
                 self.pop_params, 'distance_step_size', self.glbl_params.distance_step_size)
-
-        self.N_mc_totmass = self.glbl_params.N_mc_totmass
 
         # star number correction
         self.lost_mass_option = getattr(self.pop_params, "lost_mass_option",
@@ -209,9 +193,6 @@ class Population:
 
         self.av_mass_corr = None
         if self.glbl_params.star_generator=="SpiseaGenerator":
-            # if self.lost_mass_option != 3:
-            #     logger.warning("Setting lost_mass_option to 3 for SpiseaGenerator.")
-            #     self.lost_mass_option = 3
             if self.skip_lowmass_stars:
                 logger.warning("Setting skip_lowmass_stars to False for SpiseaGenerator.")
                 self.skip_lowmass_stars = False
@@ -221,13 +202,13 @@ class Population:
                 from .spisea_generator import SpiseaGenerator
             self.generator = SpiseaGenerator(self.population_density,
                 self.imf, self.age, self.metallicity, self.evolution,
-                self.glbl_params, self.position, self.max_mass, 
+                self.glbl_params, self.max_mass, 
                 self.ifmr, self.mult, self.bands, logger
                 )
         else:
             self.generator = StarGenerator(self.population_density,
                 self.imf, self.age, self.metallicity, self.evolution,
-                self.glbl_params, self.position, self.max_mass, 
+                self.glbl_params, self.max_mass, 
                 self.ifmr, self.mult, self.bands, logger
                 )
 
@@ -241,7 +222,9 @@ class Population:
         metallicity,
         kinematics,
         evolution,
-        extinction
+        extinction,
+        ifmr,
+        multiplicity
         """
 
         evolution = self.get_evolution_class()
@@ -488,65 +471,26 @@ class Population:
             raise ValueError(f"field_scale unit '{field_scale_unit}' is not supported")
 
         # flag to mark that coordinates have been set
-        self.position.update_location(l_deg, b_deg, field_shape, self.field_scale_deg)
+        self.population_density.update_location(l_deg, b_deg, field_shape, self.field_scale_deg,
+                                                self.max_distance)
 
         logger.debug(f"{self.name} : position is set to {l_deg: .3f}, {b_deg: .3f}")
         if field_shape=='circle':
             logger.debug(f"{self.field_scale_deg} deg radius circle. ({field_scale} {field_scale_unit})")
         if field_shape=='box':
-            logger.debug(f"{self.position.l_length_deg}, {self.position.b_length_deg} degree l, b length box")
+            logger.debug(f"{self.population_density.l_length_deg}, {self.population_density.b_length_deg} degree l, b length box")
 
         if self.extinction is not None:
             assert not np.any(np.isnan(self.extinction.get_extinctions([l_deg], [b_deg], [self.max_distance])[0])), \
                 fr"{self.extinction.extinction_map_name} not valid in direction l_deg={l_deg}, b_deg={b_deg} " \
                 f"at max distance {self.max_distance}. Check the map's sky coverage."
 
-    def mc_totmass(self, r_inner: float, r_outer: float, n_picks: int = 1000) -> float:
-        """
-        Monte Carlo integration of the total mass in a slice,
-        given near and far bounding radii r_inner and r_outer.
-        Want to add some catch for large error in the mass,
-        then increase value of N.
-        Recall that for a Monte Carlo integration:
-        Q_N = Volume * (1/N) * sum_N f(x) = V*<f>,
-        the expected error in Q_N decreases as 1/sqrt(N).
-
-        Parameters
-        ----------
-        r_inner : float [kpc]
-            inner radius of the slice 
-        r_outer : float [kpc]
-            outer radius of the slice
-        n_picks : int
-            number of picks for the  integration
-
-        Returns
-        -------
-        total_mass : float
-            total mass in the slice
-        """
-        # calculate volume of slice, needs to be kpc^3, r_inner and r_outer in kpc
-        if self.field_shape == 'circle':
-            volume = (1 / 3) * np.pi*(self.position.lb_radius_deg*np.pi/180)**2 * (r_outer ** 3 - r_inner ** 3)
-        elif self.field_shape == 'box':
-            volume = (1 / 3) * self.position.l_length_deg*self.position.b_length_deg*(np.pi/180)**2 * (r_outer ** 3 - r_inner ** 3)
-
-        # MC draws of density
-        d, lstar_deg, bstar_deg = self.position.draw_random_point_in_slice(r_inner,
-            r_outer, n_picks)[3:]
-        r, phi_rad, z = self.coord_trans.dlb_to_rphiz(d, lstar_deg, bstar_deg)
-        mean_density = np.mean(self.population_density.density(r, phi_rad, z))
-        # then find mass from volume*<density>
-        total_mass = volume * mean_density
-
-        return total_mass
-
     def estimate_field(self, **kwargs) -> Tuple[float, float]:
         """
-        estimate the field in the current pointing
+        Estimate the total mass and number of stars in the current field
         """
 
-        if self.position.l_deg is None:
+        if self.population_density.l_deg is None:
             msg = ("coordinates where not set."
                    "You must run set_position(l_deg, b_deg, field_shape, field_scale, field_scale_unit)"
                    "before running 'estimate_field' or 'generate_field'")
@@ -555,12 +499,8 @@ class Population:
 
         average_star_mass = self.imf.average_mass(min_mass=self.min_mass, max_mass=self.max_mass)
 
-        # radii we will step over
-        radii = np.arange(0, self.max_distance + self.step_size, self.step_size)
-        # find total mass in cone
-        # sum over all slices
-        total_stellar_mass = sum(self.mc_totmass(inner_radii, outer_radii, n_picks=1000)
-            for inner_radii, outer_radii in zip(radii, radii[1:]))
+        # total mass is computed in population_density.update_location
+        total_stellar_mass = self.population_density.total_mass
         # find total number of stars
         if self.population_density.density_unit == 'init_mass':
             av_mass_corr = 1
@@ -599,9 +539,8 @@ class Population:
             **kwargs
             ) -> float:
         """
-        Estimates the ratio between the average evolved mass and initialmass
-        Generates and evolve N stars in the cone,
-        Evolve them and estimates the average mass
+        Estimates the ratio between the average evolved mass and initial mass by
+        generating and evolving n_stars stars in the field andevolving them.
 
         Parameters
         ----------
@@ -623,9 +562,9 @@ class Population:
         logger.info(f"Evolving test set from population {self.popid} to estimate average initial->final mass ratio")
         # generate positions for a test sample
         positions = np.array(
-            self.position.draw_random_point_in_slice(0, self.max_distance, n_stars))
+            self.population_density.draw_random_positions(n_stars))
 
-        star_sample, _ = self.generator.generate_star_at_location(positions[0:3].T,
+        star_sample, _ = self.generator.generate_star_at_location(positions[0:3],
             {'star_mass'},
             min_mass=self.min_mass, max_mass=self.max_mass)
         # get evolved mass
@@ -636,7 +575,6 @@ class Population:
         av_mass_corr = average_m_evolved / average_m_initial
 
         self.av_mass_corr = av_mass_corr
-        #pdb.set_trace()
 
         return av_mass_corr
 
@@ -668,27 +606,19 @@ class Population:
 
         return av_mass_corr
 
-    def get_n_star_expected(self, radii, average_imass_per_star, av_mass_corr):
-        """ estimates the number of stars in each slice """
-
-        # estimate the mass/numbers in each slice
-        mass_per_slice = np.array([self.mc_totmass(radii_inner, radii_outer, self.N_mc_totmass)
-            for radii_inner, radii_outer in zip(radii, radii[1:])])
-        ################################################################
-        #   Translate density into number of generated stars           #
-        ################################################################
+    def get_n_star_expected(self, average_imass_per_star, av_mass_corr):
+        """ estimates the number of stars needed """
 
         if self.population_density.density_unit == "number":
-            n_star_expected = mass_per_slice  # density returns n_star_expected
-            mass_per_slice = n_star_expected * average_imass_per_star * av_mass_corr
+            n_star_expected = self.population_density.total_mass  # density returns n_star_expected
 
         if self.population_density.density_unit == 'init_mass':
-            n_star_expected = mass_per_slice / average_imass_per_star
+            n_star_expected = self.population_density.total_mass / average_imass_per_star
 
         else:
-            n_star_expected = mass_per_slice / (average_imass_per_star * av_mass_corr)
+            n_star_expected = self.population_density.total_mass / (average_imass_per_star * av_mass_corr)
 
-        return n_star_expected, mass_per_slice
+        return n_star_expected
 
     # @staticmethod
     # def convert_to_dataframe(
@@ -711,21 +641,20 @@ class Population:
 
     def generate_field(self) -> pd.DataFrame:
         """
-        Generate the stars in the field
-        estimates the number of stars from a density distribution
-        and generates stars based on the individual distributions
-        estimates evolved properties by interpolating the isochrones
+        Generate the stars in the field. The number of stars is determined by
+        the density distribution, and the individual evolved properties come
+        from isochrone interpolation. 
 
         Returns
         -------
         population_df : DataFrame
             collected stars for this population
-        distribution : dict
-            collected distributions, by now only the distance distribution
+        population_companions_df : DataFrame
+            companions for the population_df stars (None if no multiplicity)
 
         """
-        if self.position.l_deg is None:
-            msg = ("coordinates were not set."
+        if self.population_density.l_deg is None:
+            msg = ("Coordinates were not set."
                    "You must run set_position(l_deg, b_deg, field_shape, field_scale, field_scale_unit)"
                    "before running 'estimate_field' or 'generate_field'")
             logger.critical(msg)
@@ -734,7 +663,7 @@ class Population:
         logger.create_info_subsection(f"Population {self.popid};  {self.name}")
 
         # array of radii to use
-        radii = np.arange(0, self.max_distance + self.step_size, self.step_size)
+        radii = np.arange(0, self.max_distance + 0.1, 0.1)
 
         # placeholder to collect data frames
         df_list = []
@@ -756,12 +685,11 @@ class Population:
         # get initial av_mass_corr # might be estimated on the fly
         av_mass_corr = self.get_mass_loss_for_option(self.lost_mass_option)
 
-        n_star_expected, mass_per_slice = self.get_n_star_expected(
-            radii, average_imass_per_star, av_mass_corr)
+        n_star_expected = self.get_n_star_expected(average_imass_per_star, av_mass_corr)
 
-        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (np.sum(n_star_expected)>0):
-            if np.sum(n_star_expected) < self.N_av_mass:
-                n_star_expected *= self.N_av_mass / np.sum(n_star_expected)
+        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (n_star_expected>0):
+            if n_star_expected < self.N_av_mass:
+                n_star_expected = self.N_av_mass
 
         mass_limit = np.ones(radii[:-1].shape) * self.min_mass  # new min mass for each
         frac_lowmass = (0., 0.)  # average mass/ fraction of stars
@@ -775,16 +703,13 @@ class Population:
         elif self.skip_lowmass_stars and isinstance(self.evolution, list):
             logger.warning("skip_lowmass_stars is not implemented for multiple isochrones")
 
+        elif self.skip_lowmass_stars and self.multiplicity is not None:
+            logger.warning("skip_lowmass_stars is not implemented for models with stellar multiplicity")
+
         elif self.skip_lowmass_stars:
+            logger.warning("i don't think this option is working yet w/ slice approx. removed")
             logger.info(f"{self.name} : estimate minimum mass for magnitude limit")
             max_age = self.age.get_maximum_age()
-            '''if self.glbl_params.obsmag:
-                self.extinction.update_extinction_in_map(radius=radii[:-1])
-                _,ext_dict_temp = self.extinction.get_extinctions(self.l_deg*np.ones(len(radii)-1),self.b_deg*np.ones(len(radii)-1),radii[:-1])
-                extinction_at_slice_fronts = ext_dict_temp[self.glbl_params.maglim[0]]
-            else:
-                extinction_at_slice_fronts = None'''
-            #print('ext slices',extinction_at_slice_fronts)
             mass_limit = self.evolution.get_mass_min(
                 self.glbl_params.maglim[0],
                 self.glbl_params.maglim[1], radii[:-1], 
@@ -801,21 +726,22 @@ class Population:
                 )  # average_mass, fraction of stars
 
         # reduce number of stars by the scale factor and fract_above_min_mass
-        total_stars = np.random.poisson(n_star_expected * (1 - frac_lowmass[1]) / self.scale_factor)
+        total_stars = np.random.poisson(n_star_expected / self.scale_factor)
 
         expected_total_imass = n_star_expected * average_imass_per_star
 
         logger.info("# From density profile (number density)")
 
-        logger.info(f"expected_total_iMass = {np.sum(expected_total_imass):.4f}")
-        logger.info(f"expected_total_eMass = {np.sum(mass_per_slice):.4f}")
+        logger.info(f"expected_total_iMass = {expected_total_imass:.4f}")
+        logger.info(f"expected_total_eMass = {self.population_density.total_mass:.4f}")
         logger.info(f"average_iMass_per_star = {average_imass_per_star:.4f}")
         logger.info(f"mass_loss_correction = {np.sum(av_mass_corr):.4f}")
-        logger.info(f"n_expected_stars = {np.sum(n_star_expected):.4f}")
-        if self.skip_lowmass_stars:
-            logger.info(f"without_lm_stars = {np.sum(n_star_expected * (1 - frac_lowmass[1])):.4f}")
+        logger.info(f"n_expected_stars = {n_star_expected:.4f}")
+        # no longer meaningful when slicing is ONLY used for mass cut, not count
+        # if self.skip_lowmass_stars:
+        #     logger.info(f"without_lm_stars = {np.sum(n_star_expected * (1 - frac_lowmass[1])):.4f}")
         logger.debug(f"{self.name} : Lost mass option: %s", self.lost_mass_option)
-        logger.debug(f"{self.name} : Generate ~{sum(total_stars)} stars")
+        logger.debug(f"{self.name} : Generate ~{total_stars} stars")
         self.population_density.average_mass = average_imass_per_star * av_mass_corr
         self.population_density.av_mass_corr = av_mass_corr
 
@@ -833,23 +759,20 @@ class Population:
         opt3_mass_loss_done=False
         use_pbar = (np.sum(total_stars)>self.glbl_params.chunk_size) * (self.generator.generator_name!='SpiseaGenerator')
         if use_pbar:
-            pbar = tqdm(total=sum(missing_stars))
+            pbar = tqdm(total=missing_stars)
         neg_missing_stars = np.minimum(missing_stars,0)
         gen_missing_stars = np.maximum(missing_stars,0)
         current_max_id = -1
-        while any(missing_stars > 0):
-            if (sum(gen_missing_stars)>self.glbl_params.chunk_size) and not (self.generator.generator_name=='SpiseaGenerator'):
+        while (missing_stars > 0):
+            if (gen_missing_stars>self.glbl_params.chunk_size) and not (self.generator.generator_name=='SpiseaGenerator'):
                 final_expected_loop=False
-                idx_cs = np.searchsorted(np.cumsum(gen_missing_stars), self.glbl_params.chunk_size)
-                rem_chunk = self.glbl_params.chunk_size - (np.cumsum(gen_missing_stars)[idx_cs-1])*(idx_cs>0)
-                gen_stars_chunk = gen_missing_stars * (np.cumsum(gen_missing_stars)<self.glbl_params.chunk_size)
-                gen_stars_chunk[idx_cs] = rem_chunk
+                gen_stars_chunk = self.glbl_params.chunk_size
             else:
                 final_expected_loop=True
-                gen_stars_chunk = np.copy(gen_missing_stars)
+                gen_stars_chunk = gen_missing_stars
 
-            df, comp_df = self.generator.generate_stars(radii,
-                gen_stars_chunk, mass_limit, self.do_kinematics, props_list)
+            df, comp_df = self.generator.generate_stars(gen_stars_chunk, 
+                mass_limit, self.do_kinematics, props_list)
 
             # Make sure main df has selection option for primary or system mags
             if self.extinction is not None:
@@ -865,11 +788,11 @@ class Population:
             if self.lost_mass_option==3 and not opt3_mass_loss_done:
                 all_m_initial += list(star_set['iMass'])
                 all_m_evolved += list(star_set['system_Mass'])
-                all_r_inner   += list(star_set['r_inner'])
+                #all_r_inner   += list(star_set['r_inner'])
                 if final_expected_loop:
                     missing_stars = self.check_field(
-                                radii, average_imass_per_star, np.array(all_m_initial), np.array(all_m_evolved), np.array(all_r_inner),
-                                mass_per_slice, frac_lowmass)
+                                average_imass_per_star, np.array(all_m_initial), np.array(all_m_evolved),
+                                self.population_density.total_mass, frac_lowmass)
                     opt3_mass_loss_done=True
                 else:
                     missing_stars -= gen_stars_chunk
@@ -890,12 +813,12 @@ class Population:
                 comp_df.loc[:,'system_idx'] += (current_max_id + 1)
             if len(df)>0:
                 current_max_id = int(np.max(df['system_idx']))
-            df.drop(columns=['r_inner'], inplace=True)
+            #df.drop(columns=['r_inner'], inplace=True)
             df_list.append(df)
             comp_df_list.append(comp_df)
             loop_counts += 1
             if use_pbar:
-                pbar.update(np.sum(gen_stars_chunk))
+                pbar.update(gen_stars_chunk)
 
             neg_missing_stars = np.minimum(missing_stars,0)
             gen_missing_stars = np.maximum(missing_stars,0)
@@ -914,14 +837,10 @@ class Population:
         # Remove any excess stars
         if (self.lost_mass_option==3) and (len(population_df)>0) and \
             (self.generator.generator_name != 'SpiseaGenerator'):
-            r_inner=radii[np.searchsorted(radii, population_df['Dist'])-1]
             population_df = self.remove_stars(population_df, population_comp_df,
-                                    r_inner, neg_missing_stars, radii)
-            #population_df.reset_index(drop=True,inplace=True)
+                                    neg_missing_stars)
         if len(population_df)>0:
             population_df.loc[:, 'pop'] = self.popid
-            # if population_comp_df is not None and len(population_comp_df)>0:
-            #     population_comp_df.loc[:,'pop'] = self.popid
 
         #pdb.set_trace()
         to = time.time()  # end timer
@@ -974,33 +893,23 @@ class Population:
     def remove_stars(
             df: pd.DataFrame,
             comp_df: pd.DataFrame,
-            radii_star: np.ndarray,
             missing_stars: np.ndarray,
-            radii: np.ndarray
             ) -> pd.DataFrame:
         """
-        Removes stars form data frame in the corresponding slice
-        if missing_stars is < 0
+        Removes stars form data frame if missing_stars is < 0
         """
-        #primary_ids, idxs, cts= np.unique(df['primary_ID'], return_index=True, return_counts=True)
-        #avg_stars_per_system = np.mean(cts)
-        preserve = np.ones(len(radii_star), bool)
-        for r, n in zip(radii, missing_stars):
-            scale_n = int(round(n/avg_stars_per_system))
-            if scale_n < 0:
-                primary_ids_slice = np.unique(df['system_idx'].to_numpy()[radii_star==r])
-                drop_primary_ids = np.random.choice(primary_ids_slice, replace=False, size=scale_n)
-                preserve[np.isin(df['system_idx'].to_numpy(), drop_primary_ids)] = False
-        return df[preserve], comp_df[np.isin(comp_df['system_idx'], df['system_idx'][preserve])]
+        if missing_stars<0:
+            df = df.sample(n=len(df)+missing_stars, replace=False)
+            return df, comp_df[np.isin(comp_df['system_idx'], df['system_idx'])]
+        else:
+            return df, comp_df
 
     def check_field(
             self,
-            radii: np.ndarray,
             average_imass_per_star: float,
             m_initial: np.ndarray,
             m_evolved: np.ndarray,
-            radii_star: np.ndarray,
-            mass_per_slice: np.ndarray,
+            total_mass: float,
             fract_mass_limit: Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]],
             ) -> np.ndarray:
         """
@@ -1010,16 +919,14 @@ class Population:
 
         Parameters
         ----------
-        radii : ndarray
         m_initial : ndarray
         m_evolved : ndarray
-        radii_star : ndarray
-        mass_per_slice : ndarray
+        total_mass: float
         fract_mass_limit : ndarray or float
         Returns
         -------
         missing_stars : ndarray
-            number of missing stars in each slice
+            number of missing stars
         """
         # estimate current initial mass
         #m_in = np.array([np.sum(m_initial[radii_star == r]) for r in radii[:-1]])
@@ -1027,7 +934,7 @@ class Population:
         #m_evo = np.array([np.sum(m_evolved[radii_star == r]) for r in radii[:-1]])
 
         if self.population_density.density_unit in ['number', 'init_mass']:
-            return np.zeros(len(mass_per_slice), dtype=int)
+            return 0
 
         # option 3.
         # if the sample is large enough otherwise determine the average mass before.
@@ -1037,14 +944,12 @@ class Population:
             fract_mass_limit[0] * fract_mass_limit[1]  # not generated
             + (1 - fract_mass_limit[1]) * np.mean(m_evolved)  # generated
             )
-        n_star_expected = mass_per_slice / average_emass_per_star_mass
+        n_star_expected = total_mass / average_emass_per_star_mass
         total_stars = np.random.poisson(
             n_star_expected * (1 - fract_mass_limit[1]) / self.scale_factor)
 
         # reduce number of stars by the scale factor
-        exist = np.array([np.sum(radii_star == r) for r in radii[:-1]])
-        missing_stars = total_stars - exist
-        #pdb.set_trace()
+        missing_stars = total_stars - len(m_evolved)
         return missing_stars
 
     def do_kinematics(
@@ -1108,7 +1013,6 @@ class Population:
                     comp_df.loc[:,band] += ext_band_series[comp_df['system_idx'].to_numpy()].to_numpy()
 
         df.loc[:,self.extinction.A_or_E_type] = extinction_in_map
-        #pdb.set_trace()
 
         return df, comp_df
 

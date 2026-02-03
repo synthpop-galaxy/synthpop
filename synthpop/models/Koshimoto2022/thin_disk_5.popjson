@@ -1,5 +1,5 @@
 {
-    "name" : "thin_disk_2",
+    "name" : "thin_disk_5",
 
     "imf_func_kwargs" : {
         "name" : "kroupa"
@@ -8,12 +8,12 @@
     "age_func_kwargs" : {
         "name" : "single_value",
         "#comment" : "units in gigayears",
-        "age_value" : 0.6
+        "age_value" : 4.0
     },
 
     "metallicity_func_kwargs" : {
         "name" : "single_value",
-        "metallicity_value" : 0.00
+        "met_value" : -0.05
     },
 
     "kinematics_func_kwargs" : {
@@ -24,17 +24,18 @@
         "beta_z" : 0.77,
         "R_sigma_r" : 14.3,
         "R_sigma_z" : 5.9,
-        "pop_age" : 0.575
+        "pop_age" : 4.0
     }, 
 
     "population_density_kwargs" : {
         "name" : "Koshimoto2021Thindisk",
         "#comment" : "rho0 in Msun/kpc**3 (10**9)",
-        "rho0" : 5.2e6,
-        "R0" : 2.6,
-        "z0" : 0.141,
-        "z45" : 0.085,
-        "Rbreak" : 5.3
+        "rho_sun" : 6.7e6,
+        "R" : 2.6,
+        "z_sun" : 0.372,
+        "z_45" : 0.223,
+        "R_break" : 5.3,
+        "linear_z" : false
     }
 }
 

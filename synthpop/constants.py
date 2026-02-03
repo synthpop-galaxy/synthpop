@@ -27,7 +27,7 @@ REQ_ISO_PROPS = ["star_mass"]
 REQ_COL_NAMES = [
         "pop", "iMass", "age",  "Fe/H_initial", "Mass",
         "In_Final_Phase", "Dist", "l", "b",
-        "vr_bc", "mul", "mub",  "x", "y", "z",  "U", "V", "W", "VR_LSR", "ExtinctionInMap"]
+        "vr_bc", "mul", "mub",  "x", "y", "z",  "U", "V", "W", "VR_LSR"]
 
 # ------- Physical Constants --------
 c = 3e8  # m/s

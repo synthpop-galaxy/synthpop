@@ -13,7 +13,7 @@
 
     "metallicity_func_kwargs" : {
         "name" : "single_value",
-        "metallicity_value" : -0.12
+        "met_value" : -0.12
     },
 
     "kinematics_func_kwargs" : {
@@ -24,17 +24,18 @@
         "beta_z" : 0.77,
         "R_sigma_r" : 14.3,
         "R_sigma_z" : 5.9,
-        "pop_age" : 8.5
+        "pop_age" : 8.7
     }, 
 
     "population_density_kwargs" : {
         "name" : "Koshimoto2021Thindisk",
         "#comment" : "rho0 in Msun/kpc**3 (10**9)",
-        "rho0" : 1.5e7,
-        "R0" : 2.6,
-        "z0" : 0.445,
-        "z45" : 0.267,
-        "Rbreak" : 5.3
+        "rho_sun" : 1.6e7,
+        "R" : 2.6,
+        "z_sun" : 0.445,
+        "z_45" : 0.267,
+        "R_break" : 5.3,
+        "linear_z" : false
     }
 }
 

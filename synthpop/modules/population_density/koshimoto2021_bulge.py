@@ -63,7 +63,8 @@ class Koshimoto2021Bulge(PopulationDensity):
                            'G':self.param_function_g,
                            'B':self.param_function_b}
         self.param_function = param_functions[parameterization]
-        self.X_shape=X_shape
+        self.X_shape = X_shape
+        self.b_X = b_X
         self.R_c = R_c
 
     @staticmethod
@@ -83,7 +84,7 @@ class Koshimoto2021Bulge(PopulationDensity):
         # Eqn 14
         return np.exp(-x**2) ** (x>0)
 
-    def rs_function(xp, yp, zp):
+    def rs_function(self, xp, yp, zp):
         # Eqn 16
         rs = ((np.abs(xp / self.x0) ** self.C_perp
              + np.abs(yp / self.y0) ** self.C_perp) ** (self.C_par/self.C_perp)
@@ -93,19 +94,19 @@ class Koshimoto2021Bulge(PopulationDensity):
     def density(self, r, phi_rad, z):
 
         # Align coordinates with the bar,
-        xp = -r * np.cos(phi_rad - self.bar_ang)
-        yp = r * np.sin(phi_rad - self.bar_ang)
+        xp = -r * np.cos(phi_rad - self.bar_angle_rad)
+        yp = r * np.sin(phi_rad - self.bar_angle_rad)
         zp = z
         
         # Do the math
         if not self.X_shape:
             # Eqn 13
-            rs = rs_function(xp, yp, zp)
+            rs = self.rs_function(xp, yp, zp)
             rho = self.rho0 * self.param_function(rs) * self.cutoff_function((r-self.R_c)/0.5)
         else:
             # Eqn 17
-            rs1 = rs_function(xp-self.b_X*zp, yp, zp)
-            rs2 = rs_function(xp+self.b_X*zp, yp, zp)
+            rs1 = self.rs_function(xp-self.b_X*zp, yp, zp)
+            rs2 = self.rs_function(xp+self.b_X*zp, yp, zp)
             rho = self.rho0 * \
                     (self.param_function(rs1) + self.param_function(rs2)) * \
                     self.cutoff_function((r-self.R_c)/0.5)

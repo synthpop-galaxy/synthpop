@@ -3,9 +3,9 @@ SynthPop is a modular framework to generate synthetic galaxy population models.
 For usage see README.md and our ReadTheDocs site!
 
 This file contains the main SynthPop class and main function,
-which handles the setting of synthpop, data collection
-from the populations, and the saving process.
-The generation process for each population is performed by
+which handles the setting of model parameters, data collection
+from the populations, and file saving.
+The generation process for each population is performed within
 the Population class defined in population.py.
 """
 
@@ -14,7 +14,7 @@ __author__ = "J. Klüter, S. Johnson, M.J. Huston"
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 __data__ = "2023-01-09"
 __license__ = "GPLv3"
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
 # Standard Imports
 import os
@@ -48,7 +48,6 @@ except (ImportError, ValueError) as e:
     from modules.post_processing import PostProcessing
     from population import Population
     from synthpop_utils.synthpop_logging import logger
-    
 
 class SynthPop:
     """

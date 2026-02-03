@@ -16,25 +16,24 @@ class Koshimoto2021Thickdisk(PopulationDensity):
     
     Attributes
     ----------
-    R0 : float [kpc]
+    R : float [kpc]
         disk scale length
-    z0 : float [kpc]
+    z_sun : float [kpc]
         disk scale height
-    rho0 : float [M_sum/kpc^3]
+    rho_sun : float [M_sum/kpc^3]
         mass density at the solar position
-    Rbreak : float [kpc]
+    R_break : float [kpc]
         distance within which surface density is flat
     """
 
-    def __init__(
-            self, rho0=(1.7e-3 + 4.4e-4) * 10 ** 9, z0=0.903, R0=2.200, Rbreak=5.300, **kwargs
-            ):
+    def __init__(self, rho_sun=(1.7e-3 + 4.4e-4 + 9.1e-6) * 10 ** 9, 
+                 z_sun=0.903, R=2.200, R_break=5.300, **kwargs):
         super().__init__(**kwargs)
         self.density_unit = 'mass'
-        self.rho0 = rho0
-        self.z0 = z0
-        self.R0 = R0
-        self.Rbreak = Rbreak
+        self.rho_sun = rho_sun
+        self.z_sun = z_sun
+        self.R = R
+        self.R_break = R_break
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
@@ -56,8 +55,8 @@ class Koshimoto2021Thickdisk(PopulationDensity):
             mass density or initial mass density should be specified in density_unit.
 
         """
-        r_past_break = (np.array(r) > self.Rbreak).astype(int)
-        rho_past = self.rho0 * np.exp(-(r - self.sun.r) / self.R0) * np.exp(-abs(z) / self.z0)
-        rho_pre = self.rho0 * np.exp(-(self.Rbreak - self.sun.r) / self.R0) * np.exp(
-            -abs(z) / self.z0)
+        r_past_break = (np.array(r) > self.R_break)
+        rho_past = self.rho_sun * np.exp(-(r - self.sun.r) / self.R) * np.exp(-abs(z) / self.z_sun)
+        rho_pre = self.rho_sun * np.exp(-(self.R_break - self.sun.r) / self.R) * np.exp(
+            -abs(z) / self.z_sun)
         return rho_past * r_past_break + rho_pre * (1 - r_past_break)
