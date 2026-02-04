@@ -51,7 +51,10 @@ Available Models
 .. note::
     additional models + descriptions coming soon
 
-synthpop_Huston2024
+Huston2024
+^^^^^^^^^^^^^^^^^^^
+
+Huston2025
 ^^^^^^^^^^^^^^^^^^^
 
 besancon_Robin2003
@@ -63,6 +66,25 @@ GUMS_dr3
 GUMS_dr3_mod_dens
 ^^^^^^^^^^^^^^^^^
 
-Koshimoto2021
+Koshimoto2022
 ^^^^^^^^^^^^^
 
+Additional Populations
+----------------
+.. note:: We provide some additional population files under **models/spare_populations**, which should not be taken as complete models but may be used for population studies or in combination with other model components.
+
+Cao2013_bulge
+^^^^^^^^^^^^^
+
+Koshimoto2022_E_bulge_nsd
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Koshimoto2022_G_bulge_nsd
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Koshimoto2022_GxG_bulge_nsd
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Sormani2022_nsd
+^^^^^^^^^^^^^^^
+Nuclear Stellar Disk population from `Sormani et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.1857S/abstract>`__.
