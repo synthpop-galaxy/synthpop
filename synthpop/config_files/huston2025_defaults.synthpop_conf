@@ -49,10 +49,7 @@
 
     "POPULATION_GENERATION":{
         "max_distance":25,
-        "distance_step_size":0.10,
-        "window_type":{"window_type":"cone"},
         "mass_lims":{"min_mass":0.08,"max_mass":100},
-        "N_mc_totmass":10000,
         "lost_mass_option": 1,
         "N_av_mass":50000,
         "scale_factor": 1,
