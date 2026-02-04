@@ -117,6 +117,7 @@ class Population:
         self.pop_params = pop_params
         self.name = self.pop_params.name
         self.popid = population_index
+        self.obsmag = glbl_params.obsmag
 
         logger.create_info_subsection(f"Population {self.popid};  {self.name}")
 
@@ -564,7 +565,7 @@ class Population:
         positions = np.array(
             self.population_density.draw_random_positions(n_stars))
 
-        star_sample, _ = self.generator.generate_star_at_location(positions[0:3],
+        star_sample, _ = self.generator.generate_star_at_location(positions[0:4],
             {'star_mass'},
             min_mass=self.min_mass, max_mass=self.max_mass)
         # get evolved mass
@@ -663,7 +664,7 @@ class Population:
         logger.create_info_subsection(f"Population {self.popid};  {self.name}")
 
         # array of radii to use
-        radii = np.arange(0, self.max_distance + 0.1, 0.1)
+        radii = np.linspace(0, self.max_distance, int(round(self.max_distance/0.1))+1)
 
         # placeholder to collect data frames
         df_list = []
@@ -702,12 +703,14 @@ class Population:
 
         elif self.skip_lowmass_stars and isinstance(self.evolution, list):
             logger.warning("skip_lowmass_stars is not implemented for multiple isochrones")
+            self.skip_lowmass_stars = False
 
-        elif self.skip_lowmass_stars and self.multiplicity is not None:
+        elif self.skip_lowmass_stars and self.mult is not None:
             logger.warning("skip_lowmass_stars is not implemented for models with stellar multiplicity")
+            self.skip_lowmass_stars = False
 
         elif self.skip_lowmass_stars:
-            logger.warning("i don't think this option is working yet w/ slice approx. removed")
+            raise NotImplementedError("SORRY I BROKE THIS OPTION TEMPORARILY - skip_lowmass_stars not available")
             logger.info(f"{self.name} : estimate minimum mass for magnitude limit")
             max_age = self.age.get_maximum_age()
             mass_limit = self.evolution.get_mass_min(
@@ -724,7 +727,7 @@ class Population:
                 ((self.imf.F_imf(mass_limit) - self.imf.F_imf(self.min_mass))
                 / (self.imf.F_imf(self.max_mass) - self.imf.F_imf(self.min_mass)))
                 )  # average_mass, fraction of stars
-
+            #pdb.set_trace()
         # reduce number of stars by the scale factor and fract_above_min_mass
         total_stars = np.random.poisson(n_star_expected / self.scale_factor)
 
@@ -771,8 +774,8 @@ class Population:
                 final_expected_loop=True
                 gen_stars_chunk = gen_missing_stars
 
-            df, comp_df = self.generator.generate_stars(gen_stars_chunk, 
-                mass_limit, self.do_kinematics, props_list)
+            df, comp_df = self.generate_stars(gen_stars_chunk, 
+                mass_limit, props_list, radii=radii)
 
             # Make sure main df has selection option for primary or system mags
             if self.extinction is not None:
@@ -888,6 +891,46 @@ class Population:
         logger.flush()
 
         return population_df, population_comp_df
+
+    def generate_stars(self, missing_stars, mass_limit, props, radii=None):
+        position = self.population_density.draw_random_positions(missing_stars)
+        min_mass = mass_limit
+
+        u, v, w, vr_hc, mu_l, mu_b, vr_lsr = self.do_kinematics(
+            position[3], position[4], position[5],
+            position[0], position[1], position[2]
+            )
+        proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
+        velocities = np.column_stack([u, v, w, ])
+
+        # generate star at the positions
+        star_systems, companions = self.generator.generate_star_at_location(
+            position[0:4], props, min_mass, self.max_mass, radii=radii)
+        star_systems.loc[:,'x'] = position[0]
+        star_systems.loc[:,'y'] = position[1]
+        star_systems.loc[:,'z'] = position[2]
+        star_systems.loc[:,'Dist'] = position[3]
+        star_systems.loc[:,'l'] = position[4]
+        star_systems.loc[:,'b'] = position[5]
+        star_systems.loc[:,'vr_bc'] = proper_motions[:,0]
+        star_systems.loc[:,'mul'] = proper_motions[:,1]
+        star_systems.loc[:,'mub'] = proper_motions[:,2]
+        star_systems.loc[:,'U'] = velocities[:,0]
+        star_systems.loc[:,'V'] = velocities[:,1]
+        star_systems.loc[:,'W'] = velocities[:,2]
+        star_systems.loc[:,'VR_LSR'] = vr_lsr
+        
+        if self.obsmag:
+            dist_modulus = 5*np.log10(position[3] * 100)
+            for band in self.bands:
+                star_systems.loc[:,band] += dist_modulus
+                if companions is not None:
+                    sys_idxs = star_systems['system_idx'].to_numpy()
+                    dist_modulus_series = pd.Series(dist_modulus, index=sys_idxs)
+                    companions.loc[:,band] += dist_modulus_series[
+                            companions['system_idx'].to_numpy()].to_numpy()
+
+        return star_systems, companions
 
     @staticmethod
     def remove_stars(

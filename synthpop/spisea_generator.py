@@ -137,47 +137,8 @@ class SpiseaGenerator(StarGenerator):
 
         return sp_dict
 
-    def generate_stars(self, missing_stars, mass_limit, do_kinematics, props):
-        position = self.density_module.draw_random_positions(missing_stars)
-        min_mass = mass_limit
-
-        u, v, w, vr_hc, mu_l, mu_b, vr_lsr = do_kinematics(
-            position[3], position[4], position[5],
-            position[0], position[1], position[2]
-            )
-        proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
-        velocities = np.column_stack([u, v, w, ])
-
-        # generate star at the positions
-        star_systems, companions = self.generate_star_at_location(
-            position[0:3], props, min_mass, self.max_mass)
-        star_systems.loc[:,'x'] = position[0]
-        star_systems.loc[:,'y'] = position[1]
-        star_systems.loc[:,'z'] = position[2]
-        star_systems.loc[:,'Dist'] = position[3]
-        star_systems.loc[:,'l'] = position[4]
-        star_systems.loc[:,'b'] = position[5]
-        star_systems.loc[:,'vr_bc'] = proper_motions[:,0]
-        star_systems.loc[:,'mul'] = proper_motions[:,1]
-        star_systems.loc[:,'mub'] = proper_motions[:,2]
-        star_systems.loc[:,'U'] = velocities[:,0]
-        star_systems.loc[:,'V'] = velocities[:,1]
-        star_systems.loc[:,'W'] = velocities[:,2]
-        star_systems.loc[:,'VR_LSR'] = vr_lsr
-        
-        if self.obsmag:
-            dist_modulus = 5*np.log10(position[3] * 100)
-            for band in self.bands:
-                star_systems.loc[:,band] += dist_modulus
-                if companions is not None:
-                    sys_idxs = star_systems['system_idx'].to_numpy()
-                    dist_modulus_series = pd.Series(dist_modulus, index=sys_idxs)
-                    companions.loc[:,band] += dist_modulus_series[
-                            companions['system_idx'].to_numpy()].to_numpy()
-
-        return star_systems, companions
-
-    def generate_star_at_location(self, position, props, min_mass=None, max_mass=None, avg_mass_per_star=None):
+    def generate_star_at_location(self, position, props, 
+                min_mass=None, max_mass=None, radii=None):
         """
         Generates stars at the given positions
         """

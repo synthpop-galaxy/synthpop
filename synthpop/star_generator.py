@@ -79,56 +79,23 @@ class StarGenerator:
         self.logger = logger
         self.system_mags = False
 
-    def generate_stars(self, missing_stars, mass_limit, do_kinematics, props):
-        position = self.density_module.draw_random_positions(missing_stars)
-        min_mass = mass_limit
-
-        u, v, w, vr_hc, mu_l, mu_b, vr_lsr = do_kinematics(
-            position[3], position[4], position[5],
-            position[0], position[1], position[2]
-            )
-        proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
-        velocities = np.column_stack([u, v, w, ])
-
-        # generate star at the positions
-        star_systems, companions = self.generate_star_at_location(
-            position[0:3], props, min_mass, self.max_mass)
-        star_systems.loc[:,'x'] = position[0]
-        star_systems.loc[:,'y'] = position[1]
-        star_systems.loc[:,'z'] = position[2]
-        star_systems.loc[:,'Dist'] = position[3]
-        star_systems.loc[:,'l'] = position[4]
-        star_systems.loc[:,'b'] = position[5]
-        star_systems.loc[:,'vr_bc'] = proper_motions[:,0]
-        star_systems.loc[:,'mul'] = proper_motions[:,1]
-        star_systems.loc[:,'mub'] = proper_motions[:,2]
-        star_systems.loc[:,'U'] = velocities[:,0]
-        star_systems.loc[:,'V'] = velocities[:,1]
-        star_systems.loc[:,'W'] = velocities[:,2]
-        star_systems.loc[:,'VR_LSR'] = vr_lsr
-        
-        if self.obsmag:
-            dist_modulus = 5*np.log10(position[3] * 100)
-            for band in self.bands:
-                star_systems.loc[:,band] += dist_modulus
-                if companions is not None:
-                    companions.loc[:,band] += dist_modulus[
-                            companions['system_idx'].to_numpy()]
-
-        return star_systems, companions
-
-    def generate_star_at_location(self, position, props, min_mass=None, max_mass=None):
+    def generate_star_at_location(self, position, props, 
+                min_mass=None, max_mass=None, radii=None):
         """
         Generate stars at the given positions with observed properties.
         """
         n_stars = len(position[0])
         # Generate base properties: intial mass, age, metallicity
         m_initial = self.imf_module.draw_random_mass(
-            min_mass=np.min(min_mass), max_mass=max_mass, N=n_stars)
+                min_mass=np.min(min_mass), max_mass=max_mass, N=n_stars)
         age = self.age_module.draw_random_age(n_stars)
         met = self.met_module.draw_random_metallicity(
             N=n_stars, x=position[0], y=position[1], z=position[2], age=age)
 
+        # Decide which stars to evolve
+        # if (min_mass is not None) and (~isinstance(min_mass, (int,float))) \
+        #         and (len(np.unique(min_mass))>1):
+        #     skip_stars = 
         # Generate evolved properties
         s_props, final_phase_flag = self.get_evolved_props(m_initial, met, age, props)
 
