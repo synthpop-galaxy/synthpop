@@ -142,9 +142,6 @@ class Population:
         self.max_distance = getattr(
                 self.pop_params, 'max_distance', self.glbl_params.max_distance)
 
-        self.step_size = getattr(
-                self.pop_params, 'distance_step_size', self.glbl_params.distance_step_size)
-
         # star number correction
         self.lost_mass_option = getattr(self.pop_params, "lost_mass_option",
             self.glbl_params.lost_mass_option)
