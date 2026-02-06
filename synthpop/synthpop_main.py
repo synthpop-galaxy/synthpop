@@ -546,7 +546,7 @@ class SynthPop:
         if self.save_data:
             logger.create_info_subsection('Save result')
             self.write_to_file(field_df, companions=False)
-            if self.parms.multiplicity_kwargs is not None:
+            if field_companions_df is not None:
                 self.write_to_file(field_companions_df, companions=True)
         t2 = time.time() - ti
 
