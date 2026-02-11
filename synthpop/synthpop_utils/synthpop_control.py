@@ -16,6 +16,7 @@ from typing import Iterator, Tuple, Dict, Optional, Union, List
 import argparse
 import numpy as np
 import pydantic
+import pdb
 
 if pydantic.__version__.startswith("2"):
     from pydantic import BaseModel, model_validator
@@ -111,24 +112,22 @@ class Parameters:
         self.l_set_type = None
         self.b_set = None
         self.b_set_type = None
+        self.field_scale = None
 
         logger.create_info_section('Settings')
         self._categories = {}
         # read settings form config files a kwargs arguments
+        #pdb.set_trace()
         config_dir = self.read_default_config(default_config)
+        #pdb.set_trace()
         self.read_specific_config(specific_config, config_dir)
+        #pdb.set_trace()
         self.read_kwargs_config(kwargs)
 
         # generate random seed if not none
         # this allows to repeat the generation process later
         if not self.random_seed:
             self.random_seed = np.random.randint(0, 2 ** 31 - 1)
-
-        # if len(self.chosen_bands) < len(self.eff_wavelengths):
-        #     tmp_eff_wavelengths = {}
-        #     for band in self.chosen_bands:
-        #         tmp_eff_wavelengths[band] = self.eff_wavelengths[band]
-        #     self.eff_wavelengths = tmp_eff_wavelengths
 
         # log settings to file
         self.parameters_dict = {key: item for key, item in self.__dict__.items() if not key.startswith('_')}
@@ -213,7 +212,8 @@ class Parameters:
         converts l_set and b_set into a location generator object
         as defined by the l/b_set_type
         """
-        if ('field_scale' not in self.__dict__) and ('solid_angle' in self.__dict__):
+        #pdb.set_trace()
+        if (self.field_scale is None) and ('solid_angle' in self.__dict__):
             logger.critical("In SynthPop >=v2.0.0, solid_angle is no longer the expected input for a field "
                 "size. Assuming circular window and assigning field_scale according to the given solid_angle.")
             self.field_scale = np.sqrt(self.solid_angle/np.pi)
@@ -318,6 +318,7 @@ class Parameters:
         logger.info("# read configuration from ")
         logger.info(f"{config_file = !r} ")
         specified = json_loader(config_file)
+        #pdb.set_trace()
 
         for cat, items in self._categories.items():
             spec_dict = specified.get(cat, specified)
