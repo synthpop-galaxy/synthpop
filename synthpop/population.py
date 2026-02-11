@@ -479,7 +479,7 @@ class Population:
             logger.debug(f"{self.population_density.l_length_deg}, {self.population_density.b_length_deg} degree l, b length box")
 
         if self.extinction is not None:
-            assert not np.any(np.isnan(self.extinction.get_extinctions([l_deg], [b_deg], [self.max_distance])[0])), \
+            assert not np.any(np.isnan(self.extinction.get_extinctions(np.array([l_deg]), np.array([b_deg]), np.array([self.max_distance]))[0])), \
                 fr"{self.extinction.extinction_map_name} not valid in direction l_deg={l_deg}, b_deg={b_deg} " \
                 f"at max distance {self.max_distance}. Check the map's sky coverage."
 
