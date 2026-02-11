@@ -213,7 +213,7 @@ class Parameters:
         converts l_set and b_set into a location generator object
         as defined by the l/b_set_type
         """
-        if (self.field_scale is None) and ('solid_angle' in self.__dict__):
+        if ('field_scale' not in self.__dict__) and ('solid_angle' in self.__dict__):
             logger.critical("In SynthPop >=v2.0.0, solid_angle is no longer the expected input for a field "
                 "size. Assuming circular window and assigning field_scale according to the given solid_angle.")
             self.field_scale = np.sqrt(self.solid_angle/np.pi)

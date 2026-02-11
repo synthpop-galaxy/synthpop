@@ -1,8 +1,8 @@
 """
-NSD Density profile from Chatzopoulos et al. (2015)
+NSC Density profile from Chatzopoulos et al. (2015)
 """
 
-__all__ = ["Chatzopoulos2015Nsd", ]
+__all__ = ["Chatzopoulos2015Nsc", ]
 __author__ = "M.J. Huston"
 __date__ = "2026-02-06"
 
@@ -10,9 +10,9 @@ import numpy as np
 import scipy.special
 from ._population_density import PopulationDensity
 
-class Chatzopoulos2015Nsd(PopulationDensity):
+class Chatzopoulos2015Nsc(PopulationDensity):
     """
-    NSD density profile
+    NSC density profile
     
     Attributes
     ----------
@@ -23,7 +23,7 @@ class Chatzopoulos2015Nsd(PopulationDensity):
     """
         
     def __init__(
-            self, gamma=0.07, q=0.28, a0=0.182, M=6.2e9,
+            self, gamma=0.71, q=0.73, a0=0.0059, M=6.1e7,
             **kwargs):
         super().__init__(**kwargs)
         self.gamma = gamma 
