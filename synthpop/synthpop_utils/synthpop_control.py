@@ -326,6 +326,17 @@ class Parameters:
                 if item in spec_dict:
                     self.__dict__.update({item: spec_dict[item]})
 
+        # We want to allow the old style of window setting to still work, with a warning.
+        if 'solid_angle' in specified:
+            self.__dict__['solid_angle'] = specified['solid_angle']
+        if 'solid_angle' in specified:
+            self.__dict__['solid_angle_unit'] = specified['solid_angle_unit']
+        if 'SIGHTLINES' in specified:
+            if 'solid_angle' in specified['SIGHTLINES']:
+                self.__dict__['solid_angle'] = specified['SIGHTLINES']['solid_angle']
+            if 'solid_angle_unit' in specified['SIGHTLINES']:
+                self.__dict__['solid_angle_unit'] = specified['SIGHTLINES']['solid_angle_unit']
+
     def read_kwargs_config(self, kwargs: dict):
         """
         reads settings from keyword arguments
