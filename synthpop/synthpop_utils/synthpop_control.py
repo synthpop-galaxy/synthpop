@@ -16,6 +16,7 @@ from typing import Iterator, Tuple, Dict, Optional, Union, List
 import argparse
 import numpy as np
 import pydantic
+import pdb
 
 if pydantic.__version__.startswith("2"):
     from pydantic import BaseModel, model_validator
@@ -111,24 +112,22 @@ class Parameters:
         self.l_set_type = None
         self.b_set = None
         self.b_set_type = None
+        self.field_scale = None
 
         logger.create_info_section('Settings')
         self._categories = {}
         # read settings form config files a kwargs arguments
+        #pdb.set_trace()
         config_dir = self.read_default_config(default_config)
+        #pdb.set_trace()
         self.read_specific_config(specific_config, config_dir)
+        #pdb.set_trace()
         self.read_kwargs_config(kwargs)
 
         # generate random seed if not none
         # this allows to repeat the generation process later
         if not self.random_seed:
             self.random_seed = np.random.randint(0, 2 ** 31 - 1)
-
-        # if len(self.chosen_bands) < len(self.eff_wavelengths):
-        #     tmp_eff_wavelengths = {}
-        #     for band in self.chosen_bands:
-        #         tmp_eff_wavelengths[band] = self.eff_wavelengths[band]
-        #     self.eff_wavelengths = tmp_eff_wavelengths
 
         # log settings to file
         self.parameters_dict = {key: item for key, item in self.__dict__.items() if not key.startswith('_')}
@@ -141,8 +140,8 @@ class Parameters:
             logger.critical(msg)
             raise ValueError(msg)
         if hasattr(self, "col_names"):
-            logger.critical("Warning: col_names input is no longer used in SynthPop v1.1+. Use RenameColumns "+ \
-                "post-processing module to change column names instead.")
+            logger.critical("Warning: col_names input is no longer used in SynthPop v1.1+. Use " \
+                "RenameColumns post-processing module to change column names instead.")
 
         # transfer l, b into a a location generator.
         self.loc = self.location_generator()
@@ -154,10 +153,18 @@ class Parameters:
         if self.output_location.endswith(os.sep) or self.output_location.endswith("/"):
             self.output_location = os.path.join(self.output_location, self.name_for_output)
 
-        if getattr(self, 'skip_lowmass_stars', False) \
-                and getattr(self, 'kinematics_at_the_end', False):
-            raise ValueError("'skip_lowmass_stars' and 'kinematics_at_the_end' "
-                             "can not be set to true simultaneously")
+        if getattr(self, 'kinematics_at_the_end', False):
+            raise ValueError("'kinematics_at_the_end' option has been removed in " \
+                             "SynthPop versions >=2.0.0")
+
+        if (self.maglim is not None) and ("keep" in self.maglim):
+            raise ValueError("In SynthPop >=2.0.0, the \"keep\"/\"remove\" maglim options have been " \
+                "removed for clarity. Use maglim=None to keep all stars or e.g. maglim=['Bessell_I', " \
+                "21] to trim a catalog.")
+        if (self.maglim is not None) and ("remove" in self.maglim):
+            logger.critical("Warning: In SynthPop >=2.0.0, the \"keep\"/\"remove\" maglim options have been " \
+                "removed for clarity. Use maglim=None to keep all stars or e.g. maglim=['Bessell_I', " \
+                "21] to trim a catalog. This catalog will be trimmed.")
         #
         self.sun = SunInfo(**self.sun, **self.lsr)
         # convert to ModuleKwargs BaseModels
@@ -167,18 +174,20 @@ class Parameters:
         else:
             self.evolution_class = ModuleKwargs.parse_obj(self.evolution_class)
 
-        self.extinction_map_kwargs = ModuleKwargs.parse_obj(self.extinction_map_kwargs)
+        if self.extinction_map_kwargs is not None:
+            self.extinction_map_kwargs = ModuleKwargs.parse_obj(self.extinction_map_kwargs)
         if self.ifmr_kwargs is not None:
             self.ifmr_kwargs = ModuleKwargs.parse_obj(self.ifmr_kwargs)
         if self.multiplicity_kwargs is not None:
             self.multiplicity_kwargs = ModuleKwargs.parse_obj(self.multiplicity_kwargs)
 
-        if isinstance(self.extinction_law_kwargs, list):
-            self.extinction_law_kwargs = [
-                ExtLawKwargs.parse_obj(ext_law) for ext_law in self.extinction_law_kwargs
-                ]
-        else:
-            self.extinction_law_kwargs = ExtLawKwargs.parse_obj(self.extinction_law_kwargs)
+        if self.extinction_law_kwargs is not None:
+            if isinstance(self.extinction_law_kwargs, list):
+                self.extinction_law_kwargs = [
+                    ExtLawKwargs.parse_obj(ext_law) for ext_law in self.extinction_law_kwargs
+                    ]
+            else:
+                self.extinction_law_kwargs = ExtLawKwargs.parse_obj(self.extinction_law_kwargs)
 
         if isinstance(self.post_processing_kwargs, list):
             self.post_processing_kwargs = [
@@ -203,14 +212,23 @@ class Parameters:
         converts l_set and b_set into a location generator object
         as defined by the l/b_set_type
         """
-        if (self.l_set is None) or (self.b_set is None) or (self.solid_angle is None):
-            logger.critical("Location or solid_angle_sr are not  defined in the settings! "
+        #pdb.set_trace()
+        if (self.field_scale is None) and ('solid_angle' in self.__dict__):
+            logger.critical("In SynthPop >=v2.0.0, solid_angle is no longer the expected input for a field "
+                "size. Assuming circular window and assigning field_scale according to the given solid_angle.")
+            self.field_scale = np.sqrt(self.solid_angle/np.pi)
+            self.field_scale_unit = 'deg'
+            if ('solid_angle_unit' in self.__dict__) and (self.solid_angle_unit=='sr'):
+                self.field_scale *= (180/np.pi)**2
+
+        if (self.l_set is None) or (self.b_set is None) or (self.field_scale is None):
+            logger.critical("Location or field size are not  defined in the settings! "
                             "Can not run main() or process_all()")
 
             # create
 
             def no_location():
-                logger.critical("Location or solid_angle_sr are not defined in the settings! "
+                logger.critical("Location or field size are not defined in the settings! "
                                 "Can not run main() or process_all()")
                 for _ in []:
                     yield 0, 0
@@ -300,12 +318,24 @@ class Parameters:
         logger.info("# read configuration from ")
         logger.info(f"{config_file = !r} ")
         specified = json_loader(config_file)
+        #pdb.set_trace()
 
         for cat, items in self._categories.items():
             spec_dict = specified.get(cat, specified)
             for item in items:
                 if item in spec_dict:
                     self.__dict__.update({item: spec_dict[item]})
+
+        # We want to allow the old style of window setting to still work, with a warning.
+        if 'solid_angle' in specified:
+            self.__dict__['solid_angle'] = specified['solid_angle']
+        if 'solid_angle' in specified:
+            self.__dict__['solid_angle_unit'] = specified['solid_angle_unit']
+        if 'SIGHTLINES' in specified:
+            if 'solid_angle' in specified['SIGHTLINES']:
+                self.__dict__['solid_angle'] = specified['SIGHTLINES']['solid_angle']
+            if 'solid_angle_unit' in specified['SIGHTLINES']:
+                self.__dict__['solid_angle_unit'] = specified['SIGHTLINES']['solid_angle_unit']
 
     def read_kwargs_config(self, kwargs: dict):
         """

@@ -69,20 +69,13 @@
     "POPULATION_GENERATION":{
         "#comment1":"Maximum distance from Sun in kpc",
         "max_distance":15,
-        "#comment2":"Step size in kpc",
-        "distance_step_size":0.10,
 
         "#comment4":"Limiting mass [min_mass, max_mass]",
         "mass_lims":{"min_mass":0.08,"max_mass":100},
-        "#comment5":"Number of points used for estimating the total mass in a slice ",
-        "N_mc_totmass":10000,
 
         "#comment6":"method to estimate the mass loss correction",
         "lost_mass_option": 1,
         "N_av_mass":20000,
-
-        "#comment7":"Flag for estimate the velocities for all stars at once",
-        "kinematics_at_the_end":false,
 
         "#comment8": "Scale down the number of generated stars n_gen = (n/scale_factor)",
         "scale_factor": 1,
@@ -133,9 +126,8 @@
     },
 
     "PHOTOMETRIC_OUTPUTS":{
-        "#comment1":["Limiting magnitude- [band, limit, opt]",
-            "opt ='keep','remove'"],
-        "maglim":["2MASS_Ks",30, "keep"],
+        "#comment1":["Limiting magnitude- null or [band, limit]"],
+        "maglim":null,
         "#comment2":["Magnitude systems and bands to generate for each star.",
             "use '[magsys,...]' to take all magnitudes from a given system",
             "or '{magsys1:[filter1, filter2,...], magsys2:'all',...}' to avoid confusion"],

@@ -15,7 +15,7 @@
         "name": "PiecewisePowerlaw",
         "alphas": [0.5]
     },
-    "imf_func_kwargs": {"name": "Kroupa"},
+
     "age_func_kwargs" : {
         "name" : "SingleValue",
         "age_value": 14

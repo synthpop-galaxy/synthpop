@@ -49,13 +49,9 @@
 
     "POPULATION_GENERATION":{
         "max_distance":25,
-        "distance_step_size":0.10,
-        "window_type":{"window_type":"cone"},
         "mass_lims":{"min_mass":0.08,"max_mass":100},
-        "N_mc_totmass":10000,
         "lost_mass_option": 1,
         "N_av_mass":50000,
-        "kinematics_at_the_end":false,
         "scale_factor": 1,
         "skip_lowmass_stars": false,
         "chunk_size": 250000,
@@ -69,7 +65,7 @@
         },
 
     "PHOTOMETRIC_OUTPUTS":{
-        "maglim":["W146", 23.975533, "remove"],
+        "maglim":["W146", 23.975533],
         "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "2MASS_J", "2MASS_H", "2MASS_Ks"],
         "obsmag":true,
         "combine_system_mags": false,

@@ -1,5 +1,6 @@
 {
     "name" : "test_population_0",
+    
     "imf_func_kwargs" : {
         "name" : "Chabrier"
     },

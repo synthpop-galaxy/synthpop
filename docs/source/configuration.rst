@@ -32,7 +32,7 @@ For example the config file can look as follows::
       "model_base_name":"my_generated_model",
       "l_set": [0, 2],
       "b_set": [-1],
-      "solid_angle":5e-7,
+      "field_scale":1e-3,
       "model_name":"besancon_Robin2003",
       "evolution_class":{
         "name":"MIST", 
@@ -66,7 +66,7 @@ Configuration File Contents
 
 Our ``_default_config.json`` is sorted into different categories, which are not required but may be used for any configuration. Note that any arguments starting with an '#' are ignored, so we use these for comments. The optional category headings are: MANDITORY, SIGHTLINES, SEED, COORDINATE_SYSTEM, POPULATION_GENERATION, EXTINCTION_MAP, ISOCHRONE_INTERPOLATION, PHOTOMETRIC_OUTPUTS, and OUTPUT.
 
-MANDITORY
+MANDATORY
 ^^^^^^^^^
 **model_name**: (string) model directory containing the population files
 
@@ -89,9 +89,11 @@ SIGHTLINES
 * "pairs": treats the l and b sets as a list of pairs, i.e. ((l[0],b[0]),..., (l[i],b[i])
 * "range": treats the l and b sets as arguments for np.arange([l/b]_set)
 
-**solid_angle**: solid angle of cone FoV in units defined by **solid_angle_unit**
+**field_shape**: shape of field on-sky (options: "circle" or "box")
 
-**solid_angle_unit**: angle for solid angle of FoV (options: "deg^2" for square degree, "sr" for steradian)
+**field_scale**: size of the field in units defined by **field_scale_unit** (radius for a circle, side length for a square box, or [l side length, b side length] for a rectangular box)
+
+**solid_angle_unit**: angular units for the **field_scale** (options: rad, deg, arcmin, arcsec)
 
 example::
 
@@ -100,8 +102,9 @@ example::
             "l_set_type":"list",
             "b_set":[-1,0,1],
             "b_set_type":"list",
-            "solid_angle": 1e-2,
-            "solid_angle_unit": "deg^2"
+            "field_shape":"box"
+            "field_scale": 1e-2,
+            "field_scale_unit": "deg"
     }
 
 SEED
@@ -160,16 +163,7 @@ POPULATION_GENERATION
 ^^^^^^^^^^^^^^^^^^^^^
 **max_distance**: maximum distance for stars in catalog (kpc)
 
-**distance_step_size**: step size for generation of stars as slices in distance (kpc)
-
-**window_type**: dictionary containing the following:
-
-* **window_type**: currently must be set to "cone" [note: other options are planned but not in the immediate future]
-* **kwargs**
-
 **mass_lims**: range of initial stellar masses to produce
-
-**N_mc_totmass**: number of random points to sample to estimate average density in a slice
 
 **lost_mass_option**: method to estimate correction for mass loss with four integer options:
 
@@ -180,11 +174,9 @@ POPULATION_GENERATION
 
 **N_av_mass**: number of stars to use to estimate average evolved stellar mass
 
-**kinematics_at_the_end**: sets whether to determine stellar masses are evolved at the end of the process, instead of as stars are generated (boolean)
-
 **scale_factor**: scale down number of generated stars as n_generated = (n_total/scale_factor)
 
-**skip_lowmass_stars**: option to skip the generation of low mass stars which cannot be bright enough to reach the magnitude cut [note: improves runtimes and memory usage]
+**skip_lowmass_stars**: option to skip the generation of low mass stars which cannot be bright enough to reach the magnitude cut [note: improves runtimes and memory usage but not available for certain configuration options]
 
 **chunk_size**: for computational feasibility, limit number of stars to evolve at once to this value
 
@@ -192,13 +184,9 @@ example::
 
     "POPULATION_GENERATION":{
         "max_distance":25,
-        "distance_step_size":0.10,
-        "window_type":{"window_type":"cone"},
         "mass_lims":{"min_mass":0.08,"max_mass":100},
-        "N_mc_totmass":10000,
         "lost_mass_option": 1,
         "N_av_mass":20000,
-        "kinematics_at_the_end":true,
         "scale_factor": 1,
         "skip_lowmass_stars": false,
         "chunk_size": 250000
@@ -207,16 +195,18 @@ example::
 EXTINCTION_MAP
 ^^^^^^^^^^^^^^
 
-**extinction_map_kwargs**: dictionary containing:
+**extinction_map_kwargs**: None or dictionary containing:
 
 * **name**: name of extinction map module
 * **<kwargs>**: any kwargs required or optional for the selected module
 
-**extinction_law_kwargs**: dictionary containing:
+**extinction_law_kwargs**: None or dictionary containing:
 
 * **name**: name of extinction law module
 * **R_V**: total to selective extinction ratio [note: only used in select extinction laws, will be ignored if input for others]
 * **<kwargs>**: any kwargs required or optional for the selected module
+
+Note: if either **extinction_map_kwargs** or **extinction_law_kwargs** is set to None, no extinction will be computed.
 
 example::
 
@@ -237,6 +227,14 @@ ISOCHRONE_INTERPOLATION
 **evolution_class**: dictionary containing:
 * **name**: name of stellar evolution class
 * **interpolator**: name of isochrone interpolator class
+
+**ifmr_kwargs**: None or dictionary containing:
+* **name**: name of the initial-final mass relation module
+* **<kwargs>**: any kwargs required or optional for the selected module
+
+**multiplicity_kwargs**: None or dictionary containing:
+* **name**: name of the metallicity module
+* **<kwargs>**: any kwargs required or optional for the selected module
 
 example for single evolution class::
 
@@ -269,9 +267,9 @@ example for evolution class determined by population::
 PHOTOMETRIC_OUTPUTS
 ^^^^^^^^^^^^^^^^^^^
 
-**mag_lim**: list containing the band to select on, the magnitude limit in that band, and "keep" or "remove" for whether to drop stars dimmer than the limit
+**mag_lim**: None, or list containing the band to select on and the magnitude limit
 
-**chosen_bands**: list of filters to include for synthetic photometry
+**chosen_bands**: list of magnitude systems or filters to include for synthetic photometry
 
 For the MIST evolution module, the following filters are available:
 
@@ -330,26 +328,30 @@ For the MIST evolution module, the following filters are available:
     * - UVIT
       - UVIT_F148W, UVIT_F154W, UVIT_F169M, UVIT_F172M, UVIT_N242W, UVIT_N219M, UVIT_N245M, UVIT_N263M, UVIT_N279N
 
-**eff_wavelengths**: dictionary specifying effective wavelength for each chosen filter [Note: use option {"json_file":"AAA_effective_wavelengths.json"} to load these from a pre-existing file]
-
 **obs_mag**: boolean option to generate observed magnitudes (generates absolute magnitudes if set to false)
+
+**combine_system_mags**: boolean option for whether the star systems table should include the summed system magnitude including any companions (for True) or only the magnitudes of the primary stars (for False). note: the companions table always holds only individual magnitudes for each companion.
 
 **opt_iso_props**: optional stellar properties to save, with original column names from isochrones
 
 For MIST isochrone stellar property options, see `their documentation here <https://waps.cfa.harvard.edu/MIST/README_tables.pdf>`_
 
-**col_names**: columns names for output for the columns determined in **opt_iso_props**
-
-example::
+example 1::
 
     "PHOTOMETRIC_OUTPUTS":{
-        "maglim":["Bessell_I", 18, "remove"],
+        "maglim":["Bessell_I", 18],
         "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "VISTA_J", "VISTA_H", "VISTA_Ks"],
-        "eff_wavelengths": {"json_file":"AAA_effective_wavelengths.json"},
         "obsmag":true,
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]", "log_R", "phase"],
+    },
 
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
-        "col_names":["logL", "Teff", "logg" ,"Fe/H_evolved","log_radius"]
+example 2::
+
+    "PHOTOMETRIC_OUTPUTS":{
+        "maglim":None,
+        "chosen_bands": ["UBVRIplus", "VISTA"],
+        "obsmag":true,
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"],
     },
 
 OUTPUT
@@ -370,7 +372,7 @@ OUTPUT
 example::
 
     "OUTPUT":{
-        "post_processing_kwargs": [{"name":"ProcessDarkCompactObjects", "remove":true}],
+        "post_processing_kwargs": [{"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}}],
         "output_location":"outputfiles/testing",
         "output_filename_pattern": "{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}",
         "output_file_type": ["csv",{}],

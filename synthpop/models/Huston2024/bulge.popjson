@@ -38,13 +38,13 @@
 
     "population_density_kwargs" : {
         "name" : "triaxial_bulge",
-	"triaxial_type" : "E3",
-	"density_unit" : "mass",
-	"x0" : 0.67,
-	"y0" : 0.29,
-	"z0" : 0.27,
-	"rho0" : 1.32585e10,
-	"bar_angle" : 29.4
+    	"triaxial_type" : "E3",
+    	"density_unit" : "mass",
+    	"x0" : 0.67,
+    	"y0" : 0.29,
+    	"z0" : 0.27,
+    	"rho0" : 1.32585e10,
+    	"bar_angle" : 29.4
     }
 }
 

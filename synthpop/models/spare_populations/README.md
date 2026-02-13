@@ -1,0 +1,1 @@
+This directory contains some population models for incomplete or swappable Galactic models. A user may construct their own model directory with components selected or swapped in from these.

@@ -37,10 +37,7 @@
         "power": 2,
 
         "flare_flag" : true
-    },
-    
-    "av_mass_corr" : 0.825737,
-    "n_star_corr" : 1.21104
+    }
 }
 
 

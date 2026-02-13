@@ -2,9 +2,7 @@
     "name" : "bulge",
 
     "imf_func_kwargs" : {
-        "name" : "PiecewisePowerlaw",
-		"alphas" : [0.22,1.16,2.32],
-		"splitpoints" : [0.08,0.90]
+        "name" : "kroupa"
     },
     
     "age_func_kwargs" : {
@@ -14,6 +12,7 @@
     },
 
     "metallicity_func_kwargs" : {
+        "#comment":"Metallicity not taken directly from Cao et al 2013",
         "#comment":"From Gonzalez, O.A.; et al. 2015",
         "name" : "double_gaussian",
         "weight" : 0.323,
@@ -24,7 +23,9 @@
     },
 
     "kinematics_func_kwargs" : {
-        "name" : "Koshimoto2021Bulge",
+        "#comment" : "Kinematics not provided in Cao et al 2013, use Koshimoto2021 unpublished results",
+        "#comment" : "Bessell function best-fit kinematics model provided by Naoki Koshimoto",
+        "name" : "koshimoto2021_bulge",
         "v0_stream" : 50.292048949082,
         "y0_stream" : 341.648699391874,
         "C_par_r" : 1.02368618322272,
@@ -39,8 +40,17 @@
     }, 
 
     "population_density_kwargs" : {
-        "name" : "Koshimoto2021BulgeB"
-    }
+        "name" : "triaxial_bulge",
+        "triaxial_type" : "E3",
+        "density_unit" : "mass",
+        "x0" : 0.67,
+        "y0" : 0.29,
+        "z0" : 0.27,
+        "rho0" : 1.32585e10,
+        "bar_angle" : 29.4
+    },
+    
+    "n_star_corr" : 1.77453
 }
 
 

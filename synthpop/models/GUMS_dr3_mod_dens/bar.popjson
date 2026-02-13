@@ -24,7 +24,6 @@
         "alphas":[0.5]
     },
 
-
    "age_func_kwargs" : {
         "name" : "SingleValue",
        "age_value": 10

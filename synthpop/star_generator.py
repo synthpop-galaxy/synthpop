@@ -1,7 +1,6 @@
 """
-This file contains the StarGenerator,
-It generates stars based on the provided initial distributions,
-evolves them and applies the extinction.
+This file contains the StarGenerator, which generates stars based on the provided 
+initial distributions and evolves them according to isochrones.
 """
 
 __all__ = ["StarGenerator"]
@@ -22,7 +21,6 @@ try:
 except ImportError:
     import constants as const
     import synthpop_utils as sp_utils
-    from position import Position
     from synthpop_utils.synthpop_logging import logger
     from synthpop_utils import coordinates_transformation as coord_trans
     from synthpop_utils import Parameters
@@ -32,7 +30,6 @@ except ImportError:
 
 else:  # continue import when if synthpop is imported
     from . import synthpop_utils as sp_utils
-    from .position import Position
     from .synthpop_utils.synthpop_logging import logger
     from .synthpop_utils import coordinates_transformation as coord_trans
     from .synthpop_utils import Parameters
@@ -51,19 +48,19 @@ class StarGenerator:
     age_module
     met_module
     evolution_module
-    kinematics_at_end : bool
-        if true, wait until all stars are generated to calculate kinematics
-    chunk_size : int
-        number of stars to generate per chunk to limit memory use
-    ref_band : str
-        primary photometric filter for catalog
-    position
+    glbl_params : dict
+        global model parameters
     max_mass : float
         maximum allowed stellar mass
+    ifmr_module
+    mult_module
+    bands : list
+        photometric filters
+    logger
     """
 
     def __init__(self, density_module, imf_module, age_module, met_module, evolution_module,
-            glbl_params, position, max_mass, ifmr_module, mult_module, bands, logger):
+            glbl_params, max_mass, ifmr_module, mult_module, bands, logger):
         self.generator_name = 'StarGenerator'
         self.density_module = density_module
         self.imf_module = imf_module
@@ -75,78 +72,30 @@ class StarGenerator:
             self.evolution_module = evolution_module
         else:
             self.evolution_module = (evolution_module,)
-        self.kinematics_at_the_end = glbl_params.kinematics_at_the_end
         self.chunk_size = glbl_params.chunk_size
-        self.ref_band = glbl_params.maglim[0]
         self.bands = bands
         self.obsmag = glbl_params.obsmag
-        self.position=position
         self.max_mass = max_mass
         self.logger = logger
         self.system_mags = False
 
-    def generate_stars(self, radii, missing_stars, mass_limit,
-        do_kinematics, props):
-        position = np.vstack([
-            np.column_stack(self.position.draw_random_point_in_slice(r_inner, r_outer, n_stars, population_density_func=self.density_module.density))
-            for r_inner, r_outer, n_stars in zip(radii, radii[1:], missing_stars)
-            ])
-
-        min_mass = np.repeat(mass_limit, missing_stars)
-        r_inner = np.repeat(radii[:-1], missing_stars)
-
-        if self.kinematics_at_the_end:
-            proper_motions = np.full((len(position), 3), np.nan)
-            velocities = np.full((len(position), 3), np.nan)
-            vr_lsr = np.repeat(np.nan, len(position))
-        else:
-            u, v, w, vr_hc, mu_l, mu_b, vr_lsr = do_kinematics(
-                position[:, 3], position[:, 4], position[:, 5],
-                position[:, 0], position[:, 1], position[:, 2]
-                )
-            proper_motions = np.column_stack([vr_hc, mu_l, mu_b])
-            velocities = np.column_stack([u, v, w, ])
-
-        # generate star at the positions
-        star_systems, companions = self.generate_star_at_location(
-            position[:, 0:3], props, min_mass, self.max_mass)
-        star_systems.loc[:,'x'] = position[:,0]
-        star_systems.loc[:,'y'] = position[:,1]
-        star_systems.loc[:,'z'] = position[:,2]
-        star_systems.loc[:,'Dist'] = position[:,3]
-        star_systems.loc[:,'l'] = position[:,4]
-        star_systems.loc[:,'b'] = position[:,5]
-        star_systems.loc[:,'r_inner'] = r_inner
-        star_systems.loc[:,'vr_bc'] = proper_motions[:,0]
-        star_systems.loc[:,'mul'] = proper_motions[:,1]
-        star_systems.loc[:,'mub'] = proper_motions[:,2]
-        star_systems.loc[:,'U'] = velocities[:,0]
-        star_systems.loc[:,'V'] = velocities[:,1]
-        star_systems.loc[:,'W'] = velocities[:,2]
-        star_systems.loc[:,'VR_LSR'] = vr_lsr
-        
-        if self.obsmag:
-            dist_modulus = 5*np.log10(position[:,3] * 100)
-            for band in self.bands:
-                star_systems.loc[:,band] += dist_modulus
-                if companions is not None:
-                    companions.loc[:,band] += dist_modulus[
-                            companions['system_idx'].to_numpy()]
-
-        return star_systems, companions
-
-    def generate_star_at_location(self, position, props, min_mass=None, max_mass=None):
+    def generate_star_at_location(self, position, props, 
+                min_mass=None, max_mass=None, radii=None):
         """
-        generates stars at the given positions
+        Generate stars at the given positions with observed properties.
         """
-        n_stars = len(position)
+        n_stars = len(position[0])
         # Generate base properties: intial mass, age, metallicity
         m_initial = self.imf_module.draw_random_mass(
-            min_mass=min_mass, max_mass=max_mass, N=n_stars)
+                min_mass=np.min(min_mass), max_mass=max_mass, N=n_stars)
         age = self.age_module.draw_random_age(n_stars)
         met = self.met_module.draw_random_metallicity(
-            N=n_stars, x=position[:,0], y=position[:,1], z=position[:,2], age=age)
+            N=n_stars, x=position[0], y=position[1], z=position[2], age=age)
 
+        # Decide which stars to evolve
+        # if (min_mass is not None) and (~isinstance(min_mass, (int,float))) \
+        #         and (len(np.unique(min_mass))>1):
+        #     skip_stars = 
         # Generate evolved properties
         s_props, final_phase_flag = self.get_evolved_props(m_initial, met, age, props)
 
@@ -204,9 +153,9 @@ class StarGenerator:
             **kwargs
             ) -> Tuple[np.ndarray, Dict, np.ndarray]:
         """
-        evolve the stars using a list of evolution classes given by self.evolution
-        each evolution class have a min and max mass range where it should be used.
-        the used class are ranked by the order in the list.
+        Evolve the stars using a list of evolution classes given by self.evolution.
+        Each evolution class can have a min and max mass range;
+        the first class in the list which allows the star's given mass is used.
 
         Parameters
         ----------
@@ -223,8 +172,6 @@ class StarGenerator:
 
         Returns
         -------
-        mag: ndarray
-            list of the main magnitude
         s_track: dict
             collection of ndarrays for each of the interpolated properties
         inside_grid: ndarray
@@ -235,13 +182,11 @@ class StarGenerator:
 
         # placeholders
         s_track = {p: np.ones(len(m_init)) * np.nan for p in props}
-        #mag = np.nan * np.ones(len(m_init))
         inside_grid = np.ones(len(m_init), bool)
         in_final_phase = np.zeros(len(m_init), bool)
         not_performed = np.ones(len(m_init), bool)
 
         # check if multiple evolution classes are sepecified
-
         for i, evolution_i in enumerate(self.evolution_module):
             # check if evolution has an atribute which says if numpy arrays can be used
             if hasattr(evolution_i, 'accept_np_arrays'):
@@ -281,11 +226,6 @@ class StarGenerator:
                     key: np.array([i[key] for i in s_props_array])
                     for key in s_props_array[0].keys()}
 
-            # update results to data array
-            # update primary magnitude (used for limits etc)
-            #mag_i = s_props_i.get(self.ref_band)
-            #mag[which] = mag_i
-
             # update flags
             inside_grid[which] = inside_grid_i
             in_final_phase[which] = in_final_phase_i
@@ -312,11 +252,10 @@ class StarGenerator:
     def apply_ifmr(self, m_init, met, s_props, final_phase_flag):
         """
         Apply the IFMR to catch stars evolved past the grid and make them
-        the appropriate dark remnant
+        the appropriate dark remnant.
         """
         m_compact, m_phase = self.ifmr_module.process_compact_objects(
             m_init[final_phase_flag], met[final_phase_flag])
-        #ref_mag[final_phase_flag] = np.nan
         for key in s_props.keys():
             if key=='star_mass':
                 s_props[key][final_phase_flag] = m_compact

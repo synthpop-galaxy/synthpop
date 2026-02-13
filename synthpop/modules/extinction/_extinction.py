@@ -395,4 +395,40 @@ def CombineExtinction(ext_map=ExtinctionMap, ext_law=ExtinctionLaw) \
                     eff_wavelengths[band], band)
                     for band in bands}
 
+        def validate_extinction(self):
+            if self.multi_laws:
+                for i,b in enumerate(self.bands):
+                    law_i = self.ext_law_dict[self.ext_law_index[i]]
+                    assert((law_i.min_wavelength<=self.eff_wavelengths[b]) & 
+                        (law_i.max_wavelength>=self.eff_wavelengths[b])), \
+                        f"Invalid filter {self.bands[i]} with wavelength {self.eff_wavelengths[b]} microns for extinction law." \
+                        f" {law_i.extinction_law_name} is valid from {law_i.min_wavelength}-{law_i.max_wavelength} microns."
+                law_i = self.ext_law_dict[self.get_ext_law_index(self.ref_wavelength, self.A_or_E_type)]
+                assert ((law_i.min_wavelength<=self.ref_wavelength) & 
+                        (law_i.max_wavelength>=self.ref_wavelength)), \
+                        f"Invalid extinction map quantity {self.A_or_E_type} for extinction law." \
+                        f" {law_i.extinction_law_name} is valid from {law_i.min_wavelength}-{law_i.max_wavelength} microns."
+                if self.ref_wavelength2 is not None:
+                    law_i = self.ext_law_dict[self.get_ext_law_index(self.ref_wavelength2, self.A_or_E_type)]
+                    assert ((law_i.min_wavelength<=self.ref_wavelength2) & 
+                            (law_i.max_wavelength>=self.ref_wavelength2)), \
+                            f"Invalid extinction map quantity {self.A_or_E_type} for extinction law." \
+                            f" {law_i.extinction_law_name} is valid from {law_i.min_wavelength}-{law_i.max_wavelength} microns."
+
+            else:
+                for i,b in enumerate(self.bands):
+                    assert((self.min_wavelength<=self.eff_wavelengths[b]) & 
+                        (self.max_wavelength>=self.eff_wavelengths[b])), \
+                        f"Invalid filter {self.bands[i]} with wavelength {self.eff_wavelengths[b]} microns for extinction law." \
+                        f" {self.extinction_law_name} is valid from {self.min_wavelength}-{self.max_wavelength} microns."
+                assert ((self.min_wavelength<=self.ref_wavelength) & 
+                        (self.max_wavelength>=self.ref_wavelength)), \
+                        f"Invalid extinction map quantity {self.A_or_E_type} for extinction law." \
+                        f" {self.extinction_law_name} is valid from {self.min_wavelength}-{self.max_wavelength} microns."
+                if self.ref_wavelength2 is not None:
+                    assert ((self.min_wavelength<=self.ref_wavelength) & 
+                            (self.max_wavelength>=self.ref_wavelength)), \
+                            f"Invalid extinction map quantity {self.A_or_E_type} for extinction law." \
+                            f" {self.extinction_law_name} is valid from {self.min_wavelength}-{self.max_wavelength} microns."
+
     return Extinction

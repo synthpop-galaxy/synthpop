@@ -1,0 +1,50 @@
+{
+    "name" : "bulge",
+
+    "imf_func_kwargs" : {
+        "name" : "PiecewisePowerlaw",
+		"alphas" : [0.18,1.13,2.32],
+		"splitpoints" : [0.08,0.86]
+    },
+    
+    "age_func_kwargs" : {
+        "name" : "single_value",
+        "#comment" : "units in gigayears",
+        "age_value" : 9.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "single_value",
+        "met_value" : 0.0
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "Koshimoto2021Bulge",
+        "v0_stream" : 43,
+        "y0_stream" : 407,
+        "C_par_r" : 1.0,
+        "C_perp_r" : 4.3,
+        "C_par_z" : 1.1,
+        "C_perp_z" : 3.7,
+        "h0_r" : [0.86, 3.22, 0.95],
+        "h0_z" : [0.56, 2.00, 3.82],
+        "sigma_i0" : [64, 76, 71],
+        "sigma_i1" : [152, 78, 82],
+        "omega_p" : 47.4
+    }, 
+
+    "population_density_kwargs" : {
+        "name" : "Koshimoto2021Bulge",
+        "parameterization" : "E",
+        "rho0" : 4.12e9,
+        "x0" : 0.93,
+        "y0" : 0.37,
+        "z0" : 0.24,
+        "C_perp" : 1.2,
+        "C_par" : 4.1,
+        "R_c" : 2.6,
+        "X_shape" : false
+    }
+}
+
+

@@ -2,6 +2,7 @@
     "2mass":["J","H","Ks"],
     "ctio_osiris":["H","K"],
     "decam":["u","g","r","i","z","y"],
+    "euclid":["Y", "J", "H"],
     "gaia":{"dr2_rev":["G","Gbp","Grp"]},
     "hawki":["J","H","Ks"],
     "wfc3":{"uvis1":["f200lp", "f218w", "f225w", "f275w", "f280n", "f300x",

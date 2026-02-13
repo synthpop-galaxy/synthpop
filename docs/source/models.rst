@@ -49,20 +49,52 @@ Additional kwargs can be used to define galactic warp (see Configuration info fo
 Available Models
 ----------------
 .. note::
-    additional models + descriptions coming soon
+    Because SynthPop uses different code frameworks than other models (e.g. different numerical techniques, approximations, and configuration options), these models will not exactly reproduce the catalogs and results that come from the cited works if the cited work did not use SynthPop itself.
 
-synthpop_Huston2024
+Huston2024
 ^^^^^^^^^^^^^^^^^^^
+Preliminary version presented by Huston et al. (in prep.), with citations therein to model components drawn from many existing models. This version was used by the Roman Galactic Exoplanet Survey Project Infrastructure Team for some preparations for microlensing science with the Roman Galactic Bulge Time Domain Survey.
+
+Huston2025
+^^^^^^^^^^^^^^^^^^^
+Final model version presented by Huston et al. (in prep.), with citations therein to model components drawn from many existing models. This version was used by the Roman Galactic Exoplanet Survey Project Infrastructure Team for some preparations for microlensing science with the Roman Galactic Bulge Time Domain Survey. There are two key differences from Huston2024: the inclusion of a nuclear stellar disk and 3-d handling of the dust.
 
 besancon_Robin2003
 ^^^^^^^^^^^^^^^^^^
+SynthPop implementation of the Besancon Galactic model, as presented by `Robin et al. (2003) <https://ui.adsabs.harvard.edu/abs/2003A%26A...409..523R/abstract>`__.
 
 GUMS_dr3
 ^^^^^^^^
+SynthPop implementation of the Gaia Universe Model Snapshot (GUMS), DR3 version, as described in the `Gaia DR3 Documenation, Section 2.2 <https://gea.esac.esa.int/archive/documentation/GDR3/Data_processing/chap_cu2sim/sec_cu2UM/>`__.
 
 GUMS_dr3_mod_dens
 ^^^^^^^^^^^^^^^^^
+SynthPop implementation of the Gaia Universe Model Snapshot (GUMS), DR3 version, as described in the `Gaia DR3 Documenation, Section 2.2 <https://gea.esac.esa.int/archive/documentation/GDR3/Data_processing/chap_cu2sim/sec_cu2UM/>`__. This version is rescaled to better match their catalog with the SynthPop code implementation (see `Klüter & Huston et al. (2025) <https://ui.adsabs.harvard.edu/abs/2024arXiv241118821K/abstract>`__).
 
-Koshimoto2021
+Koshimoto2022
 ^^^^^^^^^^^^^
+Galactic model presented by `Koshimoto et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021ApJ...917...78K/abstract>`__ and `Koshimoto et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022zndo...6941086K/abstract>`__ (`genstars <https://github.com/nkoshimoto/genstars>`__), which provides multiple model versions. Here, we provide the E+Ex bulge model, the NEED TO UPDATE DISK VERSION, and their nuclear stellar disk model, which is based on `Sormani et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.1857S/abstract>`__.
 
+Additional Populations
+----------------
+.. note:: We provide some additional population files under **models/spare_populations**, which should not be taken as complete models but may be used for population studies or in combination with other model components.
+
+Cao2013_bulge
+^^^^^^^^^^^^^
+Galactic bulge density model based on OGLE-III red clump giants from `Cao et al. (2013) <https://ui.adsabs.harvard.edu/abs/2013MNRAS.434..595C/abstract>`__, with additional parameters from other models.
+
+Koshimoto2022_E_bulge_nsd
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Alternate E bulge model from `Koshimoto et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021ApJ...917...78K/abstract>`__, with corresponding NSD implementation from `Sormani et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.1857S/abstract>`__ with the IMF from `Koshimoto et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021ApJ...917...78K/abstract>`__ for this bulge parameterization and the age and metallicity used by `genstars <https://github.com/nkoshimoto/genstars>`__.
+
+Koshimoto2022_G_bulge_nsd
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Alternate G bulge model from `Koshimoto et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021ApJ...917...78K/abstract>`__, with corresponding NSD implementation from `Sormani et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.1857S/abstract>`__ with the IMF from `Koshimoto et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021ApJ...917...78K/abstract>`__ for this bulge parameterization and the age and metallicity used by `genstars <https://github.com/nkoshimoto/genstars>`__.
+
+Koshimoto2022_GxG_bulge_nsd
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Alternate G+Gx bulge model from `Koshimoto et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021ApJ...917...78K/abstract>`__, with corresponding NSD implementation from `Sormani et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.1857S/abstract>`__ with the IMF from `Koshimoto et al. (2021) <https://ui.adsabs.harvard.edu/abs/2021ApJ...917...78K/abstract>`__ for this bulge parameterization and the age and metallicity used by `genstars <https://github.com/nkoshimoto/genstars>`__.
+
+Sormani2022_nsd
+^^^^^^^^^^^^^^^
+Nuclear Stellar Disk population from `Sormani et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022MNRAS.512.1857S/abstract>`__.
