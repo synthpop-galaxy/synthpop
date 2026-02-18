@@ -17,11 +17,11 @@ import shutil
 import numpy as np
 try:
     from ._extinction import ExtinctionMap
-    from .lallement import Lallement
+    from .lallement2019 import Lallement2019
     from .. import const
 except ImportError:
     from _extinction import ExtinctionMap
-    from lallement import Lallement
+    from lallement2019 import Lallement2019
     import constants as const
 import time
 import os
@@ -33,7 +33,7 @@ from astropy.coordinates import SkyCoord
 # empty dictionary to store dustmaps query
 _query_dict = {}
 
-class Gums(Lallement,ExtinctionMap):
+class Gums(Lallement2019,ExtinctionMap):
     """
     Extinction map from Gaia Universe Model Snapshot
 

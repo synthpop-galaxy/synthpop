@@ -13,7 +13,7 @@ Publication DOI: 10.1051/0004-6361/201834695
 Data file FTP: https://cdsarc.cds.unistra.fr/ftp/J/A+A/625/A135/
 """
 
-__all__ = ["Lallement", ]
+__all__ = ["Lallement2019", ]
 __author__ = "M.J. Huston"
 __date__ = "2024-11-06"
 
@@ -34,7 +34,7 @@ import requests
 current_map_name = None
 current_map_data = None
 
-class Lallement(ExtinctionMap):
+class Lallement2019(ExtinctionMap):
     """
     Extinction map from Lallement et al. 2019
 
