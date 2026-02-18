@@ -138,7 +138,7 @@ class SpiseaGenerator(StarGenerator):
         return sp_dict
 
     def generate_star_at_location(self, position, props, 
-                min_mass=None, max_mass=None, radii=None):
+                min_mass=None, max_mass=None, radii=None, avg_mass_per_star=None):
         """
         Generates stars at the given positions
         """

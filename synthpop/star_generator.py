@@ -80,7 +80,7 @@ class StarGenerator:
         self.system_mags = False
 
     def generate_star_at_location(self, position, props, 
-                min_mass=None, max_mass=None, radii=None):
+                min_mass=None, max_mass=None, radii=None, avg_mass_per_star=None):
         """
         Generate stars at the given positions with observed properties.
         """

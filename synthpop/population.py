@@ -902,7 +902,8 @@ class Population:
 
         # generate star at the positions
         star_systems, companions = self.generator.generate_star_at_location(
-            position[0:4], props, min_mass, self.max_mass, radii=radii)
+            position[0:4], props, min_mass, self.max_mass, radii=radii, 
+            avg_mass_per_star=self.population_density.average_mass)
         star_systems.loc[:,'x'] = position[0]
         star_systems.loc[:,'y'] = position[1]
         star_systems.loc[:,'z'] = position[2]
