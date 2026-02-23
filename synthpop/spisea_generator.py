@@ -216,13 +216,13 @@ class SpiseaGenerator(StarGenerator):
             while cluster_stars_needed > 0:
                 with BlockSpiseaPrints(block_prints=self.evolution_module.block_spisea_prints):
                     isochrone = spisea_synthetic.IsochronePhot(logAge=bin2d[0], AKs=0,
-                                        distance=10, metallicity=bin2d[1],
-                                        evo_model=self.evolution_module.spisea_evolution, atm_func=self.evolution_module.spisea_atm_func,
-                                        wd_atm_func=self.evolution_module.spisea_wd_atm_func, iso_dir=self.spisea_dir,
-                                        min_mass=np.min(min_mass), max_mass=max_mass,
-                                        filters=self.evolution_module.bands_obs_str)
+                                            distance=10, metallicity=bin2d[1],
+                                            evo_model=self.evolution_module.spisea_evolution, atm_func=self.evolution_module.spisea_atm_func,
+                                            wd_atm_func=self.evolution_module.spisea_wd_atm_func, iso_dir=self.spisea_dir,
+                                            min_mass=np.min(min_mass), max_mass=max_mass,
+                                            filters=self.evolution_module.bands_obs_str)
                     cluster=spisea_synthetic.ResolvedCluster(isochrone, self.imf_module.spisea_imf, generate_mass, 
-                                                    ifmr=self.ifmr_module.spisea_ifmr, keep_low_mass_stars=True)
+                                                        ifmr=self.ifmr_module.spisea_ifmr, keep_low_mass_stars=True)
                 star_systems_i = cluster.star_systems
                 if "companions" in cluster.__dir__():
                     companions_i = cluster.companions

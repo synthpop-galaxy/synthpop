@@ -12,6 +12,7 @@ import json
 from spisea import evolution as spisea_evolution
 from spisea import atmospheres as spisea_atmospheres
 from spisea import synthetic as spisea_synthetic
+import pdb
 
 class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
     """

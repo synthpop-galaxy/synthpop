@@ -246,7 +246,8 @@ class StarGenerator:
                 s_track[prop][not_performed] = m_init[not_performed]
             else:
                 s_track[prop][np.logical_not(inside_grid)] = np.nan
-                s_track[prop][not_performed] = m_init[not_performed]
+                s_track[prop][not_performed] = np.nan
+
         return s_track, in_final_phase
 
     def apply_ifmr(self, m_init, met, s_props, final_phase_flag):
