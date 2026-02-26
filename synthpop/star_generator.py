@@ -80,7 +80,8 @@ class StarGenerator:
         self.system_mags = False
 
     def generate_star_at_location(self, position, props, 
-                min_mass=None, max_mass=None, radii=None, avg_mass_per_star=None):
+                min_mass=None, max_mass=None, radii=None, avg_mass_per_star=None,
+                skip_lowmass_stars=False):
         """
         Generate stars at the given positions with observed properties.
         """
@@ -93,11 +94,13 @@ class StarGenerator:
             N=n_stars, x=position[0], y=position[1], z=position[2], age=age)
 
         # Decide which stars to evolve
-        # if (min_mass is not None) and (~isinstance(min_mass, (int,float))) \
-        #         and (len(np.unique(min_mass))>1):
-        #     skip_stars = 
+        skip_lowmass_idx = np.zeros(n_stars, bool)
+        if skip_lowmass_stars:
+            radii_idx = np.searchsorted(radii, position[3])-1
+            skip_lowmass_idx = m_initial < min_mass[radii_idx]
         # Generate evolved properties
-        s_props, final_phase_flag = self.get_evolved_props(m_initial, met, age, props)
+        s_props, final_phase_flag = self.get_evolved_props(m_initial, met, age, props,
+                                                            skip_lowmass_idx)
 
         # If assigned, apply IFMR to handle NS and BH evolution
         if self.ifmr_module is not None:
@@ -105,12 +108,14 @@ class StarGenerator:
                 
         # If assigned, generate companions
         if self.mult_module is not None:
+            assert skip_lowmass_stars==False
             # Adopt metallicity and age of primary; generate init mass and orbits
             pri_ids, m_initial_companions, periods, eccentricities = \
                         self.mult_module.generate_companions(m_initial)
             # Evolve companion stars
             comp_s_props, comp_final_phase_flag = self.get_evolved_props(
-                 m_initial_companions, met[pri_ids], age[pri_ids], props)
+                 m_initial_companions, met[pri_ids], age[pri_ids], props,
+                 np.zeros(len(m_initial_companions), bool))
             # Apply IFMR if present
             if self.ifmr_module is not None:
                 comp_s_props = self.apply_ifmr(m_initial_companions,
@@ -150,6 +155,7 @@ class StarGenerator:
             met: np.ndarray,
             age: np.ndarray,
             props: Set,
+            skip_lowmass_idx: np.ndarray,
             **kwargs
             ) -> Tuple[np.ndarray, Dict, np.ndarray]:
         """
@@ -197,13 +203,10 @@ class StarGenerator:
             # find the stars which fall into the mass range of the current evolution class
             if i != len(self.evolution_module) - 1:
                 which = np.where(not_performed & (m_init > evolution_i.min_mass) & (
-                        m_init < evolution_i.max_mass))[0]
+                        m_init < evolution_i.max_mass) & ~skip_lowmass_idx)[0]
             else:
-                which = np.where(not_performed & (m_init > evolution_i.min_mass))[0]
-
-            # check if there are any stars for this step
-            if len(which) == 0:
-                continue
+                which = np.where(not_performed & (m_init > evolution_i.min_mass)
+                                 & ~skip_lowmass_idx)[0]
 
             if accept_np_arrays:
                 s_props_i, inside_grid_i, in_final_phase_i = evolution_i.get_evolved_props(

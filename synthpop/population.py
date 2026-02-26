@@ -707,7 +707,7 @@ class Population:
             self.skip_lowmass_stars = False
 
         elif self.skip_lowmass_stars:
-            raise NotImplementedError("SORRY I BROKE THIS OPTION TEMPORARILY - skip_lowmass_stars not available")
+            #raise NotImplementedError("SORRY I BROKE THIS OPTION TEMPORARILY - skip_lowmass_stars not available")
             logger.info(f"{self.name} : estimate minimum mass for magnitude limit")
             max_age = self.age.get_maximum_age()
             mass_limit = self.evolution.get_mass_min(
@@ -800,14 +800,17 @@ class Population:
             else:
                 missing_stars -= gen_stars_chunk
 
-            # add to previous drawn data
+            # Filter for mag limits
             if (self.glbl_params.maglim is not None) and (not self.glbl_params.lost_mass_option==3):
+                # TODO: probably need to make this not a slice
+                # TODO: confirm this drops nans also
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
             if (len(df)>0) and (self.mult is not None):
                 comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]
             elif (len(df)==0) and (self.mult is not None):
                 comp_df.drop(comp_df.index, inplace=True)
                 
+            # add to previous drawn data
             df.loc[:,'system_idx'] += (current_max_id + 1)
             if self.mult is not None:
                 comp_df.loc[:,'system_idx'] += (current_max_id + 1)
@@ -858,31 +861,31 @@ class Population:
 
             logger.info(f'generated_total_iMass = {population_df["iMass"].sum():.4f}')
             gg = population_df.groupby(pd.cut(population_df.Dist, radii), observed=False)
-            if self.skip_lowmass_stars:
-                im_incl = (gg["iMass"].sum()
-                           + gg.size() * frac_lowmass[0] * frac_lowmass[1]
-                           / (1 - frac_lowmass[1])
-                           ).sum()
+            # if self.skip_lowmass_stars:
+            #     im_incl = (gg["iMass"].sum()
+            #                + gg.size() * frac_lowmass[0] * frac_lowmass[1]
+            #                / (1 - frac_lowmass[1])
+            #                ).sum()
 
-                logger.info(f'generated_total_iMass_incl_lowmass = {im_incl.sum():.4f}')
+            #     logger.info(f'generated_total_iMass_incl_lowmass = {im_incl.sum():.4f}')
 
             logger.info(f'generated_total_eMass = {population_df["Mass"].sum():.4f}')
-            if self.skip_lowmass_stars:
-                em_incl = (gg["Mass"].sum()
-                           + gg.size() * frac_lowmass[0] * frac_lowmass[1]
-                           / (1 - frac_lowmass[1])
-                           ).sum()
-                logger.info(f'generated_total_eMass_incl_lowmass = {em_incl:.4f}')
+            # if self.skip_lowmass_stars:
+            #     em_incl = (gg["Mass"].sum()
+            #                + gg.size() * frac_lowmass[0] * frac_lowmass[1]
+            #                / (1 - frac_lowmass[1])
+            #                ).sum()
+            #     logger.info(f'generated_total_eMass_incl_lowmass = {em_incl:.4f}')
 
             logger.info(f'det_mass_loss_corr = '
                         f'{population_df["Mass"].sum() / population_df["iMass"].sum():.4f}')
-            if self.skip_lowmass_stars:
-                logger.info(f'det_mass_loss_corr_incl_lowmass = {em_incl / im_incl}')
+            # if self.skip_lowmass_stars:
+            #     logger.info(f'det_mass_loss_corr_incl_lowmass = {em_incl / im_incl}')
 
             logger.debug(f'average_mass_per_star = {population_df["Mass"].mean():.4f}')
-            if self.skip_lowmass_stars:
-                mean_mass = em_incl * ((1 - frac_lowmass[1]) / gg.size()).sum()
-                logger.debug(f'average_mass_per_star_incl_lowmass = {mean_mass:.4f}')
+            # if self.skip_lowmass_stars:
+            #     mean_mass = em_incl * ((1 - frac_lowmass[1]) / gg.size()).sum()
+            #     logger.debug(f'average_mass_per_star_incl_lowmass = {mean_mass:.4f}')
 
         logger.log(25, '# Done')
         logger.flush()
@@ -903,7 +906,8 @@ class Population:
         # generate star at the positions
         star_systems, companions = self.generator.generate_star_at_location(
             position[0:4], props, min_mass, self.max_mass, radii=radii, 
-            avg_mass_per_star=self.population_density.average_mass)
+            avg_mass_per_star=self.population_density.average_mass,
+            skip_lowmass_stars=self.skip_lowmass_stars)
         star_systems.loc[:,'x'] = position[0]
         star_systems.loc[:,'y'] = position[1]
         star_systems.loc[:,'z'] = position[2]
