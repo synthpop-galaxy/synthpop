@@ -70,6 +70,8 @@ class StarGenerator:
         self.met_module = met_module
         if isinstance(evolution_module, list):
             self.evolution_module = evolution_module
+        elif evolution_module is None:
+            self.evolution_module = None
         else:
             self.evolution_module = (evolution_module,)
         self.chunk_size = glbl_params.chunk_size
@@ -191,6 +193,9 @@ class StarGenerator:
         inside_grid = np.ones(len(m_init), bool)
         in_final_phase = np.zeros(len(m_init), bool)
         not_performed = np.ones(len(m_init), bool)
+        if self.evolution_module is None:
+            s_track['star_mass'] = m_init
+            return s_track, in_final_phase
 
         # check if multiple evolution classes are sepecified
         for i, evolution_i in enumerate(self.evolution_module):

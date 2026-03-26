@@ -68,7 +68,7 @@ class PopParams(BaseModel, extra="allow"):
     ifmr_kwargs: ModuleKwargs = None
     multiplicity_kwargs: ModuleKwargs = None
 
-    evolution_kwargs: Optional[Union[ModuleKwargs, List[ModuleKwargs]]] = None
+    evolution_kwargs: Optional[Union[ModuleKwargs, List[ModuleKwargs], Dict[str, List[ModuleKwargs]]]] = None
 
     av_mass_corr: Optional[float] = None
     n_star_corr: Optional[float] = None
@@ -168,9 +168,25 @@ class Parameters:
         #
         self.sun = SunInfo(**self.sun, **self.lsr)
         # convert to ModuleKwargs BaseModels
-        if isinstance(self.evolution_class, list):
+        if self.evolution_class is None:
+            pass
+        elif isinstance(self.evolution_class, list):
             self.evolution_class = [
                 ModuleKwargs.parse_obj(ev) for ev in self.evolution_class]
+        elif ('default' in self.evolution_class) or ('name' not in self.evolution_class):
+            tmp = self.evolution_class.copy()
+            self.evolution_class = {}
+            for key in tmp:
+                if tmp[key] is None:
+                    self.evolution_class[key] = None
+                elif isinstance(tmp[key], list):
+                    if None in tmp[key]:
+                        self.evolution_class[key] = None
+                        if len(tmp[key])>1:
+                            raise ValueError("evolution_class list cannot contain None and real options")
+                    self.evolution_class[key] = [ModuleKwargs.parse_obj(ev) for ev in tmp[key]]
+                else:
+                    self.evolution_class[key] = ModuleKwargs.parse_obj(tmp[key])
         else:
             self.evolution_class = ModuleKwargs.parse_obj(self.evolution_class)
 

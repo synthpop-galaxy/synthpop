@@ -166,28 +166,32 @@ class Population:
             ) = self.assign_subclasses()
 
         # get magnitudes from evolution class
-        if isinstance(self.evolution, list):
-            self.bands = list(self.evolution[0].bands)
-            self.eff_wavelengths = dict(self.evolution[0].eff_wavelengths)
+        if self.evolution is not None:
+            if isinstance(self.evolution, list):
+                self.bands = list(self.evolution[0].bands)
+                self.eff_wavelengths = dict(self.evolution[0].eff_wavelengths)
+            else:
+                self.bands = list(self.evolution.bands)
+                self.eff_wavelengths = dict(self.evolution.eff_wavelengths)
+
+            # check if main magnitude is in self.bands
+            if (self.glbl_params.maglim is not None) and (self.glbl_params.maglim[0] not in self.bands):
+                msg = f'{self.glbl_params.maglim[0]}, used as filter for' \
+                      f' the magnitude limit is not in {self.bands}'
+                logger.critical(msg)
+                raise ValueError(msg)
+
+            # check if all bands are in eff_wavelengths:
+            if len(not_found := set(self.bands) - self.eff_wavelengths.keys()) != 0:
+                raise KeyError(f"Effect Wavelengths for {not_found} are not specified")
+
+            # set wavelength bands and effective wavelength
+            if self.extinction is not None:
+                self.extinction.set_bands(self.bands, self.eff_wavelengths)
+                self.extinction.validate_extinction()
         else:
-            self.bands = list(self.evolution.bands)
-            self.eff_wavelengths = dict(self.evolution.eff_wavelengths)
-
-        # check if main magnitued is in self.bands
-        if (self.glbl_params.maglim is not None) and (self.glbl_params.maglim[0] not in self.bands):
-            msg = f'{self.glbl_params.maglim[0]}, used as filter for' \
-                  f' the magnitude limit is not in {self.bands}'
-            logger.critical(msg)
-            raise ValueError(msg)
-
-        # check if all bands are in eff_wavelengths:
-        if len(not_found := set(self.bands) - self.eff_wavelengths.keys()) != 0:
-            raise KeyError(f"Effect Wavelengths for {not_found} are not specified")
-
-        # set wavelength bands and effective wavelength
-        if self.extinction is not None:
-            self.extinction.set_bands(self.bands, self.eff_wavelengths)
-            self.extinction.validate_extinction()
+            self.skip_lowmass_stars = False
+            self.bands = []
 
         self.av_mass_corr = None
         if self.glbl_params.star_generator=="SpiseaGenerator":
@@ -244,58 +248,62 @@ class Population:
         # this is to combine different isochrone systems or interpolator
         ev_init = []
         for i, ev_kwargs in enumerate(evolution_class_config):
-            # get the Isochrone system
+            if ev_kwargs is not None:
+                # get the Isochrone system
 
-            Isochrone_System = sp_utils.get_subclass(
-                EvolutionIsochrones, ev_kwargs,
-                initialize=False, population_file=self.pop_params._filename)
-
-            # check if an interpolator is specified
-            if hasattr(ev_kwargs, 'interpolator'):
-                Interpolator = sp_utils.get_subclass(
-                    EvolutionInterpolator, sp_utils.ModuleKwargs(name=ev_kwargs.interpolator),
+                Isochrone_System = sp_utils.get_subclass(
+                    EvolutionIsochrones, ev_kwargs,
                     initialize=False, population_file=self.pop_params._filename)
+
+                # check if an interpolator is specified
+                if hasattr(ev_kwargs, 'interpolator'):
+                    Interpolator = sp_utils.get_subclass(
+                        EvolutionInterpolator, sp_utils.ModuleKwargs(name=ev_kwargs.interpolator),
+                        initialize=False, population_file=self.pop_params._filename)
+                else:
+                    Interpolator = None
+
+                # combine Interpolator and Isochrone_System
+                Evo = CombineEvolution(Isochrone_System, Interpolator)
+
+                # collect all needed columns and add them to the evolution keywords
+                columns = MUST_HAVE_COLUMNS.copy()
+                columns.extend(const.REQ_ISO_PROPS)
+                columns.extend(self.glbl_params.opt_iso_props)
+                # add magnitudes to columns
+                if isinstance(self.glbl_params.chosen_bands, dict):
+                    # 1convert dict into list of tuples
+                    columns.extend(self.glbl_params.chosen_bands.items())
+                else:
+                    columns.extend(self.glbl_params.chosen_bands)
+                ev_kwargs.columns = columns
+
+                ev_init.append(ev_kwargs)
+                evolution_i = Evo(
+                    iso_kwargs=ev_kwargs.init_kwargs,
+                    int_kwargs=ev_kwargs.init_kwargs,
+                    logger=logger)
+
+                val = getattr(ev_kwargs, "min_mass", evolution_i.min_mass)
+                if val < evolution_i.min_mass:
+                    msg = f'min mass ({val:.3f}) in the evolution keywords ' \
+                          f'is lower than the masses in the Isochrone grid ({evolution_i.min_mass:.3f})'
+                    logger.critical(msg)
+                    raise ValueError(msg)
+
+                evolution_i.min_mass = val
+
+                evolution_i.max_mass = getattr(ev_kwargs, "max_mass", evolution_i.max_mass)
+                logger.debug(
+                    "%s : using EvolutionIsochrones subclass '%s' (%.2f-%.2f Msun)", self.name,
+                    evolution_i.isochrones_name, evolution_i.min_mass, evolution_i.max_mass)
+                logger.debug(
+                    "%s : using EvolutionInterpolator subclass '%s' (%.2f-%.2f Msun)", self.name,
+                    evolution_i.interpolator_name, evolution_i.min_mass, evolution_i.max_mass)
+                evolutions.append(evolution_i)
             else:
-                Interpolator = None
-
-            # combine Interpolator and Isochrone_System
-            Evo = CombineEvolution(Isochrone_System, Interpolator)
-
-            # collect all needed columns and add them to the evolution keywords
-            columns = MUST_HAVE_COLUMNS.copy()
-            columns.extend(const.REQ_ISO_PROPS)
-            columns.extend(self.glbl_params.opt_iso_props)
-            # add magnitudes to columns
-            if isinstance(self.glbl_params.chosen_bands, dict):
-                # 1convert dict into list of tuples
-                columns.extend(self.glbl_params.chosen_bands.items())
-            else:
-                columns.extend(self.glbl_params.chosen_bands)
-            ev_kwargs.columns = columns
-
-            ev_init.append(ev_kwargs)
-            evolution_i = Evo(
-                iso_kwargs=ev_kwargs.init_kwargs,
-                int_kwargs=ev_kwargs.init_kwargs,
-                logger=logger)
-
-            val = getattr(ev_kwargs, "min_mass", evolution_i.min_mass)
-            if val < evolution_i.min_mass:
-                msg = f'min mass ({val:.3f}) in the evolution keywords ' \
-                      f'is lower than the masses in the Isochrone grid ({evolution_i.min_mass:.3f})'
-                logger.critical(msg)
-                raise ValueError(msg)
-
-            evolution_i.min_mass = val
-
-            evolution_i.max_mass = getattr(ev_kwargs, "max_mass", evolution_i.max_mass)
-            logger.debug(
-                "%s : using EvolutionIsochrones subclass '%s' (%.2f-%.2f Msun)", self.name,
-                evolution_i.isochrones_name, evolution_i.min_mass, evolution_i.max_mass)
-            logger.debug(
-                "%s : using EvolutionInterpolator subclass '%s' (%.2f-%.2f Msun)", self.name,
-                evolution_i.interpolator_name, evolution_i.min_mass, evolution_i.max_mass)
-            evolutions.append(evolution_i)
+                logger.debug(f"evolution_class = None; evolution will not be performed for population {self.name}")
+                return None
         logger.log(15, '"evolution_class" : [')
         for ev_kwargs in ev_init:
             msg = f'    {ev_kwargs},'.replace("'", '"')
@@ -322,6 +330,14 @@ class Population:
                 raise ModuleNotFoundError(msg)
         else:
             logger.debug("read evolution class from config file ")
+            if isinstance(evolution_class, dict):
+                if (self.name not in evolution_class) and ('default' not in evolution_class):
+                    logger.critical(f"evolution_class dict does not contain {self.name} "+
+                        "or default; cannot assign evolution class")
+                elif self.name in evolution_class:
+                    evolution_class = evolution_class[self.name]
+                else:
+                    evolution_class = evolution_class['default']
         if not isinstance(evolution_class, list):
             evolution_class = [evolution_class]
         return evolution_class
@@ -499,6 +515,10 @@ class Population:
 
         # total mass is computed in population_density.update_location
         total_stellar_mass = self.population_density.total_mass
+        if total_stellar_mass < self.min_mass:
+            return 0, 0
+        if self.evolution is None:
+            return total_stellar_mass, total_stellar_mass/average_star_mass
         # find total number of stars
         if self.population_density.density_unit == 'init_mass':
             av_mass_corr = 1
@@ -659,6 +679,19 @@ class Population:
             raise AttributeError(msg)
 
         logger.create_info_subsection(f"Population {self.popid};  {self.name}")
+
+        if self.population_density.total_mass < self.min_mass:
+            logger.critical(f'Total stellar mass for {self.name} in field less than min mass per star.'+
+                '\nNo stars generated.')
+            companions = pd.DataFrame() if (self.mult is not None) else None
+            return pd.DataFrame(), companions
+
+        if (self.evolution is None) and (self.glbl_params.maglim is not None):
+            logger.critical(f'Set maglim is not None. Population {self.name} with evolution=None'+
+                             ' provides no magnitudes and will not be included')
+            companions = pd.DataFrame() if (self.mult is not None) else None
+            return pd.DataFrame(), companions
+
 
         # array of radii to use
         radii = np.linspace(0, self.max_distance, int(round(self.max_distance/0.1))+1)
