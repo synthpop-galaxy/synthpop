@@ -20,13 +20,13 @@ class NatalKicks(PostProcessing):
 
     Attributes
     ----------
-    kick_mean_bh=0 : float
+    kick_mean_bh=100 : float
         mean of the maxwellian kick distribution for black holes (km/s)
-    kick_mean_ns=0 : float
+    kick_mean_ns=350 : float
         mean of the maxwellian kick distribution for neutron stars (km/s)
     """
 
-    def __init__(self, model, logger, kick_mean_bh=0, kick_mean_ns=0, **kwargs):
+    def __init__(self, model, logger, kick_mean_bh=100, kick_mean_ns=350, **kwargs):
         super().__init__(model, logger, **kwargs)
         self.kick_mean_ns = kick_mean_ns
         self.kick_mean_bh = kick_mean_bh
