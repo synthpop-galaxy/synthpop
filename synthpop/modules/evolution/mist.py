@@ -24,7 +24,7 @@ import tqdm
 import sys
 
 import numpy as np
-import pandas
+import pandas as pd
 import requests
 
 from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
@@ -85,7 +85,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
     # folder where isochrone files can be found
     FOLDER = f"{ISOCHRONES_DIR}/mist"
     mag_system_conversions = pd.read_csv(f"{EVOLUTION_DIR}/mist_magnitude_systems.dat",
-                                sep='\s+', index='filter')
+                                sep='\s+', index_col='filter')
 
     # lowest and highest mass where MIST isochrones should be used
     # (can be outside the covered range, in such cases the closets grid_points are used)
@@ -282,7 +282,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         min_values = isochrones_grouped['initial_mass'].max()
         min_values.name='min_mass'
         max_values.name='max_mass'
-        mass_range = pandas.concat([min_values,max_values], axis=1)
+        mass_range = pd.concat([min_values,max_values], axis=1)
         return mass_range
 
     @staticmethod
@@ -335,7 +335,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 else:
                     if os.path.isfile(f'{filename}.h5'):
                         # file exist in a Hierarchical Data Format (.h5)
-                        df = pandas.read_hdf(f'{filename}.h5', 'data')
+                        df = pd.read_hdf(f'{filename}.h5', 'data')
 
                     else:
                         # convert ascii to Hierarchical Data Format
@@ -353,17 +353,17 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                     isochrones[file_met][use_columns] = df[use_columns]
                     
                 for band in self.bands:
-                    if mag_system_conversions.loc[band, 'system'] == self.phot_sys:
+                    if self.mag_system_conversions.loc[band, 'system'] == self.phot_sys:
                         continue
-                    elif mag_system_conversions.loc[band, 'system'] == 'Vega':
+                    elif self.mag_system_conversions.loc[band, 'system'] == 'Vega':
                         isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.phot_sys})']
-                    elif (mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='Vega'):
+                    elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='Vega'):
                         isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
-                    elif (mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='ST'):
+                    elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='ST'):
                         isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
                         isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/ST)']
 
-        return pandas.concat(isochrones.values())
+        return pd.concat(isochrones.values())
 
     @staticmethod
     def get_columns(filename):
@@ -380,7 +380,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         # get column names
         cols = cls.get_columns(filename)
         # load table from ascii file
-        df = pandas.read_csv(filename, sep='\s+', comment='#',
+        df = pd.read_csv(filename, sep='\s+', comment='#',
             skip_blank_lines=True, low_memory=False, header=None, names=cols)
         return df
 
