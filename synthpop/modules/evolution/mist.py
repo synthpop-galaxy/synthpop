@@ -94,9 +94,10 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
     min_mass = 0.1
     isochrones_name = 'MIST'
 
-    def __init__(self, columns, phot_sys='Vega', use_global=True, **kwargs):
+    def __init__(self, columns, mist_version='1.2', phot_sys='Vega', 
+                 alpha=0.0, use_global=True, **kwargs):
         """
-        pull out all the information from the isochrone file
+        Pull out all the information from the isochrone file
         and puts it into tracks under the index of the lowest
         non-magnitude properties in MIST isochrones
 
@@ -104,14 +105,24 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         ----------
         columns : list
             list of columns
+        mist_version : str
+            version of the MIST isochrones to use (only '1.2' available currently)
         phot_sys : str
             magnitude system for photometry ('Vega' by default, or 'AB' or 'ST')
+        alpha : float
+            [alpha/Fe] alpha enhancement (only 0.0 available currently)
         use_global : Bool
             store or use isochrones as global variable
         """
         
+        if mist_version != '1.2':
+            ValueError(f"Invalid mist_version {mist_version}. Only '1.2' is available at this time.")
+        if alpha != 0.0:
+            warnings.warn("MIST v1.2 only uses solar-scaled alpha abundances. Setting [alpha/Fe] to 0.0.")
+
         if phot_sys in ['Vega','AB','ST']:
             self.phot_sys = phot_sys
+            print(f'Photometry will be provided in {phot_sys} mag.')
         else:
             ValueError(f'Invalid phot_sys {phot_sys}. Select Vega, AB, or ST.')
 
