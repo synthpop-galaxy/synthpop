@@ -57,6 +57,6 @@ class CombineTables(PostProcessing):
         system_df.reset_index(inplace=True)
         # Combine table
         system_df = pd.concat([system_df, companion_df])
-        system_df.sort_values(['primary_ID', 'Is_Binary'])
+        system_df.sort_values(['primary_ID', 'Is_Binary'], inplace=True)
             
         return system_df, None
