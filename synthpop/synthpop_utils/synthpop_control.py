@@ -140,7 +140,7 @@ class Parameters:
             logger.critical(msg)
             raise ValueError(msg)
         if hasattr(self, "col_names"):
-            logger.critical("Warning: col_names input is no longer used in SynthPop v1.1+. Use " \
+            logger.critical("WARNING: col_names input is no longer used in SynthPop v1.1+. Use " \
                 "RenameColumns post-processing module to change column names instead.")
 
         # transfer l, b into a a location generator.
@@ -162,9 +162,13 @@ class Parameters:
                 "removed for clarity. Use maglim=None to keep all stars or e.g. maglim=['Bessell_I', " \
                 "21] to trim a catalog.")
         if (self.maglim is not None) and ("remove" in self.maglim):
-            logger.critical("Warning: In SynthPop >=2.0.0, the \"keep\"/\"remove\" maglim options have been " \
+            logger.critical("WARNING: In SynthPop >=2.0.0, the \"keep\"/\"remove\" maglim options have been " \
                 "removed for clarity. Use maglim=None to keep all stars or e.g. maglim=['Bessell_I', " \
                 "21] to trim a catalog. This catalog will be trimmed.")
+
+        if hasattr(self, "eff_wavelengths"):
+            logger.critical("WARNING: eff_wavelengths configuration kwarg is no longer used. Effective wavelengths are"
+                " handled by the isochrone module for its respective photometric filters.")
         #
         self.sun = SunInfo(**self.sun, **self.lsr)
         # convert to ModuleKwargs BaseModels
@@ -230,7 +234,7 @@ class Parameters:
         """
         #pdb.set_trace()
         if (self.field_scale is None) and ('solid_angle' in self.__dict__):
-            logger.critical("In SynthPop >=v2.0.0, solid_angle is no longer the expected input for a field "
+            logger.critical("WARNING: In SynthPop >=v2.0.0, solid_angle is no longer the expected input for a field "
                 "size. Assuming circular window and assigning field_scale according to the given solid_angle.")
             self.field_scale = np.sqrt(self.solid_angle/np.pi)
             self.field_scale_unit = 'deg'
@@ -352,6 +356,11 @@ class Parameters:
                 self.__dict__['solid_angle'] = specified['SIGHTLINES']['solid_angle']
             if 'solid_angle_unit' in specified['SIGHTLINES']:
                 self.__dict__['solid_angle_unit'] = specified['SIGHTLINES']['solid_angle_unit']
+        # Also check for effecive wavelengths
+        if "eff_wavelengths" in specified:
+            self.__dict__["eff_wavelengths"] = None
+        if ("PHOTOMETRIC_OUTPUTS" in specified) and ("eff_wavelengths" in specified["PHOTOMETRIC_OUTPUTS"]):
+            self.__dict__["eff_wavelengths"] = None
 
     def read_kwargs_config(self, kwargs: dict):
         """
@@ -363,11 +372,6 @@ class Parameters:
             dictionary of specifications
         """
 
-        # for cat, items in self._categories.items():
-        #     kwarg_dict = kwargs.get(cat, kwargs)
-        #     for item in items:
-        #         if item in kwarg_dict:
-        #               self.__dict__.update({item:kwarg_dict[item]})
         self.__dict__.update(kwargs)
 
 
