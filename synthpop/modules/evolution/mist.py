@@ -108,7 +108,8 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         mist_version : str
             version of the MIST isochrones to use (only '1.2' available currently)
         phot_sys : str
-            magnitude system for photometry ('Vega' by default, or 'AB' or 'ST')
+            magnitude system for photometry. None (default) will use the systems provided
+            by MIST for each filter set. A user may specify to use all 'Vega', 'AB', or 'ST'
         alpha : float
             [alpha/Fe] alpha enhancement (only 0.0 available currently)
         use_global : Bool
