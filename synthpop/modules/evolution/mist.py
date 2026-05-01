@@ -94,7 +94,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
     min_mass = 0.1
     isochrones_name = 'MIST'
 
-    def __init__(self, columns, mist_version='1.2', phot_sys='Vega', 
+    def __init__(self, columns, mist_version='1.2', phot_sys=None,
                  alpha=0.0, use_global=True, **kwargs):
         """
         Pull out all the information from the isochrone file
@@ -120,7 +120,10 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         if alpha != 0.0:
             warnings.warn("MIST v1.2 only uses solar-scaled alpha abundances. Setting [alpha/Fe] to 0.0.")
 
-        if phot_sys in ['Vega','AB','ST']:
+        if phot_sys is None:
+            self.phot_sys = phot_sys
+            print(f'Photometry will be provided in MIST\'s default mag systems.')
+        elif phot_sys in ['Vega','AB','ST']:
             self.phot_sys = phot_sys
             print(f'Photometry will be provided in {phot_sys} mag.')
         else:
@@ -363,16 +366,17 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 else:
                     isochrones[file_met][use_columns] = df[use_columns]
                     
-                for band in self.bands:
-                    if self.mag_system_conversions.loc[band, 'system'] == self.phot_sys:
-                        continue
-                    elif self.mag_system_conversions.loc[band, 'system'] == 'Vega':
-                        isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.phot_sys})']
-                    elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='Vega'):
-                        isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
-                    elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='ST'):
-                        isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
-                        isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/ST)']
+                if self.phot_sys is not None:
+                    for band in self.bands:
+                        if self.mag_system_conversions.loc[band, 'system'] == self.phot_sys:
+                            continue
+                        elif self.mag_system_conversions.loc[band, 'system'] == 'Vega':
+                            isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.phot_sys})']
+                        elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='Vega'):
+                            isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
+                        elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='ST'):
+                            isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
+                            isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/ST)']
 
         return pd.concat(isochrones.values())
 
