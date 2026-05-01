@@ -374,7 +374,6 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 elif self.mag_system_conversions.loc[band, 'system'] == 'Vega':
                     isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.phot_sys})']
                 elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='Vega'):
-                    print("HELLO")
                     isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
                 elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='ST'):
                     isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
