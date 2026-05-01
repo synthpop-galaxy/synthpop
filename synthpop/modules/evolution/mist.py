@@ -367,17 +367,18 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 else:
                     isochrones[file_met][use_columns] = df[use_columns]
                     
-                if self.phot_sys is not None:
-                    for band in self.bands:
-                        if self.mag_system_conversions.loc[band, 'system'] == self.phot_sys:
-                            continue
-                        elif self.mag_system_conversions.loc[band, 'system'] == 'Vega':
-                            isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.phot_sys})']
-                        elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='Vega'):
-                            isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
-                        elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='ST'):
-                            isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
-                            isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/ST)']
+        if self.phot_sys is not None:
+            for band in self.bands:
+                if self.mag_system_conversions.loc[band, 'system'] == self.phot_sys:
+                    continue
+                elif self.mag_system_conversions.loc[band, 'system'] == 'Vega':
+                    isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.phot_sys})']
+                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='Vega'):
+                    print("HELLO")
+                    isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
+                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='ST'):
+                    isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
+                    isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/ST)']
 
         return pd.concat(isochrones.values())
 
