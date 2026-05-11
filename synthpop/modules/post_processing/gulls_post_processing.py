@@ -37,8 +37,8 @@ class GullsPostProcessing(PostProcessing):
                                 "gulls_post_processing")
 
         # convert l, b to ra, dec
-        system_df["l(deg)"] = system_df.iloc[:, 7]  # l
-        system_df["b(deg)"] = system_df.iloc[:, 8]  # b
+        system_df["l(deg)"] = system_df['l']  # l
+        system_df["b(deg)"] = system_df['b']  # b
         ra, dec = lb_to_ad(system_df["l(deg)"], system_df["b(deg)"])
         system_df["RA2000.0"] = ra
         system_df["DEC2000.0"] = dec
