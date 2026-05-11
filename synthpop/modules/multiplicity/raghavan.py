@@ -49,7 +49,7 @@ class Raghavan(Multiplicity):
         binary_frac = (pri_masses<=0.1)*0.2 + \
                    (pri_masses>0.1)*0.3836*pri_masses**0.27
 
-        is_binary = np.random.rand(len(pri_masses))>binary_frac
+        is_binary = np.random.rand(len(pri_masses)) < binary_frac
 
         return (is_binary, binary_frac)
 
