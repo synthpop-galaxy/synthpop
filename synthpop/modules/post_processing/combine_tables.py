@@ -47,6 +47,9 @@ class CombineTables(PostProcessing):
         system_df.set_index('ID', inplace=True)
         companion_system_idxs = companion_df['primary_ID'].to_numpy()
         companion_df.loc[:,'q'] = companion_df['Mass'] / system_df['Mass'][companion_system_idxs].to_numpy()
+        copy_props = ['mul','mub','Vr','U','V','W','age','pop','l','b','Dist', 'x','y','z','A_Ks']
+        for prop in copy_props:
+            companion_df.loc[:,prop] = system_df[prop][companion_system_idxs].to_numpy()
         combined_logL = np.log10(10**companion_df['log_L'] + 10**system_df['log_L'][companion_system_idxs].to_numpy())
         companion_df.loc[:,'combined_logL'] = combined_logL
         companion_df.loc[:, 'Is_Binary'] = 2
