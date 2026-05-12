@@ -223,6 +223,9 @@ class PopsyclePostProcessing(PostProcessing):
             # map = companion_df.set_index('system_idx')['mass'].squeeze()
             # system_df['systemMass'] = system_df['obj_id'].map(map)
             # system_df['systemMass'] = system_df['systemMass'] + system_df['mass']
+            
+        else:
+            pd.eval("systemMass = system_df.mass", target=system_df, inplace=True)
 
         system_df.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
                          inplace=True)
