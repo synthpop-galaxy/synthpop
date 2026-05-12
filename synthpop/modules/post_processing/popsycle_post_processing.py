@@ -91,6 +91,7 @@ class PopsyclePostProcessing(PostProcessing):
             self.binning_procedure = True
         else:
             self.binning_procedure = False
+        self.multiplicity = model.parms.multiplicity_kwargs
 
     def do_post_processing(self, system_df: pd.DataFrame,
             companion_df: pd.DataFrame):
@@ -99,6 +100,10 @@ class PopsyclePostProcessing(PostProcessing):
         for Galaxia, saving the file to the set file name + '_psc.h5'.
         """
         self.logger.info(f"Beginning PopSyCLE postprocessing.")
+
+        if self.multiplicity == None:
+            companion_df = pd.DataFrame(columns=popsycle_nonmag_bin_cols+popsycle_nonmag_cols)
+            print("that happened")
 
         if self.star_generator == 'SpiseaGenerator':
             system_df.rename(columns={filter_spisea_dict[f]:f for f in filter_spisea_dict},
@@ -123,8 +128,9 @@ class PopsyclePostProcessing(PostProcessing):
         system_df['isMultiple'] = system_df['n_companions']
         system_df.loc[system_df['isMultiple'] != 0, 'isMultiple'] = 1
 
-        map = system_df.set_index('system_idx')['iMass'].squeeze()
-        companion_df['zams_mass_prim'] = companion_df['system_idx'].map(map)
+        if system_df['isMultiple'].any():
+            map = system_df.set_index('system_idx')['iMass'].squeeze()
+            companion_df['zams_mass_prim'] = companion_df['system_idx'].map(map)
 
         # Translate extinction to Ebv extinction
         if not self.model.populations[0].extinction.A_or_E_type=="E(B-V)":
@@ -172,7 +178,7 @@ class PopsyclePostProcessing(PostProcessing):
                          inplace=True)
         companion_df.rename(columns={'iMass':'zams_mass', 'log_Teff': 'teff', 'log_L':'L',
                             'log_g':'logg', 'Mass':'mass', '[Fe/H]':'metallicity',
-                            'eccentricity':'e'}, inplace=True)
+                            'eccentricity':'e'}, inplace=True, errors='ignore')
 
         self.logger.info("Basic columns renamed")
         pd.eval('age = log10(system_df.age*1e9)', target=system_df, inplace=True)
@@ -204,24 +210,25 @@ class PopsyclePostProcessing(PostProcessing):
         """pd.eval("systemMass = system_df.mass", target=system_df, inplace=True)
         self.logger.info("Added systemMass via eval")"""
 
-        map = system_df.set_index('obj_id')['glat'].squeeze()
-        companion_df['glat'] = companion_df['system_idx'].map(map)
-        map = system_df.set_index('obj_id')['glon'].squeeze()
-        companion_df['glon'] = companion_df['system_idx'].map(map)
-        
-        # System mass test
-        system_df.set_index('obj_id')
-        map = companion_df.groupby('system_idx')['mass'].sum()
-        system_df['systemMass'] = system_df['obj_id'].map(map).fillna(0) + system_df['mass']
-        # map = companion_df.set_index('system_idx')['mass'].squeeze()
-        # system_df['systemMass'] = system_df['obj_id'].map(map)
-        # system_df['systemMass'] = system_df['systemMass'] + system_df['mass']
+        if system_df['isMultiple'].any():
+            
+            map = system_df.set_index('obj_id')['glat'].squeeze()
+            companion_df['glat'] = companion_df['system_idx'].map(map)
+            map = system_df.set_index('obj_id')['glon'].squeeze()
+            companion_df['glon'] = companion_df['system_idx'].map(map)
+            
+            system_df.set_index('obj_id')
+            map = companion_df.groupby('system_idx')['mass'].sum()
+            system_df['systemMass'] = system_df['obj_id'].map(map).fillna(0) + system_df['mass']
+            # map = companion_df.set_index('system_idx')['mass'].squeeze()
+            # system_df['systemMass'] = system_df['obj_id'].map(map)
+            # system_df['systemMass'] = system_df['systemMass'] + system_df['mass']
 
         system_df.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
                          inplace=True)
 
         companion_df.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
-                         inplace=True)
+                         inplace=True, errors='ignore')
         
         self.logger.info("Renamed mag cols")
         
@@ -265,13 +272,15 @@ class PopsyclePostProcessing(PostProcessing):
                 popsycle_bin_df[f"m_ubv_{filter}"] = np.nan
 
         if self.binning_procedure:
+            print(popsycle_bin_df)
             return popsycle_df, popsycle_bin_df
         else:
-            with h5py.File(f"{self.output_root}_companions.h5", 'w') as h5file:
-                h5file['lat_bin_edges'] = lat_bin_edges
-                h5file['long_bin_edges'] = long_bin_edges
-                
-            _bin_lb_hdf5(lat_bin_edges, long_bin_edges, popsycle_bin_df, f"{self.output_root}_companions")
+            if system_df['isMultiple'].any():
+                with h5py.File(f"{self.output_root}_companions.h5", 'w') as h5file:
+                    h5file['lat_bin_edges'] = lat_bin_edges
+                    h5file['long_bin_edges'] = long_bin_edges
+                    
+                _bin_lb_hdf5(lat_bin_edges, long_bin_edges, popsycle_bin_df, f"{self.output_root}_companions")
             
             with h5py.File(f"{self.output_root}.h5", 'w') as h5file:
                 h5file['lat_bin_edges'] = lat_bin_edges
@@ -279,5 +288,8 @@ class PopsyclePostProcessing(PostProcessing):
                 
             _bin_lb_hdf5(lat_bin_edges, long_bin_edges, popsycle_df, self.output_root)
             self.logger.info(f"PopSyCLE formatted output saved in {self.output_root}.h5")
-            
-            return system_df, companion_df
+
+            if system_df['isMultiple'].any():
+                return system_df, companion_df
+            else:
+                return system_df
