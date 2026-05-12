@@ -21,7 +21,7 @@
     "kinematics_func_kwargs" : {
         "name" : "Koshimoto2021Bulge",
         "v0_stream" : 49,
-        "y0_stream" : 393,
+        "y0_stream" : 0.393,
         "C_par_r" : 1.0,
         "C_perp_r" : 3.8,
         "C_par_z" : 1.0,
