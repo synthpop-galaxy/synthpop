@@ -22,6 +22,7 @@ import warnings
 import json
 import tqdm
 import sys
+from astropy import table
 
 import numpy as np
 import pandas as pd
@@ -95,7 +96,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
     isochrones_name = 'MIST'
 
     def __init__(self, columns, mist_version='1.2', phot_sys=None,
-                 alpha=0.0, use_global=True, **kwargs):
+                 alpha=0.0, use_global=True, effective_wavelengths=None, **kwargs):
         """
         Pull out all the information from the isochrone file
         and puts it into tracks under the index of the lowest
@@ -132,7 +133,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
 
         self.magsys, self.none_mag_cols, self.bands = self.get_mag_systems(columns)
         with open(f"{EVOLUTION_DIR}/mist_effective_wavelengths.json") as f:
-            self.eff_wavelengths = json.load(f)
+            self.eff_wavelengths = json.load(f)[effective_wavelengths]
 
         # Check for isochrone directory and create if needed
         os.makedirs(self.FOLDER, exist_ok=True)
@@ -460,3 +461,87 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         os.remove(f'{self.FOLDER}/MIST_v1.2_vvcrit0.4_{magsys_name}.txz')
 
         print('Isochrones downloaded: %s' % magsys_name)
+
+def generate_effective_wavelengths_json():
+    from astropy import units as u
+    from astroquery.svo_fps import SvoFps
+    
+    with open(f'{EVOLUTION_DIR}/mist_columns.json') as f:
+        columns_dict = json.load(f)
+    
+    filters_list = []
+    for k,v in columns_dict.items():
+        if v not in ['cmd','basic','full']:
+            filters_list.append(k)
+            
+    all_effs = {'vega_eff': {},
+                'pivot': {},
+                'average': {}}
+
+    for f in filters_list:
+        pre_str = columns_dict[f]
+        f_str = f.replace('_','.')
+        if pre_str=='UBVRIplus': pre_str=f.split('_')[0]
+        if pre_str=='IPHAS': pre_str, f_str = 'INT', '.'.join(f_str.split('.')[1:])
+        if pre_str=='Swift': f_str = 'UVOT.'+f_str.split('.')[1]
+        if pre_str=='Bessell': pre_str = 'Generic'
+        if pre_str=='DECam': pre_str = 'CTIO'
+        if pre_str=='VISTA': pre_str = 'Paranal'
+        if pre_str=='UKIDSS': pre_str = 'UKIRT'
+        if pre_str=='WFIRST': f_str = 'WFI.'+f_str
+        if pre_str=='UVIT': pre_str = 'Astrosat'
+        if pre_str=='Gaia' and f_str.split('.')[2]=='EDR3': 
+            if f_str.split('.')[1]=='G': f_str='Gaia3.'+f_str.split('.')[1]
+            else: f_str='Gaia3.G'+f_str.split('.')[1].lower()
+        elif pre_str=='Gaia' and f_str.split('.')[2]=='DR2Rev': 
+            if f_str.split('.')[1]=='G': f_str='Gaia2r.'+f_str.split('.')[1]
+            else: f_str='Gaia2r.G'+f_str.split('.')[1].lower()
+        elif pre_str=='Gaia' and ("MAW" in f_str.split('.')[2]): 
+            f_str = {"Gaia_G_MAW": 'Gaia2m.G', "Gaia_RP_MAW": 'Gaia2m.Grp',
+                     "Gaia_BP_MAWb": 'Gaia2m.Gbp_bright', "Gaia_BP_MAWf":'Gaia2m.Gbp_faint'}[f]     
+        if pre_str=='SPITZER':
+            f_str = 'IRAC.' + {'3.6':'I1', '4.5':'I2', '5.8':'I3', '8.0':'I4'}[f.split('_')[-1]]
+            
+        if pre_str=='WashDDOuvby' and f.split('_')[0]=='Washington':
+            pre_str = 'GCPD'; f_str += '_pe'
+        elif pre_str=='WashDDOuvby' and f.split('_')[0]=='DDO51': pre_str,f_str = 'KPNO','Mosaic.D51'
+        elif pre_str=='WashDDOuvby' and f.split('_')[0]=='Stromgren': pre_str='Generic'
+        
+        if pre_str=='TESS': f_str +='.red'
+        if pre_str=='Kepler' and f_str=='Kepler.Kp': f_str='Kepler.K'
+        if pre_str=='HSC': 
+            pre_str='Subaru'
+            if f_str.split('.')[-1][:2]=='nb': f_str+='_filter'
+        if pre_str=='SDSSugriz': pre_str='Sloan'
+        if pre_str=='PanSTARRS': pre_str,f_str = 'PAN-STARRS', 'PS1.'+f.split('_')[-1]
+        if pre_str=='JWST': f_str = 'NIRCam.'+f.split('_')[-1]
+        if pre_str[:3]=='HST': 
+            pre_str='HST'; f_str = f_str.replace('.','_',1)
+            if f_str[:9]=='WFC3_UVIS': f_str = f_str.replace('.','1.')
+            elif f_str[:5]=='WFPC2': f_str = f_str.replace('_','-WF.')
+        if pre_str=='SPLUS':
+            pre_str = 'CTIO'
+            if ('SDSS' in f_str) or ('JAVA' in f_str): f_str = 'S-PLUS.'+f_str.split('.')[-1][0]
+            else: f_str = 'S-PLUS.F'+f_str.split('.')[-1][2:]
+        
+        if pre_str=='CFHT': 
+            f_str = 'Megaprime.'+f.split('_')[1]
+            if f.split('_')[-1] != 'CaHK': f_str +='S'
+            if f.split('_')[-1]=='new': f_str += '2'
+        
+        
+        try:
+            filt_id = f"{pre_str}/{f_str}"
+            all_tab = SvoFps.get_filter_metadata(filt_id)
+            vals = [(all_tab[col].to(u.micron)).value.round(10) for col 
+                    in ['WavelengthEff', 'WavelengthPivot', 'WavelengthMean']]
+            all_effs['vega_eff'][f] = vals[0]
+            all_effs['pivot'][f] = vals[1]
+            all_effs['average'][f] = vals[2]
+        except:
+            print(filt_id, f)
+    
+    json_object = json.dumps(all_effs, indent=4)
+    with open(f"{EVOLUTION_DIR}/mist_effective_wavelengths.json", "w") as outfile:
+        outfile.write(json_object)
+    return

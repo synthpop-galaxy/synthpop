@@ -134,9 +134,13 @@
         "chosen_bands": ["Bessell_B", "Bessell_V", "Bessell_I", "Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3", "2MASS_J", "2MASS_H", "2MASS_Ks", "Z087", "W146"],
         "#comment4":"Set obsmag to true for observed magnitude, false for absolute magnitudes",
         "obsmag":true,
+        "#comment5":"Set combine_system_mags to true to show sytem magnitudes in the systems table, false for primary star mags",
         "combine_system_mags": true,
+        "#comment6":"Set definition of effective wavelength per filter. Used for scaling extinction",
+        "#comment6.1":"options are vega_eff, pivot, and average, with vega_eff reproducing version1 behavior",
+        "effective_wavelengths": "vega_eff",
 
-        "#comment5": "Optional properties from the isochrones; these can overlap with the default properties.",
+        "#comment7": "Optional properties from the isochrones; these can overlap with the default properties.",
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"]
     },
 

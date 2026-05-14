@@ -22,7 +22,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
     def __init__(self, columns, spisea_evolution_name="MISTv1", block_spisea_prints=True,
                     spisea_evolution_kwargs={"version":1.2, "synthpop_extension":True},
                     spisea_atm_func_name="get_merged_atmosphere", spisea_wd_atm_func_name="get_wd_atmosphere",
-                    min_mass=0, max_mass=1000, **kwargs):
+                    min_mass=0, max_mass=1000, effective_wavelengths='pivot', **kwargs):
         self.name='SpiseaCluster'
         self.block_spisea_prints=block_spisea_prints
         if spisea_evolution_name=='MISTv1':
@@ -49,7 +49,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
 
         self.magsys, self.non_mag_cols, self.bands, self.bands_obs_str = self.get_cols(columns)
         with open(f"{EVOLUTION_DIR}/spisea_effective_wavelengths.json") as f:
-            all_eff_wavelengths = json.load(f)
+            all_eff_wavelengths = json.load(f)[effective_wavelengths]
         self.eff_wavelengths = {self.bands[i]:all_eff_wavelengths[self.bands_obs_str[i]] for i in range(len(self.bands))}
 
 
@@ -119,7 +119,7 @@ def generate_effective_wavelengths_json():
     import pysynphot
     with open(f'{EVOLUTION_DIR}/spisea_filters.json') as f:
         d = json.load(f)
-    def do_filts(sys,flts):
+    def do_filt_effs(sys,flts):
         efflamsi = {}
         for flt in flts:
                 flt_name = sys+','+flt
@@ -128,18 +128,47 @@ def generate_effective_wavelengths_json():
                 assert str(filt.waveunits) == 'angstrom'
                 efflamsi[flt_name] = obs*1e-4
                 #pdb.set_trace()
+                print(flt_name, obs*1e-4)
+        return efflamsi
+    def do_filt_pivs(sys,flts):
+        efflamsi = {}
+        for flt in flts:
+                flt_name = sys+','+flt
+                filt = spisea_synthetic.get_filter_info(flt_name)
+                obs = filt.pivot()
+                assert str(filt.waveunits) == 'angstrom'
+                efflamsi[flt_name] = obs*1e-4
+                #pdb.set_trace()
+                print(flt_name, obs*1e-4)
+        return efflamsi
+    def do_filt_avgs(sys,flts):
+        efflamsi = {}
+        for flt in flts:
+                flt_name = sys+','+flt
+                filt = spisea_synthetic.get_filter_info(flt_name)
+                obs = filt.avgwave()
+                assert str(filt.waveunits) == 'angstrom'
+                efflamsi[flt_name] = obs*1e-4
+                #pdb.set_trace()
+                print(flt_name, obs*1e-4)
         return efflamsi
 
-    efflams = {}
-    for sys in d:
-        flts = d[sys]
-        if isinstance(flts,dict):
-            for subsys in flts:
-                efflams.update(do_filts(sys+','+subsys,flts[subsys]))
-        else:
-            efflams.update(do_filts(sys,flts))
+    all_effs = {}
+    typ = ['vega_eff','pivot','average']
+    funcs = [do_filt_effs, do_filt_pivs, do_filt_avgs]
+    for tp in range(3):
+        efflams = {}
+        do_filts = funcs[tp]
+        for sys in d:
+            flts = d[sys]
+            if isinstance(flts,dict):
+                for subsys in flts:
+                    efflams.update(do_filts(sys+','+subsys,flts[subsys]))
+            else:
+                efflams.update(do_filts(sys,flts))
+        all_effs[typ[tp]] = efflams
 
-    json_object = json.dumps(efflams, indent=4)
+    json_object = json.dumps(all_effs, indent=4)
     with open(f"{EVOLUTION_DIR}/spisea_effective_wavelengths.json", "w") as outfile:
         outfile.write(json_object)
     return

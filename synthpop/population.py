@@ -248,6 +248,7 @@ class Population:
         # this is to combine different isochrone systems or interpolator
         ev_init = []
         for i, ev_kwargs in enumerate(evolution_class_config):
+            ev_kwargs.effective_wavelengths = self.glbl_params.effective_wavelengths
             if ev_kwargs is not None:
                 # get the Isochrone system
 
@@ -1080,6 +1081,7 @@ class Population:
             galactic_coordinates[:, 1],
             galactic_coordinates[:, 2],
             galactic_coordinates[:, 0])
+        #pdb.set_trace()
 
         if self.glbl_params.obsmag:
             for i, band in enumerate(self.bands):
