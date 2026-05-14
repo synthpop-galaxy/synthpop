@@ -78,9 +78,7 @@ def rotation_matrix(
 def add_magnitudes(mags):
     mags = np.array(mags)
     fluxes = np.nan_to_num(10**(-0.4*mags))
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=RuntimeWarning,
-                    message='divide by zero encountered in log')
+    with np.errstate(divide='ignore', invalid='ignore'):
         mag_sum = -2.5*np.log10(np.sum(fluxes, axis=0))
     if np.isinf(mag_sum):
         mag_sum = np.nan
@@ -90,10 +88,8 @@ def subtract_magnitudes(mag_sum, mag):
     #mags = np.array(mag)
     fluxes = np.nan_to_num(10**(-0.4*mag))
     flux_sum = np.nan_to_num(10**(-0.4*mag_sum))
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=RuntimeWarning,
-                    message='divide by zero encountered in log')
-        mag_diff = -2.5*np.log10(flux_sum - np.sum(fluxes, axis=0))
+    with np.errstate(divide='ignore', invalid='ignore'):
+        mag_diff = -2.5*np.log10(flux_sum - fluxes)
     mag_diff[np.isinf(mag_diff)] = np.nan
     return mag_diff
 
