@@ -9,6 +9,7 @@ __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penn
 import numpy as np
 import pandas as pd
 import warnings
+import pdb
 
 def solidangle_to_half_cone_angle(solid_angle):
     return np.arccos(1 - solid_angle / (2. * np.pi))
@@ -91,6 +92,8 @@ def subtract_magnitudes(mag_sum, mag):
     with np.errstate(divide='ignore', invalid='ignore'):
         mag_diff = -2.5*np.log10(flux_sum - fluxes)
     mag_diff[np.isinf(mag_diff)] = np.nan
+    mag_diff[np.isclose(mag_sum.to_numpy(), mag, equal_nan=True)] = np.nan
+
     return mag_diff
 
 def combine_system_mags(df, comp_df, filters):
