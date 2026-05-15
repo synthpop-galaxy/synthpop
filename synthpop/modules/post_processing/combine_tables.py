@@ -47,7 +47,7 @@ class CombineTables(PostProcessing):
         system_df.set_index('ID', inplace=True)
         companion_system_idxs = companion_df['primary_ID'].to_numpy()
         companion_df.loc[:,'q'] = companion_df['Mass'] / system_df['Mass'][companion_system_idxs].to_numpy()
-        copy_props = ['mul','mub','Vr','U','V','W','age','pop','l','b','Dist', 'x','y','z','A_Ks']
+        copy_props = ['mul','mub','vr_bc','U','V','W','age','pop','l','b','Dist', 'x','y','z','A_Ks']
         for prop in copy_props:
             companion_df.loc[:,prop] = system_df[prop][companion_system_idxs].to_numpy()
         combined_logL = np.log10(10**companion_df['log_L'] + 10**system_df['log_L'][companion_system_idxs].to_numpy())
@@ -57,9 +57,11 @@ class CombineTables(PostProcessing):
         system_df.loc[companion_system_idxs, 'combined_logL'] = combined_logL.to_numpy()
         system_df.loc[companion_system_idxs, 'combined_logP'] = companion_df['logP'].to_numpy()
         system_df.loc[companion_system_idxs, 'Is_Binary'] = 1
+        system_df.loc[companion_system_idxs, 'eccentricity'] = companion_df['eccentricity'].to_numpy()
         system_df.reset_index(inplace=True)
         # Combine table
         system_df = pd.concat([system_df, companion_df])
         system_df.sort_values(['primary_ID', 'Is_Binary'], inplace=True)
-            
+        system_df = system_df.fillna(np.nan)
+        
         return system_df, None
