@@ -36,6 +36,7 @@ class CombineTables(PostProcessing):
         # Do some renames
         system_df.rename(columns={'system_Mass':'total_mass', 'system_idx':'ID'}, inplace=True)
         companion_df.rename(columns={'system_Mass': 'total_mass', 'system_idx':'primary_ID'}, inplace=True)
+        system_df.loc[:,'primary_ID'] = system_df['ID']
         companion_df.loc[:,'logP'] = np.log10(companion_df['period'])
         companion_df.loc[:,'ID'] = np.max(system_df['ID']) + 1 + np.arange(len(companion_df))
         # Set up combo columns
