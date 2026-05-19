@@ -80,6 +80,29 @@ class GullsPostProcessing(PostProcessing):
         
             # Combine primary and secondary tables on primary_ID and add columns for system vs secondary
             joined = primaries.join(secondaries, lsuffix='_sys', rsuffix='_sec', how='inner')
+            
+            # Get indices for mapping values back
+            # System
+            idx_system = joined['original_df_pos_sys'].to_numpy()
+            row_pos_system = system_df.index.get_indexer(idx_system)
+            valid_system = (row_pos_system!= -1)
+            
+            # Secondaries
+            idx_secondary = joined['original_df_pos_sec'].to_numpy()
+            row_pos_secondary = system_df.index.get_indexer(idx_secondary)
+            valid_secondary = (row_pos_secondary != -1)
+            
+            # Assign the primaries the secondaries' q and map back
+            joined['q_sys'] = joined['q_sec']
+            q_col_pos = system_df.columns.get_loc('q')
+            if valid_system.any():
+                system_df.iloc[row_pos_system[valid_system], q_col_pos] = joined['q_sys'].to_numpy()
+            
+            # Assign the secondaries the primaries' combined_logP and map back
+            joined['combined_logP_sec'] = joined['combined_logP_sys']
+            logP_col_pos = system_df.columns.get_loc('combined_logP')
+            if valid_secondary.any():
+                system_df.iloc[row_pos_secondary[valid_secondary], logP_col_pos] = joined['combined_logP_sec'].to_numpy()
         
             # Separate out primary's magnitude and replace original magnitude
             for filt in filtlist:
@@ -139,19 +162,19 @@ class GullsPostProcessing(PostProcessing):
         
                 # I don't fully understand why, but according to StackOverflow, I need to do this to
                 # stop it from complaining about equal len keys and values when trying to map back the primaries
-                idx_system = joined['original_df_pos_sys'].to_numpy()
-                row_pos_system = system_df.index.get_indexer(idx_system)
-                valid_system = (row_pos_system != -1)
-                col_pos_system = system_df.columns.get_loc(filt)
+                # idx_system = joined['original_df_pos_sys'].to_numpy()
+                # row_pos_system = system_df.index.get_indexer(idx_system)
+                # valid_system = (row_pos_system != -1)
+                filt_col_pos_system = system_df.columns.get_loc(filt)
                 if valid_system.any():
-                    system_df.iloc[row_pos_system[valid_system], col_pos_system] = mag_primary 
+                    system_df.iloc[row_pos_system[valid_system], filt_col_pos_system] = mag_primary 
                 
-                idx_secondary = joined['original_df_pos_sec'].to_numpy()
-                row_pos_secondary = system_df.index.get_indexer(idx_secondary)
-                valid_secondary = (row_pos_secondary != -1)
-                col_pos_secondary = system_df.columns.get_loc(f"combined_{filt}")
+                # idx_secondary = joined['original_df_pos_sec'].to_numpy()
+                # row_pos_secondary = system_df.index.get_indexer(idx_secondary)
+                # valid_secondary = (row_pos_secondary != -1)
+                comb_col_pos_secondary = system_df.columns.get_loc(f"combined_{filt}")
                 if valid_secondary.any():
-                    system_df.iloc[row_pos_secondary[valid_secondary], col_pos_secondary] = joined[f"combined_{filt}_sec"]
+                    system_df.iloc[row_pos_secondary[valid_secondary], comb_col_pos_secondary] = joined[f"combined_{filt}_sec"]
    
         # reduce data frame to the needed columns
         cols = filtlist + ["mul", "mub", "Vr", "U", "V", "W", "iMass", 
@@ -166,7 +189,7 @@ class GullsPostProcessing(PostProcessing):
         # if running gulls simulations that are only single-sources or single
         # (non-planetary) lenses. So, don't want to just universally include these.
         if 'Is_Binary' in system_df.columns:
-            binary_cols = ['Is_Binary', 'primary_ID', 'ID', 'combined_logL',
+            binary_cols = ['Is_Binary', 'primary_ID', 'ID',
                            'total_mass', 'q', 'combined_logP', 'eccentricity']
             for filt in filtlist:
                 binary_cols.append(f"combined_{filt}")
@@ -199,6 +222,7 @@ class GullsPostProcessing(PostProcessing):
                 system_df.loc[:, f"combined_{filt}"] = system_df.loc[:, f"combined_{filt}"].fillna(99)
             system_df.loc[:, "combined_K213"] = system_df.loc[:, "combined_K213"].fillna(99)
         system_df = system_df.fillna(value=2e-50)
+        system_df = system_df.replace(-np.inf, 2e-50) # takes care of -inf from combining logL when it's a NaN single or both-NaN binary
 
 
         # Impose magnitude lower limits based on Roman expectations
