@@ -17,7 +17,7 @@ class Koshimoto2021Bulge(Kinematics):
 
     def __init__(
             self, v0_stream, y0_stream, C_par_r, C_perp_r, C_par_z, C_perp_z, h0_r, h0_z, sigma_i0,
-            sigma_i1, omega_p, bar_angle=27, **kwargs
+            sigma_i1, omega_p, bar_angle=27, bar_plane_angle=0, **kwargs
             ):
         super().__init__(**kwargs) # initialises self.coord_transform & self.density_class
         self.v0_stream = v0_stream  # km/s
@@ -32,7 +32,7 @@ class Koshimoto2021Bulge(Kinematics):
         self.sigma_i1 = sigma_i1  # km/s
         self.omega_p = omega_p  # km/s/kpc
         self.bar_ang = bar_angle*np.pi/180 #radians
-
+        self.bar_plane_ang = bar_plane_angle*np.pi/180
 
     def vel_disp(self, xp, yp, zp, i):
         if i < 2:
@@ -67,9 +67,12 @@ class Koshimoto2021Bulge(Kinematics):
         R = np.sqrt(x ** 2 + y ** 2)
         # Rotate to be in plane of galactic bar -> xp axis aligned with major axis of bar
         alpha=self.bar_ang
-        xp = x * np.cos(alpha) - y * np.sin(alpha)
-        yp = x * np.sin(alpha) + y * np.cos(alpha)
-        zp = z
+        xp0 = x * np.cos(alpha) - y * np.sin(alpha)
+        yp0 = x * np.sin(alpha) + y * np.cos(alpha)
+        zp0 = z
+        xp = xp0 * np.cos(self.bar_plane_ang) + zp0 * np.sin(self.bar_plane_ang)
+        yp = yp0
+        zp = - xp0 * np.sin(self.bar_plane_ang) + zp0 * np.cos(self.bar_plane_ang)
 
         # Stream velocityy
         v_x_stream = self.v0_stream * (1 - np.exp(-(yp / self.y0_stream)**2)) * (-1) ** (
