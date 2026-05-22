@@ -30,11 +30,13 @@ class TriaxialBulge(PopulationDensity):
     Rmax : float [kpc]
         cutoff radius for bulge
     bar_angle : float [degrees]
-        angle of the bar
+        angle of the bar within the plane
+    bar_plane_angle : float [degrees]
+        angle of the bar out of the plane
     """
 
     def __init__(self, triaxial_type: str, density_unit: str, x0: float, y0: float, z0: float, rho0: float, 
-                 Rmax=np.inf, bar_angle=29.4, **kwargs):
+                 Rmax=np.inf, bar_angle=29.4, bar_plane_angle=0.0, **kwargs):
         super().__init__(**kwargs)
         self.population_density_name = "Bulge_Density"
         self.density_unit = density_unit
@@ -44,6 +46,7 @@ class TriaxialBulge(PopulationDensity):
         self.rho0 = rho0
         self.Rmax = Rmax
         self.bar_ang = bar_angle * np.pi / 180
+        self.bar_plane_ang = bar_plane_angle * np.pi / 180
 
        #Functional form
         if triaxial_type not in ['G1','G2','G3','E1','E2','E3','P1','P2','P3']:
@@ -77,7 +80,9 @@ class TriaxialBulge(PopulationDensity):
             rr = np.sqrt((x/self.x0)**2 + (y/self.y0)**2 + (z/self.z0)**2)
             return self.rho0 * 1/(1+r**2)**2
         # Select proper function
-        rho_func_dict = {'G1':rho_G1, 'G2':rho_G2, 'G3':rho_G3, 'E1':rho_E1, 'E2':rho_E2, 'E3':rho_E3, 'P1':rho_P1, 'P2':rho_P2, 'P3':rho_P3}
+        rho_func_dict = {'G1':rho_G1, 'G2':rho_G2, 'G3':rho_G3, 
+                         'E1':rho_E1, 'E2':rho_E2, 'E3':rho_E3, 
+                         'P1':rho_P1, 'P2':rho_P2, 'P3':rho_P3}
         self.rho_func = rho_func_dict[triaxial_type]
 
 
@@ -88,11 +93,12 @@ class TriaxialBulge(PopulationDensity):
 
         Parameters
         ----------
-        r : ndarray ['kpc']
+        r : ndarray [kpc]
             Distance to z axis
-        phi_rad : ndarray ['rad']
+        phi_rad : ndarray [rad]
             azimuth angle of the stars. phi_rad = 0 is pointing towards sun.
-        z : height above the galactic plane (corrected for warp of the galaxy)
+        z : ndarray [kpc]
+            height above the galactic plane (corrected for warp of the galaxy)
 
         Returns
         -------
@@ -101,10 +107,14 @@ class TriaxialBulge(PopulationDensity):
             mass density or initial mass density should be specified in density_unit.
 
         """
-        # Align coordinates with the bar,
-        xb = -r * np.cos(phi_rad - self.bar_ang)
-        yb = r * np.sin(phi_rad - self.bar_ang)
-        zb = z
+        # Align coordinates with bar within the plane
+        xb0 = -r * np.cos(phi_rad - self.bar_ang)
+        yb0 = r * np.sin(phi_rad - self.bar_ang)
+        zb0 = z
+        # Align to out-of-plane tilt
+        xb = xb0 * np.cos(self.bar_plane_ang) + zb0 * np.sin(self.bar_plane_ang)
+        yb = yb0
+        zb = - xb0 * np.sin(self.bar_plane_ang) + zb0 * np.cos(self.bar_plane_ang)
 
         # Apply cutoff radius (Eqn 5)
         # 1 when r<Rmax, exponential drop-off otherwise
