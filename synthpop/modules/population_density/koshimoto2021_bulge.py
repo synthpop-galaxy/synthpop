@@ -20,19 +20,21 @@ class Koshimoto2021Bulge(PopulationDensity):
     parameterization : str
         parameterization options, with 'E' for Exponential, 'G' for Gaussian, 
         and 'B' for Bessel function.
-    x0 : float
+    x0 : float [kpc]
         scale length along x' axis
-    y0 : float
+    y0 : float [kpc]
         scale length along y' axis
-    z0 : float
+    z0 : float [kpc]
         scale length along z' axis
     C_par : float
         bar shape parameter
     C_perp : float
         bar shape parameter
-    bar_angle_deg : float
-        angle of the bar from the GC line of sight in degrees
-    R_c : float
+    bar_angle : float [deg]
+        angle of the bar from the GC line of sight (within plane) in degrees
+    bar_plane_angle : float [deg]
+        angle of the bar from the GC line of sight out of the plane in degrees
+    R_c : float [kpc]
         cutoff radius
     X_shape : boolean
         if true, apply as an X-shaped structure
@@ -42,7 +44,7 @@ class Koshimoto2021Bulge(PopulationDensity):
         
     def __init__(
             self, parameterization, rho0, x0, y0, z0, C_perp, C_par, R_c, 
-            X_shape=False, b_X=None, bar_angle_deg=27, **kwargs
+            X_shape=False, b_X=None, bar_angle=27, bar_plane_angle=0, **kwargs
             ):
         # these were the defaults we phased out:
         #    parameterization='B', x0=0.849918751795326, y0=0.339420928043361, z0=0.286256780667543, 
@@ -58,7 +60,8 @@ class Koshimoto2021Bulge(PopulationDensity):
         self.C_par = C_par
         self.C_perp = C_perp
         self.density_unit = 'mass'
-        self.bar_angle_rad = bar_angle_deg * np.pi / 180
+        self.bar_ang = bar_angle * np.pi / 180
+        self.bar_plane_ang = bar_plane_angle * np.pi / 180
         param_functions = {'E':self.param_function_e,
                            'G':self.param_function_g,
                            'B':self.param_function_b}
@@ -94,9 +97,12 @@ class Koshimoto2021Bulge(PopulationDensity):
     def density(self, r, phi_rad, z):
 
         # Align coordinates with the bar,
-        xp = -r * np.cos(phi_rad - self.bar_angle_rad)
-        yp = r * np.sin(phi_rad - self.bar_angle_rad)
-        zp = z
+        xp0 = -r * np.cos(phi_rad - self.bar_ang)
+        yp0 = r * np.sin(phi_rad - self.bar_ang)
+        zp0 = z
+        xp = xp0 * np.cos(self.bar_plane_ang) + zp0 * np.sin(self.bar_plane_ang)
+        yp = yp0
+        zp = - xp0 * np.sin(self.bar_plane_ang) + zp0 * np.cos(self.bar_plane_ang)
         
         # Do the math
         if not self.X_shape:
