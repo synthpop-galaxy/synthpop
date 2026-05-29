@@ -160,7 +160,9 @@ class Parameters:
         if (self.maglim is not None) and ("keep" in self.maglim):
             raise ValueError("In SynthPop >=2.0.0, the \"keep\"/\"remove\" maglim options have been " \
                 "removed for clarity. Use maglim=None to keep all stars or e.g. maglim=['Bessell_I', " \
-                "21] to trim a catalog.")
+                "21] to trim a catalog. The old behavior of \"keep\" would keep all stars in the catalog" \
+                " but set photometry of stars dimmer than the magnitude limit to nans. The new behavior of" \
+                " maglim=None keeps all stars without manually setting any mags to nan.")
         if (self.maglim is not None) and ("remove" in self.maglim):
             logger.critical("WARNING: In SynthPop >=2.0.0, the \"keep\"/\"remove\" maglim options have been " \
                 "removed for clarity. Use maglim=None to keep all stars or e.g. maglim=['Bessell_I', " \
