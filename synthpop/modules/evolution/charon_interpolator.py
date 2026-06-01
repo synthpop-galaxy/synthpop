@@ -568,7 +568,7 @@ class CharonInterpolator(EvolutionInterpolator):
 
             result = (w1 * p_f1 + w2 * p_f2 + w3 * p_f3 + w4 * p_f4) / (w1 + w2 + w3 + w4)
 
-            in_grid = np.product([in_grid1, in_grid2, in_grid3, in_grid4])
+            in_grid = np.prod([in_grid1, in_grid2, in_grid3, in_grid4])
         else:
             result = None
 
