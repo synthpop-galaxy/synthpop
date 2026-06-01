@@ -14,11 +14,11 @@ setup(
         'pandas>=1.4.0',
         'requests>=2.28.1',
         'tables>=3.7.0',
-        'tqdm~=4.64.1',
-        'pydantic~=1.10.7'
+        'tqdm>=4.64.1',
+        'pydantic>=1.10.7'
         ],
     extras_require={
-        'optional': ['astropy>=4.3.1', 'dustmaps>=1.0.10', 'astroquery~=0.4', 'matplotlib~=3.6.2']
+        'optional': ['astropy>=4.3.1', 'dustmaps>=1.0.10', 'astroquery>=0.4', 'matplotlib>=3.6.2']
         },
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown'
