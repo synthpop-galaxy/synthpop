@@ -22,6 +22,7 @@ import os, sys
 import pdb
 import pandas as pd
 from astropy.table import vstack
+from multiprocessing import Pool
 
 # Local Imports
 # used to allow running as main and importing to another script
@@ -117,25 +118,8 @@ class SpiseaGenerator(StarGenerator):
             raise ValueError("Invalid IMF for SPISEA Generator; must use Kroupa, PiecewisePowerlaw, or SpiseaImf")
 
         self.mh_list = np.log10(np.array(self.evolution_module.spisea_evolution.z_list) / self.evolution_module.spisea_evolution.z_solar)
-
-    @staticmethod
-    def spisea_props_to_synthpop(spisea_tab):
-        renames = {'mass_current': 'Mass', 'mass':'iMass', 'logg':'log_g',
-                          'N_companions': 'n_companions', 'e':"eccentricity"}
-        sp_dict = {}
-        for col in spisea_tab.columns:
-            if col in renames:
-                sp_dict[renames[col]] = np.array(spisea_tab[col])
-            elif col not in ['Teff', 'L', 'isMultiple', 'systemMass']:
-                sp_dict[col] = np.array(spisea_tab[col])
-        lums = np.array(spisea_tab['L'])
-        teffs = np.array(spisea_tab['Teff'])
-        sp_dict['log_L'] = np.log10(lums/const.Lsun_w)
-        sp_dict['log_Teff'] = np.log10(teffs)
-        sp_dict['log_R'] = np.log10((np.sqrt(lums/(4*np.pi*const.sigma_sb*teffs**4)))/const.Rsun_m)
-        sp_dict['star_mass'] = sp_dict['Mass']
-
-        return sp_dict
+        
+        self.n_proc = evolution_module.n_proc
 
     def generate_star_at_location(self, position, props, 
                 min_mass=None, max_mass=None, radii=None, avg_mass_per_star=None, skip_lowmass_stars=None):
@@ -198,80 +182,179 @@ class SpiseaGenerator(StarGenerator):
         companions_data['Mass'] = []
         companions_data['eccentricity'] = []
         companions_data['log_a'] = []
-
-        max_system_idx = -1
-        for i_bin, bin2d in enumerate(bins2d):
-            # Figure out where stars in this bin fit in the data set (so their positions and age/met can be correlated)
-            star_idxs_in_bin = np.where(comb_bin_idxs==i_bin)[0]
-            star_systems_list_bin = []
-            companions_list_bin = []
-            n_bin = int(bin2d[-1])
-            self.logger.debug("Starting SPISEA cluster generation for bin log_age="+str(round(bin2d[0],2))+
-                                " [M/H]="+str(bin2d[1])+" for "+str(n_bin)+" stars")
-            cluster_stars_needed = n_bin
-            # Use a minimum mass per cluster of 100.0 so we don't get an error
-            generate_mass = np.minimum(np.maximum(cluster_stars_needed*avg_mass_per_star*1.1, 100.0), 
-                                    self.chunk_size*avg_mass_per_star)
-            # Loop until we have enough stars
-            while cluster_stars_needed > 0:
-                with BlockSpiseaPrints(block_prints=self.evolution_module.block_spisea_prints):
-                    isochrone = spisea_synthetic.IsochronePhot(logAge=bin2d[0], AKs=0,
-                                            distance=10, metallicity=bin2d[1],
-                                            evo_model=self.evolution_module.spisea_evolution, atm_func=self.evolution_module.spisea_atm_func,
-                                            wd_atm_func=self.evolution_module.spisea_wd_atm_func, iso_dir=self.spisea_dir,
-                                            min_mass=np.min(min_mass), max_mass=max_mass,
-                                            filters=self.evolution_module.bands_obs_str)
-                    cluster=spisea_synthetic.ResolvedCluster(isochrone, self.imf_module.spisea_imf, generate_mass, 
-                                                        ifmr=self.ifmr_module.spisea_ifmr, keep_low_mass_stars=True)
-                star_systems_i = cluster.star_systems
-                if "companions" in cluster.__dir__():
-                    companions_i = cluster.companions
-                    companions_i['system_idx'] += (max_system_idx + 1)
-                    companions_list_bin.append(companions_i)
-                else:
-                    star_systems_i['n_companions'] = 0
-                star_systems_i['system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
-                max_system_idx = star_systems_i['system_idx'].max()
-                keep_idx = ((star_systems_i['mass']>np.min(min_mass)) & (star_systems_i['mass']<max_mass))
-                star_systems_i = star_systems_i[keep_idx]
-                star_systems_list_bin.append(star_systems_i)
-                cluster_stars_needed -= len(star_systems_i)
-
-            star_systems_bin = vstack(star_systems_list_bin)
-            if len(companions_list_bin)>0:
-                companions_bin = vstack(companions_list_bin)
-            else:
-                companions_bin = None
-            # Drop any excess stars
-            if cluster_stars_needed<0:
-                star_systems_bin = star_systems_bin[:cluster_stars_needed]
-            # Get the data into the expected form and dropped in place in the star list
-            star_systems_bin = self.spisea_props_to_synthpop(star_systems_bin)
-            for param in list(props)+['iMass','Mass','system_idx', 'n_companions']:
-                star_systems_data[param][star_idxs_in_bin] = star_systems_bin[param]
-            star_systems_data['age'][star_idxs_in_bin] = 10**bin2d[0] / 1e9
-            star_systems_data['Fe/H_initial'][star_idxs_in_bin] = self.evolution_module.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))]
-            # Drop any companions whose systems got dropped
-            if self.imf_module.spisea_imf.make_multiples and len(companions_bin)>0:
-                companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_data['system_idx'])]
-                companions_bin = self.spisea_props_to_synthpop(companions_bin)
-            if self.imf_module.spisea_imf.make_multiples and len(companions_bin)>0:
-                for param in list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']:
-                    companions_data[param] += list(companions_bin[param])
-
-        star_systems = pd.DataFrame(star_systems_data)
-        star_systems.drop(columns='star_mass', inplace=True)
-        companions = pd.DataFrame(companions_data) if (self.imf_module.spisea_imf.make_multiples) else None
+        
+        # Serial case
+        if self.n_proc==1:
+            res = []
+            for i_bin, bin2d in enumerate(bins2d):
+                system_idxs = np.where(comb_bin_idxs==i_bin)[0]
+                res.append(generate_spisea_cluster_stars(system_idxs, bin2d[0], bin2d[1],
+                                       self.evolution_module.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))],
+                                       avg_mass_per_star,
+                                       self.evolution_module.block_spisea_prints,
+                                       self.evolution_module.spisea_evolution,
+                                       self.evolution_module.spisea_atm_func,
+                                       self.evolution_module.spisea_wd_atm_func,
+                                       np.min(min_mass), max_mass,
+                                       self.evolution_module.bands_obs_str,
+                                       self.imf_module.spisea_imf,
+                                       self.ifmr_module.spisea_ifmr,
+                                       self.spisea_dir, props))
+                                   
+        
+        # Parallel case:
+        else:
+            # Split up some bins for efficiency if relevant...
+            if np.any(bins2d[:,2]>self.chunk_size):
+                bins2d_new = []
+                comb_bin_idxs_new = []
+                for i_bin, bin2d in enumerate(bins2d):
+                    if bin2d[2]<=self.chunk_size:
+                        bins2d_new.append(bin2d)
+                        comb_bin_idxs_new.append(comb_bin_idxs[i_bin])
+                    else:
+                        rem_comb_bin_idxs = comb_bin_idxs[i_bin].copy()
+                        while len(rem_comb_bin_idxs)>self.chunk_size*1.1:
+                            bins2d_new.append([bin2d[0],bin2s[1], self.chunk_size])
+                            comb_bin_idxs_new.append(rem_comb_bin_idxs[:self.chunk_size])
+                            rem_comb_bin_idxs = rem_comb_bin_idxs[self.chunk_size:]
+                        bins2d_new.append([bin2d[0],bin2s[1],len(rem_comb_bin_idxs)])
+                        comb_bin_idxs_new.append(rem_comb_bin_idxs)
+                bins2d = bins2d_new
+                comb_bin_idxs = comb_bin_idxs_new
+                
+            # Iterate through the bins and set up inputs for generate_spisea_cluster_stars
+            cluster_inputs = []
+            for i_bin, bin2d in enumerate(bins2d):
+                system_idxs = np.where(comb_bin_idxs==i_bin)[0]
+                cluster_inputs.append((system_idxs, bin2d[0], bin2d[1],
+                                       self.evolution_module.feh_list[np.argmin(np.abs(self.mh_list-bin2d[1]))],
+                                       avg_mass_per_star,
+                                       self.evolution_module.block_spisea_prints,
+                                       self.evolution_module.spisea_evolution,
+                                       self.evolution_module.spisea_atm_func,
+                                       self.evolution_module.spisea_wd_atm_func,
+                                       np.min(min_mass), max_mass,
+                                       self.evolution_module.bands_obs_str,
+                                       self.imf_module.spisea_imf,
+                                       self.ifmr_module.spisea_ifmr,
+                                       self.spisea_dir, props))
+                                       
+            # Do the parallel generation
+            with Pool(self.n_proc) as p:
+                res = p.starmap_async(generate_spisea_cluster_stars, cluster_inputs).get()
+                                   
+        # Bring together all the clusters
+        star_systems = pd.concat([res_i[0] for res_i in res])
+        star_systems.sort_index(inplace=True)
+        companions = pd.concat([res_i[1] for res_i in res]) if (self.imf_module.spisea_imf.make_multiples) else None
+        if companions is not None:
+            companions.sort_index(inplace=True)
 
         star_systems.loc[:,'system_Mass'] = star_systems['Mass']
         if self.imf_module.spisea_imf.make_multiples:
-            #companions = self.spisea_props_to_synthpop(companions)
-            companions.drop(columns='star_mass', inplace=True)
             if len(companions)>0:
                 comp_mass_sums = companions.groupby("system_idx")['Mass'].sum()
                 primary_idxs = star_systems.index[star_systems['n_companions']>0]
                 star_systems.loc[primary_idxs,'system_Mass'] += comp_mass_sums[
-                                        star_systems['system_idx'][primary_idxs]]
+                                        primary_idxs]
+            companions.reset_index(inplace=True)
+
+        star_systems.reset_index(inplace=True)
 
         return star_systems, companions
 
+def spisea_props_to_synthpop(tab):
+    renames = {'mass_current': 'Mass', 'mass':'iMass', 'logg':'log_g',
+                      'N_companions': 'n_companions', 'e':"eccentricity"}
+    for col in list(tab.columns):
+        if col in renames:
+            tab.rename_column(col, renames[col])
+    lums = np.array(tab['L'])
+    teffs = np.array(tab['Teff'])
+    tab['log_L'] = np.log10(lums/const.Lsun_w)
+    tab['log_Teff'] = np.log10(teffs)
+    tab['log_R'] = np.log10((np.sqrt(lums/(4*np.pi*const.sigma_sb*teffs**4)))/const.Rsun_m)
+    nan_mass = np.isnan(tab['Mass'])
+    tab['Mass'][nan_mass] = tab['iMass'][nan_mass]
+    tab['star_mass'] = tab['Mass']
+
+    return tab
+
+def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
+                                  avg_mass_per_star,
+                                  block_spisea_prints,
+                                  evo_model, atm_func, wd_atm_func,
+                                  min_mass, max_mass, bands_obs_str,
+                                  imf, ifmr, iso_dir, props):
+    """
+    Separated function to run SPISEA clusters for parallelization
+    """
+    max_system_idx = -1
+    star_systems_list_bin = []
+    companions_list_bin = []
+    n_bin = len(system_idxs)
+    print(f"Starting SPISEA cluster generation for bin log_age={log_age:.2f}"
+                        f" [M/H]={mh} for {n_bin} stars")
+    cluster_stars_needed = n_bin
+    # Use a minimum mass per cluster of 100.0 so we don't get an error
+    generate_mass = np.maximum(cluster_stars_needed*avg_mass_per_star*1.1, 100.0)
+    # Loop until we have enough stars
+    while cluster_stars_needed > 0:
+        with BlockSpiseaPrints(block_prints=block_spisea_prints):
+            isochrone = spisea_synthetic.IsochronePhot(logAge=log_age, AKs=0,
+                                    distance=10, metallicity=mh,
+                                    evo_model=evo_model, atm_func=atm_func,
+                                    wd_atm_func=wd_atm_func, iso_dir=iso_dir,
+                                    min_mass=min_mass, max_mass=max_mass,
+                                    filters=bands_obs_str)
+            cluster=spisea_synthetic.ResolvedCluster(isochrone, imf, generate_mass,
+                                                ifmr=ifmr, keep_low_mass_stars=True)
+        star_systems_i = cluster.star_systems
+        if "companions" in cluster.__dir__():
+            companions_i = cluster.companions
+            companions_i['system_idx'] += (max_system_idx + 1)
+            companions_list_bin.append(companions_i)
+        else:
+            star_systems_i['n_companions'] = 0
+        star_systems_i['system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
+        max_system_idx = star_systems_i['system_idx'].max()
+        keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
+        star_systems_i = star_systems_i[keep_idx]
+        star_systems_list_bin.append(star_systems_i)
+        cluster_stars_needed -= len(star_systems_i)
+
+    star_systems_bin = vstack(star_systems_list_bin)
+    if len(companions_list_bin)>0:
+        companions_bin = vstack(companions_list_bin)
+    else:
+        companions_bin = None
+    # Drop any excess stars
+    if cluster_stars_needed<0:
+        star_systems_bin = star_systems_bin[:cluster_stars_needed]
+    # Get the data into the expected form
+    star_systems_bin = spisea_props_to_synthpop(star_systems_bin)
+    
+    # TODO: this data organization needs to change
+    # Need to get pd df for exactly how this portion goes into eventual combo catalog
+    # This means handling system_idx here as well as column names/etc
+    star_systems_bin = star_systems_bin[list(props)+['iMass','Mass','system_idx', 'n_companions']]
+    star_systems_bin['age'] = 10**log_age / 1e9
+    star_systems_bin['Fe/H_initial'] = feh
+    # Get companion stars in expected form
+    if (companions_bin is not None) and len(companions_bin)>0:
+        # Drop any companions whose systems got dropped
+        companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_bin['system_idx'])]
+        companions_bin = spisea_props_to_synthpop(companions_bin)
+        companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
+        
+    # Deal with indexing
+    orig_idxs = np.array(star_systems_bin['system_idx'])
+    idxs_map = pd.Series(data=system_idxs, index=orig_idxs, dtype=int)
+    star_systems_bin['system_idx'] = system_idxs
+    if (companions_bin is not None):
+        companions_bin['system_idx'] = idxs_map[companions_bin['system_idx']]
+        companions_bin = companions_bin.to_pandas(index='system_idx')
+    #pdb.set_trace()
+
+    return star_systems_bin.to_pandas(index='system_idx'), companions_bin

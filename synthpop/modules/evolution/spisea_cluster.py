@@ -16,14 +16,18 @@ import pdb
 
 class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
     """
-    Placeholder object to store modules for use by the SpiseaGenerator, which 
+    Placeholder object to store modules and values for use by the SpiseaGenerator, which
     will generate and evolve stars as binned SPISEA clusters.
     """
-    def __init__(self, columns, spisea_evolution_name="MISTv1", block_spisea_prints=True,
+    def __init__(self, columns, n_proc=1,
+                    spisea_evolution_name="MISTv1", block_spisea_prints=True,
                     spisea_evolution_kwargs={"version":1.2, "synthpop_extension":True},
                     spisea_atm_func_name="get_merged_atmosphere", spisea_wd_atm_func_name="get_wd_atmosphere",
                     min_mass=0, max_mass=1000, effective_wavelengths='pivot', **kwargs):
         self.name='SpiseaCluster'
+        if not n_proc>=1:
+            raise ValueError("n_proc for SpiseaCluster must be at least 1")
+        self.n_proc = n_proc
         self.block_spisea_prints=block_spisea_prints
         if spisea_evolution_name=='MISTv1':
             self.feh_list = np.array([-4.0,-3.5,-3.0,-2.5,-2.0,-1.75,-1.5,-1.25,
