@@ -14,8 +14,7 @@ import h5py
 import os
 from popsycle.synthetic import _get_bin_edges, _bin_lb_hdf5
 
-filter_set_dict = {'ubv': ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K'],
-                   'roman': ['f062', 'f087', 'f106', 'f129', 'f158', 'f146', 'f184', 'f213']}
+filter_set_dict = {'ubv': ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K']}
 
 filter_matching_mist = {'ubv_J': "UKIDSS_J",
                         'ubv_H': "UKIDSS_H",
@@ -24,15 +23,7 @@ filter_matching_mist = {'ubv_J': "UKIDSS_J",
                         'ubv_I': "Bessell_I",
                         'ubv_B': "Bessell_B",
                         'ubv_V': "Bessell_V",
-                        'ubv_R': "Bessell_R",
-                        'roman_f062': "R062",
-                        'roman_f087': "Z087",
-                        'roman_f106': "Y106",
-                        'roman_f129': "J129",
-                        'roman_f158': "H158",
-                        'roman_f146': "W146",
-                        'roman_f184': "F184",
-                        'roman_f213': "K213"
+                        'ubv_R': "Bessell_R"
                        }
 
 synthpop_nonmag_cols = ['l', 'b', 'Dist',
@@ -62,7 +53,6 @@ class PopsyclePostProcessing(PostProcessing):
         #self.filter_sets = filter_sets
         self.mag_cols = []
         self.synthpop_mag_cols = []
-        self.ext_cols = []
         for fset in filter_sets:
             self.mag_cols += [fset+'_'+f for f in filter_set_dict[fset]]
             self.synthpop_mag_cols += [filter_matching_mist[fset+'_'+f] for f in filter_set_dict[fset]]
@@ -75,16 +65,9 @@ class PopsyclePostProcessing(PostProcessing):
         self.logger.info(f"Beginning PopSyCLE postprocessing.")
 
         # Drop unused data
-        # Keep Roman extinction columns from EstimateRomanExtinction, e.g.
-        # A_R062, A_Z087, ..., A_W146. These are renamed below to match
-        # PopSyCLE's photometric-system naming convention.
-        synthpop_ext_cols = [f"A_{col}" for col in self.synthpop_mag_cols]
-        extra_keep_cols = synthpop_ext_cols + ['A_Ks']
-
         cols_to_cut = []
         for col in dataframe.keys():
             if col not in (synthpop_nonmag_cols+self.synthpop_mag_cols+synthpop_nonmag_bin_cols+
-                            extra_keep_cols+
                             [self.model.populations[0].extinction.A_or_E_type]):
                 cols_to_cut.append(col)
         dataframe.drop(columns=cols_to_cut, inplace=True)
@@ -150,19 +133,6 @@ class PopsyclePostProcessing(PostProcessing):
         dataframe.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
                          inplace=True)
         self.logger.info("Renamed mag cols")
-
-        # Rename Roman extinction columns into the same PopSyCLE naming system.
-        # Example: A_R062 -> A_roman_f062.
-        ext_rename_dict = {}
-        for f in self.mag_cols:
-            synthpop_ext_col = f"A_{filter_matching_mist[f]}"
-            popsycle_ext_col = f"A_{f}"
-            if synthpop_ext_col in dataframe:
-                ext_rename_dict[synthpop_ext_col] = popsycle_ext_col
-
-        dataframe.rename(columns=ext_rename_dict, inplace=True)
-        self.ext_cols = [f"A_{f}" for f in self.mag_cols if f"A_{f}" in dataframe]
-        self.logger.info("Renamed Roman extinction cols")
         
         dataframe.loc[:, 'isMultiple'] = np.zeros(dataframe.shape[0], dtype=int)
         dataframe.loc[:, 'N_companions'] = np.zeros(dataframe.shape[0], dtype=int)
@@ -178,11 +148,7 @@ class PopsyclePostProcessing(PostProcessing):
             h5file['lat_bin_edges'] = lat_bin_edges
             h5file['long_bin_edges'] = long_bin_edges
         
-        save_mag_cols = [col for col in self.mag_cols if col in dataframe]
-        save_ext_cols = [col for col in self.ext_cols if col in dataframe]
-        save_cols = popsycle_nonmag_cols + save_mag_cols + save_ext_cols
-
-        _bin_lb_hdf5(lat_bin_edges, long_bin_edges, dataframe[save_cols], self.output_root)
+        _bin_lb_hdf5(lat_bin_edges, long_bin_edges, dataframe[popsycle_nonmag_cols+self.mag_cols], self.output_root)
         self.logger.info(f"PopSyCLE formatted output saved in {self.output_root}.h5")
     
         return dataframe
