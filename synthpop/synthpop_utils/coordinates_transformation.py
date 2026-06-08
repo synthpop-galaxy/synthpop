@@ -363,6 +363,72 @@ class CoordTrans:
 
         return vr_kmps, mu_l_maspyr, mu_b_maspyr
 
+    def vrmulb_to_uvw(self,
+            l_deg: np.ndarray, b_deg: np.ndarray, dist_kpc: np.ndarray,
+            vr_kmps: np.ndarray, mu_l_maspyr: np.ndarray, mu_b_maspyr: np.ndarray
+            ) \
+            -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+
+        Conversion from u,v,w to v_r, mu_l, and mu_b
+        Using (vr, vl, vb) = R * (u,v,w)  from Bovy 2011
+
+        Parameters
+        ----------
+        l_deg : float, ndarray [degrees]
+            galactic longitude
+        b_deg :  float, ndarray [degrees]
+            galactic latitude
+        dist_kpc : float, ndarray [kpc]
+            distance
+        vr_kmps : float, ndarray[km/s]
+            radial velocity
+        mu_l_maspyr : float, ndarray [mas/yr]
+            proper motion in galactic longitude  cos(b) is applied
+        mu_b_maspyr : float, ndarray [mas/yr]
+            proper motion in galactic latitude
+
+        Returns
+        -------
+        u_kmps : float, ndarray [km/s]
+            rectangular velocity with_out correction for the motion of the sun
+        v_kmps : float, ndarray [km/s]
+            rectangular velocity with_out correction for the motion of the sun
+        w_kmps : float, ndarray [km/s]
+             rectangular velocity with_out correction for the motion of the sun
+        """
+        # convert to radian
+        l_rad = l_deg * np.pi / 180.
+        b_rad = b_deg * np.pi / 180.
+
+        # NEW
+
+        # convert proper motion units
+        mu_l_kmps = mu_l_maspyr * dist_kpc * const.MUxD_to_VT
+        mu_b_kmps = mu_b_maspyr * dist_kpc * const.MUxD_to_VT
+
+        vr_vt = [vr_kmps, mu_l_kmps, mu_b_kmps]
+
+        # correction for tilt between galactic plane and direction to galactic center
+        H = [[self.sun.cos_theta, 0, self.sun.sin_theta],
+             [0, 1, 0],
+             [-self.sun.sin_theta, 0, self.sun.cos_theta]]
+        uvw_sol = np.dot(H, vr_vt)
+
+        # get transformation matrix
+        A = getA(l_rad, b_rad)
+        #iA = np.swapaxes(A, 0, 1)  # I.E A^T for all stars separately
+
+        if len(A.shape) == 3:
+            uvw_sol = np.sum(A * uvw_sol, axis=1)
+        else:
+            uvw_sol = np.dot(A, uvw_sol)
+
+        # account for solar motion
+        uvw = [uvw_sol[0] + self.sun.u, uvw_sol[1] + self.sun.v, uvw_sol[2] + self.sun.w]
+
+        return uvw[0], uvw[1], uvw[2]
+
     def uvw_to_vrmuad(
             self, l_deg: np.ndarray, b_deg: np.ndarray, dist_kpc: np.ndarray,
             u_kmps: np.ndarray, v_kmps: np.ndarray, w_kmps: np.ndarray
@@ -675,3 +741,41 @@ def uvw_to_vrmuad(
             proper motion in galactic latitude
         """
     return _coord_trans.uvw_to_vrmuad(l_deg, b_deg, dist_kpc, u_kmps, v_kmps, w_kmps)
+
+
+def vrmulb_to_uvw(self,
+        l_deg: np.ndarray, b_deg: np.ndarray, dist_kpc: np.ndarray,
+        vr_kmps: np.ndarray, mu_l_maspyr: np.ndarray, mu_b_maspyr: np.ndarray
+        ) \
+        -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+
+    Conversion from u,v,w to v_r, mu_l, and mu_b
+    Using (vr, vl, vb) = R * (u,v,w)  from Bovy 2011
+
+    Parameters
+    ----------
+    l_deg : float, ndarray [degrees]
+        galactic longitude
+    b_deg :  float, ndarray [degrees]
+        galactic latitude
+    dist_kpc : float, ndarray [kpc]
+        distance
+    vr_kmps : float, ndarray[km/s]
+        radial velocity
+    mu_l_maspyr : float, ndarray [mas/yr]
+        proper motion in galactic longitude  cos(b) is applied
+    mu_b_maspyr : float, ndarray [mas/yr]
+        proper motion in galactic latitude
+
+    Returns
+    -------
+    u_kmps : float, ndarray [km/s]
+        rectangular velocity with_out correction for the motion of the sun
+    v_kmps : float, ndarray [km/s]
+        rectangular velocity with_out correction for the motion of the sun
+    w_kmps : float, ndarray [km/s]
+         rectangular velocity with_out correction for the motion of the sun
+    """
+    return _coord_trans.vrmulb_to_uvw(l_deg, b_deg, dist_kpc, u_kmps, v_kmps, w_kmps)
+
