@@ -49,7 +49,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
         self.max_mass = max_mass
 
         self.allowed_non_mag_cols = ["[Fe/H]_init", "log10_isochrone_age_yr", 'phase',
-            'star_mass', 'initial_mass', 'log_L', 'log_R', 'log_Teff', 'log_g']
+            'star_mass', 'initial_mass', 'log_L', 'log_R', 'log_Teff', 'log_g', 'isWR']
 
         self.magsys, self.non_mag_cols, self.bands, self.bands_obs_str = self.get_cols(columns)
         with open(f"{EVOLUTION_DIR}/spisea_effective_wavelengths.json") as f:

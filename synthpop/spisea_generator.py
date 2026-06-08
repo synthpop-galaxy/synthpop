@@ -165,23 +165,6 @@ class SpiseaGenerator(StarGenerator):
             bin_ages = self.evolution_module.log_age_list[comb_bins[:,0]]
             bin_mhs = self.mh_list[comb_bins[:,1]]
             bins2d = np.transpose([bin_ages, bin_mhs, comb_bin_cts])
-
-        # Set up data arrays
-        star_systems_list = []
-        companions_list = []
-        star_systems_data = {param: np.zeros(n_stars) for param in props}
-        star_systems_data['iMass'] = np.zeros(n_stars)
-        star_systems_data['Mass'] = np.zeros(n_stars)
-        star_systems_data['age'] = np.zeros(n_stars)
-        star_systems_data['Fe/H_initial'] = np.zeros(n_stars)
-        star_systems_data['system_idx'] = np.zeros(n_stars, dtype=int)
-        star_systems_data['n_companions'] = np.zeros(n_stars)
-        companions_data = {param: [] for param in props}
-        companions_data['system_idx'] = []
-        companions_data['iMass'] = []
-        companions_data['Mass'] = []
-        companions_data['eccentricity'] = []
-        companions_data['log_a'] = []
         
         # Serial case
         if self.n_proc==1:
@@ -209,17 +192,18 @@ class SpiseaGenerator(StarGenerator):
                 bins2d_new = []
                 comb_bin_idxs_new = []
                 for i_bin, bin2d in enumerate(bins2d):
-                    if bin2d[2]<=self.chunk_size:
-                        bins2d_new.append(bin2d)
-                        comb_bin_idxs_new.append(comb_bin_idxs[i_bin])
-                    else:
-                        rem_comb_bin_idxs = comb_bin_idxs[i_bin].copy()
-                        while len(rem_comb_bin_idxs)>self.chunk_size*1.1:
-                            bins2d_new.append([bin2d[0],bin2s[1], self.chunk_size])
-                            comb_bin_idxs_new.append(rem_comb_bin_idxs[:self.chunk_size])
-                            rem_comb_bin_idxs = rem_comb_bin_idxs[self.chunk_size:]
-                        bins2d_new.append([bin2d[0],bin2s[1],len(rem_comb_bin_idxs)])
-                        comb_bin_idxs_new.append(rem_comb_bin_idxs)
+                    comb_bin_idxs_split = np.split(comb_bin_idxs[i_bin],
+                                            int(np.ciel(self.chunk_size/bin2d[2])))
+                    bins2d_new += [[bin2d[0],bin2d[1],len(idxs)] for idxs in comb_bin_idxs_split]
+                    comb_bin_idxs_new += comb_bin_idxs_split
+#                    else:
+#                        rem_comb_bin_idxs = comb_bin_idxs[i_bin].copy()
+#                        while len(rem_comb_bin_idxs)>self.chunk_size*1.1:
+#                            bins2d_new.append([bin2d[0],bin2s[1], self.chunk_size])
+#                            comb_bin_idxs_new.append(rem_comb_bin_idxs[:self.chunk_size])
+#                            rem_comb_bin_idxs = rem_comb_bin_idxs[self.chunk_size:]
+#                        bins2d_new.append([bin2d[0],bin2s[1],len(rem_comb_bin_idxs)])
+#                        comb_bin_idxs_new.append(rem_comb_bin_idxs)
                 bins2d = bins2d_new
                 comb_bin_idxs = comb_bin_idxs_new
                 
@@ -335,9 +319,7 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
     # Get the data into the expected form
     star_systems_bin = spisea_props_to_synthpop(star_systems_bin)
     
-    # TODO: this data organization needs to change
-    # Need to get pd df for exactly how this portion goes into eventual combo catalog
-    # This means handling system_idx here as well as column names/etc
+    # Little column adjustments
     star_systems_bin = star_systems_bin[list(props)+['iMass','Mass','system_idx', 'n_companions']]
     star_systems_bin['age'] = 10**log_age / 1e9
     star_systems_bin['Fe/H_initial'] = feh
