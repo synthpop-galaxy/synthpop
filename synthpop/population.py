@@ -248,8 +248,8 @@ class Population:
         # this is to combine different isochrone systems or interpolator
         ev_init = []
         for i, ev_kwargs in enumerate(evolution_class_config):
-            ev_kwargs.effective_wavelengths = self.glbl_params.effective_wavelengths
             if ev_kwargs is not None:
+                ev_kwargs.effective_wavelengths = self.glbl_params.effective_wavelengths
                 # get the Isochrone system
 
                 Isochrone_System = sp_utils.get_subclass(
