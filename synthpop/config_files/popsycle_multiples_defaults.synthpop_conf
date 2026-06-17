@@ -65,11 +65,12 @@
         "evolution_class": {"name":"SpiseaCluster", "block_spisea_prints":true},
         "ifmr_kwargs": {"name":"SpiseaIfmr", "spisea_ifmr_name":"IFMR_N20_Sukhbold"},
         "multiplicity_kwargs": {"name":"SpiseaMultiplicity", 
-                "spisea_multiplicity_name":"MultiplicityResolvedDK"}
+                "spisea_multiplicity_name":"MultiplicityResolvedDK"},
+        "imf": {"min_mass":0.11}
     },
 
     "PHOTOMETRIC_OUTPUTS":{
-        "maglim":["m_ubv_I", 99, "keep"],
+        "maglim":["m_ubv_I", 99],
         "chosen_bands": ["ubv", "ukirt"],
         "obsmag":false,
         "combine_system_mags":true,

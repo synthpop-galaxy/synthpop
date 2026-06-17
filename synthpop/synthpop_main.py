@@ -538,10 +538,10 @@ class SynthPop:
         if isinstance(self.post_processing, list):
             # have multiple post-processing
             for post_processing in self.post_processing:
-                field_df, field_companions_df = post_processing(field_df, field_companions_df, **kwargs)
+                field_df, field_companions_df = post_processing(field_df, field_companions_df)
         else:
             # have single postprocessing
-            field_df, field_companions_df = self.post_processing(field_df, field_companions_df, **kwargs)
+            field_df, field_companions_df = self.post_processing(field_df, field_companions_df)
 
         if self.save_data:
             logger.create_info_subsection('Save result')
