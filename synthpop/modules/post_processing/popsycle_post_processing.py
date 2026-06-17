@@ -4,7 +4,7 @@ ready to be plugged in at the calc_events stage.
 Note: obsmag must be set to FALSE in config file to use this module
 """
 
-__author__ = "M.J. Huston, A. Kim, C. Lee, S. Brooke"
+__author__ = "M.J. Huston, S. Brooke, A. Kim"
 
 from ._post_processing import PostProcessing
 import time
@@ -13,6 +13,7 @@ import numpy as np
 import h5py
 import os
 from popsycle.synthetic import _get_bin_edges, _bin_lb_hdf5
+import pdb
 
 filter_set_dict = {'ubv': ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K']}
 
@@ -69,13 +70,14 @@ popsycle_nonmag_cols = ['glat', 'glon', 'rad',
                         'vr', 'mu_lcosb', 'mu_b', 
                         'vx', 'vy', 'vz', 
                         'zams_mass', 'mass', 'systemMass', 
-                        'mbol', 'grav', 'teff', 'feh', 'age',
+                        'mbol', 'grav', 'Teff', 'L', 'feh', 'age',
                         'exbv', 'popid',
                         'isMultiple', 'N_companions', 'rem_id', 'obj_id'] 
 
 class PopsyclePostProcessing(PostProcessing):
 
-    def __init__(self, model, logger, bin_edges_number=None, filter_sets=['ubv'], **kwargs):
+    def __init__(self, model, logger, bin_edges_number=None,
+                 filter_sets=['ubv'], **kwargs):
         super().__init__(model, logger, **kwargs)
         self.bin_edges_number = bin_edges_number
         #self.filter_sets = filter_sets
@@ -101,6 +103,24 @@ class PopsyclePostProcessing(PostProcessing):
         """
         self.logger.info(f"Beginning PopSyCLE postprocessing.")
 
+        system_df.rename(columns={'iMass': 'zams_mass','Mass': 'mass',
+                                 'x': 'px', 'y': 'py', 'z': 'pz',
+                                 'U': 'vx', 'V': 'vy', 'W': 'vz',
+                                 'vr_bc': 'vr', 'mul': 'mu_lcosb', 'mub': 'mu_b',
+                                 'pop': 'popid',
+                                 'b': 'glat', 'l': 'glon', 'Dist': 'rad',
+                                 'log_g': 'grav', 'log_Teff': 'Teff',
+                                 'log_L': 'L', '[Fe/H]': 'feh',
+                                 'n_companions':'N_companions', 'system_idx':'obj_id',
+                                 'system_Mass':'systemMass'},inplace=True)
+        companion_df.rename(columns={'iMass':'zams_mass', 'log_Teff': 'Teff', 'log_L':'L',
+                            'log_g':'logg', 'Mass':'mass', '[Fe/H]':'metallicity',
+                            'eccentricity':'e'}, inplace=True, errors='ignore')
+                            
+        self.logger.info("Basic columns renamed")
+        pd.eval('age = log10(system_df.age*1e9)', target=system_df, inplace=True)
+        self.logger.info("Age units converted")
+
         if self.multiplicity == None:
             companion_df = pd.DataFrame(columns=popsycle_nonmag_bin_cols+popsycle_nonmag_cols)
             print("that happened")
@@ -116,8 +136,9 @@ class PopsyclePostProcessing(PostProcessing):
         # Drop unused data
         cols_to_cut = []
         for col in system_df.keys():
-            if col not in (synthpop_nonmag_cols+self.synthpop_mag_cols+list(roman_filters_dict)+
-                           self.mag_cols+synthpop_nonmag_bin_cols+
+            if col not in (popsycle_nonmag_cols+list(roman_filters_dict.values())+
+                           list(filter_spisea_dict.values())+
+                           self.mag_cols+popsycle_nonmag_bin_cols+
                            [self.model.populations[0].extinction.A_or_E_type]):
                 cols_to_cut.append(col)
 
@@ -125,11 +146,11 @@ class PopsyclePostProcessing(PostProcessing):
         self.logger.info("Unused columns dropped")
         self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg)}_psc"
 
-        system_df['isMultiple'] = system_df['n_companions']
+        system_df['isMultiple'] = system_df['N_companions']
         system_df.loc[system_df['isMultiple'] != 0, 'isMultiple'] = 1
 
         if system_df['isMultiple'].any():
-            map = system_df.set_index('system_idx')['iMass'].squeeze()
+            map = system_df.set_index('obj_id')['zams_mass'].squeeze()
             companion_df['zams_mass_prim'] = companion_df['system_idx'].map(map)
 
         # Translate extinction to Ebv extinction
@@ -167,24 +188,6 @@ class PopsyclePostProcessing(PostProcessing):
                 params_file.write(lines)
             self.logger.info("Parameter file written")
 
-        system_df.rename(columns={'iMass': 'zams_mass','Mass': 'mass',
-                                 'x': 'px', 'y': 'py', 'z': 'pz',
-                                 'U': 'vx', 'V': 'vy', 'W': 'vz',
-                                 'vr_bc': 'vr', 'mul': 'mu_lcosb', 'mub': 'mu_b',
-                                 'pop': 'popid',
-                                 'b': 'glat', 'l': 'glon', 'Dist': 'rad',
-                                 'log_g': 'grav', 'log_Teff': 'teff', '[Fe/H]': 'feh',
-                                 'n_companions':'N_companions', 'system_idx':'obj_id'},
-                         inplace=True)
-        companion_df.rename(columns={'iMass':'zams_mass', 'log_Teff': 'teff', 'log_L':'L',
-                            'log_g':'logg', 'Mass':'mass', '[Fe/H]':'metallicity',
-                            'eccentricity':'e'}, inplace=True, errors='ignore')
-
-        self.logger.info("Basic columns renamed")
-        pd.eval('age = log10(system_df.age*1e9)', target=system_df, inplace=True)
-        #system_df.loc[:,'age'] = np.log10(system_df['age']*1e9)
-        self.logger.info("Age units converted")
-
         combined_mass = companion_df["zams_mass"] + companion_df["zams_mass_prim"]
 
         if 'log_a' not in companion_df.columns:
@@ -201,31 +204,19 @@ class PopsyclePostProcessing(PostProcessing):
         #system_df.loc[wrap_idx, 'glon'] -= 360
         pd.eval('glon = system_df.glon - (system_df.glon>180)*360', target=system_df, inplace=True)
         self.logger.info("Galactic longitude wrapped")
-        pd.eval("mbol = -2.5 * system_df.log_L + 4.75", target=system_df, inplace=True)
+        pd.eval("mbol = -2.5 * system_df.L + 4.75", target=system_df, inplace=True)
         self.logger.info("Added mbol via eval")
         # system_df.loc[:, 'mbol2'] = -2.5 * system_df["log_L"].to_numpy() + 4.75
         # self.logger.info("Added mbol2 via loc")
         # system_df.loc[:, 'systemMass2'] = system_df['mass']
         # self.logger.info("Added systemMass2 via loc insertion")
-        """pd.eval("systemMass = system_df.mass", target=system_df, inplace=True)
-        self.logger.info("Added systemMass via eval")"""
-
+        #pd.eval("systemMass = system_df.system_Mass", target=system_df, inplace=True)
+        
         if system_df['isMultiple'].any():
-            
             map = system_df.set_index('obj_id')['glat'].squeeze()
             companion_df['glat'] = companion_df['system_idx'].map(map)
             map = system_df.set_index('obj_id')['glon'].squeeze()
             companion_df['glon'] = companion_df['system_idx'].map(map)
-            
-            system_df.set_index('obj_id')
-            map = companion_df.groupby('system_idx')['mass'].sum()
-            system_df['systemMass'] = system_df['obj_id'].map(map).fillna(0) + system_df['mass']
-            # map = companion_df.set_index('system_idx')['mass'].squeeze()
-            # system_df['systemMass'] = system_df['obj_id'].map(map)
-            # system_df['systemMass'] = system_df['systemMass'] + system_df['mass']
-            
-        else:
-            pd.eval("systemMass = system_df.mass", target=system_df, inplace=True)
 
         system_df.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
                          inplace=True)
@@ -273,6 +264,8 @@ class PopsyclePostProcessing(PostProcessing):
                 popsycle_bin_df.rename(columns={f"ubv_{filter}": f"m_ubv_{filter}"}, inplace=True)
             else:
                 popsycle_bin_df[f"m_ubv_{filter}"] = np.nan
+                
+        #pdb.set_trace()
 
         if self.binning_procedure:
             print(popsycle_bin_df)

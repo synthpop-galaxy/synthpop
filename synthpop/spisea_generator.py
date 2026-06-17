@@ -182,7 +182,9 @@ class SpiseaGenerator(StarGenerator):
                                        self.evolution_module.bands_obs_str,
                                        self.imf_module.spisea_imf,
                                        self.ifmr_module.spisea_ifmr,
-                                       self.spisea_dir, props))
+                                       self.spisea_dir, props,
+                                       self.evolution_module.bands,
+                                       self.evolution_module.bbh_frac))
                                    
         
         # Parallel case:
@@ -222,7 +224,9 @@ class SpiseaGenerator(StarGenerator):
                                        self.evolution_module.bands_obs_str,
                                        self.imf_module.spisea_imf,
                                        self.ifmr_module.spisea_ifmr,
-                                       self.spisea_dir, props))
+                                       self.spisea_dir, props,
+                                       self.evolution_module.bands,
+                                       self.evolution_module.bbh_frac))
                                        
             # Do the parallel generation
             with Pool(self.n_proc) as p:
@@ -262,6 +266,7 @@ def spisea_props_to_synthpop(tab):
     nan_mass = np.isnan(tab['Mass'])
     tab['Mass'][nan_mass] = tab['iMass'][nan_mass]
     tab['star_mass'] = tab['Mass']
+    #tab.remove_column('systemMass')
 
     return tab
 
@@ -270,7 +275,8 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
                                   block_spisea_prints,
                                   evo_model, atm_func, wd_atm_func,
                                   min_mass, max_mass, bands_obs_str,
-                                  imf, ifmr, iso_dir, props):
+                                  imf, ifmr, iso_dir, props,
+                                  bands, bbh_frac):
     """
     Separated function to run SPISEA clusters for parallelization
     """
@@ -295,19 +301,30 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
             cluster=spisea_synthetic.ResolvedCluster(isochrone, imf, generate_mass,
                                                 ifmr=ifmr, keep_low_mass_stars=True)
         star_systems_i = cluster.star_systems
+        star_systems_i['system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
         if "companions" in cluster.__dir__():
             companions_i = cluster.companions
             companions_i['system_idx'] += (max_system_idx + 1)
             companions_list_bin.append(companions_i)
         else:
-            star_systems_i['n_companions'] = 0
-        star_systems_i['system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
+            star_systems_i['N_companions'] = 0
         max_system_idx = star_systems_i['system_idx'].max()
         keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
         star_systems_i = star_systems_i[keep_idx]
         star_systems_list_bin.append(star_systems_i)
         cluster_stars_needed -= len(star_systems_i)
-
+        if ("companions" in cluster.__dir__()) and (bbh_frac<1.0) \
+                    and np.any(star_systems_i['phase']==103):
+            bh_indexes = np.where((star_systems_i['phase']==103) & star_systems_i['isMultiple'])[0]
+            n_drop = int(np.round(len(bh_indexes)*(1-bbh_frac)))
+            bh_drop_indexes = np.random.choice(bh_indexes, size=n_drop, replace=False)
+            sys_drop_idxs = star_systems_i['system_idx'][bh_drop_indexes]
+            companions_i.remove_rows(np.where(np.isin(companions_i["system_idx"],sys_drop_idxs))[0])
+            star_systems_i['N_companions'][bh_drop_indexes] = 0
+            star_systems_i['isMultiple'][bh_drop_indexes] = False
+            for filt in bands:
+                star_systems_i[filt][bh_drop_indexes] = np.nan
+            
     star_systems_bin = vstack(star_systems_list_bin)
     if len(companions_list_bin)>0:
         companions_bin = vstack(companions_list_bin)
