@@ -302,7 +302,10 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
         else:
             star_systems_i['n_companions'] = 0
         star_systems_i['system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
-        max_system_idx = star_systems_i['system_idx'].max()
+        if len(star_systems_i) == 0:
+            max_system_idx = -1
+        else:
+            max_system_idx = star_systems_i['system_idx'].max()
         keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
         star_systems_i = star_systems_i[keep_idx]
         star_systems_list_bin.append(star_systems_i)
