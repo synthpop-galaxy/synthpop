@@ -266,7 +266,8 @@ def spisea_props_to_synthpop(tab):
     nan_mass = np.isnan(tab['Mass'])
     tab['Mass'][nan_mass] = tab['iMass'][nan_mass]
     tab['star_mass'] = tab['Mass']
-    #tab.remove_column('systemMass')
+    if 'systemMass' in tab.columns:
+        tab.remove_column('systemMass')
 
     return tab
 
@@ -347,6 +348,7 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
         companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_bin['system_idx'])]
         companions_bin = spisea_props_to_synthpop(companions_bin)
         companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
+        companions_bin['Fe/H_initial'] = feh
         
     # Deal with indexing
     orig_idxs = np.array(star_systems_bin['system_idx'])
