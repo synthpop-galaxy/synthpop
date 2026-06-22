@@ -285,7 +285,7 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
     companions_list_bin = []
     n_bin = len(system_idxs)
     print(f"Starting SPISEA cluster generation for bin log_age={log_age:.2f}"
-                        f" [M/H]={mh} for {n_bin} stars")
+                        f" [M/H]={mh:.2f} for {n_bin} stars")
     cluster_stars_needed = n_bin
     # Use a minimum mass per cluster of 100.0 so we don't get an error
     generate_mass = np.maximum(cluster_stars_needed*avg_mass_per_star*1.1, 100.0)
@@ -308,22 +308,23 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
             companions_list_bin.append(companions_i)
         else:
             star_systems_i['N_companions'] = 0
-        max_system_idx = star_systems_i['system_idx'].max()
-        keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
-        star_systems_i = star_systems_i[keep_idx]
-        star_systems_list_bin.append(star_systems_i)
-        cluster_stars_needed -= len(star_systems_i)
-        if ("companions" in cluster.__dir__()) and (bbh_frac<1.0) \
-                    and np.any(star_systems_i['phase']==103):
-            bh_indexes = np.where((star_systems_i['phase']==103) & star_systems_i['isMultiple'])[0]
-            n_drop = int(np.round(len(bh_indexes)*(1-bbh_frac)))
-            bh_drop_indexes = np.random.choice(bh_indexes, size=n_drop, replace=False)
-            sys_drop_idxs = star_systems_i['system_idx'][bh_drop_indexes]
-            companions_i.remove_rows(np.where(np.isin(companions_i["system_idx"],sys_drop_idxs))[0])
-            star_systems_i['N_companions'][bh_drop_indexes] = 0
-            star_systems_i['isMultiple'][bh_drop_indexes] = False
-            for filt in bands:
-                star_systems_i[filt][bh_drop_indexes] = np.nan
+        if len(star_systems_i)>0:
+            max_system_idx = star_systems_i['system_idx'].max()
+            keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
+            star_systems_i = star_systems_i[keep_idx]
+            star_systems_list_bin.append(star_systems_i)
+            cluster_stars_needed -= len(star_systems_i)
+            if ("companions" in cluster.__dir__()) and (bbh_frac<1.0) \
+                        and np.any(star_systems_i['phase']==103):
+                bh_indexes = np.where((star_systems_i['phase']==103) & star_systems_i['isMultiple'])[0]
+                n_drop = int(np.round(len(bh_indexes)*(1-bbh_frac)))
+                bh_drop_indexes = np.random.choice(bh_indexes, size=n_drop, replace=False)
+                sys_drop_idxs = star_systems_i['system_idx'][bh_drop_indexes]
+                companions_i.remove_rows(np.where(np.isin(companions_i["system_idx"],sys_drop_idxs))[0])
+                star_systems_i['N_companions'][bh_drop_indexes] = 0
+                star_systems_i['isMultiple'][bh_drop_indexes] = False
+                for filt in bands:
+                    star_systems_i[filt][bh_drop_indexes] = np.nan
             
     star_systems_bin = vstack(star_systems_list_bin)
     if len(companions_list_bin)>0:
