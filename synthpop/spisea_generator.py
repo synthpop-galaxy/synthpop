@@ -343,12 +343,12 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
     star_systems_bin['age'] = 10**log_age / 1e9
     star_systems_bin['Fe/H_initial'] = feh
     # Get companion stars in expected form
-    if (companions_bin is not None) and len(companions_bin)>0:
+    if (companions_bin is not None) and (len(companions_bin)>0):
         # Drop any companions whose systems got dropped
+        companions_bin['Fe/H_initial'] = feh
         companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_bin['system_idx'])]
         companions_bin = spisea_props_to_synthpop(companions_bin)
         companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
-        companions_bin['Fe/H_initial'] = feh
         
     # Deal with indexing
     orig_idxs = np.array(star_systems_bin['system_idx'])
