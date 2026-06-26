@@ -117,7 +117,11 @@ class SpiseaGenerator(StarGenerator):
         else:
             raise ValueError("Invalid IMF for SPISEA Generator; must use Kroupa, PiecewisePowerlaw, or SpiseaImf")
 
-        self.mh_list = np.log10(np.array(self.evolution_module.spisea_evolution.z_list) / self.evolution_module.spisea_evolution.z_solar)
+        # TODO clean this up later
+        if self.evolution_module.spisea_evolution.model_version_name=='COSMIC':
+            self.mh_list = self.evolution_module.feh_list
+        else:
+            self.mh_list = np.log10(np.array(self.evolution_module.spisea_evolution.z_list) / self.evolution_module.spisea_evolution.z_solar)
         
         self.n_proc = evolution_module.n_proc
 
@@ -293,7 +297,15 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
     # Loop until we have enough stars
     while cluster_stars_needed > 0:
         with BlockSpiseaPrints(block_prints=block_spisea_prints):
-            isochrone = spisea_synthetic.IsochronePhot(logAge=log_age, AKs=0,
+            if evo_model.model_version_name=='COSMIC':
+                isochrone = spisea_synthetic.IsochronePhotExternalEvolution(logAge=log_age, AKs=0,
+                                    distance=10, metallicity=mh,
+                                    evo_model=evo_model, atm_func=atm_func,
+                                    wd_atm_func=wd_atm_func, atm_grid_dir=iso_dir,
+                                    min_mass=min_mass, max_mass=max_mass,
+                                    filters=bands_obs_str)
+            else:
+                isochrone = spisea_synthetic.IsochronePhot(logAge=log_age, AKs=0,
                                     distance=10, metallicity=mh,
                                     evo_model=evo_model, atm_func=atm_func,
                                     wd_atm_func=wd_atm_func, iso_dir=iso_dir,

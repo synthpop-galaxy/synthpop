@@ -24,7 +24,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
                     spisea_evolution_kwargs={"version":1.2, "synthpop_extension":True},
                     spisea_atm_func_name="get_merged_atmosphere", spisea_wd_atm_func_name="get_wd_atmosphere",
                     min_mass=0, max_mass=1000, effective_wavelengths='pivot',
-                    bbh_frac=0.1, **kwargs):
+                    bbh_frac=0.1, BSEDict='default', **kwargs):
         self.name='SpiseaCluster'
         if not n_proc>=1:
             raise ValueError("n_proc for SpiseaCluster must be at least 1")
@@ -40,6 +40,10 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
             self.log_age_list = np.linspace(6.0,10.1,83)
             self.log_age_list[-1] = 10.9
             Warning(f"Evolution module {spisea_evolution_name} only includes solar metallicy. All stars will be assigned solar metallicity.")
+        elif spisea_evolution_name=='COSMIC':
+            self.feh_list = np.array([-2.3,-2.0,-1.75,-1.5,-1.25,
+                                      -1.0,-0.75,-0.5,-0.25,0,0.176])
+            self.log_age_list = np.linspace(5.0,10.3,54)
         else:
             raise ValueError("Invalid SPISEA evolution_model. Only MISTv1 and MergedBaraffePisaEkstromParsec are available at this time.")
         self.spisea_evolution = getattr(spisea_evolution, spisea_evolution_name)(**spisea_evolution_kwargs)
@@ -56,8 +60,18 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
         with open(f"{EVOLUTION_DIR}/spisea_effective_wavelengths.json") as f:
             all_eff_wavelengths = json.load(f)[effective_wavelengths]
         self.eff_wavelengths = {self.bands[i]:all_eff_wavelengths[self.bands_obs_str[i]] for i in range(len(self.bands))}
+        
+        # Binary evolution
         self.bbh_frac=bbh_frac
-
+        
+        # TODO clean up later
+        if spisea_evolution_name=='COSMIC':
+            self.bbh_frac=1.0
+            Warning("Setting bbh_frac to 1.0 to let COSMIC handle binary evolution.")
+            self.spisea_atm_func = spisea_atmospheres.get_merged_atmosphere_w_bb_supplement
+            self.spisea_wd_atm_func = None
+            self.spisea_evolution = spisea_evolution.COSMIC(BSEDict=BSEDict)
+            
     def get_cols(self, columns):
         with open(f"{EVOLUTION_DIR}/spisea_filters.json") as f:
             all_spisea_filters = json.load(f)
