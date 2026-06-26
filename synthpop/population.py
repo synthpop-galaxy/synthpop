@@ -719,9 +719,9 @@ class Population:
 
         n_star_expected = self.get_n_star_expected(average_imass_per_star, av_mass_corr)
 
-        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (n_star_expected>0):
-            if n_star_expected < self.N_av_mass:
-                n_star_expected = self.N_av_mass
+#        if (self.lost_mass_option == 3) and (self.population_density.density_unit != 'number') and (n_star_expected>0):
+#            if n_star_expected < self.N_av_mass:
+#                n_star_expected = self.N_av_mass
 
         mass_limit = np.ones(radii[:-1].shape) * self.min_mass  # new min mass for each
         frac_lowmass = (0., 0.)  # average mass/ fraction of stars
@@ -804,6 +804,8 @@ class Population:
             else:
                 final_expected_loop=True
                 gen_stars_chunk = gen_missing_stars
+            if (self.generator.generator_name=='SpiseaGenerator') and self.lost_mass_option==3:
+                gen_stars_chunk *= 2
 
             df, comp_df = self.generate_stars(gen_stars_chunk, 
                 mass_limit, props_list, radii=radii)
@@ -820,8 +822,8 @@ class Population:
                 
             # Keep track of all stars generated for option 3, until mass loss estimation is complete
             if self.lost_mass_option==3 and not opt3_mass_loss_done:
-                all_m_initial += list(star_set['iMass'])
-                all_m_evolved += list(star_set['system_Mass'])
+                all_m_initial += list(df['iMass'])
+                all_m_evolved += list(df['system_Mass'])
                 #all_r_inner   += list(star_set['r_inner'])
                 if final_expected_loop:
                     missing_stars = self.check_field(
@@ -872,9 +874,8 @@ class Population:
             population_comp_df = None
         
         # Remove any excess stars
-        if (self.lost_mass_option==3) and (len(population_df)>0) and \
-            (self.generator.generator_name != 'SpiseaGenerator'):
-            population_df = self.remove_stars(population_df, population_comp_df,
+        if (self.lost_mass_option==3) and (len(population_df)>0):
+            population_df, population_comp_df = self.remove_stars(population_df, population_comp_df,
                                     neg_missing_stars)
         if len(population_df)>0:
             population_df.loc[:, 'pop'] = self.popid
