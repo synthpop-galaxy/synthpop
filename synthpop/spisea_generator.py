@@ -272,6 +272,8 @@ def spisea_props_to_synthpop(tab):
     tab['star_mass'] = tab['Mass']
     if 'systemMass' in tab.columns:
         tab.remove_column('systemMass')
+    tab.remove_column('Teff')
+    tab.remove_column('L')
 
     return tab
 
@@ -318,9 +320,6 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
         if "companions" in cluster.__dir__():
             companions_i = cluster.companions
             companions_i['system_idx'] += (max_system_idx + 1)
-            companions_list_bin.append(companions_i)
-        else:
-            star_systems_i['N_companions'] = 0
         if len(star_systems_i)>0:
             max_system_idx = star_systems_i['system_idx'].max()
             keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
@@ -338,6 +337,11 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
                 star_systems_i['isMultiple'][bh_drop_indexes] = False
                 for filt in bands:
                     star_systems_i[filt][bh_drop_indexes] = np.nan
+                    
+        if "companions" in cluster.__dir__():
+            companions_list_bin.append(companions_i)
+        else:
+            star_systems_i['N_companions'] = 0
             
     star_systems_bin = vstack(star_systems_list_bin)
     if len(companions_list_bin)>0:
@@ -359,6 +363,9 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
         # Drop any companions whose systems got dropped
         companions_bin['Fe/H_initial'] = feh
         companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_bin['system_idx'])]
+        companions_bin = spisea_props_to_synthpop(companions_bin)
+        companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
+    elif (companions_bin is not None):
         companions_bin = spisea_props_to_synthpop(companions_bin)
         companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
         
