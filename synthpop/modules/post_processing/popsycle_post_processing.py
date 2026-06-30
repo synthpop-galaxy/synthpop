@@ -15,7 +15,9 @@ import os
 from popsycle.synthetic import _get_bin_edges, _bin_lb_hdf5
 import pdb
 
-filter_set_dict = {'ubv': ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K']}
+filter_set_dict = {'ubv': ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K'],
+                   'roman': ['f062', 'f087', 'f106', 'f129', 'f158', 'f146', 'f184', 'f213']
+                  }
 
 filter_matching_mist = {'ubv_J': "UKIDSS_J",
                         'ubv_H': "UKIDSS_H",
@@ -24,7 +26,15 @@ filter_matching_mist = {'ubv_J': "UKIDSS_J",
                         'ubv_I': "Bessell_I",
                         'ubv_B': "Bessell_B",
                         'ubv_V': "Bessell_V",
-                        'ubv_R': "Bessell_R"
+                        'ubv_R': "Bessell_R",
+                        'roman_f062': "R062",
+                        'roman_f087': "Z087",
+                        'roman_f106': "Y106",
+                        'roman_f129': "J129",
+                        'roman_f158': "H158",
+                        'roman_f146': "W146",
+                        'roman_f184': "F184",
+                        'roman_f213': "K213"
                        }
 
 filter_spisea_dict = {'UKIDSS_J': "m_ukirt_J",
@@ -83,6 +93,7 @@ class PopsyclePostProcessing(PostProcessing):
         #self.filter_sets = filter_sets
         self.mag_cols = []
         self.synthpop_mag_cols = []
+        self.ext_cols = []
         for fset in filter_sets:
             self.mag_cols += [fset+'_'+f for f in filter_set_dict[fset]]
             # if model.parms.star_generator != 'SpiseaGenerator':
@@ -133,11 +144,19 @@ class PopsyclePostProcessing(PostProcessing):
         #print(system_df.columns)
         
         # Drop unused data
+        # Keep filter-specific extinction columns created upstream by
+        # EstimateRomanExtinction, e.g. A_R062, A_Z087, ..., A_W146.
+        # These are renamed below to match PopSyCLE's photometric naming.
+        synthpop_ext_cols = [f"A_{col}" for col in self.synthpop_mag_cols]
+        popsycle_ext_cols = [f"A_{col}" for col in self.mag_cols]
+        extra_keep_cols = synthpop_ext_cols + popsycle_ext_cols + ['A_Ks']
+
         cols_to_cut = []
         for col in system_df.keys():
             if col not in (popsycle_nonmag_cols+list(roman_filters_dict.keys())+
                            list(filter_spisea_dict.keys())+
-                           self.mag_cols+popsycle_nonmag_bin_cols+
+                           self.mag_cols+self.synthpop_mag_cols+
+                           popsycle_nonmag_bin_cols+extra_keep_cols+
                            [self.model.populations[0].extinction.A_or_E_type]):
                 cols_to_cut.append(col)
 
@@ -163,6 +182,30 @@ class PopsyclePostProcessing(PostProcessing):
             system_df.drop(columns=['ext_orig'], inplace=True)
         else:
             system_df.rename(columns={"E(B-V)":'exbv'}, inplace=True)
+
+        # Rename MIST/SynthPop magnitude columns into PopSyCLE names.
+        # Example: R062 -> roman_f062.
+        system_df.rename(columns={filter_matching_mist[f]: f for f in self.mag_cols
+                                  if f in filter_matching_mist},
+                         inplace=True, errors='ignore')
+        companion_df.rename(columns={filter_matching_mist[f]: f for f in self.mag_cols
+                                     if f in filter_matching_mist},
+                            inplace=True, errors='ignore')
+        self.logger.info("Renamed mag cols")
+
+        # Rename filter-specific extinction columns into the same PopSyCLE
+        # photometric naming system.
+        # Example: A_R062 -> A_roman_f062.
+        ext_rename_dict = {}
+        for f in self.mag_cols:
+            synthpop_ext_col = f"A_{filter_matching_mist[f]}"
+            popsycle_ext_col = f"A_{f}"
+            if synthpop_ext_col in system_df:
+                ext_rename_dict[synthpop_ext_col] = popsycle_ext_col
+
+        system_df.rename(columns=ext_rename_dict, inplace=True)
+        self.ext_cols = [f"A_{f}" for f in self.mag_cols if f"A_{f}" in system_df]
+        self.logger.info("Renamed filter extinction cols")
         
         # create log (with same info as galaxia log)
         #dtype = [('latitude', 'f8'), ('longitude', 'f8'), ('surveyArea', 'f8')]
@@ -232,7 +275,8 @@ class PopsyclePostProcessing(PostProcessing):
 
         cols_to_cut = []
         for col in system_df.keys():
-            if col not in (popsycle_nonmag_cols + self.mag_cols + list(roman_filters_dict.keys())):
+            if col not in (popsycle_nonmag_cols + self.mag_cols +
+                           list(roman_filters_dict.keys()) + self.ext_cols):
                 cols_to_cut.append(col)
         popsycle_df = system_df.drop(columns=cols_to_cut)
 
