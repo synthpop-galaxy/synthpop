@@ -1,6 +1,6 @@
 {
   "SEED": {
-    "random_seed": null
+    "random_seed": 12345
   },
   "MANDATORY": {
     "name_for_output": "Huston2025_kirkpatrick",

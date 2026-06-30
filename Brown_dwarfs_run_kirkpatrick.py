@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # ============================================================
-# generate_ogle_bd.py
+# generate_ogle_bd_kirkpatrick.py
 #
-# Generation-only OGLE rerun for SP-H25 with min_mass = 0.01
+# OGLE rerun for SP-H25 with the Kirkpatrick IMF and min_mass = 0.01
 # - patches the SynthPop config
 # - downloads/loads OGLE tables
 # - creates subfs_inmap.csv
@@ -14,6 +14,10 @@
 #   import fetch_data
 #   from mulens_rates import microlensing_calculations
 #   import synthpop as sp
+#
+# NOTE:
+#   Replace the default --config path below with your actual
+#   Kirkpatrick IMF config filename.
 # ============================================================
 
 from pathlib import Path
@@ -32,23 +36,23 @@ warnings.filterwarnings("ignore")
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Generate OGLE source/lens catalogs and microlensing rates for a brown-dwarf min-mass rerun."
+        description="Generate OGLE source/lens catalogs and microlensing rates for a brown-dwarf min-mass rerun with the Kirkpatrick IMF."
     )
     parser.add_argument(
         "--config",
-        default="./synthpop/config_files/huston2025_defaults_min001_kirkpatrick_min001.synthpop_conf",
-        help="Path to base SynthPop config file."
+        default="./synthpop/config_files/huston2025_defaults_min001.synthpop_conf",
+        help="Path to the Kirkpatrick IMF SynthPop config file."
     )
     parser.add_argument(
         "--tag",
-        default="min001",
+        default="kirkpatrick_min001",
         help="Run tag appended to output names."
     )
     parser.add_argument(
         "--min-mass",
         type=float,
         default=0.01,
-        help="New minimum mass to write into the patched config."
+        help="Minimum mass to write into the patched config."
     )
     parser.add_argument(
         "--output-root",
@@ -89,7 +93,7 @@ def main():
     RUN_TAG = args.tag
     NEW_MIN_MASS = args.min_mass
 
-    MODEL_NAME = f"Huston2025_kirkpatrick_{RUN_TAG}"
+    MODEL_NAME = f"Huston2025_{RUN_TAG}"
     ROOT_OUT = Path(args.output_root).expanduser().resolve() / f"ogle_chips_{RUN_TAG}"
     SRC_OUT = ROOT_OUT / "src"
     LENS_OUT = ROOT_OUT / "lens"
@@ -105,6 +109,8 @@ def main():
     print("Base config:", BASE_CONF)
     print("Run tag:", RUN_TAG)
     print("New min mass:", NEW_MIN_MASS)
+    print("Output root:", ROOT_OUT)
+    print("Rates file:", RATES_OUT)
 
     # --------------------------------------------------------
     # Patch config

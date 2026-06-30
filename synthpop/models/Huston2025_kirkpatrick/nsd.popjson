@@ -1,0 +1,39 @@
+{
+    "name" : "nsd",
+
+    "imf_func_kwargs" : {
+        "name" : "PiecewisePowerlaw",
+        "min_mass": 0.01,
+        "max_mass": 100,
+        "alphas" : [0.6, 0.25, 1.3, 2.3],
+        "splitpoints": [0.05, 0.22, 0.55]
+    },
+    
+    "age_func_kwargs" : {
+        "name" : "single_value",
+        "#comment" : "units in gigayears",
+        "age_value" : 10.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "#comment":"From Gonzalez, O.A.; et al. 2015",
+        "name" : "double_gaussian",
+        "weight" : 0.323,
+        "mean1" : -0.31,
+        "std1" : 0.31,
+        "mean2" : 0.26,
+        "std2" : 0.20
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "kinematics_from_grid",
+        "moment_file":"sormani2022_koshimoto_grid.dat"
+    }, 
+
+    "population_density_kwargs" : {
+        "name" : "density_from_grid",
+        "moment_file":"sormani2022_koshimoto_grid.dat"
+    }
+}
+
+

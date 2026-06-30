@@ -1,6 +1,6 @@
 {
   "SEED": {
-    "random_seed": null
+    "random_seed": 12345
   },
   "MANDATORY": {
     "name_for_output": "Huston2025_kirkpatrick",
@@ -100,7 +100,7 @@
       "2MASS_Ks"
     ],
     "eff_wavelengths": {
-      "json_file": "AAA_effective_wavelengths.json"
+      "json_file": "/System/Volumes/Data/mnt/g3/scratch/rileypatlak/code/synthpop/synthpop/config_files/AAA_effective_wavelengths.json"
     },
     "obsmag": false,
     "opt_iso_props": [
