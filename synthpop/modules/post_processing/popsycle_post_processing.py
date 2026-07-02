@@ -132,7 +132,8 @@ class PopsyclePostProcessing(PostProcessing):
         self.logger.info("Unused columns dropped")
         self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg)}_psc"
 
-        bin_cols_to_cut = [] # bandaid
+        # Remove duplicate column names
+        bin_cols_to_cut = []
         for col in companion_df.keys():
             if col not in (synthpop_nonmag_cols+self.synthpop_mag_cols+list(roman_filters_dict)+ self.mag_cols+synthpop_nonmag_bin_cols+ [self.model.populations[0].extinction.A_or_E_type]+list(filter_spisea_dict)):
                 bin_cols_to_cut.append(col)
