@@ -70,11 +70,7 @@
     },
 
     "PHOTOMETRIC_OUTPUTS":{
-<<<<<<< HEAD
         "maglim":null,
-=======
-        "maglim":["m_ubv_I", 99],
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
         "chosen_bands": ["ubv", "ukirt"],
         "obsmag":false,
         "combine_system_mags":true,

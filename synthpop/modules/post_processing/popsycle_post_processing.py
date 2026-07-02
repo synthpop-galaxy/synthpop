@@ -52,12 +52,12 @@ synthpop_nonmag_cols = ['l', 'b', 'Dist',
                         'vr_bc', 'mul','mub',
                         'U', 'V', 'W',
                         'iMass','Mass',
-                        'log_L', 'log_g', 'log_Teff', '[Fe/H]_initial', 'age',
+                        'log_L', 'log_g', 'log_Teff', 'Fe/H_initial', 'age',
                         'pop', 'phase', 'n_companions', 'system_Mass'
                         ]
 
 synthpop_nonmag_bin_cols = ['system_idx', 'period', 'eccentricity', '2MASS_Ks',
-                           'star_mass', 'log_R']
+                           'star_mass', 'log_R', 'log_a']
 
 popsycle_nonmag_bin_cols = ['system_idx', 'zams_mass', 'Teff', 'L',
                             'logg', 'isWR', 'mass', 'phase', 'metallicity',
@@ -102,29 +102,19 @@ class PopsyclePostProcessing(PostProcessing):
         for Galaxia, saving the file to the set file name + '_psc.h5'.
         """
         self.logger.info(f"Beginning PopSyCLE postprocessing.")
-        
-        #pdb.set_trace()
-
-<<<<<<< HEAD
-        print("early_code")
-        print(system_df)
-        print(system_df.columns)
-        print(companion_df)
 
         if self.multiplicity == None:
             companion_df = pd.DataFrame(columns=synthpop_nonmag_bin_cols + synthpop_nonmag_cols)  # Empty Dataframe for operations if singles
-            print(companion_df)
-
-        print(companion_df.columns)
-        # companion_df = companion_df.reindex(columns=synthpop_nonmag_bin_cols + synthpop_nonmag_cols) # bandaid
 
         
-        # nan_sorted_columns = companion_df.isna().sum().sort_values(ascending=False).index  # Sorts column names by amount of NaNs
-        # companion_df = companion_df.reindex(columns=nan_sorted_columns)  # Resorts columns to put NaN filled columns at the end
-        # companion_df = companion_df.loc[:,~companion_df.columns.duplicated()].copy()  # Removes duplicated column names
+        nan_sorted_columns = companion_df.isna().sum().sort_values(ascending=False).index  # Sorts column names by amount of NaNs
+        companion_df = companion_df.reindex(columns=nan_sorted_columns)  # Resorts columns to put NaN filled columns at the end
+        companion_df = companion_df.loc[:,~companion_df.columns.duplicated()].copy()  # Removes duplicated column names
 
         if self.star_generator == 'SpiseaGenerator':
             system_df.rename(columns={filter_spisea_dict[f]:f for f in filter_spisea_dict},
+                         inplace=True, errors='ignore')  # Rename SPISEA filter columns to match MIST filters
+            companion_df.rename(columns={filter_spisea_dict[f]:f for f in filter_spisea_dict},
                          inplace=True, errors='ignore')  # Rename SPISEA filter columns to match MIST filters
             system_df.rename(columns={roman_filters_dict[f]:f for f in roman_filters_dict},
                          inplace=True)
@@ -135,49 +125,19 @@ class PopsyclePostProcessing(PostProcessing):
         for col in system_df.keys():
             if col not in (synthpop_nonmag_cols+self.synthpop_mag_cols+list(roman_filters_dict)+
                            self.mag_cols+synthpop_nonmag_bin_cols+
-=======
-        system_df.rename(columns={'iMass': 'zams_mass','Mass': 'mass',
-                                 'x': 'px', 'y': 'py', 'z': 'pz',
-                                 'U': 'vx', 'V': 'vy', 'W': 'vz',
-                                 'vr_bc': 'vr', 'mul': 'mu_lcosb', 'mub': 'mu_b',
-                                 'pop': 'popid',
-                                 'b': 'glat', 'l': 'glon', 'Dist': 'rad',
-                                 'log_g': 'grav', 'log_Teff': 'Teff',
-                                 'log_L': 'L', '[Fe/H]': 'feh',
-                                 'n_companions':'N_companions', 'system_idx':'obj_id',
-                                 'system_Mass':'systemMass'},inplace=True)
-        companion_df.rename(columns={'iMass':'zams_mass', 'log_Teff': 'Teff', 'log_L':'L',
-                            'log_g':'logg', 'Mass':'mass', '[Fe/H]':'metallicity',
-                            'eccentricity':'e'}, inplace=True, errors='ignore')
-                            
-        pd.eval('age = log10(system_df.age*1e9)', target=system_df, inplace=True)
-
-        if self.multiplicity == None:
-            companion_df = pd.DataFrame(columns=popsycle_nonmag_bin_cols+popsycle_nonmag_cols)
-
-        if self.star_generator == 'SpiseaGenerator':
-            system_df.rename(columns={filter_spisea_dict[f]:f for f in filter_spisea_dict},
-                         inplace=True, errors='ignore')
-            system_df.rename(columns={roman_filters_dict[f]:f for f in roman_filters_dict},
-                         inplace=True)
-                         
-        #print(system_df.columns)
-        
-        # Drop unused data
-        cols_to_cut = []
-        for col in system_df.keys():
-            if col not in (popsycle_nonmag_cols+list(roman_filters_dict.keys())+
-                           list(filter_spisea_dict.keys())+
-                           self.mag_cols+popsycle_nonmag_bin_cols+
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
                            [self.model.populations[0].extinction.A_or_E_type]):
                 cols_to_cut.append(col)
 
         system_df.drop(columns=cols_to_cut, inplace=True)
-<<<<<<< HEAD
         self.logger.info("Unused columns dropped")
         self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg)}_psc"
 
+        bin_cols_to_cut = [] # bandaid
+        for col in companion_df.keys():
+            if col not in (synthpop_nonmag_cols+self.synthpop_mag_cols+list(roman_filters_dict)+ self.mag_cols+synthpop_nonmag_bin_cols+ [self.model.populations[0].extinction.A_or_E_type]+list(filter_spisea_dict)):
+                bin_cols_to_cut.append(col)
+        companion_df.drop(columns=bin_cols_to_cut, inplace=True)
+                               
 
         system_df['isMultiple'] = system_df['n_companions'] 
         system_df.loc[system_df['isMultiple'] != 0, 'isMultiple'] = 1  # isMultiple True where n_companions is not 0
@@ -185,16 +145,6 @@ class PopsyclePostProcessing(PostProcessing):
         if system_df['isMultiple'].any():
             map = system_df.set_index('system_idx')['iMass'].squeeze()
             companion_df['zams_mass_prim'] = companion_df['system_idx'].map(map)  # Primary star mass tracked in companion dataframe
-=======
-        self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg)}_psc"
-
-        system_df['isMultiple'] = system_df['N_companions']
-        system_df.loc[system_df['isMultiple'] != 0, 'isMultiple'] = 1
-
-        if system_df['isMultiple'].any():
-            map = system_df.set_index('obj_id')['zams_mass'].squeeze()
-            companion_df['zams_mass_prim'] = companion_df['system_idx'].map(map)
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
 
         # Translate extinction to Ebv extinction
         if not self.model.populations[0].extinction.A_or_E_type=="E(B-V)":
@@ -228,7 +178,6 @@ class PopsyclePostProcessing(PostProcessing):
             with open(self.output_root + '_synthpop_params.txt', 'w') as params_file:
                 params_file.write(f"seed {self.model.parms.random_seed}\n")
                 params_file.write(lines)
-<<<<<<< HEAD
             self.logger.info("Parameter file written")
 
         system_df.rename(columns={'iMass': 'zams_mass','Mass': 'mass',
@@ -238,18 +187,22 @@ class PopsyclePostProcessing(PostProcessing):
                                  'pop': 'popid',
                                  'b': 'glat', 'l': 'glon', 'Dist': 'rad',
                                  'log_g': 'grav', 'log_Teff': 'teff', 'Fe/H_initial': 'feh',
-                                 'n_companions':'N_companions', 'system_idx':'obj_id', 'system_Mass':'systemMass'},
+                                 'n_companions':'N_companions', 'system_idx':'obj_id', 'system_Mass':'systemMass',
+                                 'log_L':'L'},
                          inplace=True)
         companion_df.rename(columns={'iMass':'zams_mass', 'log_Teff': 'teff', 'log_L':'L',
                             'log_g':'logg', 'Mass':'mass', 'Fe/H_initial':'metallicity',
                             'eccentricity':'e'}, inplace=True, errors='ignore')
 
+        system_df['L'] = 10**system_df['L']  # Delogging teff and L
+        system_df['teff'] = 10**system_df['teff']
+        companion_df['L'] = 10**companion_df['L']
+        companion_df['teff'] = 10**companion_df['teff']
+
         self.logger.info("Basic columns renamed")
         pd.eval('age = log10(system_df.age*1e9)', target=system_df, inplace=True)
         #system_df.loc[:,'age'] = np.log10(system_df['age']*1e9)
         self.logger.info("Age units converted")
-=======
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
 
         combined_mass = companion_df["zams_mass"] + companion_df["zams_mass_prim"]
 
@@ -271,22 +224,14 @@ class PopsyclePostProcessing(PostProcessing):
         # self.logger.info("Added mbol2 via loc")
         # system_df.loc[:, 'systemMass2'] = system_df['mass']
         # self.logger.info("Added systemMass2 via loc insertion")
-<<<<<<< HEAD
         """pd.eval("systemMass = system_df.mass", target=system_df, inplace=True)
         self.logger.info("Added systemMass via eval")"""
 
         if system_df['isMultiple'].any():
-            
-=======
-        #pd.eval("systemMass = system_df.system_Mass", target=system_df, inplace=True)
-        
-        if system_df['isMultiple'].any():
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
             map = system_df.set_index('obj_id')['glat'].squeeze()
             companion_df['glat'] = companion_df['system_idx'].map(map)
             map = system_df.set_index('obj_id')['glon'].squeeze()
             companion_df['glon'] = companion_df['system_idx'].map(map)
-<<<<<<< HEAD
             
             # system_df.set_index('obj_id')
             # map = companion_df.groupby('system_idx')['mass'].sum()
@@ -303,15 +248,6 @@ class PopsyclePostProcessing(PostProcessing):
 
         companion_df.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
                          inplace=True, errors='ignore')
-=======
-
-#        system_df.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
-#                         inplace=True)
-#
-#        companion_df.rename(columns={filter_matching_mist[f]:f for f in self.mag_cols},
-#                         inplace=True, errors='ignore')
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
-        
         
         # system_df.loc[:, 'isMultiple'] = np.zeros(system_df.shape[0], dtype=int)
         # system_df.loc[:, 'N_companions'] = np.zeros(system_df.shape[0], dtype=int)
@@ -326,11 +262,7 @@ class PopsyclePostProcessing(PostProcessing):
 
         cols_to_cut = []
         for col in system_df.keys():
-<<<<<<< HEAD
             if col not in (popsycle_nonmag_cols + self.mag_cols + list(roman_filters_dict)):
-=======
-            if col not in (popsycle_nonmag_cols + self.mag_cols + list(roman_filters_dict.keys())):
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
                 cols_to_cut.append(col)
         popsycle_df = system_df.drop(columns=cols_to_cut)
 
@@ -339,6 +271,10 @@ class PopsyclePostProcessing(PostProcessing):
             if col not in (popsycle_nonmag_bin_cols + self.mag_cols + list(roman_filters_dict.values())):
                 cols_to_cut.append(col)
         popsycle_bin_df = companion_df.drop(columns=cols_to_cut)
+
+        nan_sorted_columns = popsycle_bin_df.isna().sum().sort_values(ascending=False).index  # Sorts column names by amount of NaNs
+        popsycle_bin_df = popsycle_bin_df.reindex(columns=nan_sorted_columns)  # Resorts columns to put NaN filled columns at the end
+        popsycle_bin_df = popsycle_bin_df.loc[:,~popsycle_bin_df.columns.duplicated()].copy()  # Removes duplicated column names
 
         # mag cols formatted for PopSyCLE companion dataframe
         filters_ukirt = {"H", "J", "K"}
@@ -354,19 +290,8 @@ class PopsyclePostProcessing(PostProcessing):
                 popsycle_bin_df.rename(columns={f"ubv_{filter}": f"m_ubv_{filter}"}, inplace=True)
             else:
                 popsycle_bin_df[f"m_ubv_{filter}"] = np.nan
-                
-        #pdb.set_trace()
-        print(popsycle_df.columns)
-
-<<<<<<< HEAD
-        print("late code")
-        print(popsycle_bin_df)
 
         if self.binning_procedure:
-=======
-        if self.binning_procedure:
-            #print(popsycle_bin_df)
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
             return popsycle_df, popsycle_bin_df
         else:
             if system_df['isMultiple'].any():
@@ -386,8 +311,4 @@ class PopsyclePostProcessing(PostProcessing):
             if system_df['isMultiple'].any():
                 return system_df, companion_df
             else:
-<<<<<<< HEAD
                 return system_df, None
-=======
-                return system_df
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420

@@ -308,19 +308,6 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
             companions_i['system_idx'] += (max_system_idx + 1)
             companions_list_bin.append(companions_i)
         else:
-<<<<<<< HEAD
-            star_systems_i['n_companions'] = 0
-        star_systems_i['system_idx'] = np.arange(len(star_systems_i)) + max_system_idx + 1
-        if len(star_systems_i) == 0:
-            max_system_idx = -1
-        else:
-            max_system_idx = star_systems_i['system_idx'].max()
-        keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
-        star_systems_i = star_systems_i[keep_idx]
-        star_systems_list_bin.append(star_systems_i)
-        cluster_stars_needed -= len(star_systems_i)
-
-=======
             star_systems_i['N_companions'] = 0
         if len(star_systems_i)>0:
             max_system_idx = star_systems_i['system_idx'].max()
@@ -339,8 +326,7 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
                 star_systems_i['isMultiple'][bh_drop_indexes] = False
                 for filt in bands:
                     star_systems_i[filt][bh_drop_indexes] = np.nan
-            
->>>>>>> 6cd6178228abe6a07033868fc45c15c871801420
+
     star_systems_bin = vstack(star_systems_list_bin)
     if len(companions_list_bin)>0:
         companions_bin = vstack(companions_list_bin)
@@ -362,7 +348,8 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
         companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_bin['system_idx'])]
         companions_bin = spisea_props_to_synthpop(companions_bin)
         companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
-        companions_bin['Fe/H_initial'] = feh
+        if len(companions_bin)>0:
+            companions_bin['Fe/H_initial'] = feh
         
     # Deal with indexing
     orig_idxs = np.array(star_systems_bin['system_idx'])
