@@ -117,7 +117,11 @@ class SpiseaGenerator(StarGenerator):
         else:
             raise ValueError("Invalid IMF for SPISEA Generator; must use Kroupa, PiecewisePowerlaw, or SpiseaImf")
 
-        self.mh_list = np.log10(np.array(self.evolution_module.spisea_evolution.z_list) / self.evolution_module.spisea_evolution.z_solar)
+        # TODO clean this up later
+        if self.evolution_module.spisea_evolution.model_version_name=='COSMIC':
+            self.mh_list = self.evolution_module.feh_list
+        else:
+            self.mh_list = np.log10(np.array(self.evolution_module.spisea_evolution.z_list) / self.evolution_module.spisea_evolution.z_solar)
         
         self.n_proc = evolution_module.n_proc
 
@@ -268,6 +272,8 @@ def spisea_props_to_synthpop(tab):
     tab['star_mass'] = tab['Mass']
     if 'systemMass' in tab.columns:
         tab.remove_column('systemMass')
+    tab.remove_column('Teff')
+    tab.remove_column('L')
 
     return tab
 
@@ -293,7 +299,15 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
     # Loop until we have enough stars
     while cluster_stars_needed > 0:
         with BlockSpiseaPrints(block_prints=block_spisea_prints):
-            isochrone = spisea_synthetic.IsochronePhot(logAge=log_age, AKs=0,
+            if evo_model.model_version_name=='COSMIC':
+                isochrone = spisea_synthetic.IsochronePhotExternalEvolution(logAge=log_age, AKs=0,
+                                    distance=10, metallicity=mh,
+                                    evo_model=evo_model, atm_func=atm_func,
+                                    wd_atm_func=wd_atm_func, atm_grid_dir=iso_dir,
+                                    min_mass=min_mass, max_mass=max_mass,
+                                    filters=bands_obs_str)
+            else:
+                isochrone = spisea_synthetic.IsochronePhot(logAge=log_age, AKs=0,
                                     distance=10, metallicity=mh,
                                     evo_model=evo_model, atm_func=atm_func,
                                     wd_atm_func=wd_atm_func, iso_dir=iso_dir,
@@ -306,9 +320,6 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
         if "companions" in cluster.__dir__():
             companions_i = cluster.companions
             companions_i['system_idx'] += (max_system_idx + 1)
-            companions_list_bin.append(companions_i)
-        else:
-            star_systems_i['N_companions'] = 0
         if len(star_systems_i)>0:
             max_system_idx = star_systems_i['system_idx'].max()
             keep_idx = ((star_systems_i['mass']>min_mass) & (star_systems_i['mass']<max_mass))
@@ -326,7 +337,12 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
                 star_systems_i['isMultiple'][bh_drop_indexes] = False
                 for filt in bands:
                     star_systems_i[filt][bh_drop_indexes] = np.nan
-
+                    
+        if "companions" in cluster.__dir__():
+            companions_list_bin.append(companions_i)
+        else:
+            star_systems_i['N_companions'] = 0
+            
     star_systems_bin = vstack(star_systems_list_bin)
     if len(companions_list_bin)>0:
         companions_bin = vstack(companions_list_bin)
@@ -343,13 +359,17 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
     star_systems_bin['age'] = 10**log_age / 1e9
     star_systems_bin['Fe/H_initial'] = feh
     # Get companion stars in expected form
-    if (companions_bin is not None) and len(companions_bin)>0:
+    if (companions_bin is not None) and (len(companions_bin)>0):
         # Drop any companions whose systems got dropped
+        companions_bin['Fe/H_initial'] = feh
         companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_bin['system_idx'])]
         companions_bin = spisea_props_to_synthpop(companions_bin)
         companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
         if len(companions_bin)>0:
             companions_bin['Fe/H_initial'] = feh
+    elif (companions_bin is not None):
+        companions_bin = spisea_props_to_synthpop(companions_bin)
+        companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
         
     # Deal with indexing
     orig_idxs = np.array(star_systems_bin['system_idx'])
