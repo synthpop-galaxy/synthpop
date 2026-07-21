@@ -43,6 +43,6 @@ class ConvertSpiseaMags(PostProcessing):
                 conv = synthetic.calc_st_vega_filter_conversion(f_str)
             system_df.loc[:,f] += conv
             if companion_df is not None:
-                companion_df[:,f] += conv 
+                companion_df.loc[:,f] += conv 
         
         return system_df, companion_df
