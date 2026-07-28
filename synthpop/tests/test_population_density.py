@@ -1,6 +1,7 @@
 import synthpop.modules.population_density.constant as constant_density_module
 import pdb
 import numpy as np
+import pytest
 
 def check_precision(v_true, v_calc, prec):
 	assert np.abs(v_calc-v_true)/v_true < prec, \

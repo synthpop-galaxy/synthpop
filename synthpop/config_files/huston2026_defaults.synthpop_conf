@@ -62,8 +62,8 @@
 
     "ISOCHRONE_INTERPOLATION":{
         "evolution_class": {"name":"SpiseaCluster"},
-        "ifmr_kwargs": {"name":"SpiseaIfmr", "spisea_ifmr_name"="IFMR_N20_Sukhbold"},
-        "multiplicity_kwargs": {"name":"SpiseaMultiplicity", "spisea_multiplicity_name"="MultiplicityResolvedDK"}
+        "ifmr_kwargs": {"name":"SpiseaIfmr", "spisea_ifmr_name":"IFMR_N20_Sukhbold"},
+        "multiplicity_kwargs": {"name":"SpiseaMultiplicity", "spisea_multiplicity_name":"MultiplicityResolvedDK"}
         },
 
     "PHOTOMETRIC_OUTPUTS":{
@@ -72,7 +72,7 @@
         "obsmag":true,
         "combine_system_mags": true,
         "effective_wavelengths": "average",
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"]
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase"]
     },
     
     "OUTPUT":{

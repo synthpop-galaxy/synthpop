@@ -6,7 +6,10 @@ __all__ = ["SpiseaCluster", ]
 __author__ = "M.J. Huston"
 __date__ = "2025-05-28"
 
-from ._evolution import EvolutionIsochrones, EvolutionInterpolator, EVOLUTION_DIR
+try:
+    from ._evolution import EvolutionIsochrones, EvolutionInterpolator, EVOLUTION_DIR
+except:
+    from _evolution import EvolutionIsochrones, EvolutionInterpolator, EVOLUTION_DIR
 import numpy as np
 import json
 from spisea import evolution as spisea_evolution

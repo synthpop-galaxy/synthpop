@@ -22,7 +22,7 @@ from types import ModuleType
 
 import numpy as np
 
-from .. import const
+from synthpop import constants as const
 
 ISOCHRONES_DIR = const.ISOCHRONES_DIR
 EVOLUTION_DIR = os.path.dirname(__file__)

@@ -928,7 +928,15 @@ class Population:
         return population_df, population_comp_df
 
     def generate_stars(self, missing_stars, mass_limit, props, radii=None):
-        position = self.population_density.draw_random_positions(missing_stars)
+        # Drawing star positions takes more computational resources than before.
+        # Let's bin them up to make sure the density grid doesn't get too big.
+        gen_pos = missing_stars
+        position_bins = []
+        while gen_pos > 0:
+            gen_stars = np.minimum(self.glbl_params.chunk_size, gen_pos)
+            position_bins.append(self.population_density.draw_random_positions(gen_stars))
+            gen_pos -= gen_stars
+        position = np.hstack(position_bins)
         min_mass = mass_limit
 
         u, v, w, vr_bc, mu_l, mu_b, vr_lsr = self.do_kinematics(
