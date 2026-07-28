@@ -1,0 +1,34 @@
+{
+    "name" : "thick_disk",
+
+    "imf_func_kwargs" : {
+        "name" : "kroupa"
+    },
+    
+    "age_func_kwargs" : {
+        "name" : "single_value",
+        "#comment" : "units in gigayears",
+        "age_value" : 12.0
+    },
+
+    "metallicity_func_kwargs" : {
+        "name" : "gaussian",
+        "mean" : -0.78,
+        "std" : 0.30
+    },
+
+    "kinematics_func_kwargs" : {
+        "name" : "Koshimoto2021Disk",
+        "sigma_r_sun" : 75.0,
+        "sigma_z_sun" : 49.2,
+        "beta_r" : 0.0,
+        "beta_z" : 0.0,
+        "R_sigma_r" : 180.0,
+        "R_sigma_z" : 9.4,
+        "pop_age" : 12.0
+    }, 
+
+    "population_density_kwargs" : {
+        "name" : "Koshimoto2021Thickdisk"
+    }
+}
