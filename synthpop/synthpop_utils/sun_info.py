@@ -34,6 +34,11 @@ class SunInfo(BaseModel):
     l_apex_deg: float = 53.
     b_apex_deg: float = 25.
 
+    # degree direction of Galactic Center (Sag A*) in Galactic coordinates
+    # from Reid & Brunthaler (2004)
+    l_gal_cen: float = -0.056
+    b_gal_cen: float = -0.046
+
     class Config():
         try: #pydantic version compatibility
             keep_untouched = (cached_property,)

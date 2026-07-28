@@ -84,8 +84,6 @@ class Besancon2003Thindisk(PopulationDensity):
         a = np.sqrt(r ** 2 + (z / k_flare / self.e) ** 2)
         a0 = np.sqrt(self.sun.r ** 2 + (self.sun.z / k_flare0 / self.e) ** 2)
 
-
-
         def exp_arg(x):  # function to estimate the argument for exp()
             return -np.sqrt(self.offset ** 2 + x ** 2) ** self.power
 

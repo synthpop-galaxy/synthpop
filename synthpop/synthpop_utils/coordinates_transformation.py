@@ -1,5 +1,5 @@
 """
-Functions for coordinates transformations following Bovy 2011.
+Functions for coordinates transformations following Bovy (2011).
 """
 __all__ = ["get_trans_matrix", "getA", "lb_to_ad", "ad_to_lb", "dlb_to_xyz",
            "xyz_to_rphiz", "dlb_to_rphiz", "uvw_to_vrmulb", "uvw_to_vrmuad", "CoordTrans"]
@@ -38,7 +38,7 @@ def get_trans_matrix() -> np.ndarray:
 def getA(longitude_rad: np.ndarray or float, latitude_rad: np.ndarray or float) \
         -> np.ndarray:
     """
-    determines the Position Matrix A from Bovy 2011
+    Determine the Position Matrix A from Bovy (2011)
     Note that R^T is equivalent to A
 
     Parameters
@@ -94,15 +94,17 @@ class CoordTrans:
     def dlb_to_rphiz(self, d_kpc: np.ndarray, l_deg: np.ndarray, b_deg: np.ndarray) \
             -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        translates d, l, b  into  r, phi, z
-
-        phi increases along the galactic rotation with a zero point at the position of the sun
+        Transform d, l, b  into  r, phi, z
+        (phi increases along the galactic rotation with a zero point at the position of the Sun)
 
         Parameters
         ----------
-        d_kpc : float, ndarray [kpc]
-        l_deg :  float, ndarray [degree]
-        b_deg :  float, ndarray [degree]
+        d_kpc : float ndarray, [kpc]
+            distance
+        l_deg : float, ndarray, [degrees]
+            galactic longitude
+        b_deg : float, ndarray, [degrees]
+            galactic latitude
 
         Returns
         -------
@@ -127,12 +129,13 @@ class CoordTrans:
 
         Parameters
         ----------
+        d_kpc : float ndarray, [kpc]
+            distance
         l_deg : float, ndarray, [degrees]
             galactic longitude
         b_deg : float, ndarray, [degrees]
             galactic latitude
-        d_kpc : float ndarray, [kpc]
-            distance
+
         Returns
         -------
         x,y,z : float nd_array [kpc]
@@ -140,8 +143,8 @@ class CoordTrans:
         """
 
         # convert to radian
-        l_rad = l_deg * np.pi / 180.
-        b_rad = b_deg * np.pi / 180.
+        l_rad = (l_deg-self.sun.l_gal_cen) * np.pi / 180.
+        b_rad = (b_deg-self.sun.b_gal_cen) * np.pi / 180.
 
         # convert to heliocentric cartesian
         cl = np.cos(l_rad)
@@ -161,23 +164,23 @@ class CoordTrans:
     def rphiz_to_xyz(self, r_kpc: np.ndarray, phi_rad: np.ndarray, z_kpc: np.ndarray) \
             -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-            Translate from cylindrical cartesian coordinates to
+        Translate from cylindrical cartesian coordinates to
+        galactocentric cartesian coordinates
+        the zero point of z follows the warp of the galaxy.
+
+        Parameters
+        ----------
+        r_kpc :  float, ndarray [kpc]
+        phi_rad : float, ndarray [rad]
+            polar angle follows the rotation of the galaxy
+            zero point is at the sun.
+        z_kpc : float, ndarray [kpc]
+            hight above/below the galactic plane
+
+        Returns
+        -------
+        x_kpc,y_kpc,z_kpc : float, ndarray [kpc]
             galactocentric cartesian coordinates
-            the zero point of z follows the warp of the galaxy.
-
-            Parameters
-            ----------
-            r_kpc :  float, ndarray [kpc]
-            phi_rad : float, ndarray [rad]
-                polar angle follows the rotation of the galaxy
-                zero point is at the sun.
-            z_kpc : float, ndarray [kpc]
-                hight above/below the galactic plane
-
-            Returns
-            -------
-            x_kpc,y_kpc,z_kpc : float, ndarray [kpc]
-                galactocentric cartesian coordinates
         """
         # remove correction of warp
         z_kpc += self.warp_correction(r_kpc, phi_rad)
@@ -368,34 +371,33 @@ class CoordTrans:
             u_kmps: np.ndarray, v_kmps: np.ndarray, w_kmps: np.ndarray
             ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
+        Conversion from u,v,w
+        to v_r, mu_l, and mu_b
 
-            Conversion from u,v,w
-            to v_r, mu_l, and mu_b
+        Parameters
+        ----------
+        l_deg : float, ndarray [degrees]
+            galactic longitude
+        b_deg :  float, ndarray [degrees]
+            galactic latitude
+        dist_kpc : float, ndarray [kpc]
+            distance
+        u_kmps : float, ndarray [km/s]
+            rectangular velocity with_out correction for the motion of the sun
+        v_kmps : float, ndarray [km/s]
+            rectangular velocity with_out correction for the motion of the sun
+        w_kmps : float, ndarray [km/s]
+             rectangular velocity with_out correction for the motion of the sun
 
-            Parameters
-            ----------
-            l_deg : float, ndarray [degrees]
-                galactic longitude
-            b_deg :  float, ndarray [degrees]
-                galactic latitude
-            dist_kpc : float, ndarray [kpc]
-                distance
-            u_kmps : float, ndarray [km/s]
-                rectangular velocity with_out correction for the motion of the sun
-            v_kmps : float, ndarray [km/s]
-                rectangular velocity with_out correction for the motion of the sun
-            w_kmps : float, ndarray [km/s]
-                 rectangular velocity with_out correction for the motion of the sun
-
-            Returns
-            -------
-            vr_kmps : float, ndarray[km/s]
-                radial velocity
-            mu_a_maspyr : float, ndarray [mas/yr]
-                proper motion in galactic longitude cos(delta) is applied
-            mu_d_maspyr : float, ndarray [mas/yr]
-                proper motion in galactic latitude
-            """
+        Returns
+        -------
+        vr_kmps : float, ndarray[km/s]
+            radial velocity
+        mu_a_maspyr : float, ndarray [mas/yr]
+            proper motion in galactic longitude cos(delta) is applied
+        mu_d_maspyr : float, ndarray [mas/yr]
+            proper motion in galactic latitude
+        """
 
         # Galactic to Equatorial coordinate transform.
         a_deg, d_deg = self.lb_to_ad(l_deg, b_deg)
@@ -427,23 +429,23 @@ class CoordTrans:
     def vr_bc_to_vr_lsr(self, l_deg: np.ndarray, b_deg: np.ndarray, 
         vr: np.ndarray) -> np.ndarray:
         """
-            Conversion of radial velocity from barycentric frame to
-            local standard of rest frame following Beaulieu et al. (2000)
+        Conversion of radial velocity from barycentric frame to
+        local standard of rest frame following Beaulieu et al. (2000)
 
-            Parameters
-            ----------
-            l_deg : float, ndarray [degrees]
-                galactic longitude
-            b_deg :  float, ndarray [degrees]
-                galactic latitude
-            vr : float, ndarray [km/s]
-                 barycentric radial velocity
+        Parameters
+        ----------
+        l_deg : float, ndarray [degrees]
+            galactic longitude
+        b_deg :  float, ndarray [degrees]
+            galactic latitude
+        vr : float, ndarray [km/s]
+             barycentric radial velocity
 
-            Returns
-            -------
-            vr_lsr : float, ndarray[km/s]
-                radial velocity relative to the LSR
-            """
+        Returns
+        -------
+        vr_lsr : float, ndarray[km/s]
+            radial velocity relative to the LSR
+        """
 
         return (vr
             + self.sun.v_lsr * np.sin(l_deg * np.pi / 180)
@@ -505,6 +507,7 @@ def dlb_to_xyz(d_kpc: np.ndarray, l_deg: np.ndarray, b_deg: np.ndarray) \
         galactic latitude
     d_kpc : float ndarray, [kpc]
         distance
+
     Returns
     -------
     x,y,z : float nd_array [kpc]
@@ -516,23 +519,23 @@ def dlb_to_xyz(d_kpc: np.ndarray, l_deg: np.ndarray, b_deg: np.ndarray) \
 def rphiz_to_xyz(r_kpc: np.ndarray, phi_rad: np.ndarray, z_kpc: np.ndarray)\
         -> ndarray:
     """
-        Translate from cylindrical cartesian coordinates to
+    Translate from cylindrical cartesian coordinates to
+    galactocentric cartesian coordinates
+    the zero point of z follows the warp of the galaxy.
+
+    Parameters
+    ----------
+    r_kpc :  float, ndarray [kpc]
+    phi_rad : float, ndarray [rad]
+        polar angle follows the rotation of the galaxy
+        zero point is at the sun.
+    z_kpc : float, ndarray [kpc]
+        hight above/below the galactic plane
+
+    Returns
+    -------
+    x_kpc,y_kpc,z_kpc : float, ndarray [kpc]
         galactocentric cartesian coordinates
-        the zero point of z follows the warp of the galaxy.
-
-        Parameters
-        ----------
-        r_kpc :  float, ndarray [kpc]
-        phi_rad : float, ndarray [rad]
-            polar angle follows the rotation of the galaxy
-            zero point is at the sun.
-        z_kpc : float, ndarray [kpc]
-            hight above/below the galactic plane
-
-        Returns
-        -------
-        x_kpc,y_kpc,z_kpc : float, ndarray [kpc]
-            galactocentric cartesian coordinates
     """
     return _coord_trans.rphiz_to_xyz(r_kpc, phi_rad, z_kpc)
 
@@ -646,32 +649,31 @@ def uvw_to_vrmuad(
         ) \
         -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
+    Conversion from u,v,w
+    to v_r, mu_l, and mu_b
 
-        Conversion from u,v,w
-        to v_r, mu_l, and mu_b
+    Parameters
+    ----------
+    l_deg : float, ndarray [degrees]
+        galactic longitude
+    b_deg :  float, ndarray [degrees]
+        galactic latitude
+    dist_kpc : float, ndarray [kpc]
+        distance
+    u_kmps : float, ndarray [km/s]
+        rectangular velocity with_out correction for the motion of the sun
+    v_kmps : float, ndarray [km/s]
+        rectangular velocity with_out correction for the motion of the sun
+    w_kmps : float, ndarray [km/s]
+         rectangular velocity with_out correction for the motion of the sun
 
-        Parameters
-        ----------
-        l_deg : float, ndarray [degrees]
-            galactic longitude
-        b_deg :  float, ndarray [degrees]
-            galactic latitude
-        dist_kpc : float, ndarray [kpc]
-            distance
-        u_kmps : float, ndarray [km/s]
-            rectangular velocity with_out correction for the motion of the sun
-        v_kmps : float, ndarray [km/s]
-            rectangular velocity with_out correction for the motion of the sun
-        w_kmps : float, ndarray [km/s]
-             rectangular velocity with_out correction for the motion of the sun
-
-        Returns
-        -------
-        vr_kmps : float, ndarray[km/s]
-            radial velocity
-        mu_a_maspyr : float, ndarray [mas/yr]
-            proper motion in galactic longitude cos(delta) is applied
-        mu_d_maspyr : float, ndarray [mas/yr]
-            proper motion in galactic latitude
-        """
+    Returns
+    -------
+    vr_kmps : float, ndarray[km/s]
+        radial velocity
+    mu_a_maspyr : float, ndarray [mas/yr]
+        proper motion in galactic longitude cos(delta) is applied
+    mu_d_maspyr : float, ndarray [mas/yr]
+        proper motion in galactic latitude
+    """
     return _coord_trans.uvw_to_vrmuad(l_deg, b_deg, dist_kpc, u_kmps, v_kmps, w_kmps)

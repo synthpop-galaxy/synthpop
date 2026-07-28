@@ -24,6 +24,7 @@ class Besancon2003Dark(PopulationDensity):
 
     def __init__(self, e=1, pc=1.079e8, Rc=2.697, **kwargs):
         super().__init__(**kwargs)
+        self.population_density_name = 'Besancon2003Dark'
         self.density_unit = 'mass'
         self.e = e
         self.pc = pc

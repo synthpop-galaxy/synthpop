@@ -53,6 +53,7 @@ class Koshimoto2021Bulge(PopulationDensity):
         assert (parameterization in ['E', 'G', 'B']), f"Invalid Koshimoto2021Bulge parameterization" \
             f" '{parameterization}'. Options are 'E' (exponential), 'G' (gaussian), or 'B' (bessell)."
         self.parameterization = parameterization
+        self.population_density_name = 'Koshimoto2021Bulge'
         self.x0 = x0
         self.y0 = y0
         self.z0 = z0

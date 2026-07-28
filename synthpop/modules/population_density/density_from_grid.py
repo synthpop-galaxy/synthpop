@@ -1,5 +1,6 @@
 """
-Density function that interpolates over a grid
+Density function that interpolates over a grid. Created for NSD and NSC models
+tabulated from AGAMA, but can use other files with the same format.
 """
 
 __all__ = ["density_from_grid"]
@@ -24,10 +25,13 @@ class density_from_grid(PopulationDensity):
         file must be whitespace delimited and have comments marked with '#'
     density_unit : str
         "mass" or "number" to specify units for the provided density
+    abs_z : str
+        if True, take the absolute value of the z coordinate before evaluating
     """
     
     def __init__(
-            self, moment_file=None, density_unit='mass',abs_z=True,
+            self, moment_file=None, density_unit='mass', abs_z=True,
+            population_density_name='DensityFromGrid',
             **kwargs
             ):
         super().__init__(**kwargs)
@@ -37,6 +41,7 @@ class density_from_grid(PopulationDensity):
             dat['rho'], fill_value=0.0, rescale=False)
         self.density_unit = density_unit
         self.abs_z=abs_z
+        self.population_density_name = population_density_name
 
     def density(self, r, theta, z):
         if self.abs_z:

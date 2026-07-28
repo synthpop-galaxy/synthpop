@@ -30,7 +30,7 @@ class Besancon2003Thickdisk(PopulationDensity):
 
     def __init__(self, rho0, hr, hz, xl, flare_flag=False, **kwargs):
         super().__init__(**kwargs)
-        self.population_density_name = "ThickDisk"
+        self.population_density_name = "Besancon2003Thickdisk"
         self.density_unit = 'mass'
         self.rho0 = rho0
         self.xl = xl

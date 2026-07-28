@@ -40,6 +40,7 @@ class Koshimoto2021Thindisk(PopulationDensity):
         self.rho_sun = rho_sun
         self.R_break = R_break
         self.linear_z = linear_z
+        self.population_density_name = 'Koshimoto2021Thindisk'
 
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
         """

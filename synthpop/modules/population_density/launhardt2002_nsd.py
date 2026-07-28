@@ -43,6 +43,7 @@ class Launhardt2002Nsd(PopulationDensity):
         self.z0 = z0
         self.n_R = n_R 
         self.n_z = n_z
+        self.population_density_name='Launhardt2002Nsd'
 
     def density(self, r, phi_rad, z):
         rho = self.rho1 * np.exp(-0.693* ((r/self.R1)**self.n_R + (np.abs(z)/self.z0)**self.n_z)) \

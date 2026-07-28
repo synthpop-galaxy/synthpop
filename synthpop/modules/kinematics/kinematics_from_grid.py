@@ -1,5 +1,6 @@
 """
-Kinematic module that interpolates values from a grid
+Kinematic module that interpolates values from a grid. Created for NSD and NSC models
+tabulated from AGAMA, but can use other files with the same format.
 """
 
 __all__ = ['KinematicsFromGrid']

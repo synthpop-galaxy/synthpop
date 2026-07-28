@@ -36,6 +36,7 @@ class GallegoCano2020Nsd(PopulationDensity):
             q=0.37, n1=0.72, n2=0.79,
             **kwargs):
         super().__init__(**kwargs)
+        self.population_density_name = 'GallegoCano2020Nsd'
         self.rho1 = rho1_rho2*rho2
         self.rho2 = rho2
         self.R1 = R1 

@@ -26,6 +26,7 @@ class Chatzopoulos2015Nsc(PopulationDensity):
             self, gamma=0.71, q=0.73, a0=0.0059, M=6.1e7,
             **kwargs):
         super().__init__(**kwargs)
+        self.population_density_name = 'Chatzopoulos2015Nsc'
         self.gamma = gamma 
         self.q = q 
         self.a0 = a0 

@@ -38,7 +38,7 @@ class TriaxialBulge(PopulationDensity):
     def __init__(self, triaxial_type: str, density_unit: str, x0: float, y0: float, z0: float, rho0: float, 
                  Rmax=np.inf, bar_angle=29.4, bar_plane_angle=0.0, **kwargs):
         super().__init__(**kwargs)
-        self.population_density_name = "Bulge_Density"
+        self.population_density_name = "TriaxialBulge"
         self.density_unit = density_unit
         self.x0 = x0
         self.y0 = y0

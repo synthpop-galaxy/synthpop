@@ -31,6 +31,7 @@ class GumsBar(PopulationDensity):
     def __init__(self, n0, x0, y0, z0, alpha, beta, gamma, c_perp, c_para,
             dz_bone=0, x_bone=0, r_max=np.inf, sigma_cut_of=1e-10, **kwargs):
         super().__init__(**kwargs)
+        self.population_density_name = 'GumsBar'
         self.density_unit = 'number'
         self.n0 = n0
         self.x0 = x0
