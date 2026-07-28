@@ -1,8 +1,8 @@
 {   "SEED":{"random_seed":null},
 
     "MANDATORY":{
-        "name_for_output":"Huston2025",
-        "model_name":"Huston2025"
+        "name_for_output":"Huston2026",
+        "model_name":"Huston2026"
     },
 
     "SIGHTLINES":{
@@ -25,8 +25,8 @@
             "w": 7.78,
             "l_apex_deg": 56.24,
             "b_apex_deg": 22.54,
-            "l_gal_cen": 0.0,
-            "b_gal_cen": 0.0
+            "l_gal_cen": -0.056,
+            "b_gal_cen": -0.046
         },
         "lsr":{
             "u_lsr": 1.8,
@@ -45,7 +45,7 @@
 
     "EXTINCTION_MAP":
         {
-        "extinction_map_kwargs": {"name":"Surot", "project_3d":true, "dist_2d":8.15},
+        "extinction_map_kwargs": {"name":"Surot", "project_3d":true, "dist_2d":8.178},
         "extinction_law_kwargs": [{"name":"SODC", "R_V":2.5}]
         },
 
@@ -57,28 +57,26 @@
         "scale_factor": 1,
         "skip_lowmass_stars": false,
         "chunk_size": 250000,
-        "star_generator": "StarGenerator"
+        "star_generator": "SpiseaGenerator"
     },
 
     "ISOCHRONE_INTERPOLATION":{
-        "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
-        "ifmr_kwargs": {"name":"SukhboldN20"},
-        "multiplicity_kwargs": null
+        "evolution_class": {"name":"SpiseaCluster"},
+        "ifmr_kwargs": {"name":"SpiseaIfmr", "spisea_ifmr_name"="IFMR_N20_Sukhbold"},
+        "multiplicity_kwargs": {"name":"SpiseaMultiplicity", "spisea_multiplicity_name"="MultiplicityResolvedDK"}
         },
 
     "PHOTOMETRIC_OUTPUTS":{
-        "maglim":["W146", 23.975533],
-        "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "2MASS_J", "2MASS_H", "2MASS_Ks"],
+        "maglim": null,
+        "chosen_bands": ["roman", "bessell", "2mass"],
         "obsmag":true,
-        "combine_system_mags": false,
-        "effective_wavelengths": "vega_eff",
-
+        "combine_system_mags": true,
+        "effective_wavelengths": "average",
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"]
     },
     
     "OUTPUT":{
-        "post_processing_kwargs": [{"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}},
-                                   {"name":"RenameColumns", "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
+        "post_processing_kwargs": [{"name":"RenameColumns", "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
                                                             "new_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius"]}],
     
         "output_location":"outputfiles/default",
