@@ -21,7 +21,7 @@ class DoubleGaussian(Metallicity):
     metallicity_func_name : string
         A class attribute for the name of the _MetallicityBase subclass that this is.
     weight  : float
-        percentage of stars belonging to the first Gaussian distribution ( A1/(A1+A2))
+        fraction of stars belonging to the first Gaussian distribution ( A1/(A1+A2))
     mean1 : float [[Fe/H]]
         the mean value of the first Gaussian distribution
     std1 : float [[Fe/H]]
