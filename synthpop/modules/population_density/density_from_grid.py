@@ -34,14 +34,13 @@ class density_from_grid(PopulationDensity):
             population_density_name='DensityFromGrid',
             **kwargs
             ):
-        super().__init__(**kwargs)
         dat = pd.read_csv(const.MOMENTS_DIR + '/' + moment_file,
             sep='\s+', comment='#')
+        super().__init__(max_gc_dist=np.max(dat['r']), **kwargs)
         self.interpolate_rho = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
             dat['rho'], fill_value=0.0, rescale=False)
         self.density_unit = density_unit
         self.abs_z=abs_z
-        self.population_density_name = population_density_name
 
     def density(self, r, theta, z):
         if self.abs_z:

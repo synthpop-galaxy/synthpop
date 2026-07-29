@@ -14,7 +14,7 @@ import numpy as np
 from .. import const, default_sun
 from ... import synthpop_utils as sp_utils
 import pdb
-from scipy.integrate import simpson, cumulative_simpson, cumulative_trapezoid
+from scipy.integrate import cumulative_trapezoid, trapezoid
 
 class PopulationDensity(ABC):
     """
@@ -49,6 +49,7 @@ class PopulationDensity(ABC):
             radius_flare: float = 0,
             grid_resolution: float = 0.010,
             logger: ModuleType = None,
+            max_gc_dist: float = None,
             **kwargs):
         """
         Initialize the Population Density class
@@ -92,6 +93,9 @@ class PopulationDensity(ABC):
         self.b_length_deg = None
         self.grid_resolution_base = grid_resolution
         self.grid_resolution = grid_resolution
+
+        # Set limits for where we need to look for stars
+        self.max_gc_dist = max_gc_dist
 
     @abstractmethod
     def density(self, r: np.ndarray, phi_rad: np.ndarray, z: np.ndarray) -> np.ndarray:
@@ -227,8 +231,15 @@ class PopulationDensity(ABC):
         if self.logger is not None:
             self.logger.debug("setting up density grid")
 
+        #Distance initial bounds-- not dependent on field shape
+        d_min, d_max = 0, self.max_distance
+        if self.max_gc_dist is not None:
+            # Apply a 5% buffer to be safe
+            d_min = self.sun.gal_dist-self.max_gc_dist*1.05
+            d_max = self.sun.gal_dist+self.max_gc_dist*1.05
+
         if self.field_shape == 'circle':
-            self.make_density_grid_circle(0, self.max_distance)
+            self.make_density_grid_circle(d_min, d_max)
             # Adjust distance grid if relevant
             if self.total_mass>0.0:
                 nz_indices = np.flatnonzero(self.density_int_st_dir)
@@ -245,47 +256,55 @@ class PopulationDensity(ABC):
                     # TODO probably wanna get the zoom-in on angular selection working here too.........
 
         elif self.field_shape == 'box':
-            self.make_density_grid_box(0, self.max_distance,
-                            -self.l_length_deg/2 * np.pi/180, self.l_length_deg/2 * np.pi/180,
-                            -self.b_length_deg/2 * np.pi/180, self.b_length_deg/2 * np.pi/180)
-            # Adjust distance grid if relevant
-            if self.total_mass>0.0:
+            dl_min, dl_max = -self.l_length_deg/2 * np.pi/180, self.l_length_deg/2 * np.pi/180
+            db_min, db_max = -self.b_length_deg/2 * np.pi/180, self.b_length_deg/2 * np.pi/180
+            # Create the initial density grid
+            self.make_density_grid_box(d_min, d_max, dl_min, dl_max, db_min, db_max)
+            # Adaptively adjust distance grid if relevant
+            if (self.total_mass>0.0):
                 nz_indices = np.flatnonzero(self.density_int_l)
                 dmin_idx = np.maximum(nz_indices[0]-1, 0)
                 dmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_d_pts)-1)
-                while dmin_idx>0 or dmax_idx<(len(self.density_grid_d_pts)-1):
-                    self.grid_resolution =  np.maximum(self.grid_resolution/3,
-                                                self.grid_resolution* (dmax_idx-dmin_idx)/len(self.density_grid_d_pts))
-                    nz_indices = np.flatnonzero(simpson(self.density_int_b, x=self.density_grid_d_pts, axis=1))
-                    lmin_idx = np.maximum(nz_indices[0]-1, 0)
-                    lmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_dl_pts)-1)
-                    nz_indices = np.flatnonzero(simpson(simpson(self.density_grid_vscaled, x=self.density_grid_dl_pts, 
-                                                    axis=0), x=self.density_grid_d_pts, axis=0))
-                    bmin_idx = np.maximum(nz_indices[0]-1, 0)
-                    bmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_db_pts)-1)
+                self.grid_resolution =  np.maximum(self.grid_resolution/3,
+                                            self.grid_resolution*(dmax_idx-dmin_idx)/len(self.density_grid_d_pts))
+                nz_indices = np.flatnonzero(trapezoid(self.density_int_b, x=self.density_grid_d_pts, axis=1))
+                lmin_idx = np.maximum(nz_indices[0]-1, 0)
+                lmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_dl_pts)-1)
+                nz_indices = np.flatnonzero(trapezoid(trapezoid(self.density_grid_vscaled, x=self.density_grid_dl_pts, 
+                                                axis=0), x=self.density_grid_d_pts, axis=0))
+                bmin_idx = np.maximum(nz_indices[0]-1, 0)
+                bmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_db_pts)-1)
+                while dmin_idx>0 or dmax_idx<(len(self.density_grid_d_pts)-1) \
+                        or lmin_idx>0 or lmax_idx<(len(self.density_grid_dl_pts)-1) \
+                        or bmin_idx>0 or bmax_idx<(len(self.density_grid_db_pts)-1):
                     self.make_density_grid_box(self.density_grid_d_pts[dmin_idx], self.density_grid_d_pts[dmax_idx],
                                                self.density_grid_dl_pts[lmin_idx], self.density_grid_dl_pts[lmax_idx],
                                                self.density_grid_db_pts[bmin_idx], self.density_grid_db_pts[bmax_idx])
                     nz_indices = np.flatnonzero(self.density_int_l)
                     dmin_idx = np.maximum(nz_indices[0]-1, 0)
                     dmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_d_pts)-1)
-                    #pdb.set_trace()
+                    self.grid_resolution =  np.maximum(self.grid_resolution/3,
+                                                self.grid_resolution*(dmax_idx-dmin_idx)/len(self.density_grid_d_pts))
+                    nz_indices = np.flatnonzero(trapezoid(self.density_int_b, x=self.density_grid_d_pts, axis=1))
+                    lmin_idx = np.maximum(nz_indices[0]-1, 0)
+                    lmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_dl_pts)-1)
+                    nz_indices = np.flatnonzero(trapezoid(trapezoid(self.density_grid_vscaled, x=self.density_grid_dl_pts, 
+                                                    axis=0), x=self.density_grid_d_pts, axis=0))
+                    bmin_idx = np.maximum(nz_indices[0]-1, 0)
+                    bmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_db_pts)-1)
 
     def make_density_grid_circle(self, d_min, d_max):
-        # Set resolution, with Simpson method preferring odd number of points
+        # Set resolution
         grid_d_n_pts = int(np.ceil((d_max-d_min)/self.grid_resolution)) + 1
-        grid_d_n_pts += (grid_d_n_pts % 2)==0
-        grid_d_n_pts = np.maximum(grid_d_n_pts, 51)
+        grid_d_n_pts = np.maximum(grid_d_n_pts, 50)
         self.density_grid_d_pts = np.linspace(d_min, d_max, grid_d_n_pts)
 
         # Set up a grid
         grid_st_dir_n_pts = int(np.ceil(np.minimum(10.0,d_max)*2*np.pi*self.lb_radius_deg*np.pi/180/self.grid_resolution))
-        grid_st_dir_n_pts += (grid_st_dir_n_pts % 2)==0
-        grid_st_dir_n_pts = np.maximum(grid_st_dir_n_pts, 21)
+        grid_st_dir_n_pts = np.maximum(grid_st_dir_n_pts, 50)
         self.density_grid_st_dir = np.linspace(0, 2 * np.pi, grid_st_dir_n_pts)
         grid_st_rad_n_pts = int(np.ceil(np.minimum(10.0,d_max)*self.lb_radius_deg*np.pi/180/self.grid_resolution))
-        grid_st_rad_n_pts += (grid_st_dir_n_pts % 2)==0
-        grid_st_rad_n_pts = np.maximum(grid_st_rad_n_pts,11)
+        grid_st_rad_n_pts = np.maximum(grid_st_rad_n_pts,25)
         self.density_grid_st_rad = np.linspace(0,np.sqrt(self.lb_radius_deg*np.pi/180),grid_st_rad_n_pts)**2
         d_grid, st_dir_grid, st_rad_grid = np.meshgrid(self.density_grid_d_pts, self.density_grid_st_dir, 
                                              self.density_grid_st_rad)
@@ -302,24 +321,21 @@ class PopulationDensity(ABC):
         self.density_grid = self.density(r_flat, phi_flat, z_flat).reshape(grid_shape)
         vol_elem = d_grid**2 * np.sin(st_rad_grid)
         self.density_grid_vscaled = self.density_grid*vol_elem
-        self.density_int_st_rad = simpson(self.density_grid_vscaled, x=self.density_grid_st_rad, axis=2)
-        self.density_int_st_dir = simpson(self.density_int_st_rad, x=self.density_grid_st_dir, axis=0)
-        self.total_mass = simpson(self.density_int_st_dir, x=self.density_grid_d_pts, axis=0)
+        self.density_int_st_rad = trapezoid(self.density_grid_vscaled, x=self.density_grid_st_rad, axis=2)
+        self.density_int_st_dir = trapezoid(self.density_int_st_rad, x=self.density_grid_st_dir, axis=0)
+        self.total_mass = trapezoid(self.density_int_st_dir, x=self.density_grid_d_pts, axis=0)
 
     def make_density_grid_box(self, d_min, d_max, dl_min, dl_max, db_min, db_max):
-        # Set resolution, with Simpson method preferring odd number of points
-        grid_d_n_pts = int(np.ceil((d_max-d_min)/self.grid_resolution)) + 1
-        grid_d_n_pts += (grid_d_n_pts % 2)==0
-        grid_d_n_pts = np.maximum(grid_d_n_pts, 21)
+        # Set resolution
+        grid_d_n_pts = int(np.ceil((d_max-d_min)/self.grid_resolution))+1
+        grid_d_n_pts = np.maximum(grid_d_n_pts, 50)
         self.density_grid_d_pts = np.linspace(d_min, d_max, grid_d_n_pts)
 
         # Set up a grid
         delta_l_rad_n_pts = int(np.ceil(np.minimum(10.0, d_max)*(dl_max-dl_min)/self.grid_resolution))
-        delta_l_rad_n_pts += (delta_l_rad_n_pts % 2)==0
-        delta_l_rad_n_pts = np.maximum(21, delta_l_rad_n_pts)
+        delta_l_rad_n_pts = np.maximum(40, delta_l_rad_n_pts)
         delta_b_rad_n_pts = int(np.ceil(np.minimum(10.0, d_max)*(db_max-db_min)/self.grid_resolution))
-        delta_b_rad_n_pts += (delta_b_rad_n_pts % 2)==0
-        delta_b_rad_n_pts = np.maximum(21, delta_b_rad_n_pts)
+        delta_b_rad_n_pts = np.maximum(40, delta_b_rad_n_pts)
         self.density_grid_dl_pts = np.linspace(dl_min, dl_max, delta_l_rad_n_pts)
         self.density_grid_db_pts = np.linspace(db_min, db_max, delta_b_rad_n_pts)
         d_grid, dl_grid, db_grid = np.meshgrid(self.density_grid_d_pts, self.density_grid_dl_pts, 
@@ -335,16 +351,14 @@ class PopulationDensity(ABC):
         self.density_grid = self.density(r_flat, phi_flat, z_flat).reshape(grid_shape)
         vol_elem = d_grid**2 * np.cos(b_grid_ravel.reshape(grid_shape)*np.pi/180)
         self.density_grid_vscaled = self.density_grid*vol_elem
-        self.density_int_b = simpson(self.density_grid_vscaled, x=self.density_grid_db_pts, axis=2)
-        self.density_int_l = simpson(self.density_int_b, x=self.density_grid_dl_pts, axis=0)
-        self.total_mass = simpson(self.density_int_l, x=self.density_grid_d_pts, axis=0)
+        self.density_int_b = trapezoid(self.density_grid_vscaled, x=self.density_grid_db_pts, axis=2)
+        self.density_int_l = trapezoid(self.density_int_b, x=self.density_grid_dl_pts, axis=0)
+        self.total_mass = trapezoid(self.density_int_l, x=self.density_grid_d_pts, axis=0)
 
     def cumulative_integral(self, y, x=None, axis=-1, initial=0.0):
-        res = cumulative_simpson(y, x=x,axis=axis, initial=initial)
-        bad_integs = np.any(res<0) #, axis=1)
-        if bad_integs:
-            print('SWITCHING TO TRAPEZOID INTEGRATION for',self.population_density_name)
-            res = cumulative_trapezoid(y, x=x, axis=axis, initial=initial)
+        # I had initially used simpson here, but it was unstable for the NSC
+        # I think a more reliable method is to increase grid points and do trapezoid
+        res = cumulative_trapezoid(y, x=x, axis=axis, initial=initial)
         return res
 
     def draw_random_positions(self, n_stars: int = 1) \
@@ -378,136 +392,214 @@ class PopulationDensity(ABC):
         star_b_deg : float, ndarray [deg]
             galactic latitude of the drawn positions
         """
-        if n_stars==0:
-            return np.empty(0),np.empty(0),np.empty(0),np.empty(0),np.empty(0),np.empty(0)
+        if n_stars == 0:
+            return np.empty(0), np.empty(0), np.empty(0), np.empty(0), np.empty(0), np.empty(0)
 
+        idx_stars = np.arange(n_stars)
         if self.field_shape == 'circle':
-            # Select distances
+
+            # First, select distances
+            # Use quadratic CDF inversion w/ density point + cumulative density information
+            #
+            # Set up cumulative density grid and select surrounding points for each
             d_cum_dens = self.cumulative_integral(self.density_int_st_dir, x=self.density_grid_d_pts)
-            rand_pts = np.random.rand(n_stars)*d_cum_dens[-1]
-            d_kpc = np.interp(rand_pts, d_cum_dens, self.density_grid_d_pts)
+            rand_pts_d = np.random.rand(n_stars) * d_cum_dens[-1]
+            near_d_hi = np.clip(np.searchsorted(d_cum_dens, rand_pts_d), 1, len(self.density_grid_d_pts) - 1)
+            near_d_lo = near_d_hi - 1
+            d1 = self.density_grid_d_pts[near_d_lo]
+            d2 = self.density_grid_d_pts[near_d_hi]
+            cum_dens_d_lo = d_cum_dens[near_d_lo]
+            cum_dens_d_hi = d_cum_dens[near_d_hi]
+            rho1_d = self.density_int_st_dir[near_d_lo]
+            rho2_d = self.density_int_st_dir[near_d_hi]
+            cum_dens_d_diff = cum_dens_d_hi - cum_dens_d_lo
+            assert np.all(cum_dens_d_diff > 0.0), f"Density CDF must monotonically increase."
+            # Get the random point in cumulative density and invert
+            u_cell_d = np.clip((rand_pts_d - cum_dens_d_lo) / cum_dens_d_diff, 0.0, 1.0)
+            delta_rho_d = rho2_d - rho1_d
+            flat_mask_d = np.abs(delta_rho_d) < 1e-12
+            inside_sqrt_d = np.maximum(0.0, rho1_d**2 + u_cell_d * (rho2_d**2 - rho1_d**2))
+            frac_quad_d = (np.sqrt(inside_sqrt_d) - rho1_d) / np.where(flat_mask_d, 1.0, delta_rho_d)
+            frac_d = np.where(flat_mask_d, u_cell_d, frac_quad_d)
+            # Get the distance placement within the cell
+            d_kpc = d1 + frac_d * (d2 - d1)
 
-            # Select radial direction from center
-            idx_d_nearest = np.argmin(np.abs(self.density_grid_d_pts - d_kpc[:, None]), axis=1)
-            int_st_rad_idx = self.density_int_st_rad[:,idx_d_nearest]
-            st_dir_cum_dens = self.cumulative_integral(int_st_rad_idx, x=self.density_grid_st_dir, axis=0)
-            if np.any(st_dir_cum_dens[-1]==0.0):
-                # Deal with edge cases
-                bad_pts = np.where(st_dir_cum_dens[-1]==0.0)
-                new_idx_d_nearest = idx_d_nearest[bad_pts]+1
-                new_idx_d_nearest[new_idx_d_nearest>=len(self.density_grid_d_pts)] -= 2
-                idx_d_nearest[bad_pts] = new_idx_d_nearest
-                new_int_st_rad_idx = self.density_int_st_rad[:,new_idx_d_nearest]
-                st_dir_cum_dens[:,bad_pts] = self.cumulative_integral(new_int_st_rad_idx, x=self.density_grid_st_dir, axis=0)[:,None,:]
-                if np.any(st_dir_cum_dens[-1]==0.0):
-                    bad_pts = np.where(st_dir_cum_dens[-1]==0.0)
-                    new_idx_d_nearest = idx_d_nearest[bad_pts]-2
-                    idx_d_nearest[bad_pts] = new_idx_d_nearest
-                    new_int_st_rad_idx = self.density_int_st_rad[:,new_idx_d_nearest]
-                    st_dir_cum_dens[:,bad_pts] = self.cumulative_integral(new_int_st_rad_idx, x=self.density_grid_st_dir, axis=0)[:,None,:]
-                assert ~np.any(st_dir_cum_dens[-1]==0.0)
-            rand_pts = np.random.random(n_stars)*st_dir_cum_dens[-1]
-            near_pts_hi = np.minimum(np.maximum((st_dir_cum_dens < rand_pts).sum(axis=0),1),len(self.density_grid_st_dir)-1)
-            near_pts_lo = np.maximum(near_pts_hi-1,0)
-            near_pts_lo_dens = st_dir_cum_dens[near_pts_lo,range(n_stars)]
-            lin_fac = (rand_pts - near_pts_lo_dens) / (st_dir_cum_dens[near_pts_hi,range(n_stars)]-near_pts_lo_dens)
-            assert ~np.any(np.isnan(lin_fac))
-            assert np.all(rand_pts>=near_pts_lo_dens)
-            assert np.all(rand_pts<=st_dir_cum_dens[near_pts_hi,range(n_stars)])
+            # Second, select radial directions
+            # Use quadratic CDF inversion w/ density point + cumulative density information
+            #
+            # Interpolate the density slices for the surrounding d_kpc
+            t_d = (d_kpc - d1) / (d2 - d1)
+            int_rad_lo = self.density_int_st_rad[:, near_d_lo]
+            int_rad_hi = self.density_int_st_rad[:, near_d_hi]
+            int_rad_interp = (1.0 - t_d) * int_rad_lo + t_d * int_rad_hi  
+            # Set up cumulative density grid and select surrounding points for each
+            st_dir_cum_dens = self.cumulative_integral(int_rad_interp, x=self.density_grid_st_dir, axis=0)
+            rand_pts_dir = np.random.rand(n_stars) * st_dir_cum_dens[-1, :]
+            near_dir_hi = np.clip((st_dir_cum_dens <= rand_pts_dir[np.newaxis, :]).sum(axis=0), 1, len(self.density_grid_st_dir) - 1)
+            near_dir_lo = np.maximum(near_dir_hi - 1, 0)
+            dens_near_dir_lo = self.density_grid_st_dir[near_dir_lo]
+            dens_near_dir_hi = self.density_grid_st_dir[near_dir_hi]
+            cum_dens_dir_lo = st_dir_cum_dens[near_dir_lo, idx_stars]
+            cum_dens_dir_hi = st_dir_cum_dens[near_dir_hi, idx_stars]
+            rho1_dir = int_rad_interp[near_dir_lo, idx_stars]
+            rho2_dir = int_rad_interp[near_dir_hi, idx_stars]
+            cum_dens_dir_diff = cum_dens_dir_hi - cum_dens_dir_lo
+            assert np.all(cum_dens_dir_diff > 0.0), f"Directional CDF must monotonically increase."
+            # Get the random point in cumulative density and invert
+            u_cell_dir = np.clip((rand_pts_dir - cum_dens_dir_lo) / cum_dens_dir_diff, 0.0, 1.0)
+            delta_rho_dir = rho2_dir - rho1_dir
+            flat_mask_dir = np.abs(delta_rho_dir) < 1e-12
+            inside_sqrt_dir = np.maximum(0.0, rho1_dir**2 + u_cell_dir * (rho2_dir**2 - rho1_dir**2))
+            frac_quad_dir = (np.sqrt(inside_sqrt_dir) - rho1_dir) / np.where(flat_mask_dir, 1.0, delta_rho_dir)
+            frac_dir = np.where(flat_mask_dir, u_cell_dir, frac_quad_dir)
+            # Get the directional placement within the cell
+            star_st_dir = dens_near_dir_lo + frac_dir * (dens_near_dir_hi - dens_near_dir_lo)
 
-            star_st_dir = (1-lin_fac)*self.density_grid_st_dir[near_pts_lo] + lin_fac*self.density_grid_st_dir[near_pts_hi]
+            # Third, we select angular radial distance
+            # Use quadratic CDF inversion w/ density point + cumulative density information
+            #
+            # Interpolate accounting for star_st_dir and d_kpc
+            idx_st_dir_hi = np.clip((self.density_grid_st_dir < star_st_dir[:, np.newaxis]).sum(axis=1), 1, len(self.density_grid_st_dir) - 1)
+            idx_st_dir_lo = np.maximum(idx_st_dir_hi - 1, 0)
+            st_dir_lo = self.density_grid_st_dir[idx_st_dir_lo]
+            st_dir_hi = self.density_grid_st_dir[idx_st_dir_hi]
+            w_dir = np.nan_to_num((star_st_dir - st_dir_lo) / (st_dir_hi - st_dir_lo))[:, np.newaxis]
+            w_d = t_d[:, np.newaxis]
+            rho_00 = self.density_grid_vscaled[idx_st_dir_lo, near_d_lo, :]
+            rho_10 = self.density_grid_vscaled[idx_st_dir_hi, near_d_lo, :]
+            rho_01 = self.density_grid_vscaled[idx_st_dir_lo, near_d_hi, :]
+            rho_11 = self.density_grid_vscaled[idx_st_dir_hi, near_d_hi, :]
+            rho_interp = ((1.0 - w_dir) * (1.0 - w_d) * rho_00 +
+                           w_dir * (1.0 - w_d) * rho_10 +
+                           (1.0 - w_dir) * w_d * rho_01 +
+                           w_dir * w_d * rho_11)
+            # Set up cumulative density grid and select surrounding points for each
+            st_rad_cum_dens = self.cumulative_integral(rho_interp, x=self.density_grid_st_rad, axis=1)
+            rand_pts_rad = np.random.rand(n_stars) * st_rad_cum_dens[:, -1]
+            near_pts_hi = np.clip((st_rad_cum_dens <= rand_pts_rad[:, np.newaxis]).sum(axis=1), 1, len(self.density_grid_st_rad) - 1)
+            near_pts_lo = np.maximum(near_pts_hi - 1, 0)
+            r1 = self.density_grid_st_rad[near_pts_lo]
+            r2 = self.density_grid_st_rad[near_pts_hi]
+            cum_dens_rad_lo = st_rad_cum_dens[idx_stars, near_pts_lo]
+            cum_dens_rad_hi = st_rad_cum_dens[idx_stars, near_pts_hi]
+            rho1_rad = rho_interp[idx_stars, near_pts_lo]
+            rho2_rad = rho_interp[idx_stars, near_pts_hi]
+            cum_dens_rad_diff = cum_dens_rad_hi - cum_dens_rad_lo
+            assert np.all(cum_dens_rad_diff > 0.0), f"Radial CDF must monotonically increase."
+            # Get the random point in cumulative density and invert
+            u_cell_rad = np.clip((rand_pts_rad - cum_dens_rad_lo) / cum_dens_rad_diff, 0.0, 1.0)
+            delta_rho_rad = rho2_rad - rho1_rad
+            flat_mask_rad = np.abs(delta_rho_rad) < 1e-12
+            inside_sqrt_rad = np.maximum(0.0, rho1_rad**2 + u_cell_rad * (rho2_rad**2 - rho1_rad**2))
+            frac_quad_rad = (np.sqrt(inside_sqrt_rad) - rho1_rad) / np.where(flat_mask_rad, 1.0, delta_rho_rad)
+            frac_rad = np.where(flat_mask_rad, u_cell_rad, frac_quad_rad)
+            # Get the angular radial placement within the cell
+            star_st_rad = r1 + frac_rad * (r2 - r1)
 
-            # Select angular distance from center
-            idx_st_dir_nearest = np.argmin(np.abs(self.density_grid_st_dir-star_st_dir[:, None]), axis=1)
-            rho_grid_idx = self.density_grid_vscaled[idx_st_dir_nearest,idx_d_nearest,:]
-            st_rad_cum_dens = self.cumulative_integral(rho_grid_idx, x=self.density_grid_st_rad, axis=1) 
-            if np.any(st_rad_cum_dens[:,-1]==0.0):
-                # Deal with edge cases
-                bad_pts = np.where(st_rad_cum_dens[:,-1]==0.0)
-                new_idx_st_dir_nearest = idx_st_dir_nearest[bad_pts]+1
-                new_idx_st_dir_nearest[new_idx_st_dir_nearest>=len(self.density_grid_st_dir)] -= 2  
-                new_rho_grid_idx = self.density_grid_vscaled[new_idx_st_dir_nearest,idx_d_nearest[bad_pts],:]
-                st_rad_cum_dens[bad_pts] = self.cumulative_integral(new_rho_grid_idx, x=self.density_grid_st_rad, axis=1)
-                if np.any(st_rad_cum_dens[:,-1]==0.0):
-                    bad_pts = np.where(st_rad_cum_dens[:,-1]==0.0)
-                    new_idx_st_dir_nearest = idx_st_dir_nearest[bad_pts]-2
-                    new_rho_grid_idx = self.density_grid_vscaled[new_idx_st_dir_nearest,idx_d_nearest[bad_pts],:]
-                    st_rad_cum_dens[bad_pts] = self.cumulative_integral(new_rho_grid_idx, x=self.density_grid_st_rad, axis=1)
-                assert ~np.any(st_rad_cum_dens[:,-1]==0.0)
-            rand_pts = np.random.random(n_stars)*st_rad_cum_dens[:,-1]
-            near_pts_hi = np.minimum(np.maximum((st_rad_cum_dens <= rand_pts[:,None]).sum(axis=1),1),len(self.density_grid_st_rad)-1)
-            near_pts_lo = np.maximum(near_pts_hi-1,0)
-            near_pts_lo_dens = st_rad_cum_dens[range(n_stars),near_pts_lo]
-            lin_fac = np.nan_to_num((rand_pts - near_pts_lo_dens) / (st_rad_cum_dens[range(n_stars),near_pts_hi]-near_pts_lo_dens))
-            assert np.all(lin_fac<=1)
-            assert np.all(lin_fac>=0)
-            star_st_rad = (1-lin_fac)*self.density_grid_st_rad[near_pts_lo] + lin_fac*self.density_grid_st_rad[near_pts_hi]
-
-            # Get into physical coordinates
+            # Put into physical coordinates
             delta_l_rad = star_st_rad * np.sin(star_st_dir)
             delta_b_rad = star_st_rad * np.cos(star_st_dir)
 
         elif self.field_shape == 'box':
-            # Select distances
+
+            # First, select distances
+            # Use quadratic CDF inversion w/ density point + cumulative density information
+            #
+            # Set up cumulative density grid and select surrounding points for each
             d_cum_dens = self.cumulative_integral(self.density_int_l, x=self.density_grid_d_pts)
-            rand_pts = np.random.rand(n_stars)*d_cum_dens[-1]
-            d_kpc = np.interp(rand_pts, d_cum_dens, self.density_grid_d_pts)
+            rand_pts_d = np.random.rand(n_stars) * d_cum_dens[-1]
+            near_d_hi = np.clip(np.searchsorted(d_cum_dens, rand_pts_d), 1, len(self.density_grid_d_pts) - 1)
+            near_d_lo = near_d_hi - 1
+            d1 = self.density_grid_d_pts[near_d_lo]
+            d2 = self.density_grid_d_pts[near_d_hi]
+            cum_dens_d_lo = d_cum_dens[near_d_lo]
+            cum_dens_d_hi = d_cum_dens[near_d_hi]
+            rho1_d = self.density_int_l[near_d_lo]
+            rho2_d = self.density_int_l[near_d_hi]
+            cum_dens_d_diff = cum_dens_d_hi - cum_dens_d_lo
+            assert np.all(cum_dens_d_diff > 0.0), f"Density CDF must monotonically increase."
+            # Get the random point in cumulative density and invert
+            u_cell_d = np.clip((rand_pts_d - cum_dens_d_lo) / cum_dens_d_diff, 0.0, 1.0)
+            delta_rho_d = rho2_d - rho1_d
+            flat_mask_d = delta_rho_d==0
+            inside_sqrt_d = np.maximum(0.0, rho1_d**2 + u_cell_d * (rho2_d**2 - rho1_d**2))
+            frac_quad_d = (np.sqrt(inside_sqrt_d) - rho1_d) / np.where(flat_mask_d, 1.0, delta_rho_d)
+            frac_d = np.where(flat_mask_d, u_cell_d, frac_quad_d)
+            # Get the distance placement within the cell
+            d_kpc = d1 + frac_d * (d2 - d1)
 
-            # Select longitudes
-            idx_d_nearest = np.argmin(np.abs(self.density_grid_d_pts - d_kpc[:, None]), axis=1)
-            int_b_idx = self.density_int_b[:,idx_d_nearest]
-            l_cum_dens = self.cumulative_integral(int_b_idx, x=self.density_grid_dl_pts, axis=0)
-            if np.any(l_cum_dens[-1]==0.0):
-                # Deal with edge cases
-                bad_pts = np.where(l_cum_dens[-1]==0.0)
-                new_idx_d_nearest = idx_d_nearest[bad_pts]+1
-                new_idx_d_nearest[new_idx_d_nearest>=len(self.density_grid_d_pts)] -= 2
-                idx_d_nearest[bad_pts] = new_idx_d_nearest
-                new_int_b_idx = self.density_int_b[:,new_idx_d_nearest]
-                l_cum_dens[:,bad_pts] = self.cumulative_integral(new_int_b_idx, x=self.density_grid_dl_pts, axis=0)[:,None,:]
-                if np.any(l_cum_dens[-1]==0.0):
-                    bad_pts = np.where(l_cum_dens[-1]==0.0)
-                    new_idx_d_nearest = idx_d_nearest[bad_pts]-2
-                    idx_d_nearest[bad_pts] = new_idx_d_nearest
-                    new_int_b_idx = self.density_int_b[:,new_idx_d_nearest]
-                    l_cum_dens[:,bad_pts] = self.cumulative_integral(new_int_b_idx, x=self.density_grid_dl_pts, axis=0)[:,None,:]
-                assert ~np.any(l_cum_dens[-1]==0.0)
-            rand_pts = np.random.random(n_stars)*l_cum_dens[-1]
-            near_pts_hi = np.minimum(np.maximum((l_cum_dens < rand_pts).sum(axis=0),1),len(self.density_grid_dl_pts)-1)
-            near_pts_lo = np.maximum(near_pts_hi-1,0)
-            near_pts_lo_dens = l_cum_dens[near_pts_lo,range(n_stars)]
-            lin_fac = (rand_pts - near_pts_lo_dens) / (l_cum_dens[near_pts_hi,range(n_stars)]-near_pts_lo_dens)
-            assert ~np.any(np.isnan(lin_fac))
-            assert np.all(rand_pts>=near_pts_lo_dens)
-            assert np.all(rand_pts<=l_cum_dens[near_pts_hi,range(n_stars)])
+            # Second, select longitude offset
+            # Use quadratic CDF inversion w/ density point + cumulative density information
+            #
+            # Interpolate the density slices for the surrounding d_kpc
+            t_d = (d_kpc - d1) / (d2 - d1)
+            int_l_lo = self.density_int_b[:, near_d_lo]
+            int_l_hi = self.density_int_b[:, near_d_hi]
+            int_l_interp = (1.0 - t_d) * int_l_lo + t_d * int_l_hi  
+            # Set up cumulative density grid and select surrounding points for each
+            l_cum_dens = self.cumulative_integral(int_l_interp, x=self.density_grid_dl_pts, axis=0)
+            rand_pts_l = np.random.rand(n_stars) * l_cum_dens[-1, :]
+            near_l_hi = np.clip((l_cum_dens <= rand_pts_l[np.newaxis, :]).sum(axis=0), 1, len(self.density_grid_dl_pts) - 1)
+            near_l_lo = np.maximum(near_l_hi - 1, 0)
+            l1 = self.density_grid_dl_pts[near_l_lo]
+            l2 = self.density_grid_dl_pts[near_l_hi]
+            cum_dens_l_lo = l_cum_dens[near_l_lo, idx_stars]
+            cum_dens_l_hi = l_cum_dens[near_l_hi, idx_stars]
+            rho1_l = int_l_interp[near_l_lo, idx_stars]
+            rho2_l = int_l_interp[near_l_hi, idx_stars]
+            cum_dens_l_diff = cum_dens_l_hi - cum_dens_l_lo
+            assert np.all(cum_dens_l_diff > 0.0), f"Longitude CDF must monotonically increase."
+            # Get the random point in cumulative density and invert
+            u_cell_l = np.clip((rand_pts_l - cum_dens_l_lo) / cum_dens_l_diff, 0.0, 1.0)
+            delta_rho_l = rho2_l - rho1_l
+            flat_mask_l = delta_rho_l==0
+            inside_sqrt_l = np.maximum(0.0, rho1_l**2 + u_cell_l * (rho2_l**2 - rho1_l**2))
+            frac_quad_l = (np.sqrt(inside_sqrt_l) - rho1_l) / np.where(flat_mask_l, 1.0, delta_rho_l)
+            frac_l = np.where(flat_mask_l, u_cell_l, frac_quad_l)
+            # Get the longitude placement within the cell
+            delta_l_rad = l1 + frac_l * (l2 - l1)
 
-            delta_l_rad = (1-lin_fac)*self.density_grid_dl_pts[near_pts_lo] + lin_fac*self.density_grid_dl_pts[near_pts_hi]
+            # Third, select latitude offset
+            # Use quadratic CDF inversion w/ density point + cumulative density information
+            #
+            # Interpolate accounting for delta_l_rad and d_kpc
+            idx_l_hi = np.clip((self.density_grid_dl_pts < delta_l_rad[:, np.newaxis]).sum(axis=1), 1, len(self.density_grid_dl_pts) - 1)
+            idx_l_lo = np.maximum(idx_l_hi - 1, 0)
+            l_lo = self.density_grid_dl_pts[idx_l_lo]
+            l_hi = self.density_grid_dl_pts[idx_l_hi]
+            w_l = np.nan_to_num((delta_l_rad - l_lo) / (l_hi - l_lo))[:, np.newaxis]
+            w_d = t_d[:, np.newaxis]
+            rho_00 = self.density_grid_vscaled[idx_l_lo, near_d_lo, :]
+            rho_10 = self.density_grid_vscaled[idx_l_hi, near_d_lo, :]
+            rho_01 = self.density_grid_vscaled[idx_l_lo, near_d_hi, :]
+            rho_11 = self.density_grid_vscaled[idx_l_hi, near_d_hi, :]
+            rho_interp = ((1.0 - w_l) * (1.0 - w_d) * rho_00 +
+                           w_l * (1.0 - w_d) * rho_10 +
+                           (1.0 - w_l) * w_d * rho_01 +
+                           w_l * w_d * rho_11)
+            # Set up cumulative density grid and select surrounding points for each
+            b_cum_dens = self.cumulative_integral(rho_interp, x=self.density_grid_db_pts, axis=1)
 
-            # Select latitudes
-            idx_l_nearest = np.argmin(np.abs(self.density_grid_dl_pts-delta_l_rad[:, None]), axis=1)
-            rho_grid_idx = self.density_grid_vscaled[idx_l_nearest,idx_d_nearest,:]
-            b_cum_dens = self.cumulative_integral(rho_grid_idx, x=self.density_grid_db_pts, axis=1)
-            if np.any(b_cum_dens[:,-1]==0.0):
-                # Deal with edge cases
-                bad_pts = np.where(b_cum_dens[:,-1]==0.0)
-                new_idx_l_nearest = idx_l_nearest[bad_pts]+1
-                new_idx_l_nearest[new_idx_l_nearest>=len(self.density_grid_dl_pts)] -=2
-                new_rho_grid_idx = self.density_grid[new_idx_l_nearest,idx_d_nearest[bad_pts],:]
-                b_cum_dens[bad_pts] = self.cumulative_integral(new_rho_grid_idx, x=self.density_grid_db_pts, axis=1)
-                if np.any(b_cum_dens[:,-1]==0.0):
-                    bad_pts = np.where(b_cum_dens[:,-1]==0.0)
-                    new_idx_l_nearest = idx_l_nearest[bad_pts]-2
-                    new_rho_grid_idx = self.density_grid[new_idx_l_nearest,idx_d_nearest[bad_pts],:]
-                    b_cum_dens[bad_pts] = self.cumulative_integral(new_rho_grid_idx, x=self.density_grid_db_pts, axis=1)
-                assert ~np.any(b_cum_dens[:,-1]==0.0)
-            rand_pts = np.random.random(n_stars)*b_cum_dens[:,-1]
-            near_pts_hi = np.minimum(np.maximum((b_cum_dens <= rand_pts[:,None]).sum(axis=1),1),len(self.density_grid_db_pts)-1)
-            near_pts_lo = np.maximum(near_pts_hi-1,0)
-            near_pts_lo_dens = b_cum_dens[range(n_stars),near_pts_lo]
-            lin_fac = np.nan_to_num((rand_pts - near_pts_lo_dens) / (b_cum_dens[range(n_stars),near_pts_hi]-near_pts_lo_dens))
-            assert np.all(lin_fac<=1)
-            assert np.all(lin_fac>=0)
-            delta_b_rad = (1-lin_fac)*self.density_grid_db_pts[near_pts_lo] + lin_fac*self.density_grid_db_pts[near_pts_hi]
+            rand_pts_b = np.random.rand(n_stars) * b_cum_dens[:, -1]
+            near_b_hi = np.clip((b_cum_dens <= rand_pts_b[:, np.newaxis]).sum(axis=1), 1, len(self.density_grid_db_pts) - 1)
+            near_b_lo = np.maximum(near_b_hi - 1, 0)
+            b1 = self.density_grid_db_pts[near_b_lo]
+            b2 = self.density_grid_db_pts[near_b_hi]
+            cum_dens_b_lo = b_cum_dens[idx_stars, near_b_lo]
+            cum_dens_b_hi = b_cum_dens[idx_stars, near_b_hi]
+            rho1_b = rho_interp[idx_stars, near_b_lo]
+            rho2_b = rho_interp[idx_stars, near_b_hi]
+            cum_dens_b_diff = cum_dens_b_hi - cum_dens_b_lo
+            assert np.all(cum_dens_b_diff > 0.0), f"Latitude CDF must monotonically increase."
+            # Get the random point in cumulative density and invert
+            u_cell_b = np.clip((rand_pts_b - cum_dens_b_lo) / cum_dens_b_diff, 0.0, 1.0)
+            delta_rho_b = rho2_b - rho1_b
+            flat_mask_b = delta_rho_b==0
+            inside_sqrt_b = np.maximum(0.0, rho1_b**2 + u_cell_b * (rho2_b**2 - rho1_b**2))
+            frac_quad_b = (np.sqrt(inside_sqrt_b) - rho1_b) / np.where(flat_mask_b, 1.0, delta_rho_b)
+            frac_b = np.where(flat_mask_b, u_cell_b, frac_quad_b)
+            # Get the latitude placement within the cell
+            delta_b_rad = b1 + frac_b * (b2 - b1)
 
         # Convert from deltas from window center to real l & b
         star_l_rad, star_b_rad = self.rotate_00_to_lb(delta_l_rad, delta_b_rad)

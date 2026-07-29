@@ -14,7 +14,7 @@ import numpy as np
 from .. import const
 from ._kinematics import Kinematics
 from .. import default_sun
-from scipy.interpolate import LinearNDInterpolator
+from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
 class KinematicsFromGrid(Kinematics):
     """
@@ -39,14 +39,14 @@ class KinematicsFromGrid(Kinematics):
         # Open the file and create interpolators for rotational velocity and velocity dispersions
         dat = pd.read_csv(const.MOMENTS_DIR + '/' + moment_file,
             sep='\s+', comment='#')
-        self.interpolate_v_phi = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['v_phi'], fill_value=0.0, rescale=False)
-        self.interpolate_sigma_phi = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['sigma_phi'], fill_value=0.0, rescale=False)
-        self.interpolate_sigma_r = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['sigma_r'], fill_value=0.0, rescale=False)
-        self.interpolate_sigma_z = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['sigma_z'], fill_value=0.0, rescale=False)
+        self.interpolate_v_phi = ModifiedLinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
+            dat['v_phi'])
+        self.interpolate_sigma_phi = ModifiedLinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
+            dat['sigma_phi'])
+        self.interpolate_sigma_r = ModifiedLinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
+            dat['sigma_r'])
+        self.interpolate_sigma_z = ModifiedLinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
+            dat['sigma_z'])
         self.kinematics_func_name = 'kinematics_from_grid'
         self.sun = sun if sun is not None else default_sun
 
@@ -72,10 +72,10 @@ class KinematicsFromGrid(Kinematics):
         r, phi_rad, z = self.coord_trans.xyz_to_rphiz(x, y, z)
         absz = np.abs(z)
 
-        sigma_r = self.interpolate_sigma_r(list(zip(r,absz)))
-        sigma_phi = self.interpolate_sigma_phi(list(zip(r,absz)))
-        sigma_z = self.interpolate_sigma_z(list(zip(r,absz)))
-        v_rot = self.interpolate_v_phi(list(zip(r,absz)))
+        sigma_r = self.interpolate_sigma_r(np.column_stack([r,absz]))
+        sigma_phi = self.interpolate_sigma_phi(np.column_stack([r,absz]))
+        sigma_z = self.interpolate_sigma_z(np.column_stack([r,absz]))
+        v_rot = self.interpolate_v_phi(np.column_stack([r,absz]))
 
         # Draw random deviations from circular velocity
         dv_r = np.random.normal(0, sigma_r)
@@ -92,3 +92,20 @@ class KinematicsFromGrid(Kinematics):
         w = dv_z
 
         return u, v, w
+
+class ModifiedLinearNDInterpolator():
+    """
+    Use LinearNDInterpolator for points in the grid, and NearestNDInterpolator for those outside.
+    """
+    def __init__(self, points, values):
+        self.points = np.asarray(points)
+        self.values = np.asarray(values)
+        self.linear = LinearNDInterpolator(self.points, self.values, fill_value=np.nan, rescale=False)
+        self.nearest = NearestNDInterpolator(self.points, self.values, rescale=False)
+
+    def __call__(self, calc_points):
+        res = self.linear(calc_points)
+        bad_vals = np.isnan(res)
+        if np.any(bad_vals):
+            res[bad_vals]= self.nearest(calc_points[bad_vals])
+        return res
