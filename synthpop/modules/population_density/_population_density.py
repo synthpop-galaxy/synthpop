@@ -417,7 +417,7 @@ class PopulationDensity(ABC):
             # Get the random point in cumulative density and invert
             u_cell_d = np.clip((rand_pts_d - cum_dens_d_lo) / cum_dens_d_diff, 0.0, 1.0)
             delta_rho_d = rho2_d - rho1_d
-            flat_mask_d = np.abs(delta_rho_d) < 1e-12
+            flat_mask_d = delta_rho_d==0.0
             inside_sqrt_d = np.maximum(0.0, rho1_d**2 + u_cell_d * (rho2_d**2 - rho1_d**2))
             frac_quad_d = (np.sqrt(inside_sqrt_d) - rho1_d) / np.where(flat_mask_d, 1.0, delta_rho_d)
             frac_d = np.where(flat_mask_d, u_cell_d, frac_quad_d)
@@ -448,7 +448,7 @@ class PopulationDensity(ABC):
             # Get the random point in cumulative density and invert
             u_cell_dir = np.clip((rand_pts_dir - cum_dens_dir_lo) / cum_dens_dir_diff, 0.0, 1.0)
             delta_rho_dir = rho2_dir - rho1_dir
-            flat_mask_dir = np.abs(delta_rho_dir) < 1e-12
+            flat_mask_dir = delta_rho_dir==0.0
             inside_sqrt_dir = np.maximum(0.0, rho1_dir**2 + u_cell_dir * (rho2_dir**2 - rho1_dir**2))
             frac_quad_dir = (np.sqrt(inside_sqrt_dir) - rho1_dir) / np.where(flat_mask_dir, 1.0, delta_rho_dir)
             frac_dir = np.where(flat_mask_dir, u_cell_dir, frac_quad_dir)
@@ -489,7 +489,7 @@ class PopulationDensity(ABC):
             # Get the random point in cumulative density and invert
             u_cell_rad = np.clip((rand_pts_rad - cum_dens_rad_lo) / cum_dens_rad_diff, 0.0, 1.0)
             delta_rho_rad = rho2_rad - rho1_rad
-            flat_mask_rad = np.abs(delta_rho_rad) < 1e-12
+            flat_mask_rad = delta_rho_rad==0.0
             inside_sqrt_rad = np.maximum(0.0, rho1_rad**2 + u_cell_rad * (rho2_rad**2 - rho1_rad**2))
             frac_quad_rad = (np.sqrt(inside_sqrt_rad) - rho1_rad) / np.where(flat_mask_rad, 1.0, delta_rho_rad)
             frac_rad = np.where(flat_mask_rad, u_cell_rad, frac_quad_rad)

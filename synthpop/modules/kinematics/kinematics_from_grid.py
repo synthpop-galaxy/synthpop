@@ -96,6 +96,9 @@ class KinematicsFromGrid(Kinematics):
 class ModifiedLinearNDInterpolator():
     """
     Use LinearNDInterpolator for points in the grid, and NearestNDInterpolator for those outside.
+
+    This is just for edge cases where the density grid sampling for the window may occasionally place
+    a star just beyond the edge of the base input grid.
     """
     def __init__(self, points, values):
         self.points = np.asarray(points)
