@@ -529,7 +529,6 @@ def generate_effective_wavelengths_json():
             if f.split('_')[-1] != 'CaHK': f_str +='S'
             if f.split('_')[-1]=='new': f_str += '2'
         
-        
         try:
             filt_id = f"{pre_str}/{f_str}"
             all_tab = SvoFps.get_filter_metadata(filt_id)
@@ -545,3 +544,57 @@ def generate_effective_wavelengths_json():
     with open(f"{EVOLUTION_DIR}/mist_effective_wavelengths.json", "w") as outfile:
         outfile.write(json_object)
     return
+
+def get_spisea_obs_str(filt):
+    """
+    Get SPISEA/pysynphot obs_str for filter if available
+    """
+    from spisea.synthetic import get_obs_str, get_filter_info
+
+    with open(f'{EVOLUTION_DIR}/mist_columns.json') as f:
+        mist_columns = json.load(f)
+
+    with open(f'{EVOLUTION_DIR}/spisea_filters.json') as f:
+        spisea_filters = json.load(f)
+
+    mist_filter_set = mist_columns[filt]
+    # Try generic method
+    try:
+        str_spl = filt.split('_')
+        try_str = '_'.join(['m']+[substr.lower() for substr in str_spl[:-1]]+[str_spl[-1]])
+        f_str = get_obs_str(try_str)
+        get_filter_info(f_str)
+        return f_str
+    except:
+        pass
+
+    # Handle special cases
+    name_subs = {"LSST":'rubin', "PS":'ps1', "UKIDSS":'ukirt'}
+    if str_spl[0] in name_subs:
+        f_str = name_subs[str_spl[0]]+','+str_spl[-1]
+    elif mist_filter_set.startswith('HST_'):
+        str_spl[1] = str_spl[1]+'1'
+        f_str = ','.join([substr.lower() for substr in str_spl[:-1]]+[str_spl[-1]])
+    elif mist_filter_set=='JWST':
+        f_str = 'jwst,'+filt
+    elif mist_filter_set=='WFIRST':
+        f_str = 'roman,wfi,F'+filt[1:]
+    elif mist_filter_set=='HSC':
+        f_str = 'subaru,'+f_str
+    elif str_spl[0]=='Gaia':
+        str_spl = [str_spl[0], str_spl[2], str_spl[1]]
+        if str_spl[2] != 'G':
+            str_spl[2] = 'G'+str_spl[2].lower()
+        if str_spl[1] == 'DR2Rev':
+            str_spl[1] = 'dr2_rev'
+        f_str = ','.join([substr.lower() for substr in str_spl[:-1]]+[str_spl[-1]])
+    elif filt=='TESS':
+        f_str = 'tess,tess'
+    else:
+        raise ValueError(f"No corresponding SPISEA obs_str for filter {filt}")
+
+    try:
+        get_filter_info(f_str)
+        return f_str
+    except:
+        raise ValueError(f"No corresponding SPISEA obs_str for filter {filt}, {f_str}")

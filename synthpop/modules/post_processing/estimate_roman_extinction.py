@@ -1,6 +1,6 @@
 """
-Postprocessing module to improve the estimation of F146 wide-filter extinction
-with a polynomial function of A_Ks and narrower filter colors.
+Postprocessing module to improve the estimation extinction in photometric filters
+with a polynomial function of A_Ks and absolute colors.
 """
 
 __all__ = ["EstimateRomanExtinction", ]
@@ -26,22 +26,18 @@ class EstimateRomanExtinction(PostProcessing):
     ----------
     """
 
-    def __init__(self, model, logger, mag_sys='None', use_low_extinction=False, **kwargs):
+    def __init__(self, model, logger, mag_sys='None', **kwargs):
         super().__init__(model,logger, **kwargs)
         if mag_sys != 'AB':
-            raise ValueError('To use CorrectF146Extinction, magnitudes must be in AB. Confirm that you '
+            raise ValueError('To use the extinction correction, magnitudes must be in AB. Confirm that you '
                 'have converted to AB mags before using this module, then set this module\'s mag_sys ' 
-                'kwarg to \'AB\' before running. You can put the ConvertMistMags module before this '
-                'one in your post_processing_kwargs to do the conversion.')
+                'kwarg to \'AB\' before running. You can put the ConvertMistMags or ConvertSpiseaMags'
+                ' module before this one in your post_processing_kwargs to do the conversion.')
 
-        # Load up the Roman fit results
-        self.use_low_extinction = use_low_extinction
+        # Load up the fit results
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        with open(f'{current_dir}/roman_fits_abs_AKs5.json', 'r') as f:
-            self.roman_ext_fits = json.load(f)
-        with open(f'{current_dir}/roman_fits_abs_AKs1.json', 'r') as f:
-            self.roman_ext_fits_lowext = json.load(f)
-        self.roman_filter_list = ['f062', 'f087', 'f106', 'f129', 'f158', 'f184', 'f213', 'f146']
+        with open(f'{current_dir}/extinction_correction_table.dat', 'r') as f:
+            self.ext_cor_tab = json.load(f)
 
     @staticmethod
     def generic_extinction_polynomial(AKs_C, coeffs, order):
@@ -104,12 +100,12 @@ class EstimateRomanExtinction(PostProcessing):
             entries of '<filter>':[<ext_star1>, <ext_star2>, ...] for each filter
         """
         # Select the appropriate fit_dict
-        fit_dict = self.roman_ext_fits
-        if self.use_low_extinction and np.all(catalog['A_Ks']<=1):
-            fit_dict = self.roman_ext_fits_lowext
-        elif self.use_low_extinction:
-            warnings.warn("low_extinction set to True, but some A_Ks > 1. "
-                          "switching to 0 <= A_Ks <= 5 fit.")
+        # fit_dict = self.roman_ext_fits
+        # if self.use_low_extinction and np.all(catalog['A_Ks']<=1):
+        #     fit_dict = self.roman_ext_fits_lowext
+        # elif self.use_low_extinction:
+        #     warnings.warn("low_extinction set to True, but some A_Ks > 1. "
+        #                   "switching to 0 <= A_Ks <= 5 fit.")
         
         # Iterate over the filters
         result = {}
@@ -141,16 +137,21 @@ class EstimateRomanExtinction(PostProcessing):
         """
         Run the process
         """
-        if 'W146' in systems:
-            if "2MASS_Ks" in systems:
-                systems.loc[:,"K213"] = systems['2MASS_Ks'] + 1.834505
-                companions.loc[:,"K213"] = companions['2MASS_Ks'] + 1.834505
-                warnings.warn("K213 missing from MISTv1, estimating from 2MASS_Ks "
-                    "assuming 2MASS mags are in Vegamag")
-                self.model.parms.eff_wavelengths['K213'] = self.model.parms.eff_wavelengths['2MASS_Ks']
-            mag_cols = ["R062", "Z087", "Y106", "J129", "H158", "F184", "K213", "W146"]
-        elif 'm_roman_f146' in systems:
-            mag_cols = [f'm_roman_{f}' for f in self.roman_filter_list]
+        # if 'W146' in systems:
+        #     if "2MASS_Ks" in systems:
+        #         systems.loc[:,"K213"] = systems['2MASS_Ks'] + 1.834505
+        #         companions.loc[:,"K213"] = companions['2MASS_Ks'] + 1.834505
+        #         warnings.warn("K213 missing from MISTv1, estimating from 2MASS_Ks "
+        #             "assuming 2MASS mags are in Vegamag")
+        #         self.model.parms.eff_wavelengths['K213'] = self.model.parms.eff_wavelengths['2MASS_Ks']
+        #     mag_cols = ["R062", "Z087", "Y106", "J129", "H158", "F184", "K213", "W146"]
+        # elif 'm_roman_f146' in systems:
+        #     mag_cols = [f'm_roman_{f}' for f in self.roman_filter_list]
+        if self.model.parms.star_generator=='SpiseaGenerator':
+            from spisea import synthetic
+            filter_list = [synthetic.get_obs_str(f) for f in self.model.populations[0].bands]
+        else:
+
 
         # Get and convert extinction to A_Ks if needed
         A_Ks = systems[self.model.populations[0].extinction.A_or_E_type].to_numpy()
