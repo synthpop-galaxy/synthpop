@@ -38,6 +38,8 @@ class density_from_grid(PopulationDensity):
             sep='\s+', comment='#')
         super().__init__(max_gc_dist=np.max(dat['r']), **kwargs)
         rho = dat.pivot(index='r', columns='z', values='rho')
+        self.required_grid_resolution = np.minimum(np.min(np.diff(rho.index.to_numpy())),
+                                np.min(np.diff(rho.columns.to_numpy())))
         self.piv = rho
         self.interpolate_rho = RegularGridInterpolator((rho.index.to_numpy(),
             rho.columns.to_numpy()), rho.to_numpy(), 

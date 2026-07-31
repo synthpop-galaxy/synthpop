@@ -91,8 +91,8 @@ class PopulationDensity(ABC):
         self.lb_radius_deg = None
         self.l_length_deg = None
         self.b_length_deg = None
-        self.grid_resolution_base = grid_resolution
-        self.grid_resolution = grid_resolution
+        self.required_grid_resolution = grid_resolution
+        self.initial_grid_resolution = np.maximum(0.01, grid_resolution)
 
         # Set limits for where we need to look for stars
         self.max_gc_dist = max_gc_dist
@@ -226,7 +226,7 @@ class PopulationDensity(ABC):
                 self.l_length_deg = field_scale_deg
                 self.b_length_deg = field_scale_deg
         self.max_distance = max_distance
-        self.grid_resolution = self.grid_resolution_base
+        self.current_grid_resolution = self.initial_grid_resolution
 
         if self.logger is not None:
             self.logger.debug("setting up density grid")
@@ -239,34 +239,55 @@ class PopulationDensity(ABC):
             d_max = self.sun.gal_dist+self.max_gc_dist*1.05
 
         if self.field_shape == 'circle':
-            self.make_density_grid_circle(d_min, d_max)
-            # Adjust distance grid if relevant
+            self.make_density_grid_circle(d_min, d_max, 0, 2*np.pi, 0, self.lb_radius_deg*np.pi/180)
             if self.total_mass>0.0:
+                # Adjust distance grid for zero density regions if relevant
                 nz_indices = np.flatnonzero(self.density_int_st_dir)
                 dmin_idx = np.maximum(nz_indices[0]-1, 0)
                 dmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_d_pts))
-                while dmin_idx>0 or dmax_idx<(len(self.density_grid_d_pts)-1):
-                    self.grid_resolution =  np.maximum(self.grid_resolution/3,
-                                                self.grid_resolution* (dmax_idx-dmin_idx)/len(self.density_grid_d_pts))
-                    self.make_density_grid_circle(self.density_grid_d_pts[dmin_idx], self.density_grid_d_pts[dmax_idx])
+                nz_indices = np.flatnonzero(trapezoid(self.density_int_st_rad, x=self.density_grid_d_pts, axis=1))
+                stdir_min_idx = np.maximum(nz_indices[0]-1, 0)
+                stdir_max_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_st_dir)-1)
+                nz_indices = np.flatnonzero(trapezoid(trapezoid(self.density_grid_vscaled, x=self.density_grid_st_dir, 
+                                                axis=0), x=self.density_grid_d_pts, axis=0))
+                strad_min_idx = np.maximum(nz_indices[0]-1, 0)
+                strad_max_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_st_rad)-1)
+                while dmin_idx>0 or dmax_idx<(len(self.density_grid_d_pts)-1) \
+                      or stdir_min_idx>0 or stdir_max_idx<(len(self.density_grid_st_dir)-1)  \
+                      or strad_min_idx>0 or strad_max_idx<(len(self.density_grid_st_rad)-1)  :
+                    self.current_grid_resolution =  np.maximum(self.current_grid_resolution/3,
+                                                self.current_grid_resolution*(dmax_idx-dmin_idx)/len(self.density_grid_d_pts))
+                    self.make_density_grid_circle(self.density_grid_d_pts[dmin_idx], self.density_grid_d_pts[dmax_idx],
+                                                  self.density_grid_st_dir[stdir_min_idx], self.density_grid_st_dir[stdir_max_idx],
+                                                  self.density_grid_st_rad[strad_min_idx], self.density_grid_st_rad[strad_max_idx])
                     nz_indices = np.flatnonzero(self.density_int_st_dir)
                     dmin_idx = np.maximum(nz_indices[0]-1, 0)
                     dmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_d_pts))
+                    nz_indices = np.flatnonzero(trapezoid(self.density_int_st_rad, x=self.density_grid_d_pts, axis=1))
+                    stdir_min_idx = np.maximum(nz_indices[0]-1, 0)
+                    stdir_max_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_st_dir)-1)
+                    nz_indices = np.flatnonzero(trapezoid(trapezoid(self.density_grid_vscaled, x=self.density_grid_st_dir, 
+                                                    axis=0), x=self.density_grid_d_pts, axis=0))
+                    strad_min_idx = np.maximum(nz_indices[0]-1, 0)
+                    strad_max_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_st_rad)-1)
                     #pdb.set_trace()
-                    # TODO probably wanna get the zoom-in on angular selection working here too.........
+                # If needed, zoom to required resolution
+                if self.current_grid_resolution>self.required_grid_resolution:
+                    self.current_grid_resolution = self.required_grid_resolution
+                    self.make_density_grid_circle(self.density_grid_d_pts[dmin_idx], self.density_grid_d_pts[dmax_idx],
+                                                  self.density_grid_st_dir[stdir_min_idx], self.density_grid_st_dir[stdir_max_idx],
+                                                  self.density_grid_st_rad[strad_min_idx], self.density_grid_st_rad[strad_max_idx])
 
         elif self.field_shape == 'box':
             dl_min, dl_max = -self.l_length_deg/2 * np.pi/180, self.l_length_deg/2 * np.pi/180
             db_min, db_max = -self.b_length_deg/2 * np.pi/180, self.b_length_deg/2 * np.pi/180
             # Create the initial density grid
             self.make_density_grid_box(d_min, d_max, dl_min, dl_max, db_min, db_max)
-            # Adaptively adjust distance grid if relevant
             if (self.total_mass>0.0):
+                # Adaptively adjust distance grid for zero density regions if relevant
                 nz_indices = np.flatnonzero(self.density_int_l)
                 dmin_idx = np.maximum(nz_indices[0]-1, 0)
                 dmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_d_pts)-1)
-                self.grid_resolution =  np.maximum(self.grid_resolution/3,
-                                            self.grid_resolution*(dmax_idx-dmin_idx)/len(self.density_grid_d_pts))
                 nz_indices = np.flatnonzero(trapezoid(self.density_int_b, x=self.density_grid_d_pts, axis=1))
                 lmin_idx = np.maximum(nz_indices[0]-1, 0)
                 lmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_dl_pts)-1)
@@ -277,14 +298,14 @@ class PopulationDensity(ABC):
                 while dmin_idx>0 or dmax_idx<(len(self.density_grid_d_pts)-1) \
                         or lmin_idx>0 or lmax_idx<(len(self.density_grid_dl_pts)-1) \
                         or bmin_idx>0 or bmax_idx<(len(self.density_grid_db_pts)-1):
+                    self.current_grid_resolution =  np.maximum(self.current_grid_resolution/3,
+                                    self.current_grid_resolution*(dmax_idx-dmin_idx)/len(self.density_grid_d_pts))
                     self.make_density_grid_box(self.density_grid_d_pts[dmin_idx], self.density_grid_d_pts[dmax_idx],
                                                self.density_grid_dl_pts[lmin_idx], self.density_grid_dl_pts[lmax_idx],
                                                self.density_grid_db_pts[bmin_idx], self.density_grid_db_pts[bmax_idx])
                     nz_indices = np.flatnonzero(self.density_int_l)
                     dmin_idx = np.maximum(nz_indices[0]-1, 0)
                     dmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_d_pts)-1)
-                    self.grid_resolution =  np.maximum(self.grid_resolution/3,
-                                                self.grid_resolution*(dmax_idx-dmin_idx)/len(self.density_grid_d_pts))
                     nz_indices = np.flatnonzero(trapezoid(self.density_int_b, x=self.density_grid_d_pts, axis=1))
                     lmin_idx = np.maximum(nz_indices[0]-1, 0)
                     lmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_dl_pts)-1)
@@ -292,22 +313,32 @@ class PopulationDensity(ABC):
                                                     axis=0), x=self.density_grid_d_pts, axis=0))
                     bmin_idx = np.maximum(nz_indices[0]-1, 0)
                     bmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_db_pts)-1)
+                # If needed, get into required resolution
+                if self.current_grid_resolution>self.required_grid_resolution:
+                    self.current_grid_resolution = self.required_grid_resolution
+                    self.make_density_grid_box(self.density_grid_d_pts[dmin_idx], self.density_grid_d_pts[dmax_idx],
+                                               self.density_grid_dl_pts[lmin_idx], self.density_grid_dl_pts[lmax_idx],
+                                               self.density_grid_db_pts[bmin_idx], self.density_grid_db_pts[bmax_idx])
 
-    def make_density_grid_circle(self, d_min, d_max):
+    def make_density_grid_circle(self, d_min, d_max, stdir_min, stdir_max, strad_min, strad_max):
         # Set resolution
-        grid_d_n_pts = int(np.ceil((d_max-d_min)/self.grid_resolution)) + 1
-        grid_d_n_pts = np.maximum(grid_d_n_pts, 50)
+        grid_d_n_pts = int(np.ceil((d_max-d_min)/self.current_grid_resolution)) + 1
+        grid_d_n_pts = np.maximum(grid_d_n_pts, 51)
         self.density_grid_d_pts = np.linspace(d_min, d_max, grid_d_n_pts)
 
         # Set up a grid
-        grid_st_dir_n_pts = int(np.ceil(np.minimum(10.0,d_max)*2*np.pi*self.lb_radius_deg*np.pi/180/self.grid_resolution))
+        res_dist = np.minimum(self.sun.gal_dist,d_max)
+        grid_st_dir_n_pts = int(np.ceil(res_dist*strad_max/self.current_grid_resolution))
         grid_st_dir_n_pts = np.maximum(grid_st_dir_n_pts, 50)
-        self.density_grid_st_dir = np.linspace(0, 2 * np.pi, grid_st_dir_n_pts)
-        grid_st_rad_n_pts = int(np.ceil(np.minimum(10.0,d_max)*self.lb_radius_deg*np.pi/180/self.grid_resolution))
+        self.density_grid_st_dir = np.linspace(stdir_min, stdir_max, grid_st_dir_n_pts)
+        grid_st_rad_n_pts = int(np.ceil(res_dist*(strad_max-strad_min)/self.current_grid_resolution))
         grid_st_rad_n_pts = np.maximum(grid_st_rad_n_pts,25)
-        self.density_grid_st_rad = np.linspace(0,np.sqrt(self.lb_radius_deg*np.pi/180),grid_st_rad_n_pts)**2
+        self.density_grid_st_rad = np.linspace(np.sqrt(strad_min), np.sqrt(strad_max), grid_st_rad_n_pts)**2
         d_grid, st_dir_grid, st_rad_grid = np.meshgrid(self.density_grid_d_pts, self.density_grid_st_dir, 
                                              self.density_grid_st_rad)
+        self.current_grid_resolution = np.max([(self.density_grid_d_pts[1]-self.density_grid_d_pts[0]),
+                                            (self.density_grid_st_dir[1]-self.density_grid_st_dir[0])*strad_max*res_dist,
+                                            (self.density_grid_st_rad[-1]-self.density_grid_st_rad[-2])*res_dist])
         grid_shape = d_grid.shape
 
         # Get into physically meaningful coordinates
@@ -327,19 +358,23 @@ class PopulationDensity(ABC):
 
     def make_density_grid_box(self, d_min, d_max, dl_min, dl_max, db_min, db_max):
         # Set resolution
-        grid_d_n_pts = int(np.ceil((d_max-d_min)/self.grid_resolution))+1
+        grid_d_n_pts = int(np.ceil((d_max-d_min)/self.current_grid_resolution))+1
         grid_d_n_pts = np.maximum(grid_d_n_pts, 50)
         self.density_grid_d_pts = np.linspace(d_min, d_max, grid_d_n_pts)
 
         # Set up a grid
-        delta_l_rad_n_pts = int(np.ceil(np.minimum(10.0, d_max)*(dl_max-dl_min)/self.grid_resolution))
+        res_dist = np.minimum(self.sun.gal_dist,d_max)
+        delta_l_rad_n_pts = int(np.ceil(res_dist*(dl_max-dl_min)/self.current_grid_resolution))
         delta_l_rad_n_pts = np.maximum(40, delta_l_rad_n_pts)
-        delta_b_rad_n_pts = int(np.ceil(np.minimum(10.0, d_max)*(db_max-db_min)/self.grid_resolution))
+        delta_b_rad_n_pts = int(np.ceil(res_dist*(db_max-db_min)/self.current_grid_resolution))
         delta_b_rad_n_pts = np.maximum(40, delta_b_rad_n_pts)
         self.density_grid_dl_pts = np.linspace(dl_min, dl_max, delta_l_rad_n_pts)
         self.density_grid_db_pts = np.linspace(db_min, db_max, delta_b_rad_n_pts)
         d_grid, dl_grid, db_grid = np.meshgrid(self.density_grid_d_pts, self.density_grid_dl_pts, 
                                              self.density_grid_db_pts)
+        self.current_grid_resolution = np.max([(self.density_grid_d_pts[1]-self.density_grid_d_pts[0]),
+                                            (self.density_grid_dl_pts[1]-self.density_grid_dl_pts[0])*res_dist,
+                                            (self.density_grid_db_pts[1]-self.density_grid_db_pts[0])*res_dist])
         grid_shape = d_grid.shape
 
         # Get into physically meaningful coordinates
