@@ -9,7 +9,7 @@ __date__ = "2024-04-17"
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import LinearNDInterpolator
+from scipy.interpolate import LinearNDInterpolator, RegularGridInterpolator
 from ._population_density import PopulationDensity
 from .. import const
 
@@ -37,10 +37,14 @@ class density_from_grid(PopulationDensity):
         dat = pd.read_csv(const.MOMENTS_DIR + '/' + moment_file,
             sep='\s+', comment='#')
         super().__init__(max_gc_dist=np.max(dat['r']), **kwargs)
-        self.interpolate_rho = LinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['rho'], fill_value=0.0, rescale=False)
+        rho = dat.pivot(index='r', columns='z', values='rho')
+        self.piv = rho
+        self.interpolate_rho = RegularGridInterpolator((rho.index.to_numpy(),
+            rho.columns.to_numpy()), rho.to_numpy(), 
+            bounds_error=False, fill_value=0.0)
         self.density_unit = density_unit
         self.abs_z=abs_z
+        self.population_density_name = population_density_name
 
     def density(self, r, theta, z):
         if self.abs_z:

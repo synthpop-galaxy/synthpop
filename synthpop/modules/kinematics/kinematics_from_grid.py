@@ -1,6 +1,6 @@
 """
 Kinematic module that interpolates values from a grid. Created for NSD and NSC models
-tabulated from AGAMA, but can use other files with the same format.
+tabulated from AGAMA, but can use other files with the same regular grid format.
 """
 
 __all__ = ['KinematicsFromGrid']
@@ -14,7 +14,7 @@ import numpy as np
 from .. import const
 from ._kinematics import Kinematics
 from .. import default_sun
-from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
+from scipy.interpolate import RegularGridInterpolator
 
 class KinematicsFromGrid(Kinematics):
     """
@@ -39,14 +39,22 @@ class KinematicsFromGrid(Kinematics):
         # Open the file and create interpolators for rotational velocity and velocity dispersions
         dat = pd.read_csv(const.MOMENTS_DIR + '/' + moment_file,
             sep='\s+', comment='#')
-        self.interpolate_v_phi = ModifiedLinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['v_phi'])
-        self.interpolate_sigma_phi = ModifiedLinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['sigma_phi'])
-        self.interpolate_sigma_r = ModifiedLinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['sigma_r'])
-        self.interpolate_sigma_z = ModifiedLinearNDInterpolator(list(zip(dat['r'],dat['z'])), 
-            dat['sigma_z'])
+        v_phi = dat.pivot(index='r', columns='z', values='v_phi')
+        sigma_phi = dat.pivot(index='r', columns='z', values='sigma_phi')
+        sigma_r = dat.pivot(index='r', columns='z', values='sigma_r')
+        sigma_z = dat.pivot(index='r', columns='z', values='sigma_z')
+        self.interpolate_v_phi = RegularGridInterpolator((v_phi.index.to_numpy(),
+            v_phi.columns.to_numpy()), v_phi.to_numpy(),
+            bounds_error=False, fill_value=None)
+        self.interpolate_sigma_phi = RegularGridInterpolator((sigma_phi.index.to_numpy(),
+            sigma_phi.columns.to_numpy()), sigma_phi.to_numpy(), 
+            bounds_error=False, fill_value=None)
+        self.interpolate_sigma_r = RegularGridInterpolator((sigma_r.index.to_numpy(),
+            sigma_r.columns.to_numpy()), sigma_r.to_numpy(), 
+            bounds_error=False, fill_value=None)
+        self.interpolate_sigma_z = RegularGridInterpolator((sigma_z.index.to_numpy(),
+            sigma_z.columns.to_numpy()), sigma_z.to_numpy(), 
+            bounds_error=False, fill_value=None)
         self.kinematics_func_name = 'kinematics_from_grid'
         self.sun = sun if sun is not None else default_sun
 
@@ -93,22 +101,3 @@ class KinematicsFromGrid(Kinematics):
 
         return u, v, w
 
-class ModifiedLinearNDInterpolator():
-    """
-    Use LinearNDInterpolator for points in the grid, and NearestNDInterpolator for those outside.
-
-    This is just for edge cases where the density grid sampling for the window may occasionally place
-    a star just beyond the edge of the base input grid.
-    """
-    def __init__(self, points, values):
-        self.points = np.asarray(points)
-        self.values = np.asarray(values)
-        self.linear = LinearNDInterpolator(self.points, self.values, fill_value=np.nan, rescale=False)
-        self.nearest = NearestNDInterpolator(self.points, self.values, rescale=False)
-
-    def __call__(self, calc_points):
-        res = self.linear(calc_points)
-        bad_vals = np.isnan(res)
-        if np.any(bad_vals):
-            res[bad_vals]= self.nearest(calc_points[bad_vals])
-        return res
