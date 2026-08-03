@@ -52,4 +52,4 @@ class density_from_grid(PopulationDensity):
         if self.abs_z:
             z = np.abs(z)
 
-        return self.interpolate_rho(list(zip(r,z))) * 1e9
+        return self.interpolate_rho(np.column_stack([r,z])) * 1e9

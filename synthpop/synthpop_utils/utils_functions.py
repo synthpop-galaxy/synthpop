@@ -3,7 +3,8 @@ This file contains several utility functions.
 """
 
 __all__ = ["solidangle_to_half_cone_angle", "half_cone_angle_to_solidangle",
-            "rotation_matrix", "add_magnitudes", "combine_system_mags"]
+            "rotation_matrix", "add_magnitudes", "combine_system_mags",
+            "subtract_magnitudes", "get_primary_mags"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 
 import numpy as np
@@ -86,13 +87,12 @@ def add_magnitudes(mags):
     return mag_sum
     
 def subtract_magnitudes(mag_sum, mag):
-    #mags = np.array(mag)
     fluxes = np.nan_to_num(10**(-0.4*mag))
     flux_sum = np.nan_to_num(10**(-0.4*mag_sum))
     with np.errstate(divide='ignore', invalid='ignore'):
         mag_diff = -2.5*np.log10(flux_sum - fluxes)
     mag_diff[np.isinf(mag_diff)] = np.nan
-    mag_diff[np.isclose(mag_sum.to_numpy(), mag, equal_nan=True)] = np.nan
+    mag_diff[np.isclose(mag_sum, mag, equal_nan=True)] = np.nan
 
     return mag_diff
 
@@ -109,5 +109,5 @@ def get_primary_mags(df, comp_df, filters):
     primary_idxs = df.index[df['n_companions']>0]
     for band in filters:
         comp_mags = comps_gb[band].apply(add_magnitudes).to_numpy()
-        df.loc[primary_idxs,band] = subtract_magnitudes(df.loc[primary_idxs,band], comp_mags)
+        df.loc[primary_idxs,band] = subtract_magnitudes(df.loc[primary_idxs,band].to_numpy(), comp_mags)
     return df

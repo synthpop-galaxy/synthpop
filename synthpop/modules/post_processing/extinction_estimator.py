@@ -15,10 +15,10 @@ import os.path
 import json
 import warnings
 import pdb
+from astropy.table import Table
 from ...synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
 
-
-class EstimateRomanExtinction(PostProcessing):
+class ExtinctionEstimator(PostProcessing):
     """
     Postprocessing module to apply a correction to F146 extinction
     
@@ -36,8 +36,19 @@ class EstimateRomanExtinction(PostProcessing):
 
         # Load up the fit results
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        with open(f'{current_dir}/extinction_correction_table.dat', 'r') as f:
-            self.ext_cor_tab = json.load(f)
+        ext_cor_tab = Table.read(f'{current_dir}/extinction_correction_table.dat', format='ascii.mrt')
+        ext_cor_tab = ext_cor_tab.filled(999)
+        self.fit_dict = {}
+        color_cols = [col for col in ext_cor_tab.colnames if col.startswith('Color')]
+        a_cols = [col for col in ext_cor_tab.colnames if col.startswith('a_')]
+        coeff_cols = [col for col in ext_cor_tab.colnames if (col[:2] in ['a_', 'b_'])]
+        self.fit_order = len(a_cols)-1
+        for i in range(len(ext_cor_tab)):
+            filt = ext_cor_tab['Filter'][i]
+            self.fit_dict[filt] = {}
+            self.fit_dict[filt]['colors'] = [ext_cor_tab[col][i] for col in color_cols if (ext_cor_tab[col][i]!="999")]
+            self.fit_dict[filt]['order'] = self.fit_order
+            self.fit_dict[filt]['coefficients'] = [ext_cor_tab[col][i] for col in coeff_cols if ~(ext_cor_tab[col][i]==999.0)]
 
     @staticmethod
     def generic_extinction_polynomial(AKs_C, coeffs, order):
@@ -109,9 +120,9 @@ class EstimateRomanExtinction(PostProcessing):
         
         # Iterate over the filters
         result = {}
-        for filt in self.roman_filter_list:
+        for filt in self.filter_list:
             filt_valid = (filt in catalog)
-            filt_fit = fit_dict[filt]
+            filt_fit = self.fit_dict[filt]
             colors = filt_fit['colors']
             coeffs = filt_fit['coefficients']
             order = filt_fit['order']
@@ -119,7 +130,7 @@ class EstimateRomanExtinction(PostProcessing):
 
             columns = [catalog['A_Ks']]
             for c in colors:
-                f1,f2 = c.split('_')
+                f1,f2,_ = c.split('-')
                 filt_valid *= (f1 in catalog)
                 filt_valid *= (f2 in catalog)
                 if filt_valid:
@@ -137,21 +148,32 @@ class EstimateRomanExtinction(PostProcessing):
         """
         Run the process
         """
-        # if 'W146' in systems:
-        #     if "2MASS_Ks" in systems:
-        #         systems.loc[:,"K213"] = systems['2MASS_Ks'] + 1.834505
-        #         companions.loc[:,"K213"] = companions['2MASS_Ks'] + 1.834505
-        #         warnings.warn("K213 missing from MISTv1, estimating from 2MASS_Ks "
-        #             "assuming 2MASS mags are in Vegamag")
-        #         self.model.parms.eff_wavelengths['K213'] = self.model.parms.eff_wavelengths['2MASS_Ks']
-        #     mag_cols = ["R062", "Z087", "Y106", "J129", "H158", "F184", "K213", "W146"]
-        # elif 'm_roman_f146' in systems:
-        #     mag_cols = [f'm_roman_{f}' for f in self.roman_filter_list]
+
+        # Catch case where we don't have K213 and need to swap in 2MASS_Ks
+        if 'W146' in systems:
+            if "2MASS_Ks" in systems:
+                systems.loc[:,"K213"] = systems['2MASS_Ks'] + 1.834505
+                companions.loc[:,"K213"] = companions['2MASS_Ks'] + 1.834505
+                warnings.warn("K213 missing from MISTv1, estimating from 2MASS_Ks "
+                    "assuming 2MASS mags are in Vegamag")
+                self.model.parms.eff_wavelengths['K213'] = self.model.parms.eff_wavelengths['2MASS_Ks']
+            self.model.parms.bands = ["R062", "Z087", "Y106", "J129", "H158", "F184", "K213", "W146"]
+
+        # Set up filter sets
         if self.model.parms.star_generator=='SpiseaGenerator':
             from spisea import synthetic
-            filter_list = [synthetic.get_obs_str(f) for f in self.model.populations[0].bands]
+            self.full_filter_list = [synthetic.get_obs_str(f).replace(',','_') for f in self.model.parms.bands]
         else:
-
+            from ..evolution.mist import get_spisea_obs_str
+            self.full_filter_list = [get_spisea_obs_str(f).replace(',','_')  for f in self.model.parms.bands]
+        self.correct_mag_cols = self.model.parms.bands
+        self.filter_list = self.full_filter_list
+        self.filter_list = [f for f in self.full_filter_list if (f in self.fit_dict.keys())]
+        if len(self.filter_list)<len(self.filter_list):
+            not_in_cor_list = [f for f in self.full_filter_list if (f not in self.fit_dict.keys())]
+            warnings.warn(f"Filters {not_in_cor_list} do not have tabulated extinction"
+                " corrections and will use the default effective wavelength method.")
+            self.correct_mag_cols = [self.correct_mag_cols[i] for i in range(len(self.correct_mag_cols)) if (self.filter_list[i] in in_cor_list)]
 
         # Get and convert extinction to A_Ks if needed
         A_Ks = systems[self.model.populations[0].extinction.A_or_E_type].to_numpy()
@@ -162,31 +184,21 @@ class EstimateRomanExtinction(PostProcessing):
 
         # Do systems in normal case
         if (companions is None) or (not self.model.parms.combine_system_mags):
-            # Get absolute mags if needed
-            if self.model.parms.obsmag:
-                # Convert needed mags back to absolute
-                for i,f in enumerate(mag_cols):
-                    if f in systems:
-                        ext_est_dict[self.roman_filter_list[i]] = (systems[f].to_numpy() - 
-                                5*np.log10(100*systems['Dist'].to_numpy()) - \
-                                self.model.populations[0].extinction.Alambda_Amap(
-                                    self.model.parms.eff_wavelengths[f]) * \
-                                systems[self.model.populations[0].extinction.A_or_E_type].to_numpy())
-                    else:
-                        warnings.warn(f"Column {f} not found in systems, some extinction corrections "
-                            "will not be estimated.")
-            else:
-                for i,f in enumerate(mag_cols):
-                    if f in systems:
-                        ext_est_dict[self.roman_filter_list[i]] = systems[f].to_numpy()
-                    else:
-                        warnings.warn(f"Column {f} not found in systems, some extinction corrections "
-                            "will not be estimated.")
+            # Get absolute mags for extinction estimator
+            for i,f in enumerate(self.model.parms.bands):
+                if self.model.parms.obsmag:
+                    ext_est_dict[self.full_filter_list[i]] = (systems[f].to_numpy() - 
+                        5*np.log10(100*systems['Dist'].to_numpy()) - \
+                        self.model.populations[0].extinction.Alambda_Amap(
+                            self.model.parms.eff_wavelengths[f]) * \
+                        systems[self.model.populations[0].extinction.A_or_E_type].to_numpy())
+                else:
+                    ext_est_dict[self.full_filter_list[i]] = systems[f].to_numpy()
 
             # Calculate extinction in the filters from the A_Ks and absolute colors
             ext_ests = self.get_roman_extinction_sim(ext_est_dict)
-            for i,f in enumerate(self.roman_filter_list):
-                sp_f = mag_cols[i]
+            for i,f in enumerate(self.filter_list):
+                sp_f = self.correct_mag_cols[i]
                 if not np.all(np.isnan(ext_ests['A_'+f])):
                     systems.loc[:,f"A_{sp_f}"] = ext_ests['A_'+f]
                     if self.model.parms.obsmag:
@@ -203,28 +215,23 @@ class EstimateRomanExtinction(PostProcessing):
             A_Ks_series = pd.Series(A_Ks, index=systems['system_idx'].to_numpy())
             ext_est_dict['A_Ks'] = A_Ks_series[companions['system_idx'].to_numpy()]
             Dist_series = pd.Series(systems['Dist'].to_numpy(), index=systems['system_idx'].to_numpy())
-            # Get absolute mags if needed
-            if self.model.parms.obsmag:
-                # Convert needed mags back to absolute
-                for i,f in enumerate(mag_cols):
-                    if f in companions:
+            # Convert needed mags back to absolute
+            for i,f in enumerate(self.model.parms.bands):
+                if f in companions:
+                    if self.model.parms.obsmag:
                         abs_mag_f = (companions[f].to_numpy() - 
                                 5*np.log10(100*Dist_series[companions['system_idx'].to_numpy()].to_numpy()) - \
                                 self.model.populations[0].extinction.Alambda_Amap(
                                     self.model.parms.eff_wavelengths[f]) * \
                                 A_Ks_series[companions['system_idx'].to_numpy()].to_numpy())
-                        ext_est_dict[self.roman_filter_list[i]] = abs_mag_f
-                        comps_abs_mags.loc[:,self.roman_filter_list[i]] = abs_mag_f
-            else:
-                for i,f in enumerate(mag_cols):
-                    if f in companions:
+                    else:
                         abs_mag_f = companions[f].to_numpy()
-                        ext_est_dict[self.roman_filter_list[i]] = abs_mag_f
-                        comps_abs_mags.loc[:,self.roman_filter_list[i]] = abs_mag_f
+                    ext_est_dict[self.full_filter_list[i]] = abs_mag_f
+                    comps_abs_mags.loc[:,self.full_filter_list[i]] = abs_mag_f
 
             ext_ests = self.get_roman_extinction_sim(ext_est_dict)
-            for i,f in enumerate(self.roman_filter_list):
-                sp_f = mag_cols[i]
+            for i,f in enumerate(self.filter_list):
+                sp_f = self.correct_mag_cols[i]
                 if not np.all(np.isnan(ext_ests['A_'+f])):
                     companions.loc[:,f"A_{sp_f}"] = ext_ests['A_'+f]
                     if self.model.parms.obsmag:
@@ -235,66 +242,38 @@ class EstimateRomanExtinction(PostProcessing):
 
         # Do combined mag case systems table
         if (companions is not None) and (self.model.parms.combine_system_mags):
-            combo_abs_mags = systems[['system_idx','n_companions', 'A_Ks']].copy()
+            prim_abs_mags = systems[['system_idx','n_companions', 'A_Ks']].copy()
+            # Get absolute mags, calculating if needed
+            for i,f in enumerate(self.model.parms.bands):
+                if self.model.parms.obsmag:
+                    abs_mag_f = (systems[f].to_numpy() - 
+                        5*np.log10(100*systems['Dist'].to_numpy()) - \
+                        self.model.populations[0].extinction.Alambda_Amap(
+                            self.model.parms.eff_wavelengths[f]) * \
+                        systems[self.model.populations[0].extinction.A_or_E_type].to_numpy())
+                else:
+                    abs_mag_f = systems[f].to_numpy()
+                prim_abs_mags.loc[:,self.full_filter_list[i]] = abs_mag_f
+            # Subtract the companion mags if needed
             if self.model.parms.combine_system_mags:
-                prim_abs_mags = systems[['system_idx','n_companions', 'A_Ks']].copy()
-            # Get absolute mags if needed
-            if self.model.parms.obsmag:
-                # Convert needed mags back to absolute
-                for i,f in enumerate(mag_cols):
-                    if f in systems:
-                        abs_mag_f = (systems[f].to_numpy() - 
-                                5*np.log10(100*systems['Dist'].to_numpy()) - \
-                                self.model.populations[0].extinction.Alambda_Amap(
-                                    self.model.parms.eff_wavelengths[f]) * \
-                                systems[self.model.populations[0].extinction.A_or_E_type].to_numpy())
-                        if self.model.parms.combine_system_mags:
-                            combo_abs_mags.loc[:,self.roman_filter_list[i]] = abs_mag_f
-                        else:
-                            prim_abs_mags.loc[:,self.roman_filter_list[i]] = abs_mag_f
-                    else:
-                        warnings.warn(f"Column {f} not found in systems, some extinction corrections "
-                            "will not be estimated.")
-            else:
-                for i,f in enumerate(mag_cols):
-                    if f in systems:
-                        abs_mag_f = systems[f].to_numpy()
-                        if self.model.parms.combine_system_mags:
-                            combo_abs_mags.loc[:,self.roman_filter_list[i]] = abs_mag_f
-                        else:
-                            prim_abs_mags.loc[:,self.roman_filter_list[i]] = abs_mag_f
-                    else:
-                        warnings.warn(f"Column {f} not found in systems, some extinction corrections "
-                            "will not be estimated.")
-
-            if self.model.parms.combine_system_mags:
-                prim_abs_mags = get_primary_mags(combo_abs_mags, comps_abs_mags, self.roman_filter_list)
-                prim_app_mags = systems[['system_idx']].copy()
+                prim_abs_mags = get_primary_mags(prim_abs_mags, comps_abs_mags, self.full_filter_list)
 
             # Calculate extinction in the filters from the A_Ks and absolute colors
             ext_ests = self.get_roman_extinction_sim(prim_abs_mags)
-            for i,f in enumerate(self.roman_filter_list):
-                sp_f = mag_cols[i]
+
+            # Put the values in the table, and re-calculate apparent mags if relevant
+            for i,f in enumerate(self.filter_list):
+                sp_f = self.correct_mag_cols[i]
                 if not np.all(np.isnan(ext_ests['A_'+f])):
                     systems.loc[:,f"A_{sp_f}"] = ext_ests['A_'+f]
                     # So, in the absolute mag case, we are good now.
-                    # Next case: apparent mag case, systems not combined. 
-                    # Here, just correct the primary star as you would a single star
-                    if self.model.parms.obsmag and (not self.model.parms.combine_system_mags):
-                        systems.loc[:,sp_f] += ext_ests['A_'+f] - \
-                                self.model.populations[0].extinction.Alambda_Amap(
-                                    self.model.parms.eff_wavelengths[sp_f]) * \
-                                systems[self.model.populations[0].extinction.A_or_E_type].to_numpy()
-                    # Next case: absolute mags for combined systems
-                    elif self.model.parms.obsmag and self.model.parms.combine_system_mags:
-                        prim_app_mags.loc[:,sp_f] = prim_abs_mags[self.roman_filter_list[i]].to_numpy() + \
+                    # Apparent mag case: calculate primary apparent mags first, add companions later if needed
+                    if self.model.parms.obsmag:
+                        systems.loc[:,sp_f] = prim_abs_mags[self.filter_list[i]].to_numpy() + \
                                                     ext_ests['A_'+f] + 5*np.log10(100*systems['Dist'].to_numpy())
                 else:
                     warnings.warn(f"{sp_f} extinction correction could not be estimated.")
             if self.model.parms.obsmag and self.model.parms.combine_system_mags:
-                system_app_mags = combine_system_mags(prim_app_mags, companions, mag_cols)
-                for i,f in enumerate(self.roman_filter_list):
-                    sp_f = mag_cols[i]
-                    systems.loc[:,sp_f] = system_app_mags[sp_f].to_numpy()
+                systems = combine_system_mags(systems, companions, self.correct_mag_cols)
 
         return systems, companions

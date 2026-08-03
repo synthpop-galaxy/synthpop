@@ -173,6 +173,8 @@ class Population:
             else:
                 self.bands = list(self.evolution.bands)
                 self.eff_wavelengths = dict(self.evolution.eff_wavelengths)
+            self.glbl_params.bands = self.bands
+            self.glbl_params.eff_wavelengths = self.eff_wavelengths
 
             # check if main magnitude is in self.bands
             if (self.glbl_params.maglim is not None) and (self.glbl_params.maglim[0] not in self.bands):

@@ -26,7 +26,7 @@ class ConvertSpiseaMags(PostProcessing):
     def __init__(self, model, logger, system='AB', **kwargs):
         super().__init__(model,logger, **kwargs)
         if system.upper() not in ['AB', 'ST']:
-            raise NotImplementedError(f"System {system} not availabel in SPISEA.")
+            raise NotImplementedError(f"System {system} not available in SPISEA.")
         self.system = system.upper()
 
     def do_post_processing(self, system_df: pd.DataFrame,
