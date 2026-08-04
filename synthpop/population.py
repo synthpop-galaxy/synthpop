@@ -252,8 +252,9 @@ class Population:
         for i, ev_kwargs in enumerate(evolution_class_config):
             if ev_kwargs is not None:
                 ev_kwargs.effective_wavelengths = self.glbl_params.effective_wavelengths
+                ev_kwargs.photsys = self.glbl_params.photsys
+                
                 # get the Isochrone system
-
                 Isochrone_System = sp_utils.get_subclass(
                     EvolutionIsochrones, ev_kwargs,
                     initialize=False, population_file=self.pop_params._filename)

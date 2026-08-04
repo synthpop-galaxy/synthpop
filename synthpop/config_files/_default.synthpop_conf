@@ -128,9 +128,10 @@
     "PHOTOMETRIC_OUTPUTS":{
         "#comment1":["Limiting magnitude- null or [band, limit]"],
         "maglim":null,
-        "#comment2":["Magnitude systems and bands to generate for each star.",
-            "use '[magsys,...]' to take all magnitudes from a given system",
-            "or '{magsys1:[filter1, filter2,...], magsys2:'all',...}' to avoid confusion"],
+        "#comment2":["Magnitude system to use. Options are None, 'Vega', 'AB', and 'ST'.",
+                     "For None, the default system for your isochrones will be used, which may vary per band."],
+        "photsys":null,
+        "#comment3":["Select photometric filters, listing select filter names or filter sets."],
         "chosen_bands": ["Bessell_B", "Bessell_V", "Bessell_I", "Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3", "2MASS_J", "2MASS_H", "2MASS_Ks", "Z087", "W146"],
         "#comment4":"Set obsmag to true for observed magnitude, false for absolute magnitudes",
         "obsmag":true,

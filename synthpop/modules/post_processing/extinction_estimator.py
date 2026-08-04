@@ -26,13 +26,11 @@ class ExtinctionEstimator(PostProcessing):
     ----------
     """
 
-    def __init__(self, model, logger, mag_sys='None', **kwargs):
+    def __init__(self, model, logger, **kwargs):
         super().__init__(model,logger, **kwargs)
-        if mag_sys != 'AB':
-            raise ValueError('To use the extinction correction, magnitudes must be in AB. Confirm that you '
-                'have converted to AB mags before using this module, then set this module\'s mag_sys ' 
-                'kwarg to \'AB\' before running. You can put the ConvertMistMags or ConvertSpiseaMags'
-                ' module before this one in your post_processing_kwargs to do the conversion.')
+        if self.model.parms.photsys != 'AB':
+            raise ValueError('To use the extinction estimator, synthetic photometry must be in the '
+                'AB system. Use photsys=\'AB\' in your configuration.')
 
         # Load up the fit results
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -126,7 +124,7 @@ class ExtinctionEstimator(PostProcessing):
             colors = filt_fit['colors']
             coeffs = filt_fit['coefficients']
             order = filt_fit['order']
-            print(f"estimating {filt} extinction using {colors} and order={order} function")
+            self.logger.info(f"Estimating {filt} extinction using {colors} and order={order} function")
 
             columns = [catalog['A_Ks']]
             for c in colors:

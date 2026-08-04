@@ -22,7 +22,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
     Placeholder object to store modules and values for use by the SpiseaGenerator, which
     will generate and evolve stars as binned SPISEA clusters.
     """
-    def __init__(self, columns, n_proc=1,
+    def __init__(self, columns, n_proc=1, photsys=None,
                     spisea_evolution_name="MISTv1", block_spisea_prints=True,
                     spisea_evolution_kwargs={"version":1.2, "synthpop_extension":True},
                     spisea_atm_func_name="get_merged_atmosphere", spisea_wd_atm_func_name="get_wd_atmosphere",
@@ -63,6 +63,23 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
         with open(f"{EVOLUTION_DIR}/spisea_effective_wavelengths.json") as f:
             all_eff_wavelengths = json.load(f)[effective_wavelengths]
         self.eff_wavelengths = {self.bands[i]:all_eff_wavelengths[self.bands_obs_str[i]] for i in range(len(self.bands))}
+
+        # Deal with magnitude systems
+        self.photsys = photsys
+        if self.photsys is None:
+            self.photsys = 'Vega' # All mags default to Vega in SPISEA
+        if self.photsys in ['Vega','AB','ST']:
+            self.photsys_dict = {band: self.photsys for band in self.bands}
+        else:
+            raise ValueError("photsys must be 'Vega', 'AB', 'ST', or None")
+        if self.photsys=='Vega':
+            self.photsys_convert = None
+        elif self.photsys=='AB':
+            self.photsys_convert = {band: spisea_synthetic.calc_ab_vega_filter_conversion(self.bands_obs_str[i])
+                                    for i,band in enumerate(self.bands)}
+        elif self.photsys=='ST':
+            self.photsys_convert = {band: spisea_synthetic.calc_st_vega_filter_conversion(self.bands_obs_str[i])
+                                    for i,band in enumerate(self.bands)}
         
         # Binary evolution
         self.bbh_frac=bbh_frac

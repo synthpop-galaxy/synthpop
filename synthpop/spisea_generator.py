@@ -188,8 +188,7 @@ class SpiseaGenerator(StarGenerator):
                                        self.ifmr_module.spisea_ifmr,
                                        self.spisea_dir, props,
                                        self.evolution_module.bands,
-                                       self.evolution_module.bbh_frac))
-                                   
+                                       self.evolution_module.bbh_frac))                       
         
         # Parallel case:
         else:
@@ -202,14 +201,6 @@ class SpiseaGenerator(StarGenerator):
                                             int(np.ciel(self.chunk_size/bin2d[2])))
                     bins2d_new += [[bin2d[0],bin2d[1],len(idxs)] for idxs in comb_bin_idxs_split]
                     comb_bin_idxs_new += comb_bin_idxs_split
-#                    else:
-#                        rem_comb_bin_idxs = comb_bin_idxs[i_bin].copy()
-#                        while len(rem_comb_bin_idxs)>self.chunk_size*1.1:
-#                            bins2d_new.append([bin2d[0],bin2s[1], self.chunk_size])
-#                            comb_bin_idxs_new.append(rem_comb_bin_idxs[:self.chunk_size])
-#                            rem_comb_bin_idxs = rem_comb_bin_idxs[self.chunk_size:]
-#                        bins2d_new.append([bin2d[0],bin2s[1],len(rem_comb_bin_idxs)])
-#                        comb_bin_idxs_new.append(rem_comb_bin_idxs)
                 bins2d = bins2d_new
                 comb_bin_idxs = comb_bin_idxs_new
                 
@@ -240,8 +231,17 @@ class SpiseaGenerator(StarGenerator):
         star_systems = pd.concat([res_i[0] for res_i in res])
         star_systems.sort_index(inplace=True)
         companions = pd.concat([res_i[1] for res_i in res]) if (self.imf_module.spisea_imf.make_multiples) else None
+        # Convert magnitude system if needed
+        if (self.evolution_module.photsys_convert is not None) \
+                        and (self.evolution_module.bands[0] in props):
+            for i,band in enumerate(self.evolution_module.bands):
+                star_systems.loc[:,band] += self.evolution_module.photsys_convert[band]                
         if companions is not None:
             companions.sort_index(inplace=True)
+            if (self.evolution_module.photsys_convert is not None) \
+                        and (self.evolution_module.bands[0] in props):
+                for i,band in enumerate(self.evolution_module.bands):
+                    companions.loc[:,band] += self.evolution_module.photsys_convert[band]
 
         star_systems.loc[:,'system_Mass'] = star_systems['Mass']
         if self.imf_module.spisea_imf.make_multiples:
@@ -251,8 +251,9 @@ class SpiseaGenerator(StarGenerator):
                 star_systems.loc[primary_idxs,'system_Mass'] += comp_mass_sums[
                                         primary_idxs]
             companions.reset_index(inplace=True)
-
         star_systems.reset_index(inplace=True)
+
+
 
         return star_systems, companions
 

@@ -95,7 +95,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
     min_mass = 0.1
     isochrones_name = 'MIST'
 
-    def __init__(self, columns, mist_version='1.2', phot_sys=None,
+    def __init__(self, columns, mist_version='1.2', photsys=None,
                  alpha=0.0, use_global=True, effective_wavelengths=None, **kwargs):
         """
         Pull out all the information from the isochrone file
@@ -108,9 +108,6 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
             list of columns
         mist_version : str
             version of the MIST isochrones to use (only '1.2' available currently)
-        phot_sys : str
-            magnitude system for photometry. None (default) will use the systems provided
-            by MIST for each filter set. A user may specify to use all 'Vega', 'AB', or 'ST'
         alpha : float
             [alpha/Fe] alpha enhancement (only 0.0 available currently)
         use_global : Bool
@@ -122,24 +119,23 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         if alpha != 0.0:
             warnings.warn("MIST v1.2 only uses solar-scaled alpha abundances. Setting [alpha/Fe] to 0.0.")
 
-        if phot_sys is None:
-            self.phot_sys = phot_sys
-            print(f'Photometry will be provided in MIST\'s default mag systems.')
-        elif phot_sys in ['Vega','AB','ST']:
-            self.phot_sys = phot_sys
-            print(f'Photometry will be provided in {phot_sys} mag.')
-        else:
-            ValueError(f'Invalid phot_sys {phot_sys}. Select Vega, AB, or ST.')
-
         self.magsys, self.none_mag_cols, self.bands = self.get_mag_systems(columns)
         with open(f"{EVOLUTION_DIR}/mist_effective_wavelengths.json") as f:
             self.eff_wavelengths = json.load(f)[effective_wavelengths]
 
+        # Deal with magnitude systems
+        self.photsys = photsys
+        if self.photsys is None:
+            self.photsys_dict = {band: self.mag_system_conversions.loc[band,'system'] for band in self.bands}
+        elif self.photsys in ['Vega','AB','ST']:
+            self.photsys_dict = {band: self.photsys for band in self.bands}
+        else:
+            raise ValueError("photsys must be 'Vega', 'AB', 'ST', or None")
+
         # Check for isochrone directory and create if needed
         os.makedirs(self.FOLDER, exist_ok=True)
 
-        # Check for isochrones in requested magnitude systems 
-        # download from MIST if needed
+        # Check for isochrones in requested magnitude systems & download from MIST if needed
         for msys in self.magsys:
             if not os.path.isdir(f"{self.FOLDER}/{msys}"):
                 self.download_isochrones(msys)
@@ -368,15 +364,15 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                 else:
                     isochrones[file_met][use_columns] = df[use_columns]
                     
-        if self.phot_sys is not None:
+        if self.photsys is not None:
             for band in self.bands:
-                if self.mag_system_conversions.loc[band, 'system'] == self.phot_sys:
+                if self.mag_system_conversions.loc[band, 'system'] == self.photsys:
                     continue
                 elif self.mag_system_conversions.loc[band, 'system'] == 'Vega':
-                    isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.phot_sys})']
-                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='Vega'):
+                    isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.photsys})']
+                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.photsys=='Vega'):
                     isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
-                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.phot_sys=='ST'):
+                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.photsys=='ST'):
                     isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
                     isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/ST)']
 

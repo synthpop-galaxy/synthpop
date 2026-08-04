@@ -3,8 +3,7 @@ This file contains several utility functions.
 """
 
 __all__ = ["solidangle_to_half_cone_angle", "half_cone_angle_to_solidangle",
-            "rotation_matrix", "add_magnitudes", "combine_system_mags",
-            "subtract_magnitudes", "get_primary_mags"]
+            "rotation_matrix", "combine_system_mags", "get_primary_mags"]
 __credits__ = ["J. Klüter", "S. Johnson", "M.J. Huston", "A. Aronica", "M. Penny"]
 
 import numpy as np
@@ -77,37 +76,42 @@ def rotation_matrix(
     if axis == 'z':
         return np.array([[ct, -st, zero], [st, ct, zero], [zero, zero, one]])
 
-def add_magnitudes(mags):
-    mags = np.array(mags)
-    fluxes = np.nan_to_num(10**(-0.4*mags))
-    with np.errstate(divide='ignore', invalid='ignore'):
-        mag_sum = -2.5*np.log10(np.sum(fluxes, axis=0))
-    if np.isinf(mag_sum):
-        mag_sum = np.nan
-    return mag_sum
-    
-def subtract_magnitudes(mag_sum, mag):
-    fluxes = np.nan_to_num(10**(-0.4*mag))
-    flux_sum = np.nan_to_num(10**(-0.4*mag_sum))
-    with np.errstate(divide='ignore', invalid='ignore'):
-        mag_diff = -2.5*np.log10(flux_sum - fluxes)
-    mag_diff[np.isinf(mag_diff)] = np.nan
-    mag_diff[np.isclose(mag_sum, mag, equal_nan=True)] = np.nan
-
-    return mag_diff
 
 def combine_system_mags(df, comp_df, filters):
-    combined_gb = pd.concat([df[['system_idx']+filters],
-            comp_df[['system_idx']+filters]]).groupby('system_idx')
-    for band in filters:
-        df.loc[:,band] = combined_gb[band].apply(add_magnitudes)
+    all_systems = df['system_idx'].to_numpy()
+    idx_map = pd.Series(np.arange(len(all_systems)), index=all_systems)
+    comp_rows = idx_map.loc[comp_df['system_idx']].to_numpy()
+
+    comp_mags = np.ma.masked_invalid(comp_df[filters].to_numpy())
+    comp_flux = (10.0 ** (-0.4 * comp_mags)).filled(0.0)
+
+    main_mags = np.ma.masked_invalid(df[filters].to_numpy())
+    system_flux = (10.0 ** (-0.4 * main_mags)).filled(0.0)
+    np.add.at(system_flux, comp_rows, comp_flux)
+
+    masked_system_flux = np.ma.masked_less_equal(system_flux, 0.0)
+    df[filters] = (-2.5 * np.ma.log10(masked_system_flux)).filled(np.nan)
+
     return df
 
-# TODO: runs without error, but make sure the results are right
+
 def get_primary_mags(df, comp_df, filters):
-    comps_gb = comp_df[['system_idx']+filters].groupby('system_idx')
-    primary_idxs = df.index[df['n_companions']>0]
-    for band in filters:
-        comp_mags = comps_gb[band].apply(add_magnitudes).to_numpy()
-        df.loc[primary_idxs,band] = subtract_magnitudes(df.loc[primary_idxs,band].to_numpy(), comp_mags)
+    primary_idxs = (df['n_companions'] > 0).to_numpy()
+    if not np.any(primary_idxs):
+        return df
+
+    primary_systems = df.loc[primary_idxs, 'system_idx'].to_numpy()
+    idx_map = pd.Series(np.arange(len(primary_systems)), index=primary_systems)
+    comp_rows = idx_map.loc[comp_df['system_idx']].to_numpy()
+    comp_mags = np.ma.masked_invalid(comp_df[filters].to_numpy())
+    comp_flux = (10.0 ** (-0.4 * comp_mags)).filled(0.0)
+
+    system_mags = np.ma.masked_invalid(df.loc[primary_idxs, filters].to_numpy())
+    primary_flux = (10.0 ** (-0.4 * system_mags)).filled(0.0)
+    np.add.at(primary_flux, comp_rows, -comp_flux)
+
+    masked_primary_flux = np.ma.masked_less_equal(primary_flux, 0.0)
+    df.loc[primary_idxs, filters] = (-2.5 * np.ma.log10(masked_primary_flux)).filled(np.nan)
+
     return df
+
