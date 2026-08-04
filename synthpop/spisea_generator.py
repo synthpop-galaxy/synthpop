@@ -366,6 +366,8 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
         companions_bin = companions_bin[np.isin(companions_bin['system_idx'], star_systems_bin['system_idx'])]
         companions_bin = spisea_props_to_synthpop(companions_bin)
         companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
+        if len(companions_bin)>0:
+            companions_bin['Fe/H_initial'] = feh
     elif (companions_bin is not None):
         companions_bin = spisea_props_to_synthpop(companions_bin)
         companions_bin = companions_bin[list(props)+['iMass','Mass','system_idx', 'eccentricity', 'log_a']]
