@@ -1,175 +1,90 @@
-{
+{   "SEED":{"random_seed":null},
+
     "MANDATORY":{
-        "#comment1": "default directory and base for the output files",
-        "name_for_output":null,
-        "#comment2": "directory containing population json files",
-        "model_name":null
+        "name_for_output":"defaultmodel",
+        "model_name":"Huston2025"
     },
 
     "SIGHTLINES":{
-        "#comment1":"These inputs are mandatory in order to run synthpop.main() or process_all() ",
-
-        "#comment2":[
-            "Here we specify Galactic longitude and latitude in degrees",
-            "If [l/b]_set_type=='pairs' it will treat l and b as pairs, i.e. ((l[0],b[0]),..., (l[i],b[i]) ",
-            "otherwise it will loop over l and b individually, i.e. ((l[0],b[0]),...,(l[0],b[i]),(l[1],b[0]),... ",
-            "if [l/b]_set_type=='range' it will use it as argument for np.arange([l/b]_set)"
-        ],
         "l_set":null,
         "l_set_type":null,
         "b_set":null,
         "b_set_type": null,
-        "#comment3":"Field shape - options are circle or box",
         "field_shape": "circle",
-        "#comment4":"Field size - for circle, radius. for box, side half-width for square or two half-widths for (l, b)",
         "field_scale": null,
-        "#comment5":"Field scale unit. Options are rad, deg, arcmin, arcsec",
         "field_scale_unit": "deg"
     },
 
-    "SEED":{"random_seed":null},
-
     "COORDINATE_SYSTEM":{
         "sun": {
-            "#comment": "Location of the Sun (kpc)",
             "x": -8.178,
             "y": 0.0,
             "z": 0.017,
-            "#comment2": "Motion of the Sun (km/s) from Reid & Brunthaler (2020)",
             "u": 12.9,
             "v": 245.6,
             "w": 7.78,
-            "#comment3": "direction of the solar apex in galactic coordinates in degree",
             "l_apex_deg": 56.24,
-            "b_apex_deg": 22.54
+            "b_apex_deg": 22.54,
+            "l_gal_cen": 0.0,
+            "b_gal_cen": 0.0
         },
         "lsr":{
-            "#comment": "Velocity (km/s) of the local standard of rest from Schönrich et al. (2010).",
             "u_lsr": 1.8,
             "v_lsr": 233.4,
             "w_lsr": 0.53
         },
         "warp": {
-            "#comment_1": "Settings for the warp can be overwritten from the population files.",
-            "#comment_2": "This default comes from  Chen X. et al 2019.",
-            "#comment_3": "r_warp = radius when the warp starts in kpc",
             "r_warp": 7.72,
             "amp_warp": 0.060,
-            "#comment_4": "amp_warp_[pos/neg] can be used to specify different values for sin(phi_warp)>0 and sin(phi_warp)<0. If set to null(default), use amp_warp on both sides.",
             "amp_warp_pos": null,
             "amp_warp_neg": null,
-            "#comment_5": "alpha_warp = exponent in the power law",
             "alpha_warp": 1.33,
-            "#comment_6": "phi_warp_deg = angle for line of nodes; can also be in radian by specifying phi_warp_rad instead",
             "phi_warp_deg": 17.5
         }
-
-    },
-
-    "POPULATION_GENERATION":{
-        "#comment1":"Maximum distance from Sun in kpc",
-        "max_distance":15,
-
-        "#comment4":"Limiting mass [min_mass, max_mass]",
-        "mass_lims":{"min_mass":0.08,"max_mass":100},
-
-        "#comment6":"method to estimate the mass loss correction",
-        "lost_mass_option": 1,
-        "N_av_mass":20000,
-
-        "#comment8": "Scale down the number of generated stars n_gen = (n/scale_factor)",
-        "scale_factor": 1,
-        "#comment9": "Reduce the generation of low-mass stars which are to faint",
-        "skip_lowmass_stars": false,
-        "#comment10": "Evolve the number of stars in chunks of size",
-        "chunk_size": 250000,
-
-        "#comment11": "Select star generator (options are standard StarGenerator or SpiseaGenerator).",
-        "star_generator": "StarGenerator"
     },
 
     "EXTINCTION_MAP":
         {
-        "#comment":"specify the extinction map and law",
-        "extinction_map_kwargs":{
-            "name":"MapsFromDustmaps", "dustmap_name":"marshall"
-            },
-        "extinction_law_kwargs":
-            [
-            {"name":"ODonnell1994", "R_V":3.1}
-            ]
+        "extinction_map_kwargs": {"name":"Surot", "project_3d":true, "dist_2d":8.15},
+        "extinction_law_kwargs": [{"name":"SODC", "R_V":2.5}]
         },
+
+    "POPULATION_GENERATION":{
+        "max_distance":25,
+        "mass_lims":{"min_mass":0.08,"max_mass":100},
+        "lost_mass_option": 1,
+        "N_av_mass":50000,
+        "scale_factor": 1,
+        "skip_lowmass_stars": false,
+        "chunk_size": 250000,
+        "star_generator": "StarGenerator"
+    },
 
     "ISOCHRONE_INTERPOLATION":{
-        "#comment":"This includes a default and a few commented out examples of how to use the code with different Isochrone ystems and Interpolators",
-        "#comment2":"If evolution_class is set to null, it will read the keywords from the population files.",
         "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
-
-        "# comment3": ["An example for multi evolution_class; by default only the MIST isochrones are implemented.",
-        "The code iterates from the beginning of the list and uses the first appropriate class for the given star."],
-        "# evolution_class":[
-                {"name":"MIST", "min_mass":0.2, "max_mass":0.3, "#comment":"use the MIST isochrones for masses between 0.1, 0.2 with the standard interpolator"},
-                {"name":"MIST", "interpolator":"LagrangeInterpolator","min_mass":0.1, "max_mass":0.7},
-                {"name":"MIST", "interpolator":"CharonInterpolator", "#comment":"use the MIST isochrones outside of the previous defined ranges"}
-            ],
-        "#comment4": "An example for using a different evolution_class for 'population_name'",
-        "# evolution_class":{
-            "default":[
-                {"name":"MIST", "interpolator":"CharonInterpolator"}
-                ],
-            "'population_name'":[
-                        {"name":"MIST", "interpolator":"LagrangeInterpolator" , "#comment" : "a different interpolator for 'population_name'" }
-            ]
-        },
-        "ifmr_kwargs": null,
+        "ifmr_kwargs": {"name":"SukhboldN20"},
         "multiplicity_kwargs": null
-    },
+        },
 
     "PHOTOMETRIC_OUTPUTS":{
-        "#comment1":["Limiting magnitude- null or [band, limit]"],
         "maglim":null,
-        "#comment2":["Magnitude system to use. Options are None, 'Vega', 'AB', and 'ST'.",
-                     "For None, the default system for your isochrones will be used, which may vary per band."],
-        "photsys":null,
-        "#comment3":["Select photometric filters, listing select filter names or filter sets."],
-        "chosen_bands": ["Bessell_B", "Bessell_V", "Bessell_I", "Gaia_G_EDR3", "Gaia_BP_EDR3", "Gaia_RP_EDR3", "2MASS_J", "2MASS_H", "2MASS_Ks", "Z087", "W146"],
-        "#comment4":"Set obsmag to true for observed magnitude, false for absolute magnitudes",
+        "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "2MASS_J", "2MASS_H", "2MASS_Ks"],
+        "photsys": {"AB":["WFIRST"]},
         "obsmag":true,
-        "#comment5":"Set combine_system_mags to true to show sytem magnitudes in the systems table, false for primary star mags",
         "combine_system_mags": true,
-        "#comment6":"Set definition of effective wavelength per filter. Used for scaling extinction",
-        "#comment6.1":"options are vega_eff, pivot, and average, with vega_eff reproducing version1 behavior",
         "effective_wavelengths": "vega_eff",
 
-        "#comment7": "Optional properties from the isochrones; these can overlap with the default properties.",
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R","phase"]
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]", "log_R", "phase"]
     },
-
-    "OUTPUT": {
-        "#comment1":"specify a script and function for advanced post processing",
-        "#comment2": "should be either a dictionary as follows or null",
-
-        "# advanced_post_processing": {
-            "name": "sub class name",
-            "filename": "optional: path of the file ",
-            "further_keywords": "additional keyword arguments"
-            },
-        "post_processing_kwargs": [{"name":"RenameColumns", 
-            "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
-            "new_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius"]}],
-
-        "#comment3": ["If output_location is '' or null it is replaced with the synthpop directory",
-            "If output_location ends with '/' it uses output_location/name_for_output as directory"],
-        "output_location": null,
-        "#comment4": ["Pattern for the output file (without directory and extension) interpreted by string.format() ",
-            "The following keys are available:",
-            "name_for_output (str), model_name (str), l_deg (float), b_deg(float), solid_angle (float), date (datetime.date object), time (datetime.time object)"],
-        "output_filename_pattern": "{model_name}_l{l_deg:.3f}_b{b_deg:.3f}",
-        "#comment9": ["Filetypes from pandas: csv, json, html, xml, excel, hdf5, feather, parquet, stata, pickle, sql",
-            "Filetypes astropy: fits and vot"],
-        "output_file_type": ["csv",
-                            {"#Comment":  "This can be used to add additional kwargs"}],
-
-        "overwrite": false
+    
+    "OUTPUT":{
+        "post_processing_kwargs": [{"name":"RenameColumns", "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
+                                                            "new_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius"]},
+                                   {"name":"ExtinctionEstimator"}],
+    
+        "output_location":"outputfiles/default",
+        "output_filename_pattern": "{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}",
+        "output_file_type": "csv",
+        "overwrite": true
     }
 }
