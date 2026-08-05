@@ -10,13 +10,13 @@ __date__ = "2026-04-26"
 import pandas as pd 
 import numpy as np
 from ._post_processing import PostProcessing
-from .convert_mist_mags import ConvertMistMags
 import os.path
 import json
 import warnings
 import pdb
 from astropy.table import Table
 from ...synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
+from ..evolution._evolution import EVOLUTION_DIR
 
 class ExtinctionEstimator(PostProcessing):
     """
@@ -28,10 +28,6 @@ class ExtinctionEstimator(PostProcessing):
 
     def __init__(self, model, logger, **kwargs):
         super().__init__(model,logger, **kwargs)
-        if self.model.parms.photsys != 'AB':
-            raise ValueError('To use the extinction estimator, synthetic photometry must be in the '
-                'AB system. Use photsys=\'AB\' in your configuration.')
-
         # Load up the fit results
         current_dir = os.path.dirname(os.path.abspath(__file__))
         ext_cor_tab = Table.read(f'{current_dir}/extinction_correction_table.dat', format='ascii.mrt')
@@ -47,6 +43,8 @@ class ExtinctionEstimator(PostProcessing):
             self.fit_dict[filt]['colors'] = [ext_cor_tab[col][i] for col in color_cols if (ext_cor_tab[col][i]!="999")]
             self.fit_dict[filt]['order'] = self.fit_order
             self.fit_dict[filt]['coefficients'] = [ext_cor_tab[col][i] for col in coeff_cols if ~(ext_cor_tab[col][i]==999.0)]
+        with open(f"{EVOLUTION_DIR}/spisea_photometric_system_conversions.json") as f:
+            self.photsys_convert = json.load(f)
 
     @staticmethod
     def generic_extinction_polynomial(AKs_C, coeffs, order):
@@ -117,6 +115,7 @@ class ExtinctionEstimator(PostProcessing):
         #                   "switching to 0 <= A_Ks <= 5 fit.")
         
         # Iterate over the filters
+        catalog = self.convert_mags_to_ab(catalog)
         result = {}
         for filt in self.filter_list:
             filt_valid = (filt in catalog)
@@ -142,6 +141,17 @@ class ExtinctionEstimator(PostProcessing):
             
         return result
 
+    def convert_mags_to_ab(self, ext_est_dict):
+        for i, f in enumerate(self.full_filter_list_obs_str):
+            if self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'AB':
+                pass 
+            elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'Vega':
+                ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
+            elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'ST':
+                ext_est_dict[self.full_filter_list[i]] -= self.photsys_convert['ST'][f]
+                ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
+        return ext_est_dict 
+
     def do_post_processing(self, systems: pd.DataFrame, companions: pd.DataFrame):
         """
         Run the process
@@ -150,28 +160,29 @@ class ExtinctionEstimator(PostProcessing):
         # Catch case where we don't have K213 and need to swap in 2MASS_Ks
         if 'W146' in systems:
             if "2MASS_Ks" in systems:
-                systems.loc[:,"K213"] = systems['2MASS_Ks'] + 1.834505
-                companions.loc[:,"K213"] = companions['2MASS_Ks'] + 1.834505
-                warnings.warn("K213 missing from MISTv1, estimating from 2MASS_Ks "
-                    "assuming 2MASS mags are in Vegamag")
+                systems.loc[:,"K213"] = systems['2MASS_Ks']
+                companions.loc[:,"K213"] = companions['2MASS_Ks']
+                warnings.warn("K213 missing from MISTv1, estimating from 2MASS_Ks.")
                 self.model.parms.eff_wavelengths['K213'] = self.model.parms.eff_wavelengths['2MASS_Ks']
-            self.model.parms.bands = ["R062", "Z087", "Y106", "J129", "H158", "F184", "K213", "W146"]
+                self.model.parms.photsys_dict["K213"] = self.model.parms.photsys_dict["2MASS_Ks"]
+                self.model.parms.bands += ["K213"]
 
         # Set up filter sets
         if self.model.parms.star_generator=='SpiseaGenerator':
-            from spisea import synthetic
-            self.full_filter_list = [synthetic.get_obs_str(f).replace(',','_') for f in self.model.parms.bands]
+            from spisea.synthetic import get_obs_str
+            self.full_filter_list_obs_str = [get_obs_str(f) for f in self.model.parms.bands]
         else:
             from ..evolution.mist import get_spisea_obs_str
-            self.full_filter_list = [get_spisea_obs_str(f).replace(',','_')  for f in self.model.parms.bands]
+            self.full_filter_list_obs_str = [get_spisea_obs_str(f)  for f in self.model.parms.bands]
+        self.full_filter_list = [f.replace(',','_')  for f in self.full_filter_list_obs_str]
         self.correct_mag_cols = self.model.parms.bands
-        self.filter_list = self.full_filter_list
         self.filter_list = [f for f in self.full_filter_list if (f in self.fit_dict.keys())]
-        if len(self.filter_list)<len(self.filter_list):
-            not_in_cor_list = [f for f in self.full_filter_list if (f not in self.fit_dict.keys())]
+        if len(self.filter_list)<len(self.full_filter_list):
+            not_in_cor_list = [f for f in self.full_filter_list if (f not in self.filter_list)]
             warnings.warn(f"Filters {not_in_cor_list} do not have tabulated extinction"
-                " corrections and will use the default effective wavelength method.")
-            self.correct_mag_cols = [self.correct_mag_cols[i] for i in range(len(self.correct_mag_cols)) if (self.filter_list[i] in in_cor_list)]
+                " corrections and will use the default effective wavelength extinction law scaling.")
+            self.correct_mag_cols = [self.correct_mag_cols[i] for i in range(len(self.correct_mag_cols)) 
+                                     if (self.full_filter_list[i] in self.filter_list)]
 
         # Get and convert extinction to A_Ks if needed
         A_Ks = systems[self.model.populations[0].extinction.A_or_E_type].to_numpy()

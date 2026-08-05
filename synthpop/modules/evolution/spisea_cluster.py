@@ -70,17 +70,31 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
             self.photsys = 'Vega' # All mags default to Vega in SPISEA
         if self.photsys in ['Vega','AB','ST']:
             self.photsys_dict = {band: self.photsys for band in self.bands}
+        elif isinstance(self.photsys, dict):
+            self.photsys_dict = {band: 'Vega' for band in self.bands}
+            for key, val in self.photsys.items():
+                if key not in ['Vega', 'AB','ST']:
+                    raise ValueError("Dict input for photsys must be of structure e.g. {'AB':['m_roman_f146','m_roman_f087']} or {'AB':['roman']} "
+                        "with photometric systems being Vega, AB, ST, and using any valid filter sets or names from MIST v1.2.")
+                for item in val:
+                    if item in self.bands:
+                        self.photsys_dict.update({item: key})
+                    elif item in self.magsys:
+                        self.photsys_dict.update({band: key for band in self.magsys[item] if (band in self.bands)})
+                    else:
+                        raise ValueError(f"Invalid input in photsys_dict: {item} not found as band or band set.")
         else:
-            raise ValueError("photsys must be 'Vega', 'AB', 'ST', or None")
-        if self.photsys=='Vega':
-            self.photsys_convert = None
-        elif self.photsys=='AB':
-            self.photsys_convert = {band: spisea_synthetic.calc_ab_vega_filter_conversion(self.bands_obs_str[i])
-                                    for i,band in enumerate(self.bands)}
-        elif self.photsys=='ST':
-            self.photsys_convert = {band: spisea_synthetic.calc_st_vega_filter_conversion(self.bands_obs_str[i])
-                                    for i,band in enumerate(self.bands)}
-        
+            raise ValueError("photsys must be 'Vega', 'AB', 'ST', None, or dict")
+
+        with open(f"{EVOLUTION_DIR}/spisea_photometric_system_conversions.json") as f:
+            all_photsys_convert = json.load(f)
+        self.photsys_convert = {}
+        for i,band in enumerate(self.bands):
+            if self.photsys_dict[band] == 'Vega':
+                self.photsys_convert[band] = 0.0
+            else:
+                self.photsys_convert[band] = all_photsys_convert[self.photsys_dict[band]][self.bands_obs_str[i]]
+                                    
         # Binary evolution
         self.bbh_frac=bbh_frac
         
@@ -209,5 +223,36 @@ def generate_effective_wavelengths_json():
 
     json_object = json.dumps(all_effs, indent=4)
     with open(f"{EVOLUTION_DIR}/spisea_effective_wavelengths.json", "w") as outfile:
+        outfile.write(json_object)
+    return
+
+def generate_photsys_conversions():
+    with open(f'{EVOLUTION_DIR}/spisea_filters.json') as f:
+        d = json.load(f)
+
+    def do_filts(sys,flts):
+        convs_ab = {}
+        convs_st = {}
+        for flt in flts:
+            flt_name = sys+','+flt
+            convs_ab.update({flt_name: spisea_synthetic.calc_ab_vega_filter_conversion(flt_name)})
+            convs_st.update({flt_name: spisea_synthetic.calc_st_vega_filter_conversion(flt_name)})
+        return convs_ab, convs_st
+
+    all_convs = {"AB":{}, "ST":{}}
+    for sys in d:
+        flts = d[sys]
+        if isinstance(flts,dict):
+            for subsys in flts:
+                convs_ab, convs_st = do_filts(sys+','+subsys,flts[subsys])
+                all_convs["AB"].update(convs_ab)
+                all_convs["ST"].update(convs_st)
+        else:
+            convs_ab, convs_st = do_filts(sys,flts)
+            all_convs["AB"].update(convs_ab)
+            all_convs["ST"].update(convs_st)
+
+    json_object = json.dumps(all_convs, indent=4)
+    with open(f"{EVOLUTION_DIR}/spisea_photometric_system_conversions.json", "w") as outfile:
         outfile.write(json_object)
     return

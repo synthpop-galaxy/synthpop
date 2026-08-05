@@ -235,7 +235,7 @@ class SpiseaGenerator(StarGenerator):
         if (self.evolution_module.photsys_convert is not None) \
                         and (self.evolution_module.bands[0] in props):
             for i,band in enumerate(self.evolution_module.bands):
-                star_systems.loc[:,band] += self.evolution_module.photsys_convert[band]                
+                star_systems.loc[:,band] += self.evolution_module.photsys_convert[band]      
         if companions is not None:
             companions.sort_index(inplace=True)
             if (self.evolution_module.photsys_convert is not None) \
@@ -252,8 +252,6 @@ class SpiseaGenerator(StarGenerator):
                                         primary_idxs]
             companions.reset_index(inplace=True)
         star_systems.reset_index(inplace=True)
-
-
 
         return star_systems, companions
 

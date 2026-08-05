@@ -129,8 +129,21 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
             self.photsys_dict = {band: self.mag_system_conversions.loc[band,'system'] for band in self.bands}
         elif self.photsys in ['Vega','AB','ST']:
             self.photsys_dict = {band: self.photsys for band in self.bands}
+        elif isinstance(self.photsys, dict):
+            self.photsys_dict = {band: self.mag_system_conversions.loc[band,'system'] for band in self.bands}
+            for key, val in self.photsys.items():
+                if key not in ['Vega', 'AB','ST']:
+                    raise ValueError("Dict input for photsys must be of structure e.g. {'AB':['W146','Z087']} or {'AB':['WFIRST']} "
+                        "with photometric systems being Vega, AB, ST, and using any valid filter sets or names from MIST v1.2.")
+                for item in val:
+                    if item in self.bands:
+                        self.photsys_dict.update({item: key})
+                    elif item in self.magsys:
+                        self.photsys_dict.update({band: key for band in self.magsys[item] if (band in self.bands)})
+                    else:
+                        raise ValueError(f"Invalid input in photsys_dict: {item} not found as band or band set.")
         else:
-            raise ValueError("photsys must be 'Vega', 'AB', 'ST', or None")
+            raise ValueError("Input for photsys must be 'Vega', 'AB', 'ST', None, or dict.")
 
         # Check for isochrone directory and create if needed
         os.makedirs(self.FOLDER, exist_ok=True)
@@ -366,13 +379,13 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                     
         if self.photsys is not None:
             for band in self.bands:
-                if self.mag_system_conversions.loc[band, 'system'] == self.photsys:
+                if self.mag_system_conversions.loc[band, 'system'] == self.photsys_dict[band]:
                     continue
                 elif self.mag_system_conversions.loc[band, 'system'] == 'Vega':
-                    isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.photsys})']
-                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.photsys=='Vega'):
+                    isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/{self.photsys_dict[band]})']
+                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.photsys_dict[band]=='Vega'):
                     isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
-                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.photsys=='ST'):
+                elif (self.mag_system_conversions.loc[band, 'system'] == 'AB') and (self.photsys_dict[band]=='ST'):
                     isochrones[file_met][band] -= self.mag_system_conversions[f'mag(Vega/AB)']
                     isochrones[file_met][band] += self.mag_system_conversions[f'mag(Vega/ST)']
 
@@ -574,7 +587,7 @@ def get_spisea_obs_str(filt):
     elif mist_filter_set=='JWST':
         f_str = 'jwst,'+filt
     elif mist_filter_set=='WFIRST':
-        f_str = 'roman,wfi,F'+filt[1:]
+        f_str = 'roman,wfi,f'+filt[1:]
     elif mist_filter_set=='HSC':
         f_str = 'subaru,'+f_str
     elif str_spl[0]=='Gaia':

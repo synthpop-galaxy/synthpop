@@ -170,11 +170,14 @@ class Population:
             if isinstance(self.evolution, list):
                 self.bands = list(self.evolution[0].bands)
                 self.eff_wavelengths = dict(self.evolution[0].eff_wavelengths)
+                photsys_dict = self.evolution[0].photsys_dict
             else:
                 self.bands = list(self.evolution.bands)
                 self.eff_wavelengths = dict(self.evolution.eff_wavelengths)
+                photsys_dict = self.evolution.photsys_dict
             self.glbl_params.bands = self.bands
             self.glbl_params.eff_wavelengths = self.eff_wavelengths
+            self.glbl_params.photsys_dict = photsys_dict
 
             # check if main magnitude is in self.bands
             if (self.glbl_params.maglim is not None) and (self.glbl_params.maglim[0] not in self.bands):
