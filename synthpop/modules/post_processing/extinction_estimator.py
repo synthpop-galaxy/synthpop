@@ -3,7 +3,7 @@ Postprocessing module to improve the estimation extinction in photometric filter
 with a polynomial function of A_Ks and absolute colors.
 """
 
-__all__ = ["EstimateRomanExtinction", ]
+__all__ = ["ExtinctionEstimator", ]
 __author__ = "M.J. Huston"
 __date__ = "2026-04-26"
 
@@ -161,10 +161,19 @@ class ExtinctionEstimator(PostProcessing):
         if 'W146' in systems:
             if "2MASS_Ks" in systems:
                 systems.loc[:,"K213"] = systems['2MASS_Ks']
-                companions.loc[:,"K213"] = companions['2MASS_Ks']
+                if companions is not None:
+                    companions.loc[:,"K213"] = companions['2MASS_Ks']
                 warnings.warn("K213 missing from MISTv1, estimating from 2MASS_Ks.")
                 self.model.parms.eff_wavelengths['K213'] = self.model.parms.eff_wavelengths['2MASS_Ks']
                 self.model.parms.photsys_dict["K213"] = self.model.parms.photsys_dict["2MASS_Ks"]
+                self.model.parms.bands += ["K213"]
+            elif "VISTA_Ks" in systems:
+                systems.loc[:,"K213"] = systems['VISTA_Ks']
+                if companions is not None:
+                    companions.loc[:,"K213"] = companions['VISTA_Ks']
+                warnings.warn("K213 missing from MISTv1, estimating from VISTA_Ks.")
+                self.model.parms.eff_wavelengths['K213'] = self.model.parms.eff_wavelengths['VISTA_Ks']
+                self.model.parms.photsys_dict["K213"] = self.model.parms.photsys_dict["VISTA_Ks"]
                 self.model.parms.bands += ["K213"]
 
         # Set up filter sets

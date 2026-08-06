@@ -377,6 +377,5 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
     if (companions_bin is not None):
         companions_bin['system_idx'] = idxs_map[companions_bin['system_idx']]
         companions_bin = companions_bin.to_pandas(index='system_idx')
-    #pdb.set_trace()
 
     return star_systems_bin.to_pandas(index='system_idx'), companions_bin
