@@ -196,8 +196,11 @@ class ExtinctionEstimator(PostProcessing):
         # Get and convert extinction to A_Ks if needed
         A_Ks = systems[self.model.populations[0].extinction.A_or_E_type].to_numpy()
         if self.model.populations[0].extinction.A_or_E_type != 'A_Ks':
-            A_Ks *= self.model.populations[0].extinction.Alambda_Amap(2.152152)
+            AKs_Amap = self.model.populations[0].extinction.Alambda_Amap(2.152152)
+            A_Ks *= AKs_Amap
             systems.loc[:,'A_Ks'] = A_Ks
+        else:
+            AKs_Amap = 1.0
         ext_est_dict = {"A_Ks":A_Ks}
 
         # Do systems in normal case
@@ -231,7 +234,8 @@ class ExtinctionEstimator(PostProcessing):
         if companions is not None:
             comps_abs_mags = companions[['system_idx']].copy()
             A_Ks_series = pd.Series(A_Ks, index=systems['system_idx'].to_numpy())
-            ext_est_dict['A_Ks'] = A_Ks_series[companions['system_idx'].to_numpy()]
+            A_Ks_comps = A_Ks_series[companions['system_idx'].to_numpy()].to_numpy()
+            ext_est_dict['A_Ks'] = A_Ks_comps
             Dist_series = pd.Series(systems['Dist'].to_numpy(), index=systems['system_idx'].to_numpy())
             # Convert needed mags back to absolute
             for i,f in enumerate(self.model.parms.bands):
@@ -240,8 +244,7 @@ class ExtinctionEstimator(PostProcessing):
                         abs_mag_f = (companions[f].to_numpy() - 
                                 5*np.log10(100*Dist_series[companions['system_idx'].to_numpy()].to_numpy()) - \
                                 self.model.populations[0].extinction.Alambda_Amap(
-                                    self.model.parms.eff_wavelengths[f]) * \
-                                A_Ks_series[companions['system_idx'].to_numpy()].to_numpy())
+                                    self.model.parms.eff_wavelengths[f]) * A_Ks_comps)
                     else:
                         abs_mag_f = companions[f].to_numpy()
                     ext_est_dict[self.full_filter_list[i]] = abs_mag_f
@@ -293,5 +296,13 @@ class ExtinctionEstimator(PostProcessing):
                     warnings.warn(f"{sp_f} extinction correction could not be estimated.")
             if self.model.parms.obsmag and self.model.parms.combine_system_mags:
                 systems = combine_system_mags(systems, companions, self.correct_mag_cols)
+                
+        for sp_f in self.model.parms.bands:
+            if f'A_{sp_f}' not in systems:
+                systems.loc[:, f'A_{sp_f}'] = self.model.populations[0].extinction.Alambda_Amap(
+                            self.model.parms.eff_wavelengths[sp_f]) * A_Ks/AKs_Amap
+                if companions is not None:
+                    companions.loc[:, f'A_{sp_f}'] = self.model.populations[0].extinction.Alambda_Amap(
+                            self.model.parms.eff_wavelengths[sp_f]) * A_Ks_comps/AKs_Amap
 
         return systems, companions

@@ -69,10 +69,10 @@ class PopsyclePostProcessing(PostProcessing):
             self.mag_cols = [f[2:] for f in self.mag_cols_bin]
 
         for i in range(len(self.synthpop_mag_cols)):
-            if self.mag_cols[i].startswith['bessell_']:
+            if self.mag_cols[i].startswith('bessell_'):
                 self.mag_cols[i] = self.mag_cols[i].replace('bessell_', 'ubv_')
                 self.mag_cols_bin[i] = self.mag_cols[i].replace('m_bessell_', 'm_ubv_')
-            elif self.mag_cols[i].startswith['ukirt_']:
+            elif self.mag_cols[i].startswith('ukirt_'):
                 self.mag_cols[i] = self.mag_cols[i].replace('ukirt_', 'ubv_')
 
         self.synthpop_ext_cols = ['A_'+f for f in self.synthpop_mag_cols]
@@ -81,10 +81,6 @@ class PopsyclePostProcessing(PostProcessing):
 
         if self.multiplicity == None:
             companion_df = pd.DataFrame(columns=synthpop_nonmag_bin_cols + synthpop_nonmag_cols)  # Empty Dataframe for operations if singles only
-
-        """nan_sorted_columns = companion_df.isna().sum().sort_values(ascending=False).index  # Sorts column names by amount of NaNs
-        companion_df = companion_df.reindex(columns=nan_sorted_columns)  # Resorts columns to put NaN filled columns at the end
-        companion_df = companion_df.loc[:,~companion_df.columns.duplicated()].copy()  # Removes duplicated column names"""
 
         self.output_root = f"{self.model.get_filename(self.model.l_deg, self.model.b_deg)}_psc"
             

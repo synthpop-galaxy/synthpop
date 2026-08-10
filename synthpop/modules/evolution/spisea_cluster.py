@@ -79,8 +79,8 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
                 for item in val:
                     if item in self.bands:
                         self.photsys_dict.update({item: key})
-                    elif item in self.magsys:
-                        self.photsys_dict.update({band: key for band in self.magsys[item] if (band in self.bands)})
+                    elif item in self.all_spisea_filters:
+                        self.photsys_dict.update({band: key for band in self.bands if ('m_'+item+'_' in band)})
                     else:
                         raise ValueError(f"Invalid input in photsys_dict: {item} not found as band or band set.")
         else:
@@ -108,7 +108,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
             
     def get_cols(self, columns):
         with open(f"{EVOLUTION_DIR}/spisea_filters.json") as f:
-            all_spisea_filters = json.load(f)
+            self.all_spisea_filters = json.load(f)
         magsys = {}
         all_bands = []
         non_mag_cols = []
@@ -119,8 +119,8 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
             if column in self.allowed_non_mag_cols:
                 non_mag_cols.append(column)
             # Magnitude systems
-            elif column in all_spisea_filters.keys():
-                magsys = all_spisea_filters[column]
+            elif column in self.all_spisea_filters.keys():
+                magsys = self.all_spisea_filters[column]
                 # Magnitude systems with nested categories & need all
                 if hasattr(magsys, "keys"):
                     for magsys_subset in magsys.keys():
@@ -131,8 +131,8 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
                     for band in magsys:
                         all_bands.append(column+','+band)
             # Magnitude systems with nested or band selections
-            elif (len(column_split) in [2,3]) and (column_split[0] in all_spisea_filters.keys()):
-                magsys = all_spisea_filters[column_split[0]]
+            elif (len(column_split) in [2,3]) and (column_split[0] in self.all_spisea_filters.keys()):
+                magsys = self.all_spisea_filters[column_split[0]]
                 # Specified nested band set, use all filters
                 if (len(column_split)==2) and hasattr(magsys, "keys"):
                     if column_split[1] in magsys.keys():

@@ -69,10 +69,11 @@
 
     "PHOTOMETRIC_OUTPUTS":{
         "maglim":null,
-        "chosen_bands": ["ubv", "ukirt"],
+        "chosen_bands": ["bessell", "ukirt"],
         "obsmag":false,
         "combine_system_mags":true,
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase"]
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase"],
+        "photsys":"Vega"
     },
     
     "OUTPUT":{
