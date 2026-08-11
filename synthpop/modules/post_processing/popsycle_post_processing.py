@@ -60,7 +60,7 @@ class PopsyclePostProcessing(PostProcessing):
         self.synthpop_mag_cols = self.model.parms.bands
         if self.model.parms.star_generator=='SpiseaGenerator':
             self.mag_cols = [f[2:] for f in self.synthpop_mag_cols] # strip out the leading 'm_'
-            self.mag_cols_bin = self.synthpop_mag_cols
+            self.mag_cols_bin = self.synthpop_mag_cols.copy()
         else:
             # TODO might wanna genericize this at some point.....
             from ..evolution.mist import get_spisea_obs_str
@@ -71,7 +71,7 @@ class PopsyclePostProcessing(PostProcessing):
         for i in range(len(self.synthpop_mag_cols)):
             if self.mag_cols[i].startswith('bessell_'):
                 self.mag_cols[i] = self.mag_cols[i].replace('bessell_', 'ubv_')
-                self.mag_cols_bin[i] = self.mag_cols[i].replace('m_bessell_', 'm_ubv_')
+                self.mag_cols_bin[i] = self.mag_cols_bin[i].replace('m_bessell_', 'm_ubv_')
             elif self.mag_cols[i].startswith('ukirt_'):
                 self.mag_cols[i] = self.mag_cols[i].replace('ukirt_', 'ubv_')
 
