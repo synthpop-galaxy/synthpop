@@ -141,13 +141,17 @@ class SpiseaGenerator(StarGenerator):
         
         # NOTE: We check Fe/H then convert to M/H for SPISEA
         if single_age and single_feh:
-            age_all = self.evolution_module.log_age_list[np.argmin(np.abs(self.evolution_module.log_age_list-np.log10(self.age_module.age_value*1e9)))]
+            age_all = np.clip(np.log10(self.age_module.age_value*1e9),
+                              np.min(self.evolution_module.log_age_list),
+                              np.max(self.evolution_module.log_age_list))
             mh_all = self.mh_list[np.argmin(np.abs(self.evolution_module.feh_list-self.met_module.metallicity_value))]
             comb_bin_idxs = np.zeros(n_stars,dtype=int)
             bins2d = [[age_all, mh_all, n_stars]]
         elif single_age:
             # Sample metallicities in [Fe/H], then bin by nearest grid point
-            age_all = self.evolution_module.log_age_list[np.argmin(np.abs(self.evolution_module.log_age_list-np.log10(self.age_module.age_value*1e9)))]
+            age_all = np.clip(np.log10(self.age_module.age_value*1e9),
+                              np.min(self.evolution_module.log_age_list),
+                              np.max(self.evolution_module.log_age_list))
             fehs = self.met_module.draw_random_metallicity(
                     N=n_stars, x=position[0], y=position[1], z=position[2], age=10**age_all/1e9)
             feh_bins, comb_bin_idxs, feh_bin_cts = np.unique(np.argmin(np.abs(self.evolution_module.feh_list - fehs[:, None]), axis=1), 
