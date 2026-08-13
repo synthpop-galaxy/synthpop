@@ -209,7 +209,7 @@ class PopsyclePostProcessing(PostProcessing):
         # system_df.loc[:, 'obj_id'] = np.arange(0, len(system_df))
 
         _, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude, longitude, surveyArea, self.bin_edges_number)
-
+        
         # Cut unused columns
         cols_to_cut = []
         for col in system_df.keys():
@@ -219,10 +219,10 @@ class PopsyclePostProcessing(PostProcessing):
 
         cols_to_cut = []
         for col in companion_df.keys():
-            if col not in (popsycle_nonmag_bin_cols + self.mag_cols_bin + self.ext_cols):
+            if col not in (popsycle_nonmag_bin_cols + self.mag_cols_bin + self.ext_cols_bin):
                 cols_to_cut.append(col)
         popsycle_bin_df = companion_df.drop(columns=cols_to_cut)
-
+        
         if self.binning_procedure:
             return popsycle_df, popsycle_bin_df
         else:
