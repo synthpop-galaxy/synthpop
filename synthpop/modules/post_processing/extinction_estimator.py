@@ -123,7 +123,7 @@ class ExtinctionEstimator(PostProcessing):
             colors = filt_fit['colors']
             coeffs = filt_fit['coefficients']
             order = filt_fit['order']
-            self.logger.info(f"Estimating {filt} extinction using {colors} and order={order} function")
+            self.logger.debug(f"Estimating {filt} extinction using {colors} and order={order} function")
 
             columns = [catalog['A_Ks']]
             for c in colors:

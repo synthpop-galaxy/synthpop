@@ -20,18 +20,18 @@ synthpop_nonmag_cols = ['l', 'b', 'Dist',
                         'U', 'V', 'W',
                         'iMass','Mass',
                         'log_L', 'log_g', 'log_Teff', 'Fe/H_initial', 'age',
-                        'pop', 'phase', 'n_companions', 'system_Mass']
+                        'pop', 'phase', 'isWR', 'n_companions', 'system_Mass']
 popsycle_nonmag_cols = ['glat', 'glon', 'rad',
                         'px', 'py', 'pz', 
                         'vr', 'mu_lcosb', 'mu_b', 
                         'vx', 'vy', 'vz', 
                         'zams_mass', 'mass', 'systemMass', 
                         'mbol', 'grav', 'Teff', 'L', 'feh', 'age',
-                        'exbv', 'popid',
+                        'exbv', 'popid','isWR',
                         'isMultiple', 'N_companions', 'rem_id', 'obj_id'] 
 
 synthpop_nonmag_bin_cols = ['system_idx', 'period', 'eccentricity', '2MASS_Ks',
-                           'star_mass', 'log_R', 'log_a']
+                           'star_mass', 'log_R', 'log_a', 'isWR']
 popsycle_nonmag_bin_cols = ['system_idx', 'zams_mass', 'Teff', 'L',
                             'logg', 'isWR', 'mass', 'phase', 'metallicity',
                             'log_a', 'e', 'i', 'Omega', 'omega', 'zams_mass_prim',

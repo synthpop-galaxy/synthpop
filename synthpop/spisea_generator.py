@@ -294,7 +294,7 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
     star_systems_list_bin = []
     companions_list_bin = []
     n_bin = len(system_idxs)
-    print(f"Starting SPISEA cluster generation for bin log_age={log_age:.2f}"
+    logger.debug(f"Starting SPISEA cluster generation for bin log_age={log_age:.2f}"
                         f" [M/H]={mh:.2f} for {n_bin} stars")
     cluster_stars_needed = n_bin
     # Use a minimum mass per cluster of 100.0 so we don't get an error
