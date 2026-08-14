@@ -709,12 +709,12 @@ class Population:
 
         # collect all the column names
         # required_properties + optional_properties + magnitudes
-        headers = const.REQ_COL_NAMES + self.glbl_params.opt_iso_props + self.bands
-        # replace "ExtinctionInMap" with the output of the extinction map
-        if self.extinction is not None:
-            headers.append(self.extinction.A_or_E_type)
+#        headers = const.REQ_COL_NAMES + self.glbl_params.opt_iso_props + self.bands
+#        # replace "ExtinctionInMap" with the output of the extinction map
+#        if self.extinction is not None:
+#            headers.append(self.extinction.A_or_E_type)
         # requested properties
-        props_list = set(const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props + self.bands)
+        props_list = list(dict.fromkeys(const.REQ_ISO_PROPS + self.glbl_params.opt_iso_props)) + self.bands
 
         # get average_mass from imf
         average_imass_per_star = self.imf.average_mass(min_mass=self.min_mass,
