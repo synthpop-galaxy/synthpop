@@ -854,7 +854,6 @@ class Population:
                 comp_df.drop(comp_df.index, inplace=True)
             # If IFMR is None, we will have some zero mass objects to remove
             if np.any(df['Mass']==0.0):
-                print("FOUND SOME ZERO MASSES")
                 df = df[df['Mass']>0.0]
                 if self.mult is not None and len(comp_df)>0:
                     comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]
