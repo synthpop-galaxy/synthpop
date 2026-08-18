@@ -502,7 +502,8 @@ class Population:
             logger.debug(f"{self.population_density.l_length_deg}, {self.population_density.b_length_deg} degree l, b length box")
 
         if self.extinction is not None:
-            assert not np.any(np.isnan(self.extinction.get_extinctions(np.array([l_deg]), np.array([b_deg]), np.array([self.max_distance]))[0])), \
+            assert not np.any(np.isnan(self.extinction.get_extinctions(np.array([l_deg]), np.array([b_deg]),
+                                                                 np.array([self.max_distance]))[0])), \
                 fr"{self.extinction.extinction_map_name} not valid in direction l_deg={l_deg}, b_deg={b_deg} " \
                 f"at max distance {self.max_distance}. Check the map's sky coverage."
 
@@ -851,6 +852,21 @@ class Population:
                 comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]
             elif (len(df)==0) and (self.mult is not None):
                 comp_df.drop(comp_df.index, inplace=True)
+            # If IFMR is None, we will have some zero mass objects to remove
+            if np.any(df['Mass']==0.0):
+                print("FOUND SOME ZERO MASSES")
+                df = df[df['Mass']>0.0]
+                if self.mult is not None and len(comp_df)>0:
+                    comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]
+            if (self.mult is not None) and np.any(comp_df['Mass']==0.0):
+                unique_pris_orig = np.unique(comp_df['system_idx'].to_numpy())
+                comp_df = comp_df[comp_df['Mass']>0.0]
+                # Update companion counts
+                unique_pris, comp_count = np.unique(comp_df['system_idx'].to_numpy(), return_counts=True)
+                df.loc[unique_pris,"n_companions"] = comp_count
+                # Update companion counts for those that go to zero
+                no_comp_pris = np.setdiff1d(unique_pris_orig, unique_pris, assume_unique=True)
+                df.loc[no_comp_pris,"n_companions"] = 0
                 
             # add to previous drawn data
             df.loc[:,'system_idx'] += (current_max_id + 1)
@@ -964,7 +980,6 @@ class Population:
             vr_bc, mu_l, mu_b = self.coord_trans.uvw_to_vrmulb(position[4],
                             position[5], position[3], u, v, w)
             vr_lsr = self.coord_trans.vr_bc_to_vr_lsr(position[4], position[5], vr_bc)
-            #star_systems.drop(columns=['kick_x',])
             
         star_systems.loc[:,'x'] = position[0]
         star_systems.loc[:,'y'] = position[1]

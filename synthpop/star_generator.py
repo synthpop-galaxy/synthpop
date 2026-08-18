@@ -105,8 +105,7 @@ class StarGenerator:
                                                             skip_lowmass_idx)
 
         # If assigned, apply IFMR to handle NS and BH evolution
-        if self.ifmr_module is not None:
-            s_props = self.apply_ifmr(m_initial, met, s_props, final_phase_flag)
+        s_props = self.apply_ifmr(m_initial, met, s_props, final_phase_flag)
                 
         # If assigned, generate companions
         if self.mult_module is not None:
@@ -119,8 +118,7 @@ class StarGenerator:
                  m_initial_companions, met[pri_ids], age[pri_ids], props,
                  np.zeros(len(m_initial_companions), bool))
             # Apply IFMR if present
-            if self.ifmr_module is not None:
-                comp_s_props = self.apply_ifmr(m_initial_companions,
+            comp_s_props = self.apply_ifmr(m_initial_companions,
                     met[pri_ids], comp_s_props, comp_final_phase_flag)
 
         # Compile star systems table for output
@@ -263,15 +261,19 @@ class StarGenerator:
         Apply the IFMR to catch stars evolved past the grid and make them
         the appropriate dark remnant.
         """
-        m_compact, m_phase = self.ifmr_module.process_compact_objects(
-            m_init[final_phase_flag], met[final_phase_flag])
-        for key in s_props.keys():
-            if key=='star_mass':
-                s_props[key][final_phase_flag] = m_compact
-            elif key=='phase':
-                s_props[key][final_phase_flag] = m_phase
-            else:
-                s_props[key][final_phase_flag] = np.nan
+        if self.ifmr_module is None:
+            for key in s_props:
+                s_props[key][final_phase_flag] = 0.0
+        else:
+            m_compact, m_phase = self.ifmr_module.process_compact_objects(
+                m_init[final_phase_flag], met[final_phase_flag])
+            for key in s_props:
+                if key=='star_mass':
+                    s_props[key][final_phase_flag] = m_compact
+                elif key=='phase':
+                    s_props[key][final_phase_flag] = m_phase
+                else:
+                    s_props[key][final_phase_flag] = np.nan
         return s_props
 
 

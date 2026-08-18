@@ -550,8 +550,8 @@ class CharonInterpolator(EvolutionInterpolator):
             raise ValueError("inter_age must either be log or linear")
 
         # split properties
-        props_no_charon = props.intersection(self.props_no_charon)
-        props_with_charon = props.difference(self.props_no_charon)
+        props_no_charon = set(props).intersection(self.props_no_charon)
+        props_with_charon = set(props).difference(self.props_no_charon)
 
         in_grid = None
 
