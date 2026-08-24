@@ -6,12 +6,12 @@
     },
 
     "SIGHTLINES":{
-        "l_set":null,
-        "l_set_type":null,
-        "b_set":null,
-        "b_set_type": null,
+        "l_set":[0.5],
+        "l_set_type":"list",
+        "b_set":[-1.4],
+        "b_set_type": "list",
         "field_shape": "circle",
-        "field_scale": null,
+        "field_scale": 0.001,
         "field_scale_unit": "deg"
     },
 
