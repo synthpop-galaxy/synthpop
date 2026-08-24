@@ -86,7 +86,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
     # folder where isochrone files can be found
     FOLDER = f"{ISOCHRONES_DIR}/mist"
     mag_system_conversions = pd.read_csv(f"{EVOLUTION_DIR}/mist_magnitude_systems.dat",
-                                sep='\s+', index_col='filter')
+                                sep=r'\s+', index_col='filter')
 
     # lowest and highest mass where MIST isochrones should be used
     # (can be outside the covered range, in such cases the closets grid_points are used)
@@ -406,7 +406,7 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
         # get column names
         cols = cls.get_columns(filename)
         # load table from ascii file
-        df = pd.read_csv(filename, sep='\s+', comment='#',
+        df = pd.read_csv(filename, sep=r'\s+', comment='#',
             skip_blank_lines=True, low_memory=False, header=None, names=cols)
         return df
 
@@ -566,6 +566,7 @@ def get_spisea_obs_str(filt):
     with open(f'{EVOLUTION_DIR}/spisea_filters.json') as f:
         spisea_filters = json.load(f)
 
+    mist_columns['K213'] = 'WFIRST'
     mist_filter_set = mist_columns[filt]
     # Try generic method
     try:
