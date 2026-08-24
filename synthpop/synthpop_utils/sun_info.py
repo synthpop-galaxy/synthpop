@@ -10,7 +10,9 @@ __data__ = "2023-05-05"
 
 from functools import cached_property
 import numpy as np
+import pydantic
 from pydantic import BaseModel
+import warnings
 
 class SunInfo(BaseModel):
     # location of the sun
@@ -40,9 +42,9 @@ class SunInfo(BaseModel):
     b_gal_cen: float = -0.046
 
     class Config():
-        try: #pydantic version compatibility
+        if pydantic.__version__.startswith("1"):
             keep_untouched = (cached_property,)
-        except:
+        else:
             ignored_types = (cached_property,)
 
     @cached_property

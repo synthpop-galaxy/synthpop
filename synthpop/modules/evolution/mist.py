@@ -140,8 +140,6 @@ class MIST(EvolutionIsochrones, CharonInterpolator):
                         self.photsys_dict.update({item: key})
                     elif item in self.magsys:
                         self.photsys_dict.update({band: key for band in self.magsys[item] if (band in self.bands)})
-                    else:
-                        raise ValueError(f"Invalid input in photsys_dict: {item} not found as band or band set.")
         else:
             raise ValueError("Input for photsys must be 'Vega', 'AB', 'ST', None, or dict.")
 

@@ -28,6 +28,14 @@ class ExtinctionEstimator(PostProcessing):
 
     def __init__(self, model, logger, **kwargs):
         super().__init__(model,logger, **kwargs)
+        
+        if (self.model.parms.maglim is not None) and self.model.parms.obsmag:
+            raise ValueError("ExtinctionEstimator is not compatible with "
+                "a magnitude limit and observed magnitudes (see inputs "
+                "for obsmag and maglim). To use ExtinctionEstimator with "
+                "observed magnitudes and a magnitude limit, use maglim=None and "
+                "AdditionalCuts postprocessing module after ExtinctionEstimator.")
+        
         # Load up the fit results
         current_dir = os.path.dirname(os.path.abspath(__file__))
         ext_cor_tab = Table.read(f'{current_dir}/extinction_correction_table.dat', format='ascii.mrt')

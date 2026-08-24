@@ -6,7 +6,7 @@
     "solid_angle":0.0001,
     "solid_angle_unit":"deg^2",
 
-    "model_name":"besancon_Robin2003",
+    "model_name":"Huston2025",
 
     "extinction_map_kwargs": {"name":"maps_from_dustmaps", "dustmap_name":"marshall"},
     "extinction_law_kwargs": [{"name":"SODC", "R_V":2.5}],
@@ -14,6 +14,7 @@
 
     "maglim":["2MASS_Ks",21],
     "obsmag": true,
+    "post_processing_kwargs":null,
 
     "name_for_output":"default_synthpop",
     "overwrite": true,

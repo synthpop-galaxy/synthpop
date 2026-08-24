@@ -25,6 +25,7 @@ class AdditionalCuts(PostProcessing):
         where 'param_nameN' can be any column in the DataFrame,
         'cut_typeN' must be 'min' or 'max', and
         cutlimitN should be the int or float value to cut at.
+        Example: ["Bessell_I", "max", 21]
     difference_cuts : list
         list of cuts to make based on column value differences (e.g. color);
         e.g. [['param_name1a', 'param_name1b', 'cut_type1', cut_limit1],
