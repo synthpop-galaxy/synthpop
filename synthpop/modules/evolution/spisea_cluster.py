@@ -171,41 +171,36 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
         return
 
 def generate_effective_wavelengths_json():
-    import pysynphot
+    import synphot
+    import astropy.units as u
+    from spisea.synthetic import vega
     with open(f'{EVOLUTION_DIR}/spisea_filters.json') as f:
         d = json.load(f)
     def do_filt_effs(sys,flts):
         efflamsi = {}
         for flt in flts:
-                flt_name = sys+','+flt
-                filt = spisea_synthetic.get_filter_info(flt_name)
-                obs = pysynphot.Observation(pysynphot.Vega, filt).efflam()
-                assert str(filt.waveunits) == 'angstrom'
-                efflamsi[flt_name] = obs*1e-4
-                #pdb.set_trace()
-                print(flt_name, obs*1e-4)
+            flt_name = sys+','+flt
+            filt = spisea_synthetic.get_filter_info(flt_name)
+            obs = synphot.Observation(vega, filt
+                         ).effective_wavelength()
+            efflamsi[flt_name] = obs.to(u.micron).value
+            print(flt_name, efflamsi[flt_name])
         return efflamsi
     def do_filt_pivs(sys,flts):
         efflamsi = {}
         for flt in flts:
-                flt_name = sys+','+flt
-                filt = spisea_synthetic.get_filter_info(flt_name)
-                obs = filt.pivot()
-                assert str(filt.waveunits) == 'angstrom'
-                efflamsi[flt_name] = obs*1e-4
-                #pdb.set_trace()
-                print(flt_name, obs*1e-4)
+            flt_name = sys+','+flt
+            filt = spisea_synthetic.get_filter_info(flt_name)
+            efflamsi[flt_name] = filt.pivot().to(u.micron).value
+            print(flt_name, efflamsi[flt_name])
         return efflamsi
     def do_filt_avgs(sys,flts):
         efflamsi = {}
         for flt in flts:
-                flt_name = sys+','+flt
-                filt = spisea_synthetic.get_filter_info(flt_name)
-                obs = filt.avgwave()
-                assert str(filt.waveunits) == 'angstrom'
-                efflamsi[flt_name] = obs*1e-4
-                #pdb.set_trace()
-                print(flt_name, obs*1e-4)
+            flt_name = sys+','+flt
+            filt = spisea_synthetic.get_filter_info(flt_name)
+            efflamsi[flt_name] = filt.avgwave().to(u.micron).value
+            print(flt_name, efflamsi[flt_name])
         return efflamsi
 
     all_effs = {}
@@ -237,8 +232,8 @@ def generate_photsys_conversions():
         convs_st = {}
         for flt in flts:
             flt_name = sys+','+flt
-            convs_ab.update({flt_name: spisea_synthetic.calc_ab_vega_filter_conversion(flt_name)})
-            convs_st.update({flt_name: spisea_synthetic.calc_st_vega_filter_conversion(flt_name)})
+            convs_ab.update({flt_name: spisea_synthetic.calc_ab_vega_filter_conversion(flt_name).value})
+            convs_st.update({flt_name: spisea_synthetic.calc_st_vega_filter_conversion(flt_name).value})
         return convs_ab, convs_st
 
     all_convs = {"AB":{}, "ST":{}}
