@@ -13,6 +13,7 @@ except ImportError:
     from _extinction import ExtinctionLaw
 from spisea import reddening
 import numpy as np
+from astropy import units as u
     
 class Spisea(ExtinctionLaw):
     """
@@ -29,8 +30,14 @@ class Spisea(ExtinctionLaw):
     def __init__(self, red_law_str, **kwargs):
         self.extinction_law_name = 'Spisea:'+red_law_str
         self.spisea_red_law = reddening.get_red_law(red_law_str)
-        self.min_wavelength = self.spisea_red_law.low_lim*1e-4
-        self.max_wavelength = self.spisea_red_law.high_lim*1e-4
+        # SynPhot SPISEA case
+        if isinstance(self.spisea_red_law.low_lim, u.Quantity):
+            self.min_wavelength = self.spisea_red_law.low_lim.to(u.micron).value
+            self.max_wavelength = self.spisea_red_law.high_lim.to(u.micron).value
+        # Old (pysynphot) SPISEA case
+        else:
+            self.min_wavelength = self.spisea_red_law.low_lim*1e-4
+            self.max_wavelength = self.spisea_red_law.high_lim*1e-4
         self.law_ref_wavelength = self.spisea_red_law.wave[0]*1e-4
 
     def Alambda_Aref(self, eff_wavelength: float) -> float:

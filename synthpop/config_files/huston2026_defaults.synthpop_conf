@@ -73,13 +73,10 @@
         "obsmag":true,
         "combine_system_mags": true,
         "effective_wavelengths": "average",
-        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase"]
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase", "isWR"]
     },
     
-    "OUTPUT":{
-        "post_processing_kwargs": [{"name":"RenameColumns", "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
-                                                            "new_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius"]}],
-    
+    "OUTPUT":{    
         "output_location":"outputfiles/default",
         "output_filename_pattern": "{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}",
         "output_file_type": "csv",
