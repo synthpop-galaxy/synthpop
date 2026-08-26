@@ -69,17 +69,17 @@
     "PHOTOMETRIC_OUTPUTS":{
         "maglim":["W146", 23.975533],
         "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "2MASS_J", "2MASS_H", "2MASS_Ks"],
-        "photsys": null,
+        "photsys": {"AB":["WFIRST"]},
         "obsmag":true,
         "combine_system_mags": false,
         "effective_wavelengths": "vega_eff",
+        "maglim_after_postproc": false,
 
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"]
     },
     
     "OUTPUT":{
-        "post_processing_kwargs": [{"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}},
-                                   {"name":"RenameColumns", "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
+        "post_processing_kwargs": [{"name":"RenameColumns", "old_names":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R"],
                                                             "new_names":["logL", "logTeff", "logg" ,"Fe/H_evolved","log_radius"]}],
     
         "output_location":"outputfiles/default",

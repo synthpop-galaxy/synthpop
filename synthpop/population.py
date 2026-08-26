@@ -137,6 +137,7 @@ class Population:
         self.min_mass = self.glbl_params.mass_lims['min_mass']
         self.max_mass = self.glbl_params.mass_lims['max_mass']
         self.skip_lowmass_stars = self.glbl_params.skip_lowmass_stars
+        self.maglim_after_postproc = self.glbl_params.maglim_after_postproc
 
         # get maximum distance and step_size
         self.max_distance = getattr(
@@ -748,7 +749,6 @@ class Population:
             self.skip_lowmass_stars = False
 
         elif self.skip_lowmass_stars:
-            #raise NotImplementedError("SORRY I BROKE THIS OPTION TEMPORARILY - skip_lowmass_stars not available")
             logger.info(f"{self.name} : estimate minimum mass for magnitude limit")
             max_age = self.age.get_maximum_age()
             mass_limit = self.evolution.get_mass_min(
@@ -844,14 +844,16 @@ class Population:
                 missing_stars -= gen_stars_chunk
 
             # Filter for mag limits
-            if (self.glbl_params.maglim is not None) and (not self.glbl_params.lost_mass_option==3):
+            if (self.glbl_params.maglim is not None) and \
+                (not self.glbl_params.lost_mass_option==3) \
+                and (not self.maglim_after_postproc):
                 # TODO: probably need to make this not a slice
                 # TODO: confirm this drops nans also
                 df = df[df[self.glbl_params.maglim[0]]<self.glbl_params.maglim[1]]
-            if (len(df)>0) and (self.mult is not None):
-                comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]
-            elif (len(df)==0) and (self.mult is not None):
-                comp_df.drop(comp_df.index, inplace=True)
+                if (len(df)>0) and (self.mult is not None):
+                    comp_df = comp_df[np.isin(comp_df['system_idx'].to_numpy(), df['system_idx'].to_numpy())]
+                elif (len(df)==0) and (self.mult is not None):
+                    comp_df.drop(comp_df.index, inplace=True)
             # If IFMR is None, we will have some zero mass objects to remove
             if np.any(df['Mass']==0.0):
                 df = df[df['Mass']>0.0]
@@ -896,8 +898,8 @@ class Population:
         
         # Remove any excess stars
         if (self.lost_mass_option==3) and (len(population_df)>0):
-            population_df, population_comp_df = self.remove_stars(population_df, population_comp_df,
-                                    neg_missing_stars)
+            population_df, population_comp_df = self.remove_stars(population_df,
+                        population_comp_df, neg_missing_stars)
         if len(population_df)>0:
             population_df.loc[:, 'pop'] = self.popid
 

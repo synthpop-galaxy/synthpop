@@ -73,6 +73,7 @@
         "obsmag":true,
         "combine_system_mags": true,
         "effective_wavelengths": "vega_eff",
+        "maglim_after_postproc": true,
 
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]", "log_R", "phase"]
     },

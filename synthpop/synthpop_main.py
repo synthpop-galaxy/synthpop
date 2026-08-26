@@ -542,7 +542,15 @@ class SynthPop:
         else:
             # have single postprocessing
             field_df, field_companions_df = self.post_processing(field_df, field_companions_df)
-
+            
+        if self.parms.maglim_after_postproc and (self.parms.maglim is not None):
+            if len(field_df)>0:
+                field_df = field_df[field_df[self.parms.maglim[0]]<self.parms.maglim[1]]
+                if (field_companions_df is not None) and len(field_companions_df)>0:
+                    field_companions_df = field_companions_df[np.isin(
+                                            field_companions_df['system_idx'].to_numpy(),
+                                            field_df['system_idx'].to_numpy())]
+                    
         if self.save_data:
             logger.create_info_subsection('Save result')
             self.write_to_file(field_df, companions=False)
