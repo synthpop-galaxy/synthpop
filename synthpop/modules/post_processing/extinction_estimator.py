@@ -150,14 +150,20 @@ class ExtinctionEstimator(PostProcessing):
         return result
 
     def convert_mags_to_ab(self, ext_est_dict):
+        #pdb.set_trace()
         for i, f in enumerate(self.full_filter_list_obs_str):
-            if self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'AB':
-                pass 
-            elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'Vega':
-                ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
-            elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'ST':
-                ext_est_dict[self.full_filter_list[i]] -= self.photsys_convert['ST'][f]
-                ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
+            try:
+                if self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'AB':
+                    pass
+                elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'Vega':
+                    ext_est_dict[self.full_filter_list[i]].setflags(write=True)
+                    ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
+                elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'ST':
+                    ext_est_dict[self.full_filter_list[i]].setflags(write=True)
+                    ext_est_dict[self.full_filter_list[i]] -= self.photsys_convert['ST'][f]
+                    ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
+            except:
+                pdb.set_trace()
         return ext_est_dict 
 
     def do_post_processing(self, systems: pd.DataFrame, companions: pd.DataFrame):
@@ -288,7 +294,9 @@ class ExtinctionEstimator(PostProcessing):
                 prim_abs_mags = get_primary_mags(prim_abs_mags, comps_abs_mags, self.full_filter_list)
 
             # Calculate extinction in the filters from the A_Ks and absolute colors
-            ext_ests = self.get_roman_extinction_sim(prim_abs_mags)
+            ext_est_dict = {f:prim_abs_mags[f].to_numpy() for f in self.full_filter_list}
+            ext_est_dict['A_Ks'] = A_Ks
+            ext_ests = self.get_roman_extinction_sim(ext_est_dict)
 
             # Put the values in the table, and re-calculate apparent mags if relevant
             for i,f in enumerate(self.filter_list):
