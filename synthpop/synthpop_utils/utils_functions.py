@@ -78,40 +78,65 @@ def rotation_matrix(
 
 
 def combine_system_mags(df, comp_df, filters):
-    all_systems = df['system_idx'].to_numpy()
-    idx_map = pd.Series(np.arange(len(all_systems)), index=all_systems)
-    comp_rows = idx_map.loc[comp_df['system_idx']].to_numpy()
+    sys_indexer = pd.Index(df['system_idx'])
+    comp_rows = sys_indexer.get_indexer(comp_df['system_idx'])
 
-    comp_mags = np.ma.masked_invalid(comp_df[filters].to_numpy())
-    comp_flux = (10.0 ** (-0.4 * comp_mags)).filled(0.0)
+    comp_mags = comp_df[filters].to_numpy()
+    main_mags = df[filters].to_numpy()
+    main_mags_for_comp = main_mags[comp_rows]
 
-    main_mags = np.ma.masked_invalid(df[filters].to_numpy())
-    system_flux = (10.0 ** (-0.4 * main_mags)).filled(0.0)
-    np.add.at(system_flux, comp_rows, comp_flux)
+    # Companion-to-primary relative flux ratio: 10^(-0.4 * (m_comp - m_main))
+    delta_m = comp_mags - main_mags_for_comp
+    comp_to_main_ratio = np.nan_to_num(10.0 ** (-0.4 * delta_m), nan=0.0)
 
-    masked_system_flux = np.ma.masked_less_equal(system_flux, 0.0)
-    df[filters] = (-2.5 * np.ma.log10(masked_system_flux)).filled(np.nan)
+    # Accumulate relative companion flux ratio per primary system
+    total_comp_ratio = np.zeros_like(main_mags)
+    np.add.at(total_comp_ratio, comp_rows, comp_to_main_ratio)
 
+    # Accumulate absolute companion flux for dark primaries
+    comp_abs_flux = np.nan_to_num(10.0 ** (-0.4 * comp_mags), nan=0.0)
+    total_comp_abs_flux = np.zeros_like(main_mags)
+    np.add.at(total_comp_abs_flux, comp_rows, comp_abs_flux)
+
+    inv_ln10_25 = 2.5 / np.log(10.0)
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        # Precision path using log1p: m_tot = m_main - (2.5/ln10) * ln(1 + ratio)
+        combined_with_primary = main_mags - inv_ln10_25 * np.log1p(total_comp_ratio)
+        
+        # Fallback path for dark primaries (where primary magnitude is NaN)
+        combined_dark = np.where(total_comp_abs_flux > 0.0, -2.5 * np.log10(total_comp_abs_flux), np.nan)
+
+        combined_mags = np.where(~np.isnan(main_mags), combined_with_primary, combined_dark)
+
+    df[filters] = combined_mags
     return df
 
-
-def get_primary_mags(df, comp_df, filters):
-    primary_idxs = (df['n_companions'] > 0).to_numpy()
-    if not np.any(primary_idxs):
+def get_primary_mags(df, comp_df, filters, rtol=1e-12):
+    # remove nan mag companions
+    comp_clean = comp_df.dropna(subset=[filters[0]])
+    if comp_clean.empty:
         return df
+    comp_rows = pd.Index(df['system_idx']).get_indexer(comp_clean['system_idx'])
 
-    primary_systems = df.loc[primary_idxs, 'system_idx'].to_numpy()
-    idx_map = pd.Series(np.arange(len(primary_systems)), index=primary_systems)
-    comp_rows = idx_map.loc[comp_df['system_idx']].to_numpy()
-    comp_mags = np.ma.masked_invalid(comp_df[filters].to_numpy())
-    comp_flux = (10.0 ** (-0.4 * comp_mags)).filled(0.0)
+    # magnitude math
+    comp_mags = comp_clean[filters].to_numpy()
+    sys_mags = df[filters].to_numpy()
+    sys_mags_for_comp = sys_mags[comp_rows]
+    delta_m = comp_mags - sys_mags_for_comp
+    flux_ratio = 10.0 ** (-0.4 * delta_m)
+    total_comp_ratio = np.zeros_like(sys_mags)
+    np.add.at(total_comp_ratio, comp_rows, flux_ratio)
+    inv_ln10_25 = 2.5 / np.log(10.0)
 
-    system_mags = np.ma.masked_invalid(df.loc[primary_idxs, filters].to_numpy())
-    primary_flux = (10.0 ** (-0.4 * system_mags)).filled(0.0)
-    np.add.at(primary_flux, comp_rows, -comp_flux)
+    # mag subtraction
+    with np.errstate(invalid='ignore', divide='ignore'):
+        remaining_fraction = 1.0 - total_comp_ratio
+        valid_primary = (remaining_fraction > rtol) & ~np.isnan(sys_mags)
 
-    masked_primary_flux = np.ma.masked_less_equal(primary_flux, 0.0)
-    df.loc[primary_idxs, filters] = (-2.5 * np.ma.log10(masked_primary_flux)).filled(np.nan)
+        mag_correction = -inv_ln10_25 * np.log1p(-total_comp_ratio)
+        primary_mags = np.where(valid_primary, sys_mags + mag_correction, np.nan)
 
+    df[filters] = primary_mags
     return df
 
