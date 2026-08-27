@@ -74,7 +74,7 @@
         "combine_system_mags":true,
         "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase", "isWR"],
         "photsys":"Vega",
-        "maglim_after_postproc": false,
+        "maglim_after_postproc": true
     },
     
     "OUTPUT":{
