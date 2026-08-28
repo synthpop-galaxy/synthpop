@@ -3,7 +3,7 @@ Density function that interpolates over a grid. Created for NSD and NSC models
 tabulated from AGAMA, but can use other files with the same format.
 """
 
-__all__ = ["density_from_grid"]
+__all__ = ["DensityFromGrid"]
 __author__ = "M.J. Huston"
 __date__ = "2024-04-17"
 
@@ -13,7 +13,7 @@ from scipy.interpolate import LinearNDInterpolator, RegularGridInterpolator
 from ._population_density import PopulationDensity
 from .. import const
 
-class density_from_grid(PopulationDensity):
+class DensityFromGrid(PopulationDensity):
     """
     Generic PopulationDensity subclass to interpolate over a grid
 
@@ -35,7 +35,7 @@ class density_from_grid(PopulationDensity):
             **kwargs
             ):
         dat = pd.read_csv(const.MOMENTS_DIR + '/' + moment_file,
-            sep='\s+', comment='#')
+            sep=r'\s+', comment='#')
         super().__init__(max_gc_dist=np.max(dat['r']), **kwargs)
         rho = dat.pivot(index='r', columns='z', values='rho')
         self.required_grid_resolution = np.minimum(np.min(np.diff(rho.index.to_numpy())),

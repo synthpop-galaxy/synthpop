@@ -244,7 +244,7 @@ class PopulationDensity(ABC):
                 # Adjust distance grid for zero density regions if relevant
                 nz_indices = np.flatnonzero(self.density_int_st_dir)
                 dmin_idx = np.maximum(nz_indices[0]-1, 0)
-                dmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_d_pts))
+                dmax_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_d_pts)-1)
                 nz_indices = np.flatnonzero(trapezoid(self.density_int_st_rad, x=self.density_grid_d_pts, axis=1))
                 stdir_min_idx = np.maximum(nz_indices[0]-1, 0)
                 stdir_max_idx = np.minimum(nz_indices[-1]+1,len(self.density_grid_st_dir)-1)
