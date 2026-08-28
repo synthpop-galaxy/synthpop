@@ -4,7 +4,7 @@
     "imf_func_kwargs" : {
         "name" : "PiecewisePowerlaw",
         "alphas" : [1.6,3.0],
-        "splitpoints" : [1.0]},
+        "splitpoints" : [1.0]
     },
 
     "age_func_kwargs" : {

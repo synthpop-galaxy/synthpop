@@ -11,7 +11,7 @@
         "rc": 2.175827881
     },
 
-    "#imf_func_kwargs" :{
+    "imf_func_kwargs" :{
         "name": "PiecewisePowerlaw",
         "alphas": [0.5]
     },
