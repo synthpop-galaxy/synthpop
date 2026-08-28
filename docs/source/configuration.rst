@@ -18,7 +18,7 @@ The configuration sets the following:
 
 Specific and Default Configurations
 -----------------------------------
-We provide a ``_default_config.synthpop_conf`` file, which is the default file used if a custom one is not entered.
+We provide a ``_default.synthpop_conf`` file, which is the default file used if a custom one is not entered.
 A specific configuration will override any parameters defined in the default.
 
 The default values are defined in config_files/_default_config.json.
@@ -38,7 +38,7 @@ For example the config file can look as follows::
         "name":"MIST", 
         "interpolator":"CharonInterpolator"
         },
-      "extinction_map_kwargs": {"name":"Marshall"}
+      "extinction_map_kwargs": {"name":"MapsFromDustmaps", "dustmap_name":"marshall"}
       "extinction_law_kwargs": {"name":"ODonnellCardelli"}
     }
 
@@ -64,7 +64,8 @@ where ``default_config`` is an optional keyword argument.
 Configuration File Contents
 -----------------------------
 
-Our ``_default_config.json`` is sorted into different categories, which are not required but may be used for any configuration. Note that any arguments starting with an '#' are ignored, so we use these for comments. The optional category headings are: MANDITORY, SIGHTLINES, SEED, COORDINATE_SYSTEM, POPULATION_GENERATION, EXTINCTION_MAP, ISOCHRONE_INTERPOLATION, PHOTOMETRIC_OUTPUTS, and OUTPUT.
+Our ``_default.synthpop_conf`` is sorted into different categories, which are not required but may be used for any configuration. Note that any arguments starting with an '#' are ignored, so we use these for comments. 
+The optional category headings are: MANDITORY, SIGHTLINES, SEED, COORDINATE_SYSTEM, POPULATION_GENERATION, EXTINCTION_MAP, ISOCHRONE_INTERPOLATION, PHOTOMETRIC_OUTPUTS, and OUTPUT.
 
 MANDATORY
 ^^^^^^^^^
@@ -75,8 +76,8 @@ MANDATORY
 example::
 
     "MANDATORY":{
-        "model_name":"Model1",
-        "name_for_output":"Model1_v1"
+        "model_name":"validation_model",
+        "name_for_output":"my_test_model"
     },
 
 SIGHTLINES
@@ -85,7 +86,7 @@ SIGHTLINES
 
 **l_set_type**, **b_set_type**: three options for how to handle **l_set** and **b_set**:
 
-* "list": create a grid of sightlines, with all l and b values looped over individually, i.e. ((l[0],b[0]),...,(l[0],b[i]),(l[1],b[0]),... 
+* "list" (default): create a grid of sightlines, with all l and b values looped over individually, i.e. ((l[0],b[0]),...,(l[0],b[i]),(l[1],b[0]),... 
 * "pairs": treats the l and b sets as a list of pairs, i.e. ((l[0],b[0]),..., (l[i],b[i])
 * "range": treats the l and b sets as arguments for np.arange([l/b]_set)
 
@@ -118,6 +119,7 @@ COORDINATE_SYSTEMS
 * **x**, **y**, **z**: location of the Sun in cartesian Galactic coordinates (kpc)
 * **u**, **v**, **w**: motion of the Sun in cartesian Galactic coordinates (km/s)
 * **l_apex_deg**, **b_apex_deg**: direction of the Solar apex in Galactic coordinates (degree)
+* **l_gal_cen**, **b_gal_cen**: Galactic coordinates of the Galactic center (degree)
 
 **lsr**: dictionary containing the following values:
 
@@ -131,7 +133,7 @@ COORDINATE_SYSTEMS
 * **alpha_warp**: exponent of warp power law (b in equation below)
 * **phi_warp_deg**, **phi_warp_rad**: angle for line of notes, where one should be specified with indicated unit (degree or radian)
 
-example with solar motion from Reid & Brunthaler (2020), LSR motion from Schönrich et al. (2010), warp from Chen X. et al (2019)::
+example with solar motion from Reid & Brunthaler (2020), LSR motion from Schönrich et al. (2010), warp from Chen X. et al (2019), and no offset in the GC position::
 
     "COORDINATE_SYSTEM":{
         "sun": {
@@ -142,7 +144,9 @@ example with solar motion from Reid & Brunthaler (2020), LSR motion from Schönr
             "v": 245.6,
             "w": 7.78,
             "l_apex_deg": 56.24,
-            "b_apex_deg": 22.54
+            "b_apex_deg": 22.54,
+            "l_gal_cen": 0.0,
+            "b_gal_cen": 0.0
         },
         "lsr":{
             "u_lsr": 1.8,
@@ -169,7 +173,7 @@ POPULATION_GENERATION
 
 * 1: For each population, a test batch of N_av_mass stars is generated and evolved to estimate the total initial stellar mass required to meet the desired present day total stellar mass. These values are saved for all sightlines run with the initialized populations.
 * 2: For each population a test batch of N_av_mass stars is generated and evolved to estimate the total initial stellar mass required to meet the desired present day total stellar mass. These value is re-calculated for each sightline run.
-* 3: Initially treat the population density as an initial mass density, then add or remove stars as needed.
+* 3: Initially treat the population density as an initial mass density, then add/remove stars as needed.
 * 4: Use the precomputed value given by either "av_mass_corr" or "n_star_corr" in each population file to scale the required total initial stellar mass needed to achieve the desired present day total stellar mass.
 
 **N_av_mass**: number of stars to use to estimate average evolved stellar mass
@@ -180,6 +184,12 @@ POPULATION_GENERATION
 
 **chunk_size**: for computational feasibility, limit number of stars to evolve at once to this value
 
+**star_generator**: star generation method to use:
+
+* StarGenerator: SynthPop's internal star generation method, which was the only option in SynthPop versions before 2.0.0.
+* SpiseaGenerator: Use `SPISEA <https://spisea.readthedocs.io/en/latest/>`_ to generate the stellar populations. If selected, the following configuration options must be for the SPISEA versions of each option/module: 
+evolution_class, ifmr_kwargs, multiplicity_kwargs, photometric filters (in maglim, chosen_bands, and photsys), opt_iso_props.
+
 example::
 
     "POPULATION_GENERATION":{
@@ -189,7 +199,8 @@ example::
         "N_av_mass":20000,
         "scale_factor": 1,
         "skip_lowmass_stars": false,
-        "chunk_size": 250000
+        "chunk_size": 250000,
+        "star_generator": "StarGenerator"
     },
 
 EXTINCTION_MAP
@@ -236,33 +247,53 @@ ISOCHRONE_INTERPOLATION
 * **name**: name of the metallicity module
 * **<kwargs>**: any kwargs required or optional for the selected module
 
-example for single evolution class::
+example for single evolution class that will cut out all objects evolved beyond the isochrone grid and generate to companions::
 
     "ISOCHRONE_INTERPOLATION":{
         "evolution_class": {"name":"MIST", "interpolator":"CharonInterpolator"},
+        "ifmr_kwargs":null,
+        "multiplicity_kwargs":null
     }
 
-example for evolution class determined by initial mass, where we iterate through the list and apply the first appropriate option per star::
+example for evolution class determined by initial mass, where we iterate through the list and apply the first appropriate option per star,
+apply multiplicity, and use an IFMR::
 
     "ISOCHRONE_INTERPOLATION":{
         "evolution_class":[
-                {"name":"MIST", "min_mass":0.2, "max_mass":0.3},
                 {"name":"MIST", "interpolator":"LagrangeInterpolator","min_mass":0.1, "max_mass":0.7},
                 {"name":"MIST", "interpolator":"CharonInterpolator"}
-            ]
+            ],
+        "ifmr_kwargs":{"name":"SukhboldN20"},
+        "multiplicity_kwargs":{"name":"Raghavan"}
     }
 
-example for evolution class determined by population::
+example for evolution class determined by population with multiplicity and an IFMR::
 
     "ISOCHRONE_INTERPOLATION":{
         "evolution_class":{
             "default":[
                 {"name":"MIST", "interpolator":"CharonInterpolator"}
                 ],
-            "<population_name>":[
+            "thick_disk":[
                         {"name":"MIST", "interpolator":"LagrangeInterpolator"}
-            ]
+            ],
+        "ifmr_kwargs":{"name":"Spera15"},
+        "multiplicity_kwargs":{"name":"Raghavan"}
     }
+
+example using SPISEA::
+    "ISOCHRONE_INTERPOLATION":{
+        "evolution_class": {"name":"SpiseaCluster"},
+        "ifmr_kwargs": {"name":"SpiseaIfmr", "spisea_ifmr_name":"IFMR_N20_Sukhbold"},
+        "multiplicity_kwargs": {"name":"SpiseaMultiplicity", "spisea_multiplicity_name":"MultiplicityResolvedDK"}
+        },
+
+example using SPISEA w/ COSMIC::
+    "ISOCHRONE_INTERPOLATION":{
+        "evolution_class": {"name":"SpiseaCluster", "spisea_evolution_name":"COSMIC", "spisea_evolution_kwargs":{"BSEDict":"default"}},
+        "ifmr_kwargs": null,
+        "multiplicity_kwargs": {"name":"SpiseaMultiplicity", "spisea_multiplicity_name":"MultiplicityResolvedDK"}
+        },
 
 PHOTOMETRIC_OUTPUTS
 ^^^^^^^^^^^^^^^^^^^
@@ -328,6 +359,15 @@ For the MIST evolution module, the following filters are available:
     * - UVIT
       - UVIT_F148W, UVIT_F154W, UVIT_F169M, UVIT_F172M, UVIT_N242W, UVIT_N219M, UVIT_N245M, UVIT_N263M, UVIT_N279N
 
+See `this page <https://spisea.readthedocs.io/en/latest/filters.html>`_ for SPISEA's photometric filter options. Filters may be indicated by set or individual filter obs strs.
+
+**photsys**: photometric magnitude system, which may be:
+
+* a single string: "Vega", "AB", or "ST"
+* a dict indicating a specific system for any specific filters or filter sets (e.g. {"AB":["WFIRST"]} or {"AB"}:["W146","Z087"])
+
+If not indicated for a specific filter, the default photometric system for the underlying isochrone will be used. See `this table <https://mist.science/BC_tables/zeropoints.txt>`_ for MIST's defaults; SPISEA uses Vega for all by default.
+
 **obs_mag**: boolean option to generate observed magnitudes (generates absolute magnitudes if set to false)
 
 **combine_system_mags**: boolean option for whether the star systems table should include the summed system magnitude including any companions (for True) or only the magnitudes of the primary stars (for False). note: the companions table always holds only individual magnitudes for each companion.
@@ -336,23 +376,58 @@ For the MIST evolution module, the following filters are available:
 
 For MIST isochrone stellar property options, see `their documentation here <https://waps.cfa.harvard.edu/MIST/README_tables.pdf>`_
 
+For SPISEA, available properties are: "log_L", "log_Teff", "log_g", "log_R", "phase", "isWR"
+
+**maglim_after_postproc**: boolean option for whether to apply the magnitude limit (if not None) during generation (False) or after post-processing (True). Must be True for certain post-processing modules that modify photometry, like ExtinctionEstimator.
+
 example 1::
 
     "PHOTOMETRIC_OUTPUTS":{
         "maglim":["Bessell_I", 18],
         "chosen_bands": ["R062","Z087","Y106","J129","W146","H158","F184", "Bessell_U", "Bessell_B", "Bessell_V", "Bessell_R", "Bessell_I", "VISTA_J", "VISTA_H", "VISTA_Ks"],
+        "photsys": {"AB":["R062","Z087","Y106","J129","W146","H158","F184"]},
         "obsmag":true,
+        "combine_system_mags":true,
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]", "log_R", "phase"],
+        "maglim_after_postproc": true
     },
 
 example 2::
 
     "PHOTOMETRIC_OUTPUTS":{
         "maglim":None,
-        "chosen_bands": ["UBVRIplus", "VISTA"],
+        "chosen_bands": ["UBVRIplus", "WFIRST"],
+        "photsys": {"AB":["WFIRST"]},
         "obsmag":true,
+        "combine_system_mags":true,
         "opt_iso_props":["log_L", "log_Teff", "log_g", "[Fe/H]","log_R", "phase"],
+        "maglim_after_postproc": false
     },
+
+example 3 (SpiseaGenerator)::
+
+    "PHOTOMETRIC_OUTPUTS":{
+        "maglim":["m_bessell_I", 21],
+        "chosen_bands": ["bessell", "ukirt", "roman"],
+        "photsys":"AB",
+        "obsmag":true,
+        "combine_system_mags":true,
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase"],
+        "maglim_after_postproc": false
+    },
+
+example 4 (SpiseaGenerator)::
+
+    "PHOTOMETRIC_OUTPUTS":{
+        "maglim":None,
+        "chosen_bands": ["roman,wfi,f087", "roman,wfi,f146", "roman,wfi,f213", ],
+        "photsys":{"AB":["roman"]},
+        "obsmag":true,
+        "combine_system_mags":true,
+        "opt_iso_props":["log_L", "log_Teff", "log_g", "log_R", "phase", "isWR"],
+        "maglim_after_postproc": false
+    },
+
 
 OUTPUT
 ^^^^^^
@@ -372,9 +447,9 @@ OUTPUT
 example::
 
     "OUTPUT":{
-        "post_processing_kwargs": [{"name":"ConvertMistMags", "conversions":{"AB": ["R062", "Z087", "Y106", "J129", "W146", "H158", "F184"]}}],
+        "post_processing_kwargs": [{"name":"ExtinctionEstimator"}],
         "output_location":"outputfiles/testing",
         "output_filename_pattern": "{name_for_output}_l{l_deg:.3f}_b{b_deg:.3f}",
-        "output_file_type": ["csv",{}],
+        "output_file_type": "csv",
         "overwrite": true
     }
