@@ -7,9 +7,9 @@
 
     "SIGHTLINES":{
         "l_set":[0.5],
-        "l_set_type":"list",
+        "l_set_type":null,
         "b_set":[-1.4],
-        "b_set_type": "list",
+        "b_set_type": null,
         "field_shape": "circle",
         "field_scale": 0.001,
         "field_scale_unit": "deg"
