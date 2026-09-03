@@ -31,7 +31,9 @@ class Koshimoto2021Thindisk(PopulationDensity):
         if True, use linear scale height; if False, use flat
     """
 
-    def __init__(self, R, z_sun, z_45, rho_sun, R_break=5.3, linear_z=False, **kwargs):
+    def __init__(self, R: float = 5.0, z_sun: float = 0.061, z_45: float = 0.036,
+                 rho_sun: float = 5.2e6, R_break: float = 5.3,
+                 linear_z: boolean = False, **kwargs):
         super().__init__(**kwargs)
         self.density_unit = 'mass'
         self.R = R

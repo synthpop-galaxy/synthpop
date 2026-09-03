@@ -22,7 +22,7 @@ class GumsThickdisk(PopulationDensity):
     flare_flag : boolean
     """
 
-    def __init__(self, rho0, hr, hz, flare_flag=True, **kwargs):
+    def __init__(self, rho0=0.0005e9, hr=2.919, hz=0.795, flare_flag=True, **kwargs):
         super().__init__(**kwargs)
         self.name = "GumsThickdisk"
         self.density_unit = 'mass'

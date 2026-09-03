@@ -7,14 +7,15 @@ __all__ = ["GumsHalo", ]
 __author__ = "J. Klüter"
 __date__ = "2023-04-03"
 
-
 import numpy as np
 from .. import const
 from ._population_density import PopulationDensity
 
-
 class GumsHalo(PopulationDensity):
-    def __init__(self, rho0, e=0.774, rc=2.175827881, ah=1, dh=2.777231, **kwargs):
+    def __init__(self, rho0: float = 4.1e4,
+                 e: float = 0.774, rc: float = 2.175827881,
+                 ah: float = 1, dh: float = 2.777231,
+                 **kwargs):
         """
         Spheroidal density profile
         e.g. To describe the Halo density in the Besancon Gaia Universe Model

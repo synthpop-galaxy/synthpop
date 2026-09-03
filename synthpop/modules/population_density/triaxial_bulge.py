@@ -35,8 +35,9 @@ class TriaxialBulge(PopulationDensity):
         angle of the bar out of the plane
     """
 
-    def __init__(self, triaxial_type: str, density_unit: str, x0: float, y0: float, z0: float, rho0: float, 
-                 Rmax=np.inf, bar_angle=29.4, bar_plane_angle=0.0, **kwargs):
+    def __init__(self, triaxial_type: str = 'E3', density_unit: str = 'mass',
+                 x0: float = 0.67, y0: float = 0.29, z0: float = 0.27, rho0: float = 1.32585e10,
+                 Rmax: float = np.inf, bar_angle=29.4, bar_plane_angle=0.0, **kwargs):
         super().__init__(**kwargs)
         self.population_density_name = "TriaxialBulge"
         self.density_unit = density_unit

@@ -28,7 +28,8 @@ class Besancon2003Thickdisk(PopulationDensity):
         flag if flare is included or not
     """
 
-    def __init__(self, rho0, hr, hz, xl, flare_flag=False, **kwargs):
+    def __init__(self, rho0=0.00134e9, hr=2.5, hz=0.8, xl=0.4,
+                 flare_flag=False, **kwargs):
         super().__init__(**kwargs)
         self.population_density_name = "Besancon2003Thickdisk"
         self.density_unit = 'mass'

@@ -20,16 +20,24 @@ class GumsBar(PopulationDensity):
     x0 : float
     y0 : float
     z0 : float
-    sigma_cut_of : float
+    alpha : float
+    beta : float
+    gamma : float
     c_para : float
     c_perp : float
     dz_bone : float
     x_bone : float
     r_max : float
+    sigma_cut_of : float
     """
 
-    def __init__(self, n0, x0, y0, z0, alpha, beta, gamma, c_perp, c_para,
-            dz_bone=0, x_bone=0, r_max=np.inf, sigma_cut_of=1e-10, **kwargs):
+    def __init__(self, n0: float = 4.508e10,
+            x0: float = 1.076, y0: float = 0.49, z0: float = 0.3,
+            alpha: float = 3.6505926536, beta: float = 0, gamma: float = 0,
+            c_perp: float = 3.329, c_para: float = 3.007,
+            dz_bone: float = 0, x_bone: float = 0,
+            r_max: float = np.inf, sigma_cut_of: float = 1e-10,
+            **kwargs):
         super().__init__(**kwargs)
         self.population_density_name = 'GumsBar'
         self.density_unit = 'number'

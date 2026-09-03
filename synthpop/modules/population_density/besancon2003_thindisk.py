@@ -11,7 +11,6 @@ import numpy as np
 from .. import const
 from ._population_density import PopulationDensity
 
-
 class Besancon2003Thindisk(PopulationDensity):
     """
     Einasto profile
@@ -40,7 +39,11 @@ class Besancon2003Thindisk(PopulationDensity):
     """
 
     def __init__(
-            self, e, p0, hrp, hrm, offset=0, power=1, disk_cutoff=14, flare_flag=True, **kwargs
+            self, e: float = 0.0140, p0: float = 0.003999e9,
+            hrp: float = 5.0, hrm: float = 3.0,
+            offset: float = 0, power: float = 1,
+            disk_cutoff: float = 14, flare_flag: boolean = True,
+            **kwargs
             ):
         super().__init__(**kwargs)
         self.population_density_name = "Besancon2003Thindisk"
