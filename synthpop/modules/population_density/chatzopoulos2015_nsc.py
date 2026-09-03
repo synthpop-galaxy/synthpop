@@ -32,8 +32,7 @@ class Chatzopoulos2015Nsc(PopulationDensity):
         self.a0 = a0 
         self.M = M
         
-    @staticmethod
-    def a_func(r,z):
+    def a_func(self,r,z):
         return np.sqrt(r**2 + z**2/self.q**2)
 
     def density(self, r, phi_rad, z):

@@ -45,13 +45,11 @@ class GallegoCano2020Nsd(PopulationDensity):
         self.n1 = n1 
         self.n2 = n2
 
-        
-    @staticmethod
-    def a_func(r,z):
+    def a_func(self,r,z):
         return np.sqrt(r**2 + z**2/self.q**2)
 
     def density(self, r, phi_rad, z):
-        a = a_func(r,z)
+        a = self.a_func(r,z)
         rho = self.rho1*np.exp(-(a/self.R1)**self.n1) + self.rho2*np.exp(-(a/self.R2)**self.n2)
 
         return rho
