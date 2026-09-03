@@ -21,7 +21,8 @@
         "name" : "Besancon2003",
         "sigma_u" : 67.0,
         "sigma_v" : 51.0,
-        "sigma_w" : 42.0
+        "sigma_w" : 42.0,
+        "do_V_ad": true
     }, 
 
     "population_density_kwargs" : {

@@ -25,7 +25,8 @@
         "sigma_u" : 30.2,
         "sigma_v" : 19.5,
         "sigma_w" : 13.2, 
-        "disp_grad" : -0.2
+        "disp_grad" : -0.2,
+        "do_V_ad": true
     }, 
 
     "population_density_kwargs" : {

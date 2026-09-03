@@ -12,6 +12,7 @@ from typing import Tuple, Type
 from types import ModuleType
 import numpy as np
 from .. import default_sun
+from synthpop.synthpop_utils.coordinates_transformation import CoordTrans
 
 class Kinematics(ABC):
     """
@@ -38,12 +39,11 @@ class Kinematics(ABC):
     """
 
     def __init__(self,
-            sun: ModuleType = None,
-            coord_trans: ModuleType = None,
-            density_class: ModuleType = None,
-            logger: ModuleType = None,
-
-                 **kwargs):
+                sun: ModuleType = None,
+                coord_trans: ModuleType = None,
+                density_class: ModuleType = None,
+                logger: ModuleType = None,
+                **kwargs):
         """
         Initialize the Kinematics class
         
@@ -67,7 +67,7 @@ class Kinematics(ABC):
         # sun sun sun, here it comes
         self.sun = sun if sun is not None else default_sun
 
-        self.coord_trans = coord_trans
+        self.coord_trans = coord_trans if coord_trans is not None else CoordTrans(self.sun)
         self.density_class = density_class
 
     @abstractmethod

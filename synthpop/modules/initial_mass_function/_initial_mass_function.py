@@ -13,7 +13,7 @@ from types import ModuleType
 import numpy as np
 from scipy import integrate, interpolate
 from abc import ABC, abstractmethod
-
+from ...synthpop_utils.synthpop_logging import logger as default_logger
 
 class InitialMassFunction(ABC):
     """
@@ -44,7 +44,7 @@ class InitialMassFunction(ABC):
         Initialize the IMF class for a Population class
         """
         self.spisea_imf = None
-        self.logger = logger
+        self.logger = logger if logger is not None else default_logger
         # default mass limits
         if min_mass is  None: min_mass = 0.01
         if max_mass is  None: max_mass = 100

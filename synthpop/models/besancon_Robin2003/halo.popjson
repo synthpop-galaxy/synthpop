@@ -22,7 +22,8 @@
         "sigma_u" : 131.0,
         "sigma_v" : 106.0,
         "sigma_w" : 85.0,
-        "const_V_ad" : 226
+        "const_V_ad" : 226,
+        "do_V_ad": true
     }, 
 
     "population_density_kwargs" : {

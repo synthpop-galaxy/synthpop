@@ -17,8 +17,6 @@ except (ImportError):
 from .utils_functions import rotation_matrix
 from .sun_info import default_sun, SunInfo
 
-
-
 def get_trans_matrix() -> np.ndarray:
     """
     creates the transformation matrix between galactic and equatorial coordinates

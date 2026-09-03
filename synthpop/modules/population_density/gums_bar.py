@@ -35,7 +35,7 @@ class GumsBar(PopulationDensity):
             x0: float = 1.076, y0: float = 0.49, z0: float = 0.3,
             alpha: float = 3.6505926536, beta: float = 0, gamma: float = 0,
             c_perp: float = 3.329, c_para: float = 3.007,
-            dz_bone: float = 0, x_bone: float = 0,
+            dz_bone: float = 0, x_bone: float = 1,
             r_max: float = np.inf, sigma_cut_of: float = 1e-10,
             **kwargs):
         super().__init__(**kwargs)

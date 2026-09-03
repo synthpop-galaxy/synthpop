@@ -87,6 +87,9 @@ class KinematicsFromGrid(Kinematics):
         v_rot = self.interpolate_v_phi(np.column_stack([r,absz]))
 
         # Draw random deviations from circular velocity
+        sigma_r = np.maximum(sigma_r, 0.0)
+        sigma_phi = np.maximum(sigma_phi, 0.0)
+        sigma_z = np.maximum(sigma_z, 0.0)
         dv_r = np.random.normal(0, sigma_r)
         dv_phi = np.random.normal(0, sigma_phi)
         dv_z = np.random.normal(0, sigma_z)
