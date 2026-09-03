@@ -19,7 +19,7 @@ class SingleValue(Metallicity):
         [Fe/H] value for all stars
     """
 
-    def __init__(self, met_value: float, **kwargs):
+    def __init__(self, met_value: float = 0.0, **kwargs):
         super().__init__(**kwargs)
         self.metallicity_func_name = 'single_value'
         self.metallicity_value = met_value

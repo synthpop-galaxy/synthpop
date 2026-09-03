@@ -12,6 +12,7 @@ The number of splitpoints is modifiable.
 
 __all__ = ["PiecewisePowerlaw", ]
 __date__ = "2022-06-28"
+__author__ = "J. Klüter, S. Johnson, M.J. Huston"
 
 import numpy as np
 
@@ -41,7 +42,7 @@ class PiecewisePowerlaw(InitialMassFunction):
 
     def __init__(
             self, min_mass=None, max_mass=None,
-            alphas: tuple[float] = (1), splitpoints: tuple[float] = (), **kwargs
+            alphas: tuple[float] = (1,), splitpoints: tuple[float] = (), **kwargs
             ):
         super().__init__(min_mass, max_mass)
         self.imf_name = 'PiecewisePowerlaw'

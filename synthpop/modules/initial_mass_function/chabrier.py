@@ -11,6 +11,7 @@ Initial mass function from Chabrier (2003):
 """
 
 __all__ = ['Chabrier', ]
+__author__ = "J. Klüter, S. Johnson, M.J. Huston"
 
 import numpy as np
 from scipy.special import erf, erfinv

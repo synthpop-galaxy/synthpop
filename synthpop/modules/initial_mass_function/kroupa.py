@@ -10,6 +10,7 @@ Initial mass function from Kroupa (2001):
 
 __all__ = ["Kroupa", ]
 __date__ = "2022-06-28"
+__author__ = "J. Klüter, S. Johnson, M.J. Huston"
 
 import numpy as np
 from ._initial_mass_function import InitialMassFunction

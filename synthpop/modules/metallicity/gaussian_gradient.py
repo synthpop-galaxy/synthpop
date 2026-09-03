@@ -41,7 +41,7 @@ class GaussianGradient(Metallicity):
     """
 
     def __init__(
-            self, mean: float, std: float, low_bound: float = -4, high_bound: float = 0.5,
+            self, mean: float = 0.0, std: float = 0.25, low_bound: float = -4, high_bound: float = 0.5,
             radial_gradient: float = 0.0,  **kwargs):
         super().__init__(**kwargs)
         self.metallicity_func_name = 'gaussian_gradient'

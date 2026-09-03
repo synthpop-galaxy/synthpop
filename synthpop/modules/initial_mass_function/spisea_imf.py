@@ -12,6 +12,7 @@ The number of splitpoints is modifiable.
 
 __all__ = ["SpiseaImf", ]
 __date__ = "2025-12-10"
+__author__ = "M.J. Huston"
 
 import numpy as np
 
@@ -22,7 +23,7 @@ except ImportError:
 
 from typing import Callable
 from spisea.imf import imf as spisea_imf
-from spisea.imf import spisea_multiplicity as spisea_multiplicity
+from spisea.imf import multiplicity as spisea_multiplicity
 
 class SpiseaImf(InitialMassFunction):
     """
@@ -42,7 +43,7 @@ class SpiseaImf(InitialMassFunction):
     """
 
     def __init__(self, min_mass=None, max_mass=None, spisea_imf_name='Kroupa_2001', spisea_multiplicity_name=None,
-                    spisea_imf_kwargs={}):
+                    spisea_imf_kwargs={}, **kwargs):
         super().__init__(min_mass, max_mass)
         self.imf_name = 'SpiseaImf'
         self.min_mass=min_mass
@@ -52,7 +53,7 @@ class SpiseaImf(InitialMassFunction):
         self.spisea_multiplicity = None
         if spisea_multiplicity_name is not None:
             self.spisea_multiplicity = getattr(spisea_multiplicity, spisea_multiplicity_name)
-        self.spisea_imf = getattr(spisea_imf, spisea_imf_name)(massLimits=np.array([min_mass, max_mass]), 
+        self.spisea_imf = getattr(spisea_imf, spisea_imf_name)(
                             multiplicity=self.spisea_multiplicity, **spisea_imf_kwargs)
 
     # returns the number of stars of that initial mass

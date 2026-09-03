@@ -47,7 +47,9 @@ class DoubleGaussian(Metallicity):
     """
 
     def __init__(
-            self, weight: float, mean1: float, std1: float, mean2: float, std2: float,
+            self, weight: float = 0.5,
+            mean1: float = 0.0, std1: float = 0.25,
+            mean2: float = -0.5, std2: float = 0.25,
             low_bound: float = -4, high_bound: float = 0.5, **kwargs
             ):
         super().__init__(**kwargs)

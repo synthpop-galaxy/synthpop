@@ -3,6 +3,7 @@ Single value IMF (made for PBHs)
 """
 
 __all__ = ['SingleValue', ]
+__author__ = "M.J. Huston"
 
 import numpy as np
 from scipy.special import erf, erfinv
@@ -19,7 +20,7 @@ class SingleValue(InitialMassFunction):
     """
 
     def __init__(
-            self, mass: float, **kwargs
+            self, mass: float = 1.0, **kwargs
             ):
         """
         Parameters
@@ -27,7 +28,7 @@ class SingleValue(InitialMassFunction):
         mass : float [Msun]
             mass value for all objects
         """
-        super().__init__(min_mass, max_mass)
+        super().__init__()
         self.imf_name = 'SingleValue'
 
         # setup control parameters
