@@ -3,7 +3,7 @@ Post-processing subclass that saves the result from all locations in a combined 
 """
 
 __all__ = ["CombinedCsv", ]
-__author__ = "J. Klüter"
+__author__ = "J. Klüter, M. J. Huston"
 __date__ = "2023-01-23"
 
 import os
@@ -48,7 +48,7 @@ class CombinedCsv(PostProcessing):
             # write the data to the file
             f.write(csv_data)
         
-        if companion_df is not None
+        if companion_df is not None:
             # check if the file exist, if so it will not write a new header
             file_exist = os.path.isfile(self.combined_companion_filename)
             # convert dataframe to csv sting
