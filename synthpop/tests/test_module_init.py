@@ -2,9 +2,11 @@ import synthpop
 from glob import glob
 import numpy as np
 import pytest
+import pdb
 #from synthpop.modules.age import Age
 #from synthpop.populations
 
+# Make sure we can initialize and draw from each Age module
 def test_age():
     mod_files = glob(synthpop.constants.SYNTHPOP_DIR +
                           '/modules/age/*.py')
@@ -14,8 +16,11 @@ def test_age():
         cl = synthpop.synthpop_utils.get_subclass(synthpop.modules.age.Age,
                     synthpop.synthpop_utils.ModuleKwargs.parse_obj({"name":class_name}),
                     initialize=True)
+        age = cl.draw_random_age(1000)
+        assert ~np.any(np.isnan(age))
         print(class_name, 'OK')
 
+# Make sure we can initialize and draw from each Metallicity module
 def test_metallicity():
     mod_files = glob(synthpop.constants.SYNTHPOP_DIR +
                           '/modules/metallicity/*.py')
@@ -25,8 +30,11 @@ def test_metallicity():
         cl = synthpop.synthpop_utils.get_subclass(synthpop.modules.metallicity.Metallicity,
                     synthpop.synthpop_utils.ModuleKwargs.parse_obj({"name":class_name}),
                     initialize=True)
+        met = cl.draw_random_metallicity(1000, x=np.zeros(1000), y=np.zeros(1000), z=np.zeros(1000))
+        assert ~np.any(np.isnan(met))
         print(class_name, 'OK')
 
+# Make sure we can initialize and draw from each standard IMF module
 def test_imf():
     mod_files = glob(synthpop.constants.SYNTHPOP_DIR +
                           '/modules/initial_mass_function/*.py')
@@ -36,6 +44,9 @@ def test_imf():
         cl = synthpop.synthpop_utils.get_subclass(synthpop.modules.initial_mass_function.InitialMassFunction,
                     synthpop.synthpop_utils.ModuleKwargs.parse_obj({"name":class_name}),
                     initialize=True)
+        if class_name=='spisea_imf': continue
+        m = cl.draw_random_mass(0.01,1e4,100)
+        assert ~np.any(np.isnan(m))
         print(class_name, 'OK')
 
 def test_multiplicity():
@@ -47,6 +58,7 @@ def test_multiplicity():
         cl = synthpop.synthpop_utils.get_subclass(synthpop.modules.multiplicity.Multiplicity,
                     synthpop.synthpop_utils.ModuleKwargs.parse_obj({"name":class_name}),
                     initialize=True)
+        # TODO: test running it probably...
         print(class_name, 'OK')
 
 def test_ifmr():
@@ -58,6 +70,7 @@ def test_ifmr():
         cl = synthpop.synthpop_utils.get_subclass(synthpop.modules.initial_final_mass_relation.InitialFinalMassRelation,
                     synthpop.synthpop_utils.ModuleKwargs.parse_obj({"name":class_name}),
                     initialize=True)
+        # TODO: test running it probably...
         print(class_name, 'OK')
 
 def test_density():
@@ -69,7 +82,8 @@ def test_density():
         cl = synthpop.synthpop_utils.get_subclass(synthpop.modules.population_density.PopulationDensity,
                     synthpop.synthpop_utils.ModuleKwargs.parse_obj({"name":class_name}),
                     initialize=True)
-        cl.density(np.array([1.0]), np.array([0.0]), np.array([0.0]))
+        dens = cl.density(np.linspace(0,10,100), np.zeros(100), np.zeros(100))
+        assert ~np.any(np.isnan(dens))
         print(class_name, 'OK')
 
 def test_kinematics():
@@ -81,6 +95,8 @@ def test_kinematics():
         cl = synthpop.synthpop_utils.get_subclass(synthpop.modules.kinematics.Kinematics,
                     synthpop.synthpop_utils.ModuleKwargs.parse_obj({"name":class_name}),
                     initialize=True)
+        kine = cl.draw_random_velocity(np.linspace(0.001,10,100), np.zeros(100), np.zeros(100))
+        assert ~np.any(np.isnan(kine))
         print(class_name, 'OK')
 
 @pytest.mark.skip(reason="Slow")
@@ -97,4 +113,5 @@ def test_postproc():
         cl = synthpop.synthpop_utils.get_subclass(synthpop.modules.post_processing.PostProcessing,
                     mod_kwargs,
                     initialize=True)
+        # TODO: run a test catalog through them
         print(class_name, 'OK')
