@@ -13,7 +13,7 @@ import numpy as np
 from synthpop.synthpop_utils.coordinates_transformation import lb_to_ad
 
 class GullsPostProcessing(PostProcessing):
-    def __init__(self, model, cat_type, **kwargs):
+    def __init__(self, model, cat_type: str = None, **kwargs):
         """
         Parameters:
             model: SynthPop

@@ -12,10 +12,7 @@ import pandas as pd
 import numpy as np
 from ._post_processing import PostProcessing
 from scipy.spatial import KDTree
-try:
-    from synthpop_utils.utils_functions import add_magnitudes, combine_system_mags
-except:
-    from .synthpop_utils.utils_functions import add_magnitudes, combine_system_mags
+from ...synthpop_utils.utils_functions import combine_system_mags, get_primary_mags
 
 class Blending(PostProcessing):
     """
@@ -32,8 +29,8 @@ class Blending(PostProcessing):
         must be included in your config's chosen_bands
     """
 
-    def __init__(self, model, blend_radius, filters, logger, **kwargs):
-        super().__init__(model,logger, **kwargs)
+    def __init__(self, model, blend_radius=0.0, filters=[], **kwargs):
+        super().__init__(model, **kwargs)
         self.blend_radius = blend_radius
         self.filters = filters
 

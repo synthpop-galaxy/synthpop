@@ -1,6 +1,6 @@
 """
-Post-processing module to replace certain output column names. This replaces the "col_names"
-configuration line from <v1.1.0.
+Post-processing module to replace certain output column names.
+This replaces the "col_names" configuration line from <v1.1.0.
 """
 
 __all__ = ["RenameColumns", ]
