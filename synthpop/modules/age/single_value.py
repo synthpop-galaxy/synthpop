@@ -15,7 +15,7 @@ class SingleValue(Age):
     Single age generator
     """
 
-    def __init__(self, age_value: float, **kwargs):
+    def __init__(self, age_value: float = 10.0, **kwargs):
         super().__init__(**kwargs)
         #: age function name
         self.age_func_name = 'single_value'

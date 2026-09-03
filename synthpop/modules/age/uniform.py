@@ -16,7 +16,8 @@ class Uniform(Age):
     Uniform age distribution generator
     """
 
-    def __init__(self, low_bound: float, high_bound: float, **kwargs):
+    def __init__(self, low_bound: float = 1e-4,
+                 high_bound: float = 19.9526231497, **kwargs):
         super().__init__(**kwargs)
         #: age distribution name
         self.age_func_name = 'uniform'

@@ -18,7 +18,7 @@ class Exponential(Age):
     """
 
     def __init__(
-            self, gamma: float,
+            self, gamma: float = 0,
             low_bound: float = 1e-4, high_bound: float = 19.9526231497,**kwargs
             ):
         super().__init__(**kwargs)

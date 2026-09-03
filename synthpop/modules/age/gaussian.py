@@ -18,7 +18,7 @@ class Gaussian(Age):
     """
 
     def __init__(
-            self, mean: float, std: float,
+            self, mean: float = 10.0, std: float = 1.0,
             low_bound: float = 1e-4, high_bound: float = 19.9526231497, **kwargs
             ):
         super().__init__(**kwargs)
