@@ -44,7 +44,7 @@ class VelocityGradient(Kinematics):
 
     def __init__(
             self, 
-            sigma_u: float, sigma_v: float, sigma_w: float,
+            sigma_u: float = 0.0, sigma_v: float = 0.0, sigma_w: float = 0.0,
             sun: ModuleType = None,
             vel_grad: float = 60.0,
             **kwargs

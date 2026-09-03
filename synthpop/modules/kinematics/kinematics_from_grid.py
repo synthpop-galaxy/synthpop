@@ -31,8 +31,9 @@ class KinematicsFromGrid(Kinematics):
         file must be whitespace delimited and have comments marked with '#'
     """
 
-    def __init__(
-            self, moment_file=None, sun=None,
+    def __init__(self,
+            moment_file: str = "sormani2022_koshimoto_grid.dat",
+            sun=None,
             **kwargs
             ):
         super().__init__(**kwargs) # get sun, coord_trans and density_class

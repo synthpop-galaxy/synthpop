@@ -18,12 +18,11 @@ class Koshimoto2021Disk(Kinematics):
     Kinematic module for the disk based on Koshimoto et al. (2021)
     """
 
-    def __init__(
-            self,
-            sigma_r_sun, sigma_z_sun,
-            beta_r, beta_z,
-            R_sigma_r, R_sigma_z,
-            pop_age,
+    def __init__(self,
+            sigma_r_sun: float = 42.0, sigma_z_sun: float = 24.4,
+            beta_r: float = 0.32, beta_z: float = 0.77,
+            R_sigma_r: float = 14.3, R_sigma_z: float = 5.9,
+            pop_age: float = 0.1,
             **kwargs
             ):
         super().__init__(**kwargs)

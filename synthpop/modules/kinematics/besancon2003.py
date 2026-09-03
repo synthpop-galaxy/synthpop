@@ -51,8 +51,8 @@ class Besancon2003(Kinematics):
 
     def __init__(
             self,
-            sigma_u: float, sigma_v: float, sigma_w: float,
-            disp_grad: float = 0,
+            sigma_u: float = 0.0, sigma_v: float = 0.0, sigma_w: float = 0.0,
+            disp_grad: float = 0.0,
             do_V_ad=True, const_V_ad=None,
             **kwargs
             ):

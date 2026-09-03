@@ -15,9 +15,15 @@ class Koshimoto2021Bulge(Kinematics):
     Kinematic module for the bulge based on Koshimoto et al. (2021)
     """
 
-    def __init__(
-            self, v0_stream, y0_stream, C_par_r, C_perp_r, C_par_z, C_perp_z, h0_r, h0_z, sigma_i0,
-            sigma_i1, omega_p, bar_angle=27, bar_plane_angle=0, **kwargs
+    def __init__(self,
+            v0_stream: float = 43, y0_stream: float = 0.407,
+            C_par_r: float = 1.0, C_perp_r: float = 4.3,
+            C_par_z: float = 1.1, C_perp_z: float = 3.7,
+            h0_r = [0.86, 3.22, 0.95], h0_z = [0.56, 2.00, 3.82],
+            sigma_i0 = [64, 76, 71], sigma_i1 = [152, 78, 82],
+            omega_p: float  = 47.4,
+            bar_angle=27, bar_plane_angle=0,
+            **kwargs
             ):
         super().__init__(**kwargs) # initialises self.coord_transform & self.density_class
         self.v0_stream = v0_stream  # km/s
