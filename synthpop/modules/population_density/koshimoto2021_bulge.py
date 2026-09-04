@@ -47,7 +47,7 @@ class Koshimoto2021Bulge(PopulationDensity):
             rho0: float = 4.12e9, x0: float = 0.93,
             y0: float = 0.37, z0: float = 0.24,
             C_perp: float = 1.2, C_par: float = 4.1, R_c: float = 2.6,
-            X_shape: boolean = False, b_X: float = None,
+            X_shape: bool = False, b_X: float = None,
             bar_angle: float = 27.0, bar_plane_angle: float = 0.0, **kwargs
             ):
         # these were the defaults we phased out:

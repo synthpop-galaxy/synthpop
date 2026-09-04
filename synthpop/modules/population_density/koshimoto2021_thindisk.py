@@ -33,7 +33,7 @@ class Koshimoto2021Thindisk(PopulationDensity):
 
     def __init__(self, R: float = 5.0, z_sun: float = 0.061, z_45: float = 0.036,
                  rho_sun: float = 5.2e6, R_break: float = 5.3,
-                 linear_z: boolean = False, **kwargs):
+                 linear_z: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.density_unit = 'mass'
         self.R = R

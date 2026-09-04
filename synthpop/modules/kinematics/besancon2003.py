@@ -53,7 +53,7 @@ class Besancon2003(Kinematics):
             self,
             sigma_u: float = 0.0, sigma_v: float = 0.0, sigma_w: float = 0.0,
             disp_grad: float = 0.0,
-            do_V_ad=False, const_V_ad=None,
+            do_V_ad: bool = False, const_V_ad: bool = None,
             **kwargs
             ):
         """ Init """

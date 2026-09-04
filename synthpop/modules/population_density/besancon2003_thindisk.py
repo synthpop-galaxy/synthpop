@@ -42,7 +42,7 @@ class Besancon2003Thindisk(PopulationDensity):
             self, e: float = 0.0140, p0: float = 0.003999e9,
             hrp: float = 5.0, hrm: float = 3.0,
             offset: float = 0, power: float = 1,
-            disk_cutoff: float = 14, flare_flag: boolean = True,
+            disk_cutoff: float = 14, flare_flag: bool = True,
             **kwargs
             ):
         super().__init__(**kwargs)

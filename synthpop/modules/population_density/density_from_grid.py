@@ -31,7 +31,7 @@ class DensityFromGrid(PopulationDensity):
     
     def __init__(
             self, moment_file: str ="sormani2022_koshimoto_grid.dat",
-            density_unit: str = 'mass', abs_z: boolean = True,
+            density_unit: str = 'mass', abs_z: bool = True,
             population_density_name='DensityFromGrid',
             **kwargs
             ):
