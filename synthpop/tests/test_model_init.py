@@ -1,7 +1,7 @@
 import synthpop
 
 # Make sure we can initialize all the existing models
-# Swap in a faster-loading extinction map in place of default
+# We swap in a non-default extinction map for loading speed
 
 def test_init_besancon_Robin2003():
     mod = synthpop.SynthPop(model_name='besancon_Robin2003',

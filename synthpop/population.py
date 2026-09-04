@@ -503,10 +503,21 @@ class Population:
             logger.debug(f"{self.population_density.l_length_deg}, {self.population_density.b_length_deg} degree l, b length box")
 
         if self.extinction is not None:
-            assert not np.any(np.isnan(self.extinction.get_extinctions(np.array([l_deg]), np.array([b_deg]),
-                                                                 np.array([self.max_distance]))[0])), \
-                fr"{self.extinction.extinction_map_name} not valid in direction l_deg={l_deg}, b_deg={b_deg} " \
+            if field_shape=='box':
+                dl_pts = np.concatenate([np.ones(90), np.linspace(-1,1,90), -np.ones(90), np.linspace(-1,1,90)])
+                db_pts = np.concatenate([np.linspace(-1,1,90), np.ones(90), np.linspace(-1,1,90), -np.ones(90)])
+                l_test_pts, b_test_pts = self.population_density.rotate_00_to_lb(dl_pts*self.field_scale_deg*np.pi/180/2,
+                                                                    db_pts*self.field_scale_deg*np.pi/180/2,)
+            elif field_shape=='circle':
+                circ_pts = np.linspace(0,2*np.pi,361)
+                l_test_pts, b_test_pts = self.population_density.rotate_00_to_lb(self.field_scale_deg*np.pi/180*np.cos(circ_pts),
+                                                                    self.field_scale_deg*np.pi/180*np.sin(circ_pts))
+            assert not np.any(np.isnan(self.extinction.extinction_in_map(l_test_pts*180/np.pi, b_test_pts*180/np.pi,
+                                                    np.ones(len(l_test_pts))*self.max_distance))), \
+                fr"Extinction map {self.extinction.extinction_map_name} not valid across full {field_shape}" \
+                f" field of scale {field_scale} {field_scale_unit} at l_deg={l_deg}, b_deg={b_deg} " \
                 f"at max distance {self.max_distance}. Check the map's sky coverage."
+            #pdb.set_trace()
 
     def estimate_field(self, **kwargs) -> Tuple[float, float]:
         """
