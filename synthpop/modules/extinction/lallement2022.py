@@ -73,7 +73,7 @@ class Lallement2022(ExtinctionMap):
                     f", placing it in {const.EXTINCTIONS_DIR}, and initializing your model again.")
             map_url = 'http://cdsarc.u-strasbg.fr/ftp/J/A+A/661/A147/cube_ext.fits.gz'
             map_filename = f'{const.EXTINCTIONS_DIR}/lallement2022_cube_ext.fits.gz'
-            if not os.isfile(map_filename):
+            if not os.path.isfile(map_filename):
                 with open(map_filename, "wb") as f:
                     r = requests.get(map_url)
                     f.write(r.content)

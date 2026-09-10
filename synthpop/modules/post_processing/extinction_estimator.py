@@ -211,7 +211,7 @@ class ExtinctionEstimator(PostProcessing):
         A_Ks = systems[self.model.populations[0].extinction.A_or_E_type].to_numpy()
         if self.model.populations[0].extinction.A_or_E_type != 'A_Ks':
             AKs_Amap = self.model.populations[0].extinction.Alambda_Amap(2.152152)
-            A_Ks *= AKs_Amap
+            A_Ks = AKs_Amap * A_Ks
             systems.loc[:,'A_Ks'] = A_Ks
         else:
             AKs_Amap = 1.0

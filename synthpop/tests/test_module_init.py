@@ -99,7 +99,6 @@ def test_kinematics():
         assert ~np.any(np.isnan(kine))
         print(class_name, 'OK')
 
-@pytest.mark.skip(reason="Slow")
 def test_postproc():
     # make default model but with faster loading ext map
     model = synthpop.SynthPop(extinction_map_kwargs={"name":"maps_from_dustmaps", "dustmap_name":"marshall"})
