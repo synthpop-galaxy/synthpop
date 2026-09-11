@@ -207,8 +207,6 @@ class PopsyclePostProcessing(PostProcessing):
         phases = phases.astype(int)
         system_df.loc[:, 'rem_id'] = (phases*(phases>100)).astype(int)
         # system_df.loc[:, 'obj_id'] = np.arange(0, len(system_df))
-
-        _, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude, longitude, surveyArea, self.bin_edges_number)
         
         # Cut unused columns
         cols_to_cut = []
@@ -226,6 +224,8 @@ class PopsyclePostProcessing(PostProcessing):
         if self.binning_procedure:
             return popsycle_df, popsycle_bin_df
         else:
+            _, lat_bin_edges, long_bin_edges = _get_bin_edges(latitude, longitude, surveyArea, self.bin_edges_number)
+        
             if system_df['isMultiple'].any():
                 with h5py.File(f"{self.output_root}_companions.h5", 'w') as h5file:
                     h5file['lat_bin_edges'] = lat_bin_edges
