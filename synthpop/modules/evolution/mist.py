@@ -552,9 +552,32 @@ def generate_effective_wavelengths_json():
         outfile.write(json_object)
     return
 
+def generate_spisea_obs_str_json():
+    with open(f'{EVOLUTION_DIR}/mist_columns.json') as f:
+        columns_dict = json.load(f)
+    
+    filters_list = []
+    for k,v in columns_dict.items():
+        if v not in ['cmd','basic','full']:
+            filters_list.append(k)
+
+    obs_str_dict = {}
+    for f in filters_list:
+        try:
+            obs_str_dict[f] = get_spisea_obs_str(f)
+        except:
+            print(f"No valid SPISEA match for filter {f} -- skipping.")
+    obs_str_dict['K213'] = get_spisea_obs_str('K213')
+
+    json_object = json.dumps(obs_str_dict, indent=4)
+    with open(f"{EVOLUTION_DIR}/mist_filter_obs_strs.json", "w") as outfile:
+        outfile.write(json_object)
+
+
 def get_spisea_obs_str(filt):
     """
-    Get SPISEA/pysynphot obs_str for filter if available
+    Get SPISEA/pysynphot obs_str for filter if available.
+    This function requires SPISEA to be installed.
     """
     from spisea.synthetic import get_obs_str, get_filter_info
 

@@ -37,20 +37,9 @@ class ExtinctionEstimator(PostProcessing):
                 "maglim_after_postproc=True to trim the catalog after postprocessing.")
         
         # Load up the fit results
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        ext_cor_tab = Table.read(f'{current_dir}/extinction_correction_table.dat', format='ascii.mrt')
-        ext_cor_tab = ext_cor_tab.filled(999)
-        self.fit_dict = {}
-        color_cols = [col for col in ext_cor_tab.colnames if col.startswith('Color')]
-        a_cols = [col for col in ext_cor_tab.colnames if col.startswith('a_')]
-        coeff_cols = [col for col in ext_cor_tab.colnames if (col[:2] in ['a_', 'b_'])]
-        self.fit_order = len(a_cols)-1
-        for i in range(len(ext_cor_tab)):
-            filt = ext_cor_tab['Filter'][i]
-            self.fit_dict[filt] = {}
-            self.fit_dict[filt]['colors'] = [ext_cor_tab[col][i] for col in color_cols if (ext_cor_tab[col][i]!="999")]
-            self.fit_dict[filt]['order'] = self.fit_order
-            self.fit_dict[filt]['coefficients'] = [ext_cor_tab[col][i] for col in coeff_cols if ~(ext_cor_tab[col][i]==999.0)]
+        ext_cor_tab = os.path.dirname(os.path.abspath(__file__))+'/ext_coeffs_absmag_AKs5.json'
+        with open(ext_cor_tab) as f:
+            self.fit_dict = json.load(f)
         with open(f"{EVOLUTION_DIR}/spisea_photometric_system_conversions.json") as f:
             self.photsys_convert = json.load(f)
 
@@ -195,8 +184,9 @@ class ExtinctionEstimator(PostProcessing):
             from spisea.synthetic import get_obs_str
             self.full_filter_list_obs_str = [get_obs_str(f) for f in self.model.parms.bands]
         else:
-            from ..evolution.mist import get_spisea_obs_str
-            self.full_filter_list_obs_str = [get_spisea_obs_str(f)  for f in self.model.parms.bands]
+            with open(f"{EVOLUTION_DIR}/mist_filter_obs_strs.json") as f:
+                mist_obsstrs = json.load(f)
+            self.full_filter_list_obs_str = [mist_obsstrs[f]  for f in self.model.parms.bands]
         self.full_filter_list = [f.replace(',','_')  for f in self.full_filter_list_obs_str]
         self.correct_mag_cols = self.model.parms.bands
         self.filter_list = [f for f in self.full_filter_list if (f in self.fit_dict.keys())]
