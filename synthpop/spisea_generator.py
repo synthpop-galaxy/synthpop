@@ -192,7 +192,8 @@ class SpiseaGenerator(StarGenerator):
                                        self.ifmr_module.spisea_ifmr,
                                        self.spisea_dir, props,
                                        self.evolution_module.bands,
-                                       self.evolution_module.bbh_frac))                       
+                                       self.evolution_module.bbh_frac,
+                                       self.evolution_module.bns_frac))
         
         # Parallel case:
         else:
@@ -225,7 +226,8 @@ class SpiseaGenerator(StarGenerator):
                                        self.ifmr_module.spisea_ifmr,
                                        self.spisea_dir, props,
                                        self.evolution_module.bands,
-                                       self.evolution_module.bbh_frac))
+                                       self.evolution_module.bbh_frac,
+                                       self.evolution_module.bns_frac))
                                        
             # Do the parallel generation
             with Pool(self.n_proc) as p:
@@ -286,7 +288,7 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
                                   evo_model, atm_func, wd_atm_func,
                                   min_mass, max_mass, bands_obs_str,
                                   imf, ifmr, iso_dir, props,
-                                  bands, bbh_frac):
+                                  bands, bbh_frac, bns_frac):
     """
     Separated function to run SPISEA clusters for parallelization
     """
@@ -340,6 +342,17 @@ def generate_spisea_cluster_stars(system_idxs, log_age, mh, feh,
                 star_systems_i['isMultiple'][bh_drop_indexes] = False
                 for filt in bands:
                     star_systems_i[filt][bh_drop_indexes] = np.nan
+            if ("companions" in cluster.__dir__()) and (bns_frac<1.0) \
+                        and np.any(star_systems_i['phase']==102):
+                ns_indexes = np.where((star_systems_i['phase']==102) & star_systems_i['isMultiple'])[0]
+                n_drop = int(np.round(len(ns_indexes)*(1-bns_frac)))
+                ns_drop_indexes = np.random.choice(ns_indexes, size=n_drop, replace=False)
+                sys_drop_idxs = star_systems_i['system_idx'][ns_drop_indexes]
+                companions_i.remove_rows(np.where(np.isin(companions_i["system_idx"],sys_drop_idxs))[0])
+                star_systems_i['N_companions'][ns_drop_indexes] = 0
+                star_systems_i['isMultiple'][ns_drop_indexes] = False
+                for filt in bands:
+                    star_systems_i[filt][ns_drop_indexes] = np.nan
                     
         if "companions" in cluster.__dir__():
             companions_list_bin.append(companions_i)

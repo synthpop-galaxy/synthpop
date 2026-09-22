@@ -27,7 +27,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
                     spisea_evolution_kwargs={"version":1.2, "synthpop_extension":True},
                     spisea_atm_func_name="get_merged_atmosphere", spisea_wd_atm_func_name="get_wd_atmosphere",
                     min_mass=0, max_mass=1000, effective_wavelengths='pivot',
-                    bbh_frac=0.1, **kwargs):
+                    bbh_frac=0.1, bns_frac=0.05, **kwargs):
         self.name='SpiseaCluster'
         if not n_proc>=1:
             raise ValueError("n_proc for SpiseaCluster must be at least 1")
@@ -82,6 +82,7 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
                                     
         # Binary evolution
         self.bbh_frac=bbh_frac
+        self.bns_frac=bns_frac
         
         if spisea_evolution_name=='MISTv1':
             self.feh_list = np.array([-4.0,-3.5,-3.0,-2.5,-2.0,-1.75,-1.5,-1.25,
@@ -97,9 +98,10 @@ class SpiseaCluster(EvolutionIsochrones,EvolutionInterpolator):
             self.feh_list = np.array([-2.3,-2.0,-1.75,-1.5,-1.25,
                                       -1.0,-0.75,-0.5,-0.25,0,0.176])
             self.log_age_list = np.linspace(5.0,10.3,54)
-            if self.bbh_frac<1.0:
+            if self.bbh_frac<1.0 or self.bns_frac<1.0:
                 self.bbh_frac=1.0
-                Warning("Setting bbh_frac to 1.0 to let COSMIC handle binary evolution.")
+                self.bns_frac=1.0
+                Warning("Setting bbh_frac & bsn_frac to 1.0 to let COSMIC handle binary evolution.")
             if spisea_atm_func_name != "get_merged_atmosphere_w_bb_supplement":
                 self.spisea_atm_func = spisea_atmospheres.get_merged_atmosphere_w_bb_supplement
                 Warning("Setting amosphere model to get_merged_atmosphere_w_bb_supplement for COSMIC.")
