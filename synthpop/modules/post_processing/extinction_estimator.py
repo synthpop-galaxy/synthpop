@@ -141,18 +141,13 @@ class ExtinctionEstimator(PostProcessing):
     def convert_mags_to_ab(self, ext_est_dict):
         #pdb.set_trace()
         for i, f in enumerate(self.full_filter_list_obs_str):
-            try:
-                if self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'AB':
-                    pass
-                elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'Vega':
-                    ext_est_dict[self.full_filter_list[i]].setflags(write=True)
-                    ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
-                elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'ST':
-                    ext_est_dict[self.full_filter_list[i]].setflags(write=True)
-                    ext_est_dict[self.full_filter_list[i]] -= self.photsys_convert['ST'][f]
-                    ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
-            except:
-                pdb.set_trace()
+            if self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'AB':
+                pass
+            elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'Vega':
+                ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
+            elif self.model.parms.photsys_dict[self.model.parms.bands[i]] == 'ST':
+                ext_est_dict[self.full_filter_list[i]] -= self.photsys_convert['ST'][f]
+                ext_est_dict[self.full_filter_list[i]] += self.photsys_convert['AB'][f]
         return ext_est_dict 
 
     def do_post_processing(self, systems: pd.DataFrame, companions: pd.DataFrame):
@@ -218,7 +213,7 @@ class ExtinctionEstimator(PostProcessing):
                             self.model.parms.eff_wavelengths[f]) * \
                         systems[self.model.populations[0].extinction.A_or_E_type].to_numpy())
                 else:
-                    ext_est_dict[self.full_filter_list[i]] = systems[f].to_numpy()
+                    ext_est_dict[self.full_filter_list[i]] = systems[f].to_numpy(copy=True)
 
             # Calculate extinction in the filters from the A_Ks and absolute colors
             ext_ests = self.get_roman_extinction_sim(ext_est_dict)
@@ -250,7 +245,7 @@ class ExtinctionEstimator(PostProcessing):
                                 self.model.populations[0].extinction.Alambda_Amap(
                                     self.model.parms.eff_wavelengths[f]) * A_Ks_comps)
                     else:
-                        abs_mag_f = companions[f].to_numpy()
+                        abs_mag_f = companions[f].to_numpy(copy=True)
                     ext_est_dict[self.full_filter_list[i]] = abs_mag_f
                     comps_abs_mags.loc[:,self.full_filter_list[i]] = abs_mag_f
 
@@ -277,14 +272,14 @@ class ExtinctionEstimator(PostProcessing):
                             self.model.parms.eff_wavelengths[f]) * \
                         systems[self.model.populations[0].extinction.A_or_E_type].to_numpy())
                 else:
-                    abs_mag_f = systems[f].to_numpy()
+                    abs_mag_f = systems[f].to_numpy(copy=True)
                 prim_abs_mags.loc[:,self.full_filter_list[i]] = abs_mag_f
             # Subtract the companion mags if needed
             if self.model.parms.combine_system_mags:
                 prim_abs_mags = get_primary_mags(prim_abs_mags, comps_abs_mags, self.full_filter_list)
 
             # Calculate extinction in the filters from the A_Ks and absolute colors
-            ext_est_dict = {f:prim_abs_mags[f].to_numpy() for f in self.full_filter_list}
+            ext_est_dict = {f:prim_abs_mags[f].to_numpy(copy=True) for f in self.full_filter_list}
             ext_est_dict['A_Ks'] = A_Ks
             ext_ests = self.get_roman_extinction_sim(ext_est_dict)
 
