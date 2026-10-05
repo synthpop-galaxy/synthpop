@@ -234,8 +234,8 @@ def generate_photsys_conversions():
         convs_st = {}
         for flt in flts:
             flt_name = sys+','+flt
-            convs_ab.update({flt_name: spisea_synthetic.calc_ab_vega_filter_conversion(flt_name).value})
-            convs_st.update({flt_name: spisea_synthetic.calc_st_vega_filter_conversion(flt_name).value})
+            convs_ab.update({flt_name: spisea_synthetic.calc_ab_vega_filter_conversion(flt_name)})
+            convs_st.update({flt_name: spisea_synthetic.calc_st_vega_filter_conversion(flt_name)})
         return convs_ab, convs_st
 
     all_convs = {"AB":{}, "ST":{}}
