@@ -23,7 +23,7 @@ import json
 import tqdm
 import sys
 from astropy import table
-
+import pdb
 import numpy as np
 import pandas as pd
 import requests
@@ -551,7 +551,10 @@ def generate_effective_wavelengths_json():
             all_effs['pivot'][f] = vals[1]
             all_effs['average'][f] = vals[2]
         except:
-            print(filt_id, f)
+            print(filt_id, f, "not found")
+
+    if len(all_effs['pivot'])==0:
+        raise ValueError("Failed to gather any filter profiles. You may need to update astroquery.")
     
     json_object = json.dumps(all_effs, indent=4)
     with open(f"{EVOLUTION_DIR}/mist_effective_wavelengths.json", "w") as outfile:
