@@ -83,7 +83,7 @@ class ExtinctionEstimator(PostProcessing):
                         var_terms.append((Ci**p) * (AKs**q))
         terms_mat = np.column_stack(var_terms)
         val = terms_mat @ np.array(coeffs)
-        return val * AKs
+        return val
 
     def get_roman_extinction_sim(self, catalog):
         """
@@ -133,8 +133,11 @@ class ExtinctionEstimator(PostProcessing):
                     columns.append(np.ones(len(catalog))*np.nan)
             AKs_C = np.stack(columns,axis=1)
             
-            ext_filt = self.generic_extinction_polynomial(AKs_C, coeffs, order)
-            result['A_'+filt] = ext_filt
+            # Clip to min and max tabulated extinction coefficients to prevent wild outliers.
+            ext_ratio_filt = self.generic_extinction_polynomial(AKs_C, coeffs, order)
+            ext_ratio_filt = np.clip(ext_ratio_filt, a_min=filt_fit['min_Afilt_AKs_ratio'],
+                                  a_max=filt_fit['max_Afilt_AKs_ratio'])
+            result['A_'+filt] = ext_ratio_filt * AKs_C[:,0]
             
         return result
 
