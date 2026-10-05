@@ -18,7 +18,10 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d, RectBivariateSpline
 import matplotlib.pyplot as plt
-from ._evolution import EvolutionInterpolator
+try:
+    from ._evolution import EvolutionInterpolator
+except:
+    from _evolution import EvolutionInterpolator
 
 class CharonInterpolator(EvolutionInterpolator):
     """

@@ -28,10 +28,16 @@ import numpy as np
 import pandas as pd
 import requests
 
-from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
-# import a "standard" interpolator
-from .charon_interpolator import CharonInterpolator
-#from .lagrange_interpolator import LagrangeInterpolator
+try:
+    from ._evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
+    # import a "standard" interpolator
+    from .charon_interpolator import CharonInterpolator
+    #from .lagrange_interpolator import LagrangeInterpolator
+except:
+    from _evolution import EvolutionIsochrones, ISOCHRONES_DIR, EVOLUTION_DIR
+    # import a "standard" interpolator
+    from charon_interpolator import CharonInterpolator
+    #from .lagrange_interpolator import LagrangeInterpolator
 
 # global variable to store the isochrones
 mist_isochrones = None
