@@ -123,6 +123,7 @@ class ExtinctionEstimator(PostProcessing):
             self.logger.debug(f"Estimating {filt} extinction using {colors} and order={order} function")
 
             columns = [catalog['A_Ks']]
+            filler_col = np.full(len(catalog['A_Ks']),np.nan)
             for c in colors:
                 f1,f2,_ = c.split('-')
                 filt_valid *= (f1 in catalog)
@@ -130,7 +131,7 @@ class ExtinctionEstimator(PostProcessing):
                 if filt_valid:
                     columns.append(catalog[f1]-catalog[f2])
                 else:
-                    columns.append(np.ones(len(catalog))*np.nan)
+                    columns.append(filler_col)
             AKs_C = np.stack(columns,axis=1)
             
             # Clip to min and max tabulated extinction coefficients to prevent wild outliers.
