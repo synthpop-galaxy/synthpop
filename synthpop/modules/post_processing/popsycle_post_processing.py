@@ -158,6 +158,9 @@ class PopsyclePostProcessing(PostProcessing):
 
         system_df['L'] = 10**system_df['L']  # Delogging teff and L
         system_df['teff'] = 10**system_df['teff']
+        system_df['px'] -= self.model.populations[0].sun.x 
+        system_df['py'] -= self.model.populations[0].sun.y
+        system_df['pz'] -= self.model.populations[0].sun.z
         companion_df['L'] = 10**companion_df['L']
         companion_df['teff'] = 10**companion_df['teff']
 
